@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meeting-scribe"
+version = "1.0.0"
+description = "Real-time bilingual (JA/EN) meeting transcription, translation, speaker identification, and voice cloning"
+requires-python = ">=3.12,<3.14"
+authors = [{ name = "Brad Lay" }]
+license = { text = "MIT" }
+dependencies = [
+    # Server
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+
+    # Core audio/ML
+    "numpy>=1.26",
+    "torch>=2.0",
+    "torchaudio>=2.0",
+    "soundfile>=0.13",
+
+    # Translation — CTranslate2 + NLLB-200
+    "ctranslate2>=4.0",
+    "sentencepiece>=0.2",
+
+    # HTTP client (translation fallback, vLLM)
+    "httpx>=0.25",
+
+    # Utilities
+    "click>=8.0",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+# macOS Apple Silicon (ASR + TTS)
+mlx = [
+    "mlx-qwen3-asr>=0.3",
+    "mlx-audio>=0.1",
+]
+# GPU backends (GB10/CUDA)
+gpu = [
+    "whisperlivekit[faster-whisper]>=0.2.20",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "websockets>=14.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+meeting-scribe = "meeting_scribe.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meeting_scribe"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["meeting_scribe"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

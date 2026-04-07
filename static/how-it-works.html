@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How It Works — Meeting Scribe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Noto+Sans+JP:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/how-it-works.css">
+</head>
+<body data-lang="both">
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <nav class="nav-bar">
+    <a href="/" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      <span class="nav-logo-text">Meeting Scribe</span>
+    </a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn active" data-lang="both">Both</button>
+        <button class="lang-btn" data-lang="ja">JA</button>
+      </div>
+      <a href="/" class="nav-link">Launch App</a>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- ═══ HERO ═══ -->
+    <section class="hero">
+      <div class="hero-pulse">
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-core"></div>
+      </div>
+      <div class="bi-inline">
+        <h1 class="hero-title lang-en">How It Works</h1>
+        <h1 class="hero-title lang-ja">仕組み</h1>
+      </div>
+      <div class="bi hero-bi">
+        <p class="hero-subtitle lang-en">
+          Real-time bilingual meeting transcription. Japanese and English, captured and translated side by side as the conversation flows.
+        </p>
+        <p class="hero-subtitle lang-ja">
+          会議の音声をリアルタイムで文字起こし・翻訳。日本語と英語を並べて表示し、会話の流れをそのまま記録します。
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ THE EXPERIENCE ═══ -->
+    <section class="section" id="experience">
+      <div class="bi-inline">
+        <div class="section-label lang-en">01 — The Experience</div>
+        <div class="section-label lang-ja">01 — 体験</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Three columns. Every voice, every language.</h2>
+        <h2 class="section-title lang-ja">3カラム表示。すべての声、すべての言語。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">
+          The transcript is split into three synchronized views: the raw live feed, English, and Japanese. Original speech stays in its column; translations appear in the other. Nothing is lost.
+        </p>
+        <p class="section-desc lang-ja">
+          文字起こしは3つの同期ビューに分かれます。ライブフィード、英語、日本語。原語はそのまま表示され、翻訳が隣のカラムに現れます。何も見逃しません。
+        </p>
+      </div>
+
+      <div class="mockup">
+        <div class="mockup-header">
+          <div class="mockup-col-header">Live<span class="mockup-col-hint">All languages</span></div>
+          <div class="mockup-col-header">English<span class="mockup-col-hint">EN original + JA→EN</span></div>
+          <div class="mockup-col-header">日本語<span class="mockup-col-hint">JA原文 + EN→JA</span></div>
+        </div>
+        <div class="mockup-grid">
+          <div class="mockup-row">
+            <div class="mockup-cell cell-ja"><div class="mockup-speaker"><span class="mockup-speaker-dot" style="background:var(--speaker-1)"></span> 田中</div>来月の予算について確認したいのですが</div>
+            <div class="mockup-cell"><span class="translated">I'd like to confirm about next month's budget</span></div>
+            <div class="mockup-cell cell-ja">来月の予算について確認したいのですが</div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-cell"><div class="mockup-speaker"><span class="mockup-speaker-dot" style="background:var(--speaker-2)"></span> Smith</div>Sure, I prepared the Q4 projections yesterday</div>
+            <div class="mockup-cell">Sure, I prepared the Q4 projections yesterday</div>
+            <div class="mockup-cell cell-ja"><span class="translated">はい、昨日Q4の予測を準備しました</span></div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-cell cell-ja"><div class="mockup-speaker"><span class="mockup-speaker-dot" style="background:var(--speaker-1)"></span> 田中</div>ありがとうございます。では共有お願いします</div>
+            <div class="mockup-cell"><span class="translated">Thank you. Please go ahead and share</span></div>
+            <div class="mockup-cell cell-ja">ありがとうございます。では共有お願いします</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ PIPELINE OVERVIEW ═══ -->
+    <section class="section pipeline-overview" id="pipeline">
+      <div class="bi-inline">
+        <div class="section-label lang-en">02 — Under the Hood</div>
+        <div class="section-label lang-ja">02 — 内部構造</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">The pipeline</h2>
+        <h2 class="section-title lang-ja">パイプライン</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Five stages, from microphone to screen. Each runs asynchronously, connected by event streams. Audio flows in, translated text flows out.</p>
+        <p class="section-desc lang-ja">マイクから画面まで5つのステージで構成。各ステージは非同期で動作し、イベントストリームで接続。音声が入り、翻訳テキストが出力されます。</p>
+      </div>
+
+      <div class="pipeline-track" style="margin-top:var(--space-lg);">
+        <div class="pipeline-line"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="audio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Audio Capture</span><span class="pipeline-node-label lang-ja">音声キャプチャ</span></div><div class="pipeline-node-sub">16kHz PCM via WebSocket</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="asr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Speech Recognition</span><span class="pipeline-node-label lang-ja">音声認識</span></div><div class="pipeline-node-sub">Qwen3-ASR / Whisper</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="translation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Translation</span><span class="pipeline-node-label lang-ja">翻訳</span></div><div class="pipeline-node-sub">NLLB-200 / vLLM</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="speaker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Speaker Identification</span><span class="pipeline-node-label lang-ja">話者識別</span></div><div class="pipeline-node-sub">ECAPA-TDNN + diart</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="display"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Display</span><span class="pipeline-node-label lang-ja">表示</span></div><div class="pipeline-node-sub">3-column synced grid</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 1: AUDIO CAPTURE ═══ -->
+    <section class="stage" data-stage="audio" id="audio">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-number">1</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Audio Capture</h3><h3 class="stage-title lang-ja">音声キャプチャ</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">The browser captures audio from the system microphone using the Web Audio API. An <strong>AudioWorklet</strong> processor runs on a dedicated thread, resampling from the device's native rate (44.1 or 48 kHz) down to <span class="metric-inline">16 kHz mono</span> using linear interpolation.</p>
+            <p class="lang-ja">ブラウザがWeb Audio APIでマイクの音声を取得します。<strong>AudioWorklet</strong>が専用スレッドで動作し、デバイスのネイティブレート（44.1/48 kHz）から<span class="metric-inline">16 kHz モノラル</span>に線形補間でリサンプリングします。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">Every 250 milliseconds, a chunk of approximately 4,000 samples is packaged with a binary header and sent over a WebSocket connection. No JSON encoding, no base64 — pure binary PCM for minimum latency.</p>
+            <p class="lang-ja">250ミリ秒ごとに約4,000サンプルをバイナリヘッダと共にWebSocketで送信します。JSONもbase64も使いません。純粋なバイナリPCMで最小レイテンシを実現します。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">Microphone</span><span class="flow-arrow">→</span>
+            <span class="flow-node">AudioWorklet</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Resample 16kHz</span><span class="flow-arrow">→</span>
+            <span class="flow-node">WebSocket</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Server</span>
+          </div>
+
+          <div class="wire-block">
+<span class="cm">// Wire format — binary WebSocket frame</span>
+<span class="hl">[4B uint32]</span>  sample_rate      <span class="cm">// 16000</span>
+<span class="hl">[8B uint64]</span>  sample_offset    <span class="cm">// absolute position</span>
+<span class="hl">[4B uint32]</span>  stream_epoch     <span class="cm">// reconnection counter</span>
+<span class="hl">[...     ]</span>  Float32 PCM      <span class="cm">// ~4000 samples</span>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">Why client-side resampling?</div><div class="callout-title lang-ja">なぜクライアント側でリサンプリング？</div></div>
+            <div class="bi">
+              <span class="lang-en">Offloading resampling to the browser means zero audio processing overhead on the server. The server receives clean 16 kHz PCM and feeds it directly to the ASR model — no conversion step, no buffering delay.</span>
+              <span class="lang-ja">リサンプリングをブラウザに任せることで、サーバー側の音声処理負荷がゼロになります。サーバーはクリーンな16 kHz PCMをそのままASRモデルに渡すだけ。変換も遅延もありません。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 2: SPEECH RECOGNITION ═══ -->
+    <section class="stage" data-stage="asr" id="asr">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-number">2</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Speech Recognition</h3><h3 class="stage-title lang-ja">音声認識</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">Incoming audio is accumulated in a <span class="metric-inline">4-second</span> buffer. When voice activity is detected (RMS energy above threshold), the buffer is transcribed by the ASR backend. The system auto-detects Japanese and English, producing timestamped transcript segments.</p>
+            <p class="lang-ja">受信した音声は<span class="metric-inline">4秒</span>のバッファに蓄積されます。音声活動が検出される（RMSエネルギーが閾値を超える）と、ASRバックエンドが文字起こしを実行。日本語と英語を自動判別し、タイムスタンプ付きセグメントを生成します。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">The ASR backend is pluggable — on Apple Silicon, <strong>Qwen3-ASR-0.6B</strong> runs natively via MLX with a real-time factor as low as <span class="metric-inline">0.06</span> (16x faster than real-time). On NVIDIA GPUs, <strong>faster-whisper</strong> with the large-v3-turbo model provides higher quality with CUDA INT8 acceleration.</p>
+            <p class="lang-ja">ASRバックエンドは差し替え可能です。Apple Siliconでは<strong>Qwen3-ASR-0.6B</strong>がMLXでネイティブに動作し、リアルタイムファクター<span class="metric-inline">0.06</span>（実時間の16倍速）を達成。NVIDIA GPUでは<strong>faster-whisper</strong>のlarge-v3-turboモデルがCUDA INT8で高精度な認識を提供します。</p>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">Hallucination filtering</div><div class="callout-title lang-ja">ハルシネーション対策</div></div>
+            <div class="bi">
+              <span class="lang-en">ASR models sometimes hallucinate during silence. Meeting Scribe applies multi-layer filtering: known phrases are blocked, segments over 200 characters are discarded, and text with 50%+ repeating characters is rejected. Language identification uses CJK character ratio heuristics.</span>
+              <span class="lang-ja">ASRモデルは無音区間でハルシネーションを起こすことがあります。Meeting Scribeは多層フィルタで対策：既知フレーズのブロック、200文字超のセグメント除去、50%以上の繰り返し文字除去。言語判別にはCJK文字比率を使用します。</span>
+            </div>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">4s buffer</span><span class="flow-arrow">→</span>
+            <span class="flow-node">VAD</span><span class="flow-arrow">→</span>
+            <span class="flow-node">ASR model</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Filter</span><span class="flow-arrow">→</span>
+            <span class="flow-node">TranscriptEvent</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 3: TRANSLATION ═══ -->
+    <section class="stage" data-stage="translation" id="translation">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-number">3</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Translation Pipeline</h3><h3 class="stage-title lang-ja">翻訳パイプライン</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">Finalized transcript segments enter the translation pipeline. A <strong>merge gate</strong> holds segments briefly and combines adjacent utterances in the same language (within a 2-second gap from the same speaker) — reducing translation overhead for short, fragmented speech.</p>
+            <p class="lang-ja">確定したセグメントが翻訳パイプラインに入ります。<strong>マージゲート</strong>がセグメントを一時保持し、同一言語・同一話者の隣接発話（2秒以内）を結合。短い断片的な発話のオーバーヘッドを削減します。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">Merged segments are placed in an async queue with <span class="metric-inline">2 concurrent workers</span>, a capacity of 50 items, and a 30-second timeout per translation. When full, the oldest unstarted item is dropped — the system never falls behind.</p>
+            <p class="lang-ja">結合されたセグメントは非同期キューへ。<span class="metric-inline">2つの並行ワーカー</span>、最大50アイテム、翻訳あたり30秒のタイムアウト。満杯時は未着手の最古アイテムを破棄し、リアルタイム性を維持します。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">TranscriptEvent</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Merge Gate</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Async Queue</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Backend</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Display</span>
+          </div>
+
+          <div class="bi">
+            <p class="lang-en">Each translation moves through a lifecycle with animated status indicators:</p>
+            <p class="lang-ja">各翻訳はライフサイクルを経て処理され、アニメーション付きインジケータで表示されます：</p>
+          </div>
+
+          <div class="lifecycle">
+            <div class="lifecycle-state"><span class="lifecycle-dot pending"></span> pending</div>
+            <span class="lifecycle-arrow">→</span>
+            <div class="lifecycle-state"><span class="lifecycle-dot in-progress"></span> in_progress</div>
+            <span class="lifecycle-arrow">→</span>
+            <div class="lifecycle-state"><span class="lifecycle-dot done"></span> done</div>
+            <span class="lifecycle-arrow">/</span>
+            <div class="lifecycle-state"><span class="lifecycle-dot failed"></span> failed</div>
+            <span class="lifecycle-arrow">/</span>
+            <div class="lifecycle-state"><span class="lifecycle-dot skipped"></span> skipped</div>
+          </div>
+
+          <div class="bi">
+            <p class="lang-en">The default backend is <strong>NLLB-200</strong> (1.3B parameters) via CTranslate2 with INT8 quantization. CPU: <span class="metric-inline">~500ms</span>/sentence. CUDA: <span class="metric-inline">~100ms</span>/sentence. For higher quality, <strong>vLLM</strong> + Qwen3.5 serves as an alternative.</p>
+            <p class="lang-ja">デフォルトは<strong>NLLB-200</strong>（13億パラメータ）、CTranslate2のINT8量子化で動作。CPU: <span class="metric-inline">~500ms</span>/文。CUDA: <span class="metric-inline">~100ms</span>/文。高品質翻訳には<strong>vLLM</strong> + Qwen3.5も使用可能です。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 4: SPEAKER IDENTIFICATION ═══ -->
+    <section class="stage" data-stage="speaker" id="speaker">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-number">4</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Speaker Identification</h3><h3 class="stage-title lang-ja">話者識別</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">Before a meeting begins, participants can enroll their voice by speaking for 2–3 seconds. The system extracts a voiceprint embedding using <strong>ECAPA-TDNN</strong> (SpeechBrain), a compact neural network trained on speaker verification.</p>
+            <p class="lang-ja">会議の開始前に、参加者は2〜3秒の発話で声を登録できます。<strong>ECAPA-TDNN</strong>（SpeechBrain）で声紋の埋め込みベクトルを抽出。話者照合に特化したコンパクトなニューラルネットワークです。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">During the meeting, <strong>diart</strong> (powered by pyannote) performs online speaker diarization — clustering audio into speaker turns in real time, supporting up to 4 concurrent speakers. Each cluster is matched against enrolled embeddings via cosine similarity.</p>
+            <p class="lang-ja">会議中は<strong>diart</strong>（pyannoteベース）がオンラインで話者ダイアライゼーションを実行。音声をリアルタイムで話者ごとにクラスタリングし、最大4人に対応。コサイン類似度で登録済み埋め込みと照合して名前を割り当てます。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">Enrollment</span><span class="flow-arrow">→</span>
+            <span class="flow-node">ECAPA-TDNN</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Voiceprint</span>
+          </div>
+          <div class="flow" style="margin-top:var(--space-sm);">
+            <span class="flow-node">Live audio</span><span class="flow-arrow">→</span>
+            <span class="flow-node">diart</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Cluster match</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Named speaker</span>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">Optional by design</div><div class="callout-title lang-ja">任意の機能として設計</div></div>
+            <div class="bi">
+              <span class="lang-en">Speaker identification is entirely optional. Meetings can start without enrollment — speakers get cluster labels (Speaker 1, 2) based on voice similarity. Names can be added anytime.</span>
+              <span class="lang-ja">話者識別は完全にオプションです。登録なしで会議を開始でき、声の類似性に基づいてクラスタラベル（話者1、話者2）が自動割り当て。名前はいつでも追加できます。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 5: DISPLAY ═══ -->
+    <section class="stage" data-stage="display" id="display">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-number">5</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">The Display</h3><h3 class="stage-title lang-ja">表示</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">The frontend renders a <strong>3-column synchronized grid</strong> using CSS Grid. Each segment spans all three columns as a single row, ensuring perfect vertical alignment. Live shows all speech as-spoken; English and Japanese columns show originals and translations.</p>
+            <p class="lang-ja">フロントエンドはCSS Gridによる<strong>3カラム同期グリッド</strong>で表示。各セグメントが3カラムにまたがる1行として配置され、縦方向の位置が完全に揃います。ライブ列は全発話を原語で表示し、英語・日本語列にはそれぞれの原文と翻訳が表示されます。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">New segments enter with a slide-up animation. Translations flash with a <span style="color:var(--text-accent)">gold highlight</span> on arrival. Speaker attribution uses color-coded badges — consistent colors throughout the meeting.</p>
+            <p class="lang-ja">新しいセグメントはスライドアップで表示。翻訳到着時は<span style="color:var(--text-accent)">ゴールドのハイライト</span>で一瞬光ります。話者はカラーバッジで表示され、会議を通じて一貫した色が使われます。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">The entire frontend is built with <strong>zero build tools</strong> — static HTML, CSS, and vanilla JavaScript. No bundler, no transpiler, no framework.</p>
+            <p class="lang-ja">フロントエンド全体が<strong>ビルドツールなし</strong>で構築。静的HTML、CSS、バニラJavaScriptのみ。バンドラーもフレームワークもありません。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ RESOURCE REQUIREMENTS ═══ -->
+    <section class="resources-section stage" data-stage="resources" id="resources">
+      <div class="bi-inline">
+        <div class="section-label lang-en">03 — Resource Requirements</div>
+        <div class="section-label lang-ja">03 — 必要リソース</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">What you need to run it</h2>
+        <h2 class="section-title lang-ja">動作に必要なもの</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Meeting Scribe adapts to the hardware available. The same codebase runs on a MacBook, a Windows workstation, or a dedicated GPU server — with different backends optimized for each.</p>
+        <p class="section-desc lang-ja">Meeting Scribeは利用可能なハードウェアに適応します。同じコードベースがMacBook、Windowsワークステーション、専用GPUサーバーで動作し、それぞれに最適化されたバックエンドを使用します。</p>
+      </div>
+
+      <div class="resource-table-wrap">
+        <table class="resource-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>macOS <span class="platform-pill pill-macos">Apple Silicon</span></th>
+              <th>Windows 11 <span class="platform-pill pill-windows">RTX 2000 Ada</span></th>
+              <th>GB10 / Linux <span class="platform-pill pill-gb10">vLLM</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="group-row"><td colspan="4"><span class="lang-en">Speech Recognition</span><span class="lang-ja">音声認識</span></td></tr>
+            <tr><td><span class="lang-en">Model</span><span class="lang-ja">モデル</span></td><td>Qwen3-ASR-0.6B <span class="mv">(MLX)</span></td><td>faster-whisper large-v3-turbo <span class="mv">(CUDA)</span></td><td>faster-whisper large-v3-turbo <span class="mv">(CUDA)</span></td></tr>
+            <tr><td><span class="lang-en">Memory</span><span class="lang-ja">メモリ</span></td><td><span class="mv">~1.2 GB</span> unified</td><td><span class="mv">~1 GB</span> VRAM (INT8)</td><td><span class="mv">~1 GB</span> VRAM (INT8)</td></tr>
+            <tr><td><span class="lang-en">Speed</span><span class="lang-ja">速度</span></td><td><span class="mv">RTF 0.06–0.25</span></td><td>Fast <span class="mv">(CUDA INT8)</span></td><td>Fast <span class="mv">(CUDA INT8)</span></td></tr>
+            <tr class="group-row"><td colspan="4"><span class="lang-en">Translation</span><span class="lang-ja">翻訳</span></td></tr>
+            <tr><td><span class="lang-en">Backend</span><span class="lang-ja">バックエンド</span></td><td>NLLB-200 1.3B <span class="mv">(CT2, CPU)</span></td><td>NLLB-200 1.3B <span class="mv">(CT2, CUDA)</span></td><td>vLLM + Qwen3.5 <span class="mv">(GPU)</span></td></tr>
+            <tr><td><span class="lang-en">Memory</span><span class="lang-ja">メモリ</span></td><td><span class="mv">~2 GB</span> RAM</td><td><span class="mv">~1.5 GB</span> VRAM (INT8)</td><td><span class="mv">~4–8 GB</span> VRAM</td></tr>
+            <tr><td><span class="lang-en">Latency</span><span class="lang-ja">レイテンシ</span></td><td><span class="mv">~500ms</span> / sentence</td><td><span class="mv">~100ms</span> / sentence</td><td>Model-dependent</td></tr>
+            <tr class="group-row"><td colspan="4"><span class="lang-en">Speaker Identification</span><span class="lang-ja">話者識別</span></td></tr>
+            <tr><td><span class="lang-en">Voiceprint</span><span class="lang-ja">声紋</span></td><td>ECAPA-TDNN <span class="mv">~200 MB</span></td><td>ECAPA-TDNN <span class="mv">~200 MB</span></td><td>ECAPA-TDNN <span class="mv">~200 MB</span></td></tr>
+            <tr><td><span class="lang-en">Diarization</span><span class="lang-ja">ダイアライゼーション</span></td><td>CPU <span class="mv">(limited)</span></td><td>GPU-accelerated</td><td>GPU-accelerated + Sortformer</td></tr>
+            <tr class="group-row"><td colspan="4"><span class="lang-en">System</span><span class="lang-ja">システム</span></td></tr>
+            <tr class="total-row"><td><span class="lang-en">Total memory</span><span class="lang-ja">合計メモリ</span></td><td><span class="mv">~3–4 GB</span> RAM</td><td><span class="mv">~3–4 GB</span> of 8 GB VRAM</td><td><span class="mv">~8–12 GB</span> VRAM</td></tr>
+            <tr><td>OS</td><td>macOS 14+</td><td>Windows 11</td><td>Linux (Ubuntu)</td></tr>
+            <tr><td><span class="lang-en">Prerequisites</span><span class="lang-ja">前提条件</span></td><td>Python 3.12+, M-series</td><td>Python 3.12+, CUDA 12.x</td><td>CUDA toolkit + vLLM</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="resource-notes">
+        <div class="resource-note">
+          <div class="resource-note-title"><span class="resource-note-dot" style="background:var(--speaker-2)"></span> macOS / Apple Silicon</div>
+          <div class="bi">
+            <span class="lang-en">MLX provides native Apple Silicon acceleration without GPU drivers. Unified memory means the ASR model shares the same pool as the OS — no dedicated VRAM needed.</span>
+            <span class="lang-ja">MLXはGPUドライバ不要でApple Siliconをネイティブに活用。ユニファイドメモリによりASRモデルはOSと同じメモリプールを共有し、専用VRAMは不要です。</span>
+          </div>
+        </div>
+        <div class="resource-note">
+          <div class="resource-note-title"><span class="resource-note-dot" style="background:var(--speaker-3)"></span> Windows / RTX 2000 Ada</div>
+          <div class="bi">
+            <span class="lang-en">8 GB dedicated VRAM fits ASR + CT2 translation + speaker ID simultaneously. CTranslate2 with CUDA cuts translation latency from ~500ms to ~100ms. faster-whisper runs natively — no WSL required.</span>
+            <span class="lang-ja">8 GB専用VRAMにASR・CT2翻訳・話者識別が余裕で収まります。CTranslate2のCUDAで翻訳レイテンシを約500msから約100msに短縮。faster-whisperはWSL不要でネイティブ動作します。</span>
+          </div>
+        </div>
+        <div class="resource-note">
+          <div class="resource-note-title"><span class="resource-note-dot" style="background:var(--text-accent)"></span> GB10 / vLLM Production</div>
+          <div class="bi">
+            <span class="lang-en">A dedicated GPU enables the full pipeline: large-v3-turbo for best ASR, vLLM + Qwen3.5 for nuanced translation, Sortformer for GPU diarization. 8–12 GB VRAM delivers the highest quality.</span>
+            <span class="lang-ja">専用GPUでフルパイプラインを実現。large-v3-turboで最高品質のASR、vLLM + Qwen3.5で細やかな翻訳、SortformerでGPU高速ダイアライゼーション。8〜12 GB VRAMで最高品質です。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="page-footer">
+      <a href="/" class="footer-cta">
+        <span class="lang-en">Launch Meeting Scribe</span>
+        <span class="lang-ja">Meeting Scribeを起動</span>
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+      </a>
+      <div class="footer-attr">meeting scribe — real-time bilingual transcription</div>
+    </footer>
+
+  </div>
+
+  <script src="js/how-it-works.js"></script>
+</body>
+</html>

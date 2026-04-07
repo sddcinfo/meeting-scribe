@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# TLS certs (local only)
+certs/
+
+# Runtime meeting data
+meetings/
+
+# Claude Code
+.claude/
+CLAUDE.md
+.claude.json
+
+# macOS
+.DS_Store
+
+# Editors
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# mise
+.mise.local.toml
+
+# ML model cache
+.cache/
