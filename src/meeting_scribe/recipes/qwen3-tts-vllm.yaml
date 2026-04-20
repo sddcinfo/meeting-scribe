@@ -1,0 +1,38 @@
+# Qwen3-TTS — vllm-omni backed
+# CustomVoice 1.7B: premium timbres (aiden, vivian, ono_anna, sohee, uncle_fu)
+# + zero-shot cloning via inline ref_audio. OpenAI-compatible
+# /v1/audio/speech with stream=true response_format=pcm.
+# Single container with continuous batching (no replica pooling).
+
+# model_key MUST be `tts-vllm` (not `tts`) — the legacy faster-qwen3-tts
+# container in docker-compose.gb10.yml already owns the name `scribe-tts`.
+# This recipe corresponds to the compose service `vllm-tts` whose
+# container_name is `scribe-tts-vllm`.
+model_key: tts-vllm
+model_id: Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice
+short_name: Qwen3-TTS-1.7B-CustomVoice
+description: "vllm-omni TTS with continuous batching, inline ref_audio cloning"
+
+container_type: vllm
+image: scribe-tts-vllm:latest
+build_context: containers/tts-vllm
+# Parallel-run port while legacy scribe-tts / scribe-tts-2 still own 8002/8012.
+# Phase 6 (after user acceptance) will delete the legacy services and flip
+# this back to 8002. Override at runtime with SCRIBE_TTS_VLLM_URL to route.
+port: 8022
+
+extra_args:
+  # fastsafetensors matches the ASR + 35B translate recipes — 19x
+  # faster loader on GB10 NVMe. TTS cold load drops from ~60-90s to
+  # ~5-10s, which makes `restart-container tts` a ~10s operation.
+  - "--load-format=fastsafetensors"
+
+capabilities:
+  tool_calling: false
+  reasoning: false
+  multimodal: true
+  max_context: 4096
+  active_params: "1.7B"
+  total_params: "1.7B"
+
+best_for: "Real-time voice cloning TTS for translated speech"

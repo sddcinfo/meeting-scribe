@@ -1,0 +1,52 @@
+{
+  "label": "baseline_gpu70_seq10",
+  "url": "http://localhost:8000",
+  "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "timestamp": "2026-04-08 23:42:46",
+  "results": [
+    {
+      "concurrency": 1,
+      "num_requests": 30,
+      "wall_time_s": 11.52,
+      "throughput_rps": 2.6,
+      "latency_p50_ms": 373.1,
+      "latency_p90_ms": 501.7,
+      "latency_p99_ms": 588.5,
+      "latency_mean_ms": 384.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 4,
+      "num_requests": 30,
+      "wall_time_s": 4.91,
+      "throughput_rps": 6.11,
+      "latency_p50_ms": 621.7,
+      "latency_p90_ms": 777.8,
+      "latency_p99_ms": 978.5,
+      "latency_mean_ms": 623.4,
+      "errors": 0
+    },
+    {
+      "concurrency": 8,
+      "num_requests": 30,
+      "wall_time_s": 4.14,
+      "throughput_rps": 7.24,
+      "latency_p50_ms": 931.3,
+      "latency_p90_ms": 1548.3,
+      "latency_p99_ms": 1981.5,
+      "latency_mean_ms": 1010.5,
+      "errors": 0
+    },
+    {
+      "concurrency": 16,
+      "num_requests": 30,
+      "wall_time_s": 3.52,
+      "throughput_rps": 8.52,
+      "latency_p50_ms": 1567.6,
+      "latency_p90_ms": 2146.4,
+      "latency_p99_ms": 2753.2,
+      "latency_mean_ms": 1483.0,
+      "errors": 0
+    }
+  ]
+}

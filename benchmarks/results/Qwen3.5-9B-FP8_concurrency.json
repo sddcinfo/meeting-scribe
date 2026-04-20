@@ -1,0 +1,56 @@
+{
+  "label": "Qwen3.5-9B-FP8",
+  "url": "http://localhost:8000",
+  "model": "lovedheart/Qwen3.5-9B-FP8",
+  "timestamp": "2026-04-09 09:04:45",
+  "vllm_config": {
+    "driver": "580.126.09",
+    "gpu": "NVIDIA GB10"
+  },
+  "results": [
+    {
+      "concurrency": 1,
+      "num_requests": 30,
+      "wall_time_s": 14.97,
+      "throughput_rps": 2.0,
+      "latency_p50_ms": 491.0,
+      "latency_p90_ms": 622.7,
+      "latency_p99_ms": 711.8,
+      "latency_mean_ms": 498.9,
+      "errors": 0
+    },
+    {
+      "concurrency": 4,
+      "num_requests": 30,
+      "wall_time_s": 5.0,
+      "throughput_rps": 6.0,
+      "latency_p50_ms": 596.0,
+      "latency_p90_ms": 977.3,
+      "latency_p99_ms": 1090.1,
+      "latency_mean_ms": 632.4,
+      "errors": 0
+    },
+    {
+      "concurrency": 8,
+      "num_requests": 30,
+      "wall_time_s": 2.77,
+      "throughput_rps": 10.85,
+      "latency_p50_ms": 611.0,
+      "latency_p90_ms": 782.1,
+      "latency_p99_ms": 913.1,
+      "latency_mean_ms": 633.1,
+      "errors": 0
+    },
+    {
+      "concurrency": 16,
+      "num_requests": 30,
+      "wall_time_s": 1.81,
+      "throughput_rps": 16.56,
+      "latency_p50_ms": 752.9,
+      "latency_p90_ms": 990.4,
+      "latency_p99_ms": 1211.2,
+      "latency_mean_ms": 795.8,
+      "errors": 0
+    }
+  ]
+}

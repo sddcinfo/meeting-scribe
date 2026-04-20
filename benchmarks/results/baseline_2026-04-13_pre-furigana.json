@@ -1,0 +1,507 @@
+{
+  "label": "pre-furigana",
+  "timestamp": 1776068472.4833455,
+  "iso": "2026-04-13T17:21:12+0900",
+  "config": {
+    "sequential_iters": 25,
+    "concurrent_iters": 40,
+    "concurrency": 4
+  },
+  "scribe_status_before": {
+    "meeting": {
+      "id": null,
+      "state": null
+    },
+    "backends": {
+      "asr": true,
+      "diarize": true,
+      "translate": true,
+      "tts": true
+    },
+    "backend_details": {
+      "asr": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "model": "Qwen/Qwen3-ASR-1.7B",
+        "url": "http://localhost:8003"
+      },
+      "translate": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "model": "Intel/Qwen3.5-35B-A3B-int4-AutoRound",
+        "url": "http://localhost:8010"
+      },
+      "diarize": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "url": "http://localhost:8001",
+        "consecutive_failures": 0
+      },
+      "tts": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "url": "http://localhost:8002",
+        "consecutive_failures": 0
+      }
+    },
+    "connections": 0,
+    "audio_out_connections": 0,
+    "metrics": {
+      "elapsed_s": 296.6,
+      "audio_chunks": 132,
+      "audio_s": 33.1,
+      "asr_events": 16,
+      "asr_partials": 0,
+      "asr_finals": 16,
+      "asr_eps": 0.1,
+      "translations_submitted": 15,
+      "translations_completed": 15,
+      "translations_failed": 0,
+      "avg_translation_ms": 0,
+      "translate_warmup_ms": 0,
+      "asr_load_ms": 0,
+      "tts": {
+        "queue_depth": 0,
+        "queue_maxsize": 4,
+        "workers_busy": 0,
+        "workers_total": 4,
+        "container_concurrency": 1,
+        "submitted": 0,
+        "delivered": 0,
+        "drops": {
+          "filler": 0,
+          "stale_producer": 0,
+          "stale_worker": 0,
+          "pre_synth": 0,
+          "post_synth": 0,
+          "queue_full": 0,
+          "missing_origin": 0
+        },
+        "timeouts": 0,
+        "synth_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "upstream_lag_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "tts_post_translation_lag_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "end_to_end_lag_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "oldest_inflight_age_ms": 0,
+        "last_delivery_age_ms": null,
+        "health": "healthy",
+        "health_since": 0.0
+      },
+      "listener": {
+        "connected": 0,
+        "deliveries": 0,
+        "send_failed": 0,
+        "removed_on_send_error": 0,
+        "send_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        }
+      },
+      "loop_lag_ms": {
+        "p50": 0.8,
+        "p95": 2095.21,
+        "p99": 2478.84,
+        "sample_count": 256
+      },
+      "crash": null
+    },
+    "gpu": {
+      "vram_used_mb": 97470,
+      "vram_total_mb": 124546,
+      "vram_pct": 78.3
+    },
+    "system": {
+      "cpu_pct": 1.9,
+      "mem_used_mb": 97488,
+      "mem_total_mb": 124546,
+      "mem_pct": 78.3,
+      "load": [
+        0.59,
+        0.77,
+        0.72
+      ],
+      "uptime_s": 31219,
+      "containers": [
+        {
+          "name": "scribe-tts",
+          "cpu_pct": 0.24,
+          "mem_mb": 117,
+          "pids": 104
+        },
+        {
+          "name": "scribe-tts-2",
+          "cpu_pct": 0.18,
+          "mem_mb": 102,
+          "pids": 62
+        },
+        {
+          "name": "scribe-diarization",
+          "cpu_pct": 0.34,
+          "mem_mb": 2249,
+          "pids": 62
+        },
+        {
+          "name": "scribe-asr",
+          "cpu_pct": 3.39,
+          "mem_mb": 2786,
+          "pids": 258
+        },
+        {
+          "name": "scribe-autoheal",
+          "cpu_pct": 0.0,
+          "mem_mb": 3,
+          "pids": 2
+        },
+        {
+          "name": "autosre-vllm-local",
+          "cpu_pct": 3.23,
+          "mem_mb": 728,
+          "pids": 261
+        }
+      ]
+    },
+    "guest": false,
+    "dev_mode": true
+  },
+  "asr_sequential": {
+    "probe": "asr",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 25,
+      "min": 88.7,
+      "p50": 95.8,
+      "p95": 100.6,
+      "p99": 100.7,
+      "max": 100.7,
+      "mean": 96.5
+    }
+  },
+  "translate_ja_en_sequential": {
+    "probe": "translate_ja_en",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 25,
+      "min": 236.1,
+      "p50": 259.6,
+      "p95": 361.7,
+      "p99": 392.2,
+      "max": 392.2,
+      "mean": 278.8
+    }
+  },
+  "translate_en_ja_sequential": {
+    "probe": "translate_en_ja",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 25,
+      "min": 167.9,
+      "p50": 254.7,
+      "p95": 363.8,
+      "p99": 365.9,
+      "max": 365.9,
+      "mean": 262.9
+    }
+  },
+  "diarize_sequential": {
+    "probe": "diarize",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 25,
+      "min": 13.1,
+      "p50": 13.7,
+      "p95": 15.8,
+      "p99": 19.6,
+      "max": 19.6,
+      "mean": 14.1
+    }
+  },
+  "asr_concurrent": {
+    "probe": "asr",
+    "mode": "concurrent(c=4,n=40)",
+    "latency_ms": {
+      "n": 40,
+      "min": 84.9,
+      "p50": 115.1,
+      "p95": 122.9,
+      "p99": 123.4,
+      "max": 123.4,
+      "mean": 109.8
+    }
+  },
+  "translate_concurrent": {
+    "probe": "translate_ja_en",
+    "mode": "concurrent(c=4,n=40)",
+    "latency_ms": {
+      "n": 40,
+      "min": 333.0,
+      "p50": 415.5,
+      "p95": 555.4,
+      "p99": 571.2,
+      "max": 571.2,
+      "mean": 445.8
+    }
+  },
+  "diarize_concurrent": {
+    "probe": "diarize",
+    "mode": "concurrent(c=4,n=40)",
+    "latency_ms": {
+      "n": 40,
+      "min": 20.8,
+      "p50": 50.6,
+      "p95": 61.9,
+      "p99": 66.7,
+      "max": 66.7,
+      "mean": 50.8
+    }
+  },
+  "mixed_stress": {
+    "wall_ms": 4601.6,
+    "asr": {
+      "n": 13,
+      "min": 206.0,
+      "p50": 228.4,
+      "p95": 291.8,
+      "p99": 291.8,
+      "max": 291.8,
+      "mean": 228.3
+    },
+    "translate": {
+      "n": 13,
+      "min": 209.0,
+      "p50": 358.8,
+      "p95": 503.1,
+      "p99": 503.1,
+      "max": 503.1,
+      "mean": 353.6
+    },
+    "diarize": {
+      "n": 13,
+      "min": 17.8,
+      "p50": 41.3,
+      "p95": 43.8,
+      "p99": 43.8,
+      "max": 43.8,
+      "mean": 38.9
+    }
+  },
+  "scribe_status_after": {
+    "meeting": {
+      "id": null,
+      "state": null
+    },
+    "backends": {
+      "asr": true,
+      "diarize": true,
+      "translate": true,
+      "tts": true
+    },
+    "backend_details": {
+      "asr": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "model": "Qwen/Qwen3-ASR-1.7B",
+        "url": "http://localhost:8003"
+      },
+      "translate": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "model": "Intel/Qwen3.5-35B-A3B-int4-AutoRound",
+        "url": "http://localhost:8010"
+      },
+      "diarize": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "url": "http://localhost:8001",
+        "consecutive_failures": 0
+      },
+      "tts": {
+        "ready": true,
+        "status": "active",
+        "detail": null,
+        "url": "http://localhost:8002",
+        "consecutive_failures": 0
+      }
+    },
+    "connections": 0,
+    "audio_out_connections": 0,
+    "metrics": {
+      "elapsed_s": 323.9,
+      "audio_chunks": 132,
+      "audio_s": 33.1,
+      "asr_events": 16,
+      "asr_partials": 0,
+      "asr_finals": 16,
+      "asr_eps": 0.0,
+      "translations_submitted": 15,
+      "translations_completed": 15,
+      "translations_failed": 0,
+      "avg_translation_ms": 0,
+      "translate_warmup_ms": 0,
+      "asr_load_ms": 0,
+      "tts": {
+        "queue_depth": 0,
+        "queue_maxsize": 4,
+        "workers_busy": 0,
+        "workers_total": 4,
+        "container_concurrency": 1,
+        "submitted": 0,
+        "delivered": 0,
+        "drops": {
+          "filler": 0,
+          "stale_producer": 0,
+          "stale_worker": 0,
+          "pre_synth": 0,
+          "post_synth": 0,
+          "queue_full": 0,
+          "missing_origin": 0
+        },
+        "timeouts": 0,
+        "synth_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "upstream_lag_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "tts_post_translation_lag_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "end_to_end_lag_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        },
+        "oldest_inflight_age_ms": 0,
+        "last_delivery_age_ms": null,
+        "health": "healthy",
+        "health_since": 0.0
+      },
+      "listener": {
+        "connected": 0,
+        "deliveries": 0,
+        "send_failed": 0,
+        "removed_on_send_error": 0,
+        "send_ms": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "sample_count": 0
+        }
+      },
+      "loop_lag_ms": {
+        "p50": 0.81,
+        "p95": 2094.18,
+        "p99": 2478.84,
+        "sample_count": 256
+      },
+      "crash": null
+    },
+    "gpu": {
+      "vram_used_mb": 97505,
+      "vram_total_mb": 124546,
+      "vram_pct": 78.3
+    },
+    "system": {
+      "cpu_pct": 12.1,
+      "mem_used_mb": 97438,
+      "mem_total_mb": 124546,
+      "mem_pct": 78.2,
+      "load": [
+        1.55,
+        0.99,
+        0.79
+      ],
+      "uptime_s": 31246,
+      "containers": [
+        {
+          "name": "scribe-tts",
+          "cpu_pct": 1.64,
+          "mem_mb": 119,
+          "pids": 104
+        },
+        {
+          "name": "scribe-tts-2",
+          "cpu_pct": 0.3,
+          "mem_mb": 101,
+          "pids": 62
+        },
+        {
+          "name": "scribe-diarization",
+          "cpu_pct": 0.28,
+          "mem_mb": 2237,
+          "pids": 62
+        },
+        {
+          "name": "scribe-asr",
+          "cpu_pct": 3.0,
+          "mem_mb": 2786,
+          "pids": 259
+        },
+        {
+          "name": "scribe-autoheal",
+          "cpu_pct": 0.93,
+          "mem_mb": 3,
+          "pids": 2
+        },
+        {
+          "name": "autosre-vllm-local",
+          "cpu_pct": 160.09,
+          "mem_mb": 729,
+          "pids": 261
+        }
+      ]
+    },
+    "guest": false,
+    "dev_mode": true
+  },
+  "loop_lag_delta": {
+    "p50_before": 0.8,
+    "p50_after": 0.81,
+    "p95_before": 2095.21,
+    "p95_after": 2094.18,
+    "p99_before": 2478.84,
+    "p99_after": 2478.84
+  },
+  "gpu_vram_pct": {
+    "before": 78.3,
+    "after": 78.3
+  }
+}

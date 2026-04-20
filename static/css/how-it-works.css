@@ -1,0 +1,2164 @@
+/* How It Works — Editorial technical documentation
+   Vertical pipeline flow, scroll-triggered reveals, same design tokens as app.
+
+   ── Canonical test viewports ────────────────────────────────────────────
+   Full list with sources lives in `static/TESTING_VIEWPORTS.md`.  Short
+   version — production must look right on these logical viewports.  All
+   media-query breakpoints below are anchored to them; do not retune one
+   without re-checking the others.  These are logical pixels; the page
+   deliberately relies on the browser's width-media-query abstraction
+   so DPR (2x on iPad, 3x on iPhone Pro Max) is handled transparently.
+
+     • Desktop                             1440 × 900   · 1x DPR
+     • iPad Pro 11" M4 (landscape)         1194 × 834   · 2x DPR
+     • iPad Pro 9.7" 2016 (landscape)      1024 × 768   · 2x DPR
+     • iPad Pro (portrait, generic)         834 × 1194  · 2x DPR
+     • iPhone 17 Pro Max (portrait)         440 × 956   · 3x DPR
+
+   The 440 px width sits between the 480 px "small phone" and 768 px
+   "tablet portrait" breakpoints, so it gets its own min-width block
+   to avoid tablet-tier styles bleeding onto the largest phone.
+
+   iOS safe-area: the HTML uses <meta name="viewport" content="...
+   viewport-fit=cover"> so env(safe-area-inset-bottom) picks up the
+   home-indicator gap.  The .page container + footer both apply the
+   inset as padding-bottom so content never hides behind the browser
+   chrome.  If you add a new page-level container, remember to add
+   the same inset padding.
+
+   System-fonts-only constraint: served from a hotspot with no
+   internet access.  All font stacks list a distinctive primary (DM
+   Sans / Noto Sans JP / JetBrains Mono) and *must* fall back through
+   real OS-installed faces.  Do not add @font-face rules. */
+
+:root {
+  --bg-deep:    #f8f7f4;
+  --bg-surface: #ffffff;
+  --bg-raised:  #f2f1ee;
+  --bg-hover:   #eceae6;
+  --border:     #d8d6d0;
+  --border-dim: #e8e6e2;
+
+  --text-primary:   #1a1a1e;
+  --text-secondary: #4a4a52;
+  --text-muted:     #8a8a94;
+  --text-accent:    #8b6914;
+
+  --speaker-1: #c45d20;
+  --speaker-2: #1a6fb5;
+  --speaker-3: #2a8540;
+  --speaker-4: #9b2d7b;
+
+  --recording:   #dc2626;
+  --success:     #16a34a;
+  --warning:     #ca8a04;
+  --info:        #6b7280;
+
+  --font-ui:   'DM Sans', -apple-system, sans-serif;
+  --font-ja:   'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3.5rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-med:  300ms;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+/* Inline code — normalises across browsers so <code> in prose reads
+   as typography, not as a browser default.  Scoped to class-less
+   <code> tags so the topology's <code class="topo-service-model">,
+   nav, wire-block etc. keep their own stylings. */
+.page code:not([class]) {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 1px 5px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-dim);
+  border-radius: 3px;
+  color: var(--text-accent);
+  white-space: nowrap;
+}
+
+/* ═══════════ GRAIN OVERLAY ═══════════ */
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ═══════════ NAV BAR ═══════════ */
+
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-xl);
+  background: rgba(248, 247, 244, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-dim);
+  height: 52px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.nav-logo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-accent);
+}
+
+.nav-logo-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.lang-toggle {
+  display: flex;
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lang-btn {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.lang-btn + .lang-btn {
+  border-left: 1px solid var(--border-dim);
+}
+
+.lang-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+}
+
+.lang-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-raised);
+  font-weight: 600;
+}
+
+/* ═══════════ BILINGUAL LAYOUT ═══════════ */
+
+.lang-ja {
+  font-family: var(--font-ja);
+}
+
+/* Side-by-side wrapper for bilingual content */
+.bi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-xl);
+  align-items: start;
+  margin-bottom: var(--space-sm);
+}
+
+.bi > .lang-en { grid-column: 1; }
+.bi > .lang-ja { grid-column: 2; }
+
+/* Remove default margin from elements inside .bi since the grid handles spacing */
+.bi > p,
+.bi > h2,
+.bi > span {
+  margin: 0;
+}
+
+/* Single-language modes */
+body[data-lang="en"] .lang-ja { display: none; }
+body[data-lang="ja"] .lang-en { display: none; }
+body[data-lang="en"] .bi,
+body[data-lang="ja"] .bi {
+  grid-template-columns: 1fr;
+}
+body[data-lang="en"] .bi > .lang-en,
+body[data-lang="ja"] .bi > .lang-ja {
+  grid-column: 1;
+}
+
+/* Inline bilingual (for short items like titles, labels) */
+.bi-inline {
+  display: flex;
+  gap: var(--space-md);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+body[data-lang="en"] .bi-inline > .lang-ja,
+body[data-lang="ja"] .bi-inline > .lang-en {
+  display: none;
+}
+
+/* JA column styling in both mode — subtle left border for visual separation */
+.bi > .lang-ja {
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border-dim);
+  padding-left: var(--space-md);
+}
+
+body[data-lang="ja"] .bi > .lang-ja {
+  color: var(--text-primary);
+  border-left: none;
+  padding-left: 0;
+}
+
+/* Ensure consecutive .bi grids maintain consistent column widths */
+.stage-body > .bi + .bi {
+  margin-top: var(--space-sm);
+}
+
+/* Hero bilingual — center-align the side-by-side */
+.hero .bi {
+  text-align: center;
+  justify-items: center;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero .bi > .lang-ja {
+  border-left: none;
+  padding-left: 0;
+  border-top: 1px solid var(--border-dim);
+  padding-top: var(--space-sm);
+}
+
+body[data-lang="ja"] .hero .bi > .lang-ja {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Callout bilingual — side-by-side within the callout box */
+.callout .bi {
+  margin-bottom: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-lg);
+}
+
+body[data-lang="en"] .callout .bi,
+body[data-lang="ja"] .callout .bi {
+  grid-template-columns: 1fr;
+}
+
+/* Bilingual stacks to single column on phones only */
+@media (max-width: 640px) {
+  .bi {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  .bi > .lang-en,
+  .bi > .lang-ja {
+    grid-column: 1;
+  }
+  .bi > .lang-ja {
+    border-left: none;
+    padding-left: 0;
+  }
+  .hero .bi > .lang-ja {
+    border-top: none;
+  }
+  .callout .bi {
+    grid-template-columns: 1fr;
+  }
+  .resource-note .bi {
+    grid-template-columns: 1fr;
+  }
+  .stage-body {
+    grid-template-columns: 1fr;
+  }
+  .stage-body > .bi {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nav-link {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border-dim);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+  background: var(--bg-surface);
+}
+
+/* ═══════════ PAGE CONTAINER ═══════════ */
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  /* Left/right + iOS safe-area insets; bottom inset joins the
+     existing space-xl so content doesn't hide behind the iPhone
+     home indicator / browser tab bar.  The top is handled by the
+     nav-bar (which is fixed-positioned), so no top inset needed. */
+  padding:
+    0
+    max(var(--space-xl), env(safe-area-inset-right))
+    calc(var(--space-xl) + env(safe-area-inset-bottom))
+    max(var(--space-xl), env(safe-area-inset-left));
+}
+
+/* ═══════════ HERO ═══════════ */
+
+.hero {
+  min-height: min(50vh, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-top: 72px;
+  padding-bottom: var(--space-xl);
+  position: relative;
+}
+
+.hero-pulse {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+
+.hero-pulse-core {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  box-shadow: 0 0 20px rgba(139, 105, 20, 0.25);
+  z-index: 2;
+}
+
+.hero-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-accent);
+  animation: hero-pulse 3s var(--ease-out) infinite;
+}
+
+.hero-pulse-ring:nth-child(2) { animation-delay: 1s; }
+.hero-pulse-ring:nth-child(3) { animation-delay: 2s; }
+
+@keyframes hero-pulse {
+  0%   { transform: scale(0.4); opacity: 0.6; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+.hero-title {
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: var(--space-md);
+}
+
+.hero-title-jp {
+  display: block;
+  font-family: var(--font-ja);
+  font-weight: 300;
+  font-size: 0.42em;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+}
+
+.hero-subtitle {
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  color: var(--text-secondary);
+  max-width: 620px;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+.hero-scroll {
+  display: none;
+}
+
+/* ═══════════ SECTION LAYOUT ═══════════ */
+
+.section {
+  padding: var(--space-xl) 0;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+  margin-bottom: var(--space-sm);
+}
+
+.section-title {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.section-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ═══════════ EXPERIENCE MOCKUP ═══════════ */
+
+.mockup {
+  margin-top: var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.mockup-header {
+  display: flex;
+  border-bottom: 1px solid var(--border-dim);
+  background: var(--bg-raised);
+}
+
+.mockup-col-header {
+  flex: 1;
+  padding: 10px var(--space-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-right: 1px solid var(--border-dim);
+}
+
+.mockup-col-header:last-child { border-right: none; }
+
+.mockup-col-hint {
+  display: block;
+  font-weight: 400;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.mockup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.mockup-row {
+  display: contents;
+}
+
+.mockup-cell {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--border-dim);
+  border-right: 1px solid var(--border-dim);
+}
+
+.mockup-row:last-child .mockup-cell { border-bottom: none; }
+.mockup-cell:nth-child(3n) { border-right: none; }
+
+.mockup-cell.cell-ja {
+  font-family: var(--font-ja);
+  font-weight: 400;
+}
+
+.mockup-speaker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.mockup-speaker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mockup-cell .translated {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ═══════════ PIPELINE OVERVIEW ═══════════ */
+
+.pipeline-overview {
+  position: relative;
+  padding: var(--space-xl) 0 var(--space-md);
+}
+
+.pipeline-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding-left: 28px;
+}
+
+.pipeline-line {
+  position: absolute;
+  left: 28px;
+  top: 28px;
+  bottom: 28px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--text-accent), color-mix(in srgb, var(--text-accent) 30%, transparent));
+  transform: translateX(-50%);
+  z-index: 0;
+}
+
+.pipeline-particle {
+  position: absolute;
+  left: 28px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  transform: translateX(-50%);
+  animation: particle-flow 4s linear infinite;
+  opacity: 0;
+  z-index: 1;
+}
+
+.pipeline-particle:nth-child(2) { animation-delay: 1.33s; }
+.pipeline-particle:nth-child(3) { animation-delay: 2.66s; }
+
+@keyframes particle-flow {
+  0%   { top: 28px;  opacity: 0; }
+  3%   { opacity: 0.9; }
+  97%  { opacity: 0.9; }
+  100% { top: calc(100% - 28px); opacity: 0; }
+}
+
+.pipeline-node-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  position: relative;
+  z-index: 2;
+  padding: var(--space-sm) 0;
+}
+
+.pipeline-node-group:nth-child(even) {
+  flex-direction: row;
+}
+
+.pipeline-node {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.pipeline-node svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+  color: var(--text-muted);
+  transition: color 0.4s var(--ease-out);
+}
+
+.pipeline-node.active {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--node-color, var(--text-accent)) 12%, transparent),
+              0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pipeline-node.active svg { color: var(--node-color, var(--text-accent)); }
+
+.pipeline-node[data-stage="audio"]       { --node-color: var(--speaker-1); }
+.pipeline-node[data-stage="asr"]         { --node-color: var(--speaker-2); }
+.pipeline-node[data-stage="translation"] { --node-color: var(--speaker-3); }
+.pipeline-node[data-stage="speaker"]     { --node-color: var(--speaker-4); }
+.pipeline-node[data-stage="tts"]         { --node-color: #b52d2d; }
+.pipeline-node[data-stage="display"]     { --node-color: var(--text-accent); }
+
+.pipeline-node.active { border-color: var(--node-color, var(--text-accent)); }
+
+.pipeline-node-info {
+  text-align: left;
+  min-width: 160px;
+}
+
+.pipeline-node-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pipeline-node-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ═══════════ PIPELINE DETAIL STAGES ═══════════ */
+
+.stage {
+  padding: var(--space-lg) 0;
+}
+
+.stage-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 10px;
+  padding: var(--space-lg) var(--space-xl);
+  border-left: 3px solid var(--stage-color, var(--border));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.stage[data-stage="audio"]       { --stage-color: var(--speaker-1); }
+.stage[data-stage="asr"]         { --stage-color: var(--speaker-2); }
+.stage[data-stage="translation"] { --stage-color: var(--speaker-3); }
+.stage[data-stage="speaker"]     { --stage-color: var(--speaker-4); }
+.stage[data-stage="tts"]         { --stage-color: #b52d2d; }
+.stage[data-stage="display"]     { --stage-color: var(--text-accent); }
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.stage-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--stage-color, var(--text-accent));
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stage-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.stage-body {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm) var(--space-xl);
+}
+
+/* Non-bilingual elements span full width */
+.stage-body > .flow,
+.stage-body > .wire-block,
+.stage-body > .lifecycle,
+.stage-body > .callout {
+  grid-column: 1 / -1;
+}
+
+/* .bi inside stage-body: use subgrid to inherit columns */
+.stage-body > .bi {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  gap: 0 var(--space-xl);
+  margin-bottom: 0;
+}
+
+.stage-body strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Single-language: stage-body collapses to 1 column */
+body[data-lang="en"] .stage-body,
+body[data-lang="ja"] .stage-body {
+  grid-template-columns: 1fr;
+}
+
+body[data-lang="en"] .stage-body > .bi,
+body[data-lang="ja"] .stage-body > .bi {
+  grid-template-columns: 1fr;
+}
+
+/* ═══════════ FLOW DIAGRAM (per-stage pipeline) ═══════════
+
+   Same schematic vocabulary as the architecture topology: subtle
+   engineered panel, mono pills with the stage-colour as a bottom
+   accent, CSS-drawn connector lines (no text arrows), hover lift.
+   The `.flow` element sits inside a `.stage` so it inherits the
+   stage-colour via --stage-color.  Standalone uses (e.g. the
+   network-access section) fall back to --text-accent.            */
+
+.flow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  row-gap: var(--space-sm);
+  /* Size the panel to its content (no big void of panel beside a
+     short pipeline) and centre that fitted panel in the card.
+     max-width: 100% caps at the card width so a long pipeline can
+     still wrap onto multiple rows when there isn't room for one
+     line. */
+  width: fit-content;
+  max-width: 100%;
+  margin: var(--space-lg) auto;
+  padding: var(--space-lg) var(--space-xl);
+  background:
+    linear-gradient(180deg, var(--bg-surface), var(--bg-raised));
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Faint engineering grid behind the flow — matches the topology. */
+.flow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.flow-node {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 7px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-bottom: 2px solid var(--stage-color, var(--text-accent));
+  border-radius: 5px;
+  white-space: nowrap;
+  color: var(--text-primary);
+  position: relative;
+  z-index: 2;
+  align-self: center;
+  transition: transform 0.2s var(--ease-out),
+              box-shadow 0.2s var(--ease-out);
+}
+
+.flow-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--stage-color, var(--text-accent)) 18%, transparent);
+}
+
+/* The arrow becomes a CSS-drawn connector line + arrowhead — no
+   typographic "→" characters anywhere.  Hides the original text via
+   `font-size: 0` on the parent span so the HTML can stay unchanged
+   across stages. */
+.flow-arrow {
+  position: relative;
+  flex: 0 0 36px;
+  align-self: center;
+  height: 1px;
+  font-size: 0;
+  color: transparent;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--stage-color, var(--text-accent)) 25%, var(--text-muted)),
+    color-mix(in srgb, var(--stage-color, var(--text-accent)) 70%, var(--text-muted)));
+  z-index: 2;
+  margin: 0 -1px;
+}
+
+.flow-arrow::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  border-left: 5px solid color-mix(in srgb, var(--stage-color, var(--text-accent)) 70%, var(--text-muted));
+}
+
+/* Wire format / code blocks */
+.wire-block {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  padding: var(--space-md) var(--space-lg);
+  margin: var(--space-lg) 0;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: var(--text-secondary);
+}
+
+.wire-block .hl {
+  color: var(--text-accent);
+  font-weight: 500;
+}
+
+.wire-block .cm {
+  color: var(--text-muted);
+}
+
+/* Callout box */
+.callout {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md) var(--space-lg);
+  background: color-mix(in srgb, var(--stage-color, var(--text-accent)) 5%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--stage-color, var(--text-accent)) 20%, var(--border-dim));
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.callout-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-xs);
+}
+
+/* Translation lifecycle — same schematic vocabulary as .flow so the
+   stage reads as one continuous document rather than three competing
+   diagram styles.  Each state is a pill with a state-colour dot;
+   arrows are the same CSS-drawn connector lines. */
+.lifecycle {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  row-gap: var(--space-sm);
+  margin: var(--space-lg) 0;
+  padding: var(--space-lg) var(--space-lg);
+  background:
+    linear-gradient(180deg, var(--bg-surface), var(--bg-raised));
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lifecycle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.lifecycle-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-bottom: 2px solid var(--state-color, var(--text-muted));
+  border-radius: 5px;
+  position: relative;
+  z-index: 2;
+  align-self: center;
+  transition: transform 0.2s var(--ease-out);
+}
+
+.lifecycle-state:hover { transform: translateY(-2px); }
+
+.lifecycle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--state-color, var(--text-muted));
+}
+
+.lifecycle-state:has(.pending)     { --state-color: var(--warning); }
+.lifecycle-state:has(.in-progress) { --state-color: var(--speaker-2); }
+.lifecycle-state:has(.done)        { --state-color: var(--success); }
+.lifecycle-state:has(.failed)      { --state-color: var(--recording); }
+.lifecycle-state:has(.skipped)     { --state-color: var(--text-muted); }
+
+.lifecycle-dot.pending    { animation: dot-pulse 1.5s ease infinite; }
+.lifecycle-dot.in-progress { animation: bar-pulse 1s var(--ease-out) infinite; }
+
+/* Connector line between lifecycle states — same visual as .flow-arrow,
+   minus the stage-colour gradient (lifecycle transitions are
+   state-flavoured, not stage-flavoured). */
+.lifecycle-arrow {
+  position: relative;
+  flex: 0 0 28px;
+  align-self: center;
+  height: 1px;
+  font-size: 0;
+  color: transparent;
+  background: var(--text-muted);
+  z-index: 2;
+  margin: 0 -1px;
+}
+
+.lifecycle-arrow::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -3px;
+  width: 0;
+  height: 0;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  border-left: 5px solid var(--text-muted);
+}
+
+/* The "/" separator between terminal states (done/failed/skipped)
+   gets rendered as a vertical tick so it still reads as "or" without
+   re-using the arrow glyph. */
+.lifecycle-arrow[data-kind="or"] {
+  flex-basis: 20px;
+  background: transparent;
+}
+
+.lifecycle-arrow[data-kind="or"]::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  bottom: -6px;
+  transform: translateX(-50%);
+  width: 1px;
+  background:
+    repeating-linear-gradient(180deg,
+      var(--text-muted) 0 3px,
+      transparent 3px 6px);
+}
+
+.lifecycle-arrow[data-kind="or"]::after { display: none; }
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes bar-pulse {
+  0%   { transform: scaleX(0.6); opacity: 0.6; }
+  50%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0.6); opacity: 0.6; }
+}
+
+/* Inline metric */
+.metric-inline {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-accent);
+  font-weight: 500;
+}
+
+/* ═══════════ RESOURCE TABLE ═══════════ */
+
+.resources-section {
+  padding: var(--space-xl) 0;
+}
+
+.resource-table-wrap {
+  margin-top: var(--space-xl);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.resource-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.82rem;
+}
+
+.resource-table thead th {
+  background: var(--text-primary);
+  color: var(--bg-deep);
+  font-weight: 600;
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  border-bottom: none;
+}
+
+.resource-table thead th:first-child {
+  width: 160px;
+}
+
+.platform-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.pill-macos    { background: rgba(26, 111, 181, 0.2); color: #4a9fd9; }
+.pill-windows  { background: rgba(42, 133, 64, 0.2);  color: #4ab868; }
+.pill-gb10     { background: rgba(139, 105, 20, 0.2); color: #c9a030; }
+
+.resource-table tbody td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-dim);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.resource-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.resource-table tbody tr:nth-child(even) td {
+  background: var(--bg-raised);
+}
+
+.resource-table tbody td:first-child {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.resource-table .group-row td {
+  background: var(--bg-hover);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 6px var(--space-md);
+}
+
+.mv {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-accent);
+  font-weight: 500;
+}
+
+.resource-table .total-row td {
+  background: var(--bg-raised);
+  font-weight: 600;
+  border-top: 2px solid var(--border);
+}
+
+/* Resource notes */
+.resource-notes {
+  margin-top: var(--space-xl);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-md);
+}
+
+.resource-note {
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.resource-note-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resource-note-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.resource-note .bi {
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--space-md);
+}
+
+body[data-lang="en"] .resource-note .bi,
+body[data-lang="ja"] .resource-note .bi {
+  grid-template-columns: 1fr;
+}
+
+/* ═══════════ FOOTER ═══════════ */
+
+.page-footer {
+  padding: var(--space-xl) 0 var(--space-lg);
+  text-align: center;
+  border-top: 1px solid var(--border-dim);
+}
+
+.footer-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px 28px;
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.footer-cta:hover {
+  background: var(--text-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.footer-cta svg {
+  width: 14px;
+  height: 14px;
+}
+
+.footer-attr {
+  margin-top: var(--space-lg);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ═══════════ RESPONSIVE — TABLET (iPad) ═══════════ */
+
+@media (max-width: 1024px) {
+  .page {
+    /* Preserve the iOS safe-area bottom inset at every breakpoint;
+       the default .page padding block already adds it, but these
+       narrower breakpoints re-declare padding (to tighten L/R) and
+       would otherwise wipe it out. */
+    padding:
+      0
+      max(var(--space-lg), env(safe-area-inset-right))
+      calc(var(--space-lg) + env(safe-area-inset-bottom))
+      max(var(--space-lg), env(safe-area-inset-left));
+  }
+
+  .stage-card {
+    padding: var(--space-lg) var(--space-lg);
+  }
+}
+
+/* ═══════════ RESPONSIVE — MOBILE ═══════════ */
+
+@media (max-width: 768px) {
+  .page {
+    /* Big bottom buffer on mobile.  env(safe-area-inset-bottom) only
+       covers the home-indicator gap (~34 px) — it does NOT include
+       Chrome iOS's bottom toolbar (~50 px) or Safari's when it's
+       not auto-hidden.  Without this extra buffer users scroll to
+       "the end" and the last section's bottom edge lands behind the
+       browser's own chrome.  6 rem + inset gives enough clearance
+       for every in-production iOS browser we've measured. */
+    padding:
+      0
+      max(var(--space-md), env(safe-area-inset-right))
+      calc(6rem + env(safe-area-inset-bottom))
+      max(var(--space-md), env(safe-area-inset-left));
+  }
+
+  /* Nav bar: tighter padding, smaller text */
+  .nav-bar {
+    padding: var(--space-sm) var(--space-md);
+    height: 46px;
+  }
+
+  .nav-logo-text {
+    font-size: 0.78rem;
+  }
+
+  .nav-right {
+    gap: var(--space-sm);
+  }
+
+  .lang-btn {
+    font-size: 0.62rem;
+    padding: 3px 7px;
+  }
+
+  .nav-link {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+
+  /* Hero: tighter */
+  .hero {
+    min-height: auto;
+    padding-top: 56px;
+    padding-bottom: var(--space-md);
+  }
+
+  .hero-pulse {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hero-pulse-core {
+    width: 12px;
+    height: 12px;
+  }
+
+  .hero-title {
+    font-size: 1.8rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+  }
+
+  /* Sections: compact */
+  .section, .stage, .resources-section {
+    padding: var(--space-md) 0;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+  }
+
+  .section-desc {
+    font-size: 0.88rem;
+  }
+
+  /* Pipeline: slightly smaller on mobile */
+  .pipeline-overview {
+    padding: var(--space-md) 0;
+  }
+
+  .pipeline-node {
+    width: 44px;
+    height: 44px;
+  }
+
+  .pipeline-node svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pipeline-node-label {
+    font-size: 0.82rem;
+  }
+
+  .pipeline-node-sub {
+    font-size: 0.65rem;
+  }
+
+  /* Stage cards: compact */
+  .stage-card {
+    padding: var(--space-md);
+    border-radius: 8px;
+  }
+
+  .stage-header {
+    margin-bottom: var(--space-md);
+  }
+
+  .stage-title {
+    font-size: 1rem;
+  }
+
+  .stage-body {
+    grid-template-columns: 1fr;
+    font-size: 0.85rem;
+  }
+
+  .stage-body > .bi {
+    grid-template-columns: 1fr;
+  }
+
+  /* Flow diagrams: vertical on mobile — the CSS-drawn connectors
+     rotate 90° to run down the column, and the arrow head rotates
+     with the parent so it still points "forward" (downward). */
+  .flow {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: var(--space-md);
+  }
+
+  .flow-node {
+    font-size: 0.72rem;
+    padding: 6px 14px;
+    width: fit-content;
+  }
+
+  .flow-arrow {
+    flex: 0 0 24px;
+    width: 1px;
+    height: 24px;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--stage-color, var(--text-accent)) 25%, var(--text-muted)),
+      color-mix(in srgb, var(--stage-color, var(--text-accent)) 70%, var(--text-muted)));
+    margin: -1px 0;
+  }
+
+  .flow-arrow::after {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: -3px;
+    border-top: 5px solid color-mix(in srgb, var(--stage-color, var(--text-accent)) 70%, var(--text-muted));
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-bottom: none;
+  }
+
+  /* Wire/code blocks */
+  .wire-block {
+    font-size: 0.7rem;
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+  }
+
+  /* Callout */
+  .callout {
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+    font-size: 0.78rem;
+  }
+
+  /* Lifecycle: vertical on mobile — same arrow-rotation treatment as
+     the flow diagrams so the whole page reads consistently. */
+  .lifecycle {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: var(--space-md);
+    margin: var(--space-md) 0;
+  }
+
+  .lifecycle-state {
+    font-size: 0.72rem;
+    padding: 6px 14px 6px 10px;
+    width: fit-content;
+  }
+
+  .lifecycle-arrow {
+    flex: 0 0 20px;
+    width: 1px;
+    height: 20px;
+    background: var(--text-muted);
+    margin: -1px 0;
+  }
+
+  .lifecycle-arrow::after {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: -3px;
+    border-top: 5px solid var(--text-muted);
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-bottom: none;
+  }
+
+  .lifecycle-arrow[data-kind="or"] {
+    flex-basis: 16px;
+    height: 16px;
+    background: transparent;
+  }
+
+  .lifecycle-arrow[data-kind="or"]::before {
+    left: -6px;
+    right: -6px;
+    top: 50%;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+    background: repeating-linear-gradient(90deg,
+      var(--text-muted) 0 3px,
+      transparent 3px 6px);
+    transform: none;
+  }
+
+  /* Mockup: responsive */
+  .mockup-header {
+    font-size: 0.68rem;
+  }
+
+  .mockup-cell {
+    font-size: 0.72rem;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .mockup-col-hint {
+    font-size: 0.58rem;
+  }
+
+  /* Resource table */
+  .resource-table {
+    font-size: 0.72rem;
+  }
+
+  .resource-table thead th {
+    font-size: 0.65rem;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .resource-table tbody td {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.72rem;
+  }
+
+  .resource-table thead th:first-child {
+    width: auto;
+  }
+
+  .resource-table tbody td:first-child {
+    white-space: normal;
+  }
+
+  /* Resource notes: single column */
+  .resource-notes {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-note .bi {
+    grid-template-columns: 1fr;
+  }
+
+  /* Footer */
+  .footer-cta {
+    font-size: 0.82rem;
+    padding: 10px 22px;
+  }
+}
+
+/* ═══════════ RESPONSIVE — SMALL PHONE ═══════════ */
+
+@media (max-width: 480px) {
+  /* Mockup: stack columns vertically */
+  .mockup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mockup-header {
+    flex-direction: column;
+  }
+
+  .mockup-col-header {
+    border-right: none;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .mockup-col-header:last-child { border-bottom: none; }
+
+  .mockup-cell {
+    border-right: none;
+  }
+
+  /* Even tighter spacing */
+  .hero-title {
+    font-size: 1.5rem;
+  }
+
+  .nav-bar {
+    padding: var(--space-xs) var(--space-sm);
+    height: 42px;
+  }
+
+  .nav-logo-text {
+    font-size: 0.72rem;
+  }
+}
+
+/* ═══════════ ARCHITECTURE TOPOLOGY ═══════════
+
+   Replaces the prior ASCII <pre>-style wire-block.  This is a CSS-only
+   service-topology engraving: the FastAPI app sits centre-left, the
+   four model services arrange as a column to the right, port labels
+   ride on the connecting bus, and the bus itself uses each service's
+   stage colour for the wire.  Designed to read as a technical
+   schematic rather than a Visio diagram.                              */
+
+.topology {
+  margin-top: var(--space-lg);
+  padding: var(--space-xl) var(--space-xl);
+  background:
+    linear-gradient(180deg, var(--bg-surface), var(--bg-raised));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Faint engineering-grid background — establishes the schematic aesthetic
+   without competing with content.  Opacity is light enough that it only
+   reads as texture on hover or in screenshots. */
+.topology::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Two columns: host card spans the full height on the left, service
+   stack on the right.  Each service row owns its own connector wire
+   via .topo-service::before, so alignment is automatic regardless of
+   service-row height. */
+.topo-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: var(--space-md) 64px;
+  align-items: stretch;
+}
+
+.topo-host {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-md) var(--space-md);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Tiny stub coming out of the right edge of the host — implies the
+   bus that the per-service connectors feed into. */
+.topo-host::after {
+  content: "";
+  position: absolute;
+  right: -32px;
+  top: 50%;
+  width: 32px;
+  height: 1px;
+  background: var(--text-muted);
+  z-index: 1;
+}
+
+.topo-host-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.topo-host-name {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.topo-host-meta {
+  margin-top: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.topo-host-meta code {
+  font-family: var(--font-mono);
+  color: var(--text-accent);
+}
+
+.topo-services {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  position: relative;
+  z-index: 2;
+}
+
+/* Vertical "bus" running through the gap between host and services.
+   Drawn on the left edge of the services column so it visually bonds
+   the host stub to each row's connector. */
+.topo-services::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 18px;
+  bottom: 18px;
+  width: 1px;
+  background:
+    repeating-linear-gradient(180deg,
+      var(--text-muted) 0 6px,
+      transparent 6px 12px);
+}
+
+.topo-service {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-left: 3px solid var(--node-color, var(--border));
+  border-radius: 6px;
+  font-size: 0.82rem;
+  position: relative;
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+/* Per-row connector wire from the bus into the service card. */
+.topo-service::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 50%;
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    var(--text-muted),
+    var(--node-color, var(--text-accent)));
+}
+
+/* Tiny arrow head at the service-card edge. */
+.topo-service::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: calc(50% - 3px);
+  width: 0;
+  height: 0;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  border-left: 5px solid var(--node-color, var(--text-accent));
+}
+
+.topo-service:hover {
+  transform: translateX(2px);
+  box-shadow: -2px 2px 0 color-mix(in srgb, var(--node-color, var(--text-accent)) 18%, transparent);
+}
+
+.topo-port {
+  position: absolute;
+  left: -32px;
+  top: calc(50% - 14px);
+  width: 32px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  padding: 1px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px var(--border-dim);
+}
+
+.topo-service[data-stage="asr"]         { --node-color: var(--speaker-2); }
+.topo-service[data-stage="translation"] { --node-color: var(--speaker-3); }
+.topo-service[data-stage="speaker"]     { --node-color: var(--speaker-4); }
+.topo-service[data-stage="tts"]         { --node-color: #b52d2d; }
+
+.topo-service-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--node-color, var(--text-muted));
+  justify-self: center;
+}
+
+.topo-service-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.topo-service-model {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.topo-service-port {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  background: var(--bg-raised);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* ═══════════ MEMORY-BUDGET BAR ═══════════ */
+
+.memory-budget {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+}
+
+.memory-budget-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.memory-budget-total {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.memory-bar {
+  display: flex;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-dim);
+}
+
+.memory-bar-segment {
+  height: 100%;
+  position: relative;
+  transition: filter 0.2s var(--ease-out);
+}
+
+.memory-bar-segment:hover { filter: brightness(1.08); }
+
+.memory-bar-segment[data-stage="asr"]         { background: var(--speaker-2); }
+.memory-bar-segment[data-stage="translation"] { background: var(--speaker-3); }
+.memory-bar-segment[data-stage="kv"]          {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--speaker-3) 0 6px,
+    color-mix(in srgb, var(--speaker-3) 60%, var(--bg-raised)) 6px 12px);
+}
+.memory-bar-segment[data-stage="speaker"]     { background: var(--speaker-4); }
+.memory-bar-segment[data-stage="tts"]         { background: #b52d2d; }
+.memory-bar-segment[data-stage="headroom"]    {
+  background: var(--bg-raised);
+}
+
+.memory-bar-segment[data-stage="headroom"] {
+  border-left: 1px dashed var(--border);
+}
+
+.memory-legend {
+  margin-top: var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-lg);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.memory-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+}
+
+.memory-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.memory-legend-swatch[data-stage="asr"]         { background: var(--speaker-2); }
+.memory-legend-swatch[data-stage="translation"] { background: var(--speaker-3); }
+.memory-legend-swatch[data-stage="kv"]          {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--speaker-3) 0 4px,
+    color-mix(in srgb, var(--speaker-3) 60%, var(--bg-raised)) 4px 8px);
+}
+.memory-legend-swatch[data-stage="speaker"]     { background: var(--speaker-4); }
+.memory-legend-swatch[data-stage="tts"]         { background: #b52d2d; }
+.memory-legend-swatch[data-stage="headroom"]    {
+  background: var(--bg-raised);
+  border: 1px dashed var(--border);
+}
+
+.memory-legend-pct {
+  color: var(--text-muted);
+}
+
+/* ═══════════ HARDWARE SPEC CARDS ═══════════
+
+   Four equal-weight cards summarising the GB10 box spec.  Same
+   editorial aesthetic as the rest: thin mono eyebrow, bold value,
+   mono sub-meta.  Each card gets a thin gold top rule so the group
+   reads as a matching set. */
+
+.spec-grid {
+  margin-top: var(--space-xl);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+}
+
+.spec-card {
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-top: 2px solid var(--text-accent);
+  border-radius: 6px;
+  transition: transform 0.2s var(--ease-out),
+              box-shadow 0.2s var(--ease-out);
+}
+
+.spec-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.spec-card-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.spec-card-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.spec-card-meta {
+  margin-top: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+/* ═══════════ SCROLL REVEAL ═══════════
+
+   Defensive reveal: content is FULLY VISIBLE by default.  The JS
+   bootstrap adds `.js-on` to <html> as one of its first acts, which
+   then arms the opacity-0 starting state for `.reveal` elements.  If
+   JS fails to load (slow connection, third-party blocker, ad-blocker
+   that nukes /api/diag/listener and crashes the script) the content
+   still renders — never hide content behind a JS-only animation. */
+
+.reveal {
+  /* No initial hide: if JS doesn't run, this is a no-op. */
+  transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+}
+
+.js-on .reveal {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.js-on .reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-on .reveal { opacity: 1; transform: none; transition: none; }
+  .hero-pulse-ring,
+  .pipeline-particle { animation: none; }
+}
+
+/* ═══════════ INLINE GLOSSARY LINKS ═══════════ */
+
+.gloss-link {
+  border-bottom: 1px dotted color-mix(in srgb, var(--text-accent) 50%, transparent);
+  color: inherit;
+  text-decoration: none;
+  cursor: help;
+}
+
+.gloss-link:hover {
+  color: var(--text-accent);
+  border-bottom-style: solid;
+}
+
+/* ═══════════ TERMINOLOGY (was: bolted-on glossary) ═══════════
+
+   Reframed as the page's "Terminology" reference column.  Same
+   editorial typography as the rest of the page.  Lives at the end
+   because it's a reference — but visually lands as part of the
+   document, not as an appendix.                                       */
+
+.glossary {
+  padding: var(--space-3xl) 0 var(--space-xl);
+  border-top: 1px solid var(--border-dim);
+  margin-top: var(--space-xl);
+}
+
+.glossary .section-inner {
+  max-width: 100%;
+}
+
+.glossary-header {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-xl);
+  align-items: baseline;
+  margin-bottom: var(--space-xl);
+}
+
+.glossary-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+
+.glossary h2 {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.glossary-lede {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 60ch;
+}
+
+.glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+.glossary-item {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: var(--space-md);
+  align-items: baseline;
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--border-dim);
+}
+
+.glossary-item dt {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-accent);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.glossary-item dd {
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.glossary-item dd .lang-ja {
+  display: block;
+  font-family: var(--font-ja);
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+body[data-lang="en"] .glossary-item dd .lang-ja,
+body[data-lang="ja"] .glossary-item dd .lang-en { display: none; }
+
+body[data-lang="ja"] .glossary-item dd .lang-ja {
+  display: block;
+  margin-top: 0;
+  font-family: var(--font-ja);
+  color: var(--text-secondary);
+}
+
+/* ═══════════ TARGET-VIEWPORT BREAKPOINTS ═══════════
+
+   Three load-bearing viewports the page is QA'd against.  Order in
+   the cascade matters: tablet first, then iPhone-Pro-Max-class, then
+   small phone, so each rule wins where intended.                      */
+
+/* iPad Pro 9.7" 2025 — landscape (1024 × 768) and portrait (768 × 1024).
+   The 1024 px max-width media block above already covers landscape.
+   Portrait collapses to phone-style stacking at 768. */
+
+@media (max-width: 1024px) {
+  .topo-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  .topo-host {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .topo-services {
+    grid-column: 1;
+  }
+  /* Hide the schematic connectors when the layout collapses to a
+     single column — there's no longer a horizontal axis for the wires
+     to span, so leaving them in produces stray dashes/arrows. */
+  .topo-host::after,
+  .topo-services::before,
+  .topo-service::before,
+  .topo-service::after,
+  .topo-port {
+    display: none;
+  }
+  .glossary-header {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+}
+
+/* iPhone 17 Pro Max portrait (440 × 956).  Sits above the small-phone
+   480 px breakpoint and below the tablet 768 px one — needs its own
+   block so the tablet rules don't bleed into the largest-phone class.  */
+
+@media (min-width: 416px) and (max-width: 480px) {
+  .topology {
+    padding: var(--space-md) var(--space-md);
+  }
+  .topo-host {
+    padding: var(--space-sm) var(--space-md);
+  }
+  .topo-service {
+    grid-template-columns: 24px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .topo-service-port {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .memory-budget {
+    padding: var(--space-md) var(--space-md);
+  }
+  .memory-bar { height: 22px; }
+  .memory-legend { gap: var(--space-sm) var(--space-md); }
+}

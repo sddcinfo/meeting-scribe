@@ -1,0 +1,133 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meeting-scribe"
+version = "1.3.0"
+description = "Real-time multilingual meeting transcription, translation, speaker diarization, and near-real-time interpretation audio for hotspot guests"
+requires-python = ">=3.12"
+authors = [{ name = "Brad Lay" }]
+license = { text = "MIT" }
+dependencies = [
+    # Server
+    "fastapi==0.135.3",
+    "uvicorn[standard]==0.44.0",
+
+    # Core audio/ML
+    "numpy==2.4.4",
+    "torch==2.11.0",
+    "torchaudio==2.11.0",
+    "soundfile==0.13.1",
+    # fMP4/AAC encoder for MSE streaming to hotspot guests. Bundles
+    # ffmpeg libs — no system ffmpeg required. See backends/mse_encoder.py.
+    "av==17.0.0",
+
+    # ASR runs entirely in the vLLM Qwen3-ASR container; the Python venv
+    # stays transformers-free and makes OpenAI-compatible HTTP calls.
+
+    # HTTP client (vLLM translation, TTS)
+    "httpx==0.28.1",
+
+    # QR code generation (WiFi auto-join)
+    "qrcode[pil]==8.2",
+
+    # Slide translation (text extraction + reinsertion, runs in worker container)
+    "python-pptx>=1.0.0",
+
+    # Utilities
+    "click==8.3.2",
+    "pydantic==2.12.5",
+    "pyyaml==6.0.3",
+    "pykakasi==2.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.3",
+    "pytest-asyncio==1.3.0",
+    "pytest-playwright>=0.6.2",
+    "websockets==16.0",
+    "ruff==0.15.10",
+]
+# Optional: higher-accuracy slide language detection. Adds ~170 MB but
+# materially improves classification of short/mixed-language slide text.
+# Without it, the script-aware fallback in slides/convert.py is used.
+slide-lang = [
+    "lingua-language-detector>=2.2.0",
+]
+# Optional: translation-benchmark scoring (sacreBLEU + COMET).  Used by
+# benchmarks/translation_benchmark.py --score-only for Phase 3 of the
+# Qwen3.6-FP8 migration.  COMET downloads a ~500 MB model on first
+# invocation, so this is kept out of the default dev install.
+bench = [
+    "sacrebleu>=2.4.0",
+    "unbabel-comet>=2.2.0",
+]
+
+[project.scripts]
+meeting-scribe = "meeting_scribe.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meeting_scribe"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "E501",    # line too long (handled by formatter)
+    "E402",    # module-level imports not at top (intentional lazy imports in server.py)
+    "SIM105",  # contextlib.suppress vs try/except/pass (style preference)
+    "SIM108",  # ternary vs if/else (style preference)
+    "SIM118",  # key in dict vs dict.keys() (when .keys() is clearer)
+    "RUF002",  # ambiguous unicode in docstrings (× is multiplication, deliberate)
+    "RUF003",  # ambiguous unicode in comments (same reason)
+    "RUF005",  # list concatenation vs unpacking (readability)
+    "RUF006",  # asyncio.create_task reference (fire-and-forget is intentional)
+    "B007",    # unused loop control variable (often _, sometimes named for clarity)
+    "B011",    # assert False (tests use this pattern deliberately)
+    "B017",    # blind Exception assert (tests use this pattern deliberately)
+    "B023",    # function loop variable binding (closures are intentional here)
+    "B905",    # zip() without strict= (Python 3.10 backward compat legacy)
+]
+
+# Characters legitimately used in our strings (Japanese punctuation, math
+# symbols, em-dashes, and the Cyrillic → Latin transliteration table in
+# speaker/name_llm.py).  Listed explicitly so RUF001 still catches genuine
+# typos in everything else.
+allowed-confusables = [
+    "？",  # FULLWIDTH QUESTION MARK — Japanese punctuation
+    "×",   # MULTIPLICATION SIGN — used in formatted output
+    "–",   # EN DASH — typography in reports/prints
+    "а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и",  # Cyrillic source chars
+    "й", "к", "л", "м", "н", "о", "п", "р", "с", "т",  # for the _CYRILLIC_TO_LATIN
+    "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь",  # transliteration dict in
+    "э", "ю", "я",                                      # speaker/name_llm.py
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "E741",   # ambiguous variable name `l` (test loop idiom)
+    "F841",   # unused variable (test setup convenience)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["meeting_scribe"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# Default: skip integration tests (they need a running server)
+# Run integration tests explicitly: pytest -m integration
+addopts = "-m 'not integration and not browser'"
+markers = [
+    "integration: requires running server (uses isolated test server on port 9080)",
+    "system: full-stack system tests (requires autosre start)",
+    "gb10: requires GB10 hardware with vLLM backends",
+    "slow: long-running tests (>30s)",
+    "browser: Playwright browser tests (run: playwright install chromium)",
+]

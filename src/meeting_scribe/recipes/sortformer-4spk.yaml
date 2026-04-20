@@ -1,0 +1,26 @@
+# pyannote.audio — Neural Speaker Diarization
+# Real speaker diarization with GPU acceleration on GB10 (aarch64, Blackwell).
+# Runs in pyannote container with SM_121 compatibility patches.
+
+model_key: diarization
+model_id: pyannote/speaker-diarization-3.1
+short_name: pyannote-diarize
+description: "Neural speaker diarization for up to 4 speakers"
+
+mode: solo
+tensor_parallel: 1
+port: 8001
+
+# pyannote container (not vLLM)
+docker_image: pyannote-diarize:latest
+container_type: pyannote  # Custom FastAPI wrapper
+
+gpu_memory_utilization: 0.05  # Small model, ~2GB
+max_speakers: 4
+
+capabilities:
+  max_speakers: 4
+  latency_ms: 200
+  requires_enrollment: false  # pyannote does unsupervised clustering
+
+best_for: "Real-time speaker diarization (who is speaking when)"

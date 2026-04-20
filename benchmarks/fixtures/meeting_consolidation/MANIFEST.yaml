@@ -1,0 +1,32 @@
+# Benchmark fixture manifest — Omni consolidation.
+#
+# IMPORTANT: raw audio, ground-truth transcripts, and participant voice
+# refs do NOT live in this repo. They sit under
+# /data/meeting-scribe-fixtures/ on the GB10 (age-encrypted at rest),
+# resolved by the opaque IDs below.
+#
+# This file is the public contract between harness scripts and the
+# encrypted fixture store. Every entry has a sha256 so benchmark runs
+# can fail-fast if an expected sample is missing or mutated.
+#
+# schema:
+#   samples:
+#     - id: <opaque>
+#       kind: asr | tts_studio | tts_cloned_ref | translate
+#       language: ja | en | zh | ko | ...
+#       duration_seconds: <float or null>
+#       sha256: <hex>
+#       description: "one line, no PII, no transcript leakage"
+#
+# To add a sample:
+#   1. Place the real audio / transcript under
+#      /data/meeting-scribe-fixtures/<kind>/<id>.{wav,txt,json}.
+#   2. Update sha256sums.txt (age-encrypted) alongside it.
+#   3. Append a manifest entry with the id + checksum + non-sensitive
+#      description.
+#   4. Commit the manifest update. Raw file stays outside git.
+
+version: 1
+fixture_root_on_disk: /data/meeting-scribe-fixtures/
+
+samples: []

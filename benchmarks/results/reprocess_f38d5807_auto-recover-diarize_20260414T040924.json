@@ -1,0 +1,60 @@
+{
+  "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+  "label": "auto-recover-diarize",
+  "timestamp": "2026-04-14T04:09:24",
+  "state": "complete",
+  "audio_ms": 5330145,
+  "bench_wall_ms": 355407,
+  "phase_timings_ms": {},
+  "quality": {
+    "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+    "audio_ms": 5330145,
+    "all_passed": false,
+    "checks": [
+      {
+        "name": "<lambda>",
+        "passed": false,
+        "detail": "EXCEPTION: FileNotFoundError: [Errno 2] No such file or directory: 'meetings/f38d5807-bbdf-4c5c-96fb-cb8267e55ed0/timeline.json'",
+        "metrics": {}
+      },
+      {
+        "name": "<lambda>",
+        "passed": false,
+        "detail": "EXCEPTION: FileNotFoundError: [Errno 2] No such file or directory: 'meetings/f38d5807-bbdf-4c5c-96fb-cb8267e55ed0/detected_speakers.json'",
+        "metrics": {}
+      },
+      {
+        "name": "<lambda>",
+        "passed": false,
+        "detail": "EXCEPTION: FileNotFoundError: [Errno 2] No such file or directory: 'meetings/f38d5807-bbdf-4c5c-96fb-cb8267e55ed0/speaker_lanes.json'",
+        "metrics": {}
+      },
+      {
+        "name": "<lambda>",
+        "passed": false,
+        "detail": "EXCEPTION: FileNotFoundError: [Errno 2] No such file or directory: 'meetings/f38d5807-bbdf-4c5c-96fb-cb8267e55ed0/detected_speakers.json'",
+        "metrics": {}
+      },
+      {
+        "name": "<lambda>",
+        "passed": false,
+        "detail": "EXCEPTION: FileNotFoundError: [Errno 2] No such file or directory: 'meetings/f38d5807-bbdf-4c5c-96fb-cb8267e55ed0/journal.jsonl'",
+        "metrics": {}
+      },
+      {
+        "name": "<lambda>",
+        "passed": false,
+        "detail": "EXCEPTION: FileNotFoundError: [Errno 2] No such file or directory: 'meetings/f38d5807-bbdf-4c5c-96fb-cb8267e55ed0/timeline.json'",
+        "metrics": {}
+      },
+      {
+        "name": "name_preservation",
+        "passed": true,
+        "detail": "no .bak \u2014 skipped (meeting had no prior corrections)",
+        "metrics": {
+          "skipped": true
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{"corpus_id": "ej_greet_1", "source_lang": "en", "target_lang": "ja", "source_text": "Good morning everyone, thank you for joining today's meeting.", "reference_text": "皆さんおはようございます。本日の会議にご参加いただきありがとうございます。"}
+{"corpus_id": "ej_greet_2", "source_lang": "en", "target_lang": "ja", "source_text": "Let's start with a quick round of introductions.", "reference_text": "簡単な自己紹介から始めましょう。"}
+{"corpus_id": "ej_greet_3", "source_lang": "en", "target_lang": "ja", "source_text": "Before we begin, does anyone have anything to add to the agenda?", "reference_text": "始める前に、議題に追加したい項目はありますか？"}
+{"corpus_id": "ej_greet_4", "source_lang": "en", "target_lang": "ja", "source_text": "I'd like to welcome our guests from the Tokyo office.", "reference_text": "東京オフィスからのゲストをお迎えしたいと思います。"}
+{"corpus_id": "ej_greet_5", "source_lang": "en", "target_lang": "ja", "source_text": "Thank you all for making time for this discussion.", "reference_text": "この議論のためにお時間を作っていただき、ありがとうございます。"}
+{"corpus_id": "ej_bus_1", "source_lang": "en", "target_lang": "ja", "source_text": "We exceeded our quarterly revenue target by twelve percent.", "reference_text": "四半期の売上目標を12%上回りました。"}
+{"corpus_id": "ej_bus_2", "source_lang": "en", "target_lang": "ja", "source_text": "The board approved the new strategic initiative last week.", "reference_text": "先週、取締役会は新しい戦略的取り組みを承認しました。"}
+{"corpus_id": "ej_bus_3", "source_lang": "en", "target_lang": "ja", "source_text": "We need to align on priorities before next quarter.", "reference_text": "来四半期までに優先事項について合意する必要があります。"}
+{"corpus_id": "ej_bus_4", "source_lang": "en", "target_lang": "ja", "source_text": "Our customer satisfaction scores improved three points this year.", "reference_text": "今年、顧客満足度スコアが3ポイント改善しました。"}
+{"corpus_id": "ej_bus_5", "source_lang": "en", "target_lang": "ja", "source_text": "The partnership with the APAC team has been very productive.", "reference_text": "APACチームとの連携は非常に生産的でした。"}
+{"corpus_id": "ej_bus_6", "source_lang": "en", "target_lang": "ja", "source_text": "Let's schedule a follow-up meeting to review the proposal.", "reference_text": "提案を検討するためのフォローアップ会議を設定しましょう。"}
+{"corpus_id": "ej_bus_7", "source_lang": "en", "target_lang": "ja", "source_text": "The rollout timeline is tight but achievable with focus.", "reference_text": "展開のスケジュールはタイトですが、集中すれば達成可能です。"}
+{"corpus_id": "ej_bus_8", "source_lang": "en", "target_lang": "ja", "source_text": "We should prioritize the features that reduce customer churn.", "reference_text": "顧客離れを減らす機能を優先すべきです。"}
+{"corpus_id": "ej_bus_9", "source_lang": "en", "target_lang": "ja", "source_text": "The budget review is scheduled for the end of the month.", "reference_text": "予算レビューは月末に予定されています。"}
+{"corpus_id": "ej_bus_10", "source_lang": "en", "target_lang": "ja", "source_text": "I'd like to thank the engineering team for their hard work.", "reference_text": "エンジニアリングチームの努力に感謝したいと思います。"}
+{"corpus_id": "ej_tech_1", "source_lang": "en", "target_lang": "ja", "source_text": "The database migration completed successfully overnight.", "reference_text": "データベースのマイグレーションは夜間に問題なく完了しました。"}
+{"corpus_id": "ej_tech_2", "source_lang": "en", "target_lang": "ja", "source_text": "API response times dropped to fifty milliseconds on average.", "reference_text": "APIのレスポンスタイムは平均50ミリ秒に短縮されました。"}
+{"corpus_id": "ej_tech_3", "source_lang": "en", "target_lang": "ja", "source_text": "Please run the test suite before merging the pull request.", "reference_text": "プルリクエストをマージする前にテストスイートを実行してください。"}
+{"corpus_id": "ej_tech_4", "source_lang": "en", "target_lang": "ja", "source_text": "We should deploy the patch to production tonight.", "reference_text": "今夜パッチを本番環境にデプロイすべきです。"}
+{"corpus_id": "ej_tech_5", "source_lang": "en", "target_lang": "ja", "source_text": "The incident was caused by a misconfigured load balancer.", "reference_text": "この障害は設定ミスのあったロードバランサーが原因でした。"}
+{"corpus_id": "ej_tech_6", "source_lang": "en", "target_lang": "ja", "source_text": "Can we enable the feature flag for internal users first?", "reference_text": "まず社内ユーザー向けにフィーチャーフラグを有効にできますか？"}
+{"corpus_id": "ej_tech_7", "source_lang": "en", "target_lang": "ja", "source_text": "The logs show a spike in error rates around noon.", "reference_text": "ログを見ると、正午ごろにエラー率が急増しています。"}
+{"corpus_id": "ej_tech_8", "source_lang": "en", "target_lang": "ja", "source_text": "We'll need to refactor the authentication module next sprint.", "reference_text": "次のスプリントで認証モジュールをリファクタリングする必要があります。"}
+{"corpus_id": "ej_tech_9", "source_lang": "en", "target_lang": "ja", "source_text": "The monitoring dashboard shows all services are healthy.", "reference_text": "監視ダッシュボードでは、すべてのサービスが正常であることを示しています。"}
+{"corpus_id": "ej_tech_10", "source_lang": "en", "target_lang": "ja", "source_text": "Let's review the post-mortem report together on Friday.", "reference_text": "金曜日にポストモーテム報告書を一緒に確認しましょう。"}
+{"corpus_id": "ej_conv_1", "source_lang": "en", "target_lang": "ja", "source_text": "Sorry, could you repeat that? I missed the last part.", "reference_text": "すみません、もう一度言っていただけますか？最後の部分を聞き逃しました。"}
+{"corpus_id": "ej_conv_2", "source_lang": "en", "target_lang": "ja", "source_text": "That's a really good point, I hadn't considered that angle.", "reference_text": "とても良い指摘ですね。その視点は考えていませんでした。"}
+{"corpus_id": "ej_conv_3", "source_lang": "en", "target_lang": "ja", "source_text": "Could you share the slide on the screen, please?", "reference_text": "スライドを画面で共有していただけますか？"}
+{"corpus_id": "ej_conv_4", "source_lang": "en", "target_lang": "ja", "source_text": "I'll follow up with you offline after the meeting.", "reference_text": "会議後に個別にご連絡します。"}
+{"corpus_id": "ej_conv_5", "source_lang": "en", "target_lang": "ja", "source_text": "Let's take a short break and come back in ten minutes.", "reference_text": "短い休憩を取って、10分後に戻りましょう。"}
+{"corpus_id": "ej_conv_6", "source_lang": "en", "target_lang": "ja", "source_text": "Your video is frozen; could you turn it off and back on?", "reference_text": "ビデオがフリーズしています。一度オフにして再度オンにしていただけますか？"}
+{"corpus_id": "ej_complex_1", "source_lang": "en", "target_lang": "ja", "source_text": "To minimize service disruption we should roll this out gradually across regions.", "reference_text": "サービスへの影響を最小限に抑えるため、地域ごとに段階的に展開すべきです。"}
+{"corpus_id": "ej_complex_2", "source_lang": "en", "target_lang": "ja", "source_text": "If we don't finalize the spec this week, the launch will slip to Q4.", "reference_text": "今週中に仕様を確定しないと、ローンチが第4四半期にずれ込みます。"}
+{"corpus_id": "ej_complex_3", "source_lang": "en", "target_lang": "ja", "source_text": "The data suggests our onboarding flow is losing roughly twenty percent of new users.", "reference_text": "データを見ると、オンボーディングフローで新規ユーザーの約20%を失っているようです。"}
+{"corpus_id": "ej_complex_4", "source_lang": "en", "target_lang": "ja", "source_text": "I understand your concern, but I'd like to hear from the team before we change direction.", "reference_text": "ご懸念は理解しますが、方針を変更する前にチームの意見を聞きたいと思います。"}
+{"corpus_id": "ej_complex_5", "source_lang": "en", "target_lang": "ja", "source_text": "Given the tight deadline, let's postpone the nice-to-have features and ship the core scope first.", "reference_text": "締め切りが厳しいので、あれば良い機能は後回しにして、まずコア機能を出荷しましょう。"}
+{"corpus_id": "je_greet_1", "source_lang": "ja", "target_lang": "en", "source_text": "皆さんおはようございます。本日の会議にご参加いただきありがとうございます。", "reference_text": "Good morning everyone, thank you for joining today's meeting."}
+{"corpus_id": "je_greet_2", "source_lang": "ja", "target_lang": "en", "source_text": "簡単な自己紹介から始めましょう。", "reference_text": "Let's start with a quick round of introductions."}
+{"corpus_id": "je_greet_3", "source_lang": "ja", "target_lang": "en", "source_text": "始める前に、議題に追加したい項目はありますか？", "reference_text": "Before we begin, does anyone have anything to add to the agenda?"}
+{"corpus_id": "je_greet_4", "source_lang": "ja", "target_lang": "en", "source_text": "東京オフィスからのゲストをお迎えしたいと思います。", "reference_text": "I'd like to welcome our guests from the Tokyo office."}
+{"corpus_id": "je_greet_5", "source_lang": "ja", "target_lang": "en", "source_text": "この議論のためにお時間を作っていただき、ありがとうございます。", "reference_text": "Thank you all for making time for this discussion."}
+{"corpus_id": "je_bus_1", "source_lang": "ja", "target_lang": "en", "source_text": "四半期の売上目標を12%上回りました。", "reference_text": "We exceeded our quarterly revenue target by twelve percent."}
+{"corpus_id": "je_bus_2", "source_lang": "ja", "target_lang": "en", "source_text": "先週、取締役会は新しい戦略的取り組みを承認しました。", "reference_text": "The board approved the new strategic initiative last week."}
+{"corpus_id": "je_bus_3", "source_lang": "ja", "target_lang": "en", "source_text": "来四半期までに優先事項について合意する必要があります。", "reference_text": "We need to align on priorities before next quarter."}
+{"corpus_id": "je_bus_4", "source_lang": "ja", "target_lang": "en", "source_text": "今年、顧客満足度スコアが3ポイント改善しました。", "reference_text": "Our customer satisfaction scores improved three points this year."}
+{"corpus_id": "je_bus_5", "source_lang": "ja", "target_lang": "en", "source_text": "APACチームとの連携は非常に生産的でした。", "reference_text": "The partnership with the APAC team has been very productive."}
+{"corpus_id": "je_bus_6", "source_lang": "ja", "target_lang": "en", "source_text": "提案を検討するためのフォローアップ会議を設定しましょう。", "reference_text": "Let's schedule a follow-up meeting to review the proposal."}
+{"corpus_id": "je_bus_7", "source_lang": "ja", "target_lang": "en", "source_text": "展開のスケジュールはタイトですが、集中すれば達成可能です。", "reference_text": "The rollout timeline is tight but achievable with focus."}
+{"corpus_id": "je_bus_8", "source_lang": "ja", "target_lang": "en", "source_text": "顧客離れを減らす機能を優先すべきです。", "reference_text": "We should prioritize the features that reduce customer churn."}
+{"corpus_id": "je_bus_9", "source_lang": "ja", "target_lang": "en", "source_text": "予算レビューは月末に予定されています。", "reference_text": "The budget review is scheduled for the end of the month."}
+{"corpus_id": "je_bus_10", "source_lang": "ja", "target_lang": "en", "source_text": "エンジニアリングチームの努力に感謝したいと思います。", "reference_text": "I'd like to thank the engineering team for their hard work."}
+{"corpus_id": "je_tech_1", "source_lang": "ja", "target_lang": "en", "source_text": "データベースのマイグレーションは夜間に問題なく完了しました。", "reference_text": "The database migration completed successfully overnight."}
+{"corpus_id": "je_tech_2", "source_lang": "ja", "target_lang": "en", "source_text": "APIのレスポンスタイムは平均50ミリ秒に短縮されました。", "reference_text": "API response times dropped to fifty milliseconds on average."}
+{"corpus_id": "je_tech_3", "source_lang": "ja", "target_lang": "en", "source_text": "プルリクエストをマージする前にテストスイートを実行してください。", "reference_text": "Please run the test suite before merging the pull request."}
+{"corpus_id": "je_tech_4", "source_lang": "ja", "target_lang": "en", "source_text": "今夜パッチを本番環境にデプロイすべきです。", "reference_text": "We should deploy the patch to production tonight."}
+{"corpus_id": "je_tech_5", "source_lang": "ja", "target_lang": "en", "source_text": "この障害は設定ミスのあったロードバランサーが原因でした。", "reference_text": "The incident was caused by a misconfigured load balancer."}
+{"corpus_id": "je_tech_6", "source_lang": "ja", "target_lang": "en", "source_text": "まず社内ユーザー向けにフィーチャーフラグを有効にできますか？", "reference_text": "Can we enable the feature flag for internal users first?"}
+{"corpus_id": "je_tech_7", "source_lang": "ja", "target_lang": "en", "source_text": "ログを見ると、正午ごろにエラー率が急増しています。", "reference_text": "The logs show a spike in error rates around noon."}
+{"corpus_id": "je_tech_8", "source_lang": "ja", "target_lang": "en", "source_text": "次のスプリントで認証モジュールをリファクタリングする必要があります。", "reference_text": "We'll need to refactor the authentication module next sprint."}
+{"corpus_id": "je_tech_9", "source_lang": "ja", "target_lang": "en", "source_text": "監視ダッシュボードでは、すべてのサービスが正常であることを示しています。", "reference_text": "The monitoring dashboard shows all services are healthy."}
+{"corpus_id": "je_tech_10", "source_lang": "ja", "target_lang": "en", "source_text": "金曜日にポストモーテム報告書を一緒に確認しましょう。", "reference_text": "Let's review the post-mortem report together on Friday."}
+{"corpus_id": "je_conv_1", "source_lang": "ja", "target_lang": "en", "source_text": "すみません、もう一度言っていただけますか？最後の部分を聞き逃しました。", "reference_text": "Sorry, could you repeat that? I missed the last part."}
+{"corpus_id": "je_conv_2", "source_lang": "ja", "target_lang": "en", "source_text": "とても良い指摘ですね。その視点は考えていませんでした。", "reference_text": "That's a really good point, I hadn't considered that angle."}
+{"corpus_id": "je_conv_3", "source_lang": "ja", "target_lang": "en", "source_text": "スライドを画面で共有していただけますか？", "reference_text": "Could you share the slide on the screen, please?"}
+{"corpus_id": "je_conv_4", "source_lang": "ja", "target_lang": "en", "source_text": "会議後に個別にご連絡します。", "reference_text": "I'll follow up with you offline after the meeting."}
+{"corpus_id": "je_conv_5", "source_lang": "ja", "target_lang": "en", "source_text": "短い休憩を取って、10分後に戻りましょう。", "reference_text": "Let's take a short break and come back in ten minutes."}
+{"corpus_id": "je_conv_6", "source_lang": "ja", "target_lang": "en", "source_text": "ビデオがフリーズしています。一度オフにして再度オンにしていただけますか？", "reference_text": "Your video is frozen; could you turn it off and back on?"}
+{"corpus_id": "je_complex_1", "source_lang": "ja", "target_lang": "en", "source_text": "サービスへの影響を最小限に抑えるため、地域ごとに段階的に展開すべきです。", "reference_text": "To minimize service disruption we should roll this out gradually across regions."}
+{"corpus_id": "je_complex_2", "source_lang": "ja", "target_lang": "en", "source_text": "今週中に仕様を確定しないと、ローンチが第4四半期にずれ込みます。", "reference_text": "If we don't finalize the spec this week, the launch will slip to Q4."}
+{"corpus_id": "je_complex_3", "source_lang": "ja", "target_lang": "en", "source_text": "データを見ると、オンボーディングフローで新規ユーザーの約20%を失っているようです。", "reference_text": "The data suggests our onboarding flow is losing roughly twenty percent of new users."}
+{"corpus_id": "je_complex_4", "source_lang": "ja", "target_lang": "en", "source_text": "ご懸念は理解しますが、方針を変更する前にチームの意見を聞きたいと思います。", "reference_text": "I understand your concern, but I'd like to hear from the team before we change direction."}
+{"corpus_id": "je_complex_5", "source_lang": "ja", "target_lang": "en", "source_text": "締め切りが厳しいので、あれば良い機能は後回しにして、まずコア機能を出荷しましょう。", "reference_text": "Given the tight deadline, let's postpone the nice-to-have features and ship the core scope first."}

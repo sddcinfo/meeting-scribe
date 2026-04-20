@@ -1,0 +1,120 @@
+{
+  "model_name": "Qwen3.5-35B-v2-FLASHINFER",
+  "url": "http://localhost:8000",
+  "direction": "ja_to_en",
+  "corpus_size": 15,
+  "latency_p50_ms": 447.2,
+  "latency_p90_ms": 858.0,
+  "latency_p99_ms": 3538.9,
+  "latency_mean_ms": 664.5,
+  "avg_char_similarity": 0.917,
+  "total_time_s": 9.97,
+  "throughput_sps": 1.5,
+  "results": [
+    {
+      "source": "今日の会議の議題について確認しましょう。",
+      "reference": "Let's confirm the agenda for today's meeting.",
+      "translated": "Let's confirm the agenda for today's meeting.",
+      "latency_ms": 3538.9,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "この提案について何かご質問はありますか？",
+      "reference": "Do you have any questions about this proposal?",
+      "translated": "Do you have any questions about this proposal?",
+      "latency_ms": 404.9,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "次のステップを決めましょう。",
+      "reference": "Let's decide on the next steps.",
+      "translated": "Let's decide on the next step.",
+      "latency_ms": 858.0,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "四半期の売上目標を達成しました。",
+      "reference": "We achieved our quarterly sales target.",
+      "translated": "We have achieved our quarterly sales target.",
+      "latency_ms": 382.1,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "新しいプロジェクトの予算を承認する必要があります。",
+      "reference": "We need to approve the budget for the new project.",
+      "translated": "We need to approve the budget for the new project.",
+      "latency_ms": 481.5,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "来週のデモに向けて準備を進めています。",
+      "reference": "We are preparing for next week's demo.",
+      "translated": "We are moving forward with preparations for next week's demonstration.",
+      "latency_ms": 513.1,
+      "char_similarity": 0.909
+    },
+    {
+      "source": "APIのレスポンスタイムが改善されました。",
+      "reference": "The API response time has improved.",
+      "translated": "API response times have been improved.",
+      "latency_ms": 352.0,
+      "char_similarity": 0.9
+    },
+    {
+      "source": "データベースのマイグレーションは明日実行します。",
+      "reference": "We will run the database migration tomorrow.",
+      "translated": "The database migration will be carried out tomorrow.",
+      "latency_ms": 414.3,
+      "char_similarity": 0.857
+    },
+    {
+      "source": "本番環境にデプロイする前にテストを完了してください。",
+      "reference": "Please complete testing before deploying to production.",
+      "translated": "Please complete testing before deploying to the production environment.",
+      "latency_ms": 447.9,
+      "char_similarity": 0.913
+    },
+    {
+      "source": "すみません、もう一度言っていただけますか？",
+      "reference": "Excuse me, could you say that again?",
+      "translated": "I'm sorry, could you please say that again?",
+      "latency_ms": 472.5,
+      "char_similarity": 0.75
+    },
+    {
+      "source": "その点については同意します。",
+      "reference": "I agree with that point.",
+      "translated": "I agree with that point.",
+      "latency_ms": 308.2,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "詳しく説明していただけますか？",
+      "reference": "Could you explain in more detail?",
+      "translated": "Could you please explain in more detail?",
+      "latency_ms": 369.7,
+      "char_similarity": 0.944
+    },
+    {
+      "source": "この問題を解決するためには、チーム全体で協力する必要があると考えています。",
+      "reference": "I believe we need the whole team to cooperate to solve this problem.",
+      "translated": "To resolve this issue, I believe we need the entire team to work together.",
+      "latency_ms": 560.4,
+      "char_similarity": 0.72
+    },
+    {
+      "source": "スケジュールの遅延を最小限に抑えるため、優先順位を再検討しましょう。",
+      "reference": "Let's re-examine priorities to minimize schedule delays.",
+      "translated": "To minimize schedule delays, let's reevaluate our priorities.",
+      "latency_ms": 447.2,
+      "char_similarity": 0.769
+    },
+    {
+      "source": "お客様からのフィードバックに基づいて、UIを改善する計画です。",
+      "reference": "We plan to improve the UI based on customer feedback.",
+      "translated": "We plan to improve the UI based on customer feedback.",
+      "latency_ms": 416.1,
+      "char_similarity": 1.0
+    }
+  ]
+}

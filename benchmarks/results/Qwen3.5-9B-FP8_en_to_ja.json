@@ -1,0 +1,120 @@
+{
+  "model_name": "Qwen3.5-9B-FP8",
+  "url": "http://localhost:8000",
+  "direction": "en_to_ja",
+  "corpus_size": 15,
+  "latency_p50_ms": 458.2,
+  "latency_p90_ms": 880.7,
+  "latency_p99_ms": 934.7,
+  "latency_mean_ms": 560.5,
+  "avg_char_similarity": 0.769,
+  "total_time_s": 8.41,
+  "throughput_sps": 1.78,
+  "results": [
+    {
+      "source": "Let's confirm the agenda for today's meeting.",
+      "reference": "今日の会議の議題について確認しましょう。",
+      "translated": "本日の会議の議程を確認しましょう。",
+      "latency_ms": 458.2,
+      "char_similarity": 0.55
+    },
+    {
+      "source": "Do you have any questions about this proposal?",
+      "reference": "この提案について何かご質問はありますか？",
+      "translated": "この提案についてご質問はありますか？",
+      "latency_ms": 444.9,
+      "char_similarity": 0.947
+    },
+    {
+      "source": "Let's decide on the next steps.",
+      "reference": "次のステップを決めましょう。",
+      "translated": "次へのステップを決定しましょう。",
+      "latency_ms": 405.0,
+      "char_similarity": 0.812
+    },
+    {
+      "source": "We achieved our quarterly sales target.",
+      "reference": "四半期の売上目標を達成しました。",
+      "translated": "四半期の売上目標を達成しました。",
+      "latency_ms": 934.7,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "We need to approve the budget for the new project.",
+      "reference": "新しいプロジェクトの予算を承認する必要があります。",
+      "translated": "新規プロジェクトの予算を承認する必要があります。",
+      "latency_ms": 448.3,
+      "char_similarity": 0.88
+    },
+    {
+      "source": "We are preparing for next week's demo.",
+      "reference": "来週のデモに向けて準備を進めています。",
+      "translated": "来週のデモに向けて準備を進めています。",
+      "latency_ms": 489.3,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "The API response time has improved.",
+      "reference": "APIのレスポンスタイムが改善されました。",
+      "translated": "API の応答時間が改善されました。",
+      "latency_ms": 443.4,
+      "char_similarity": 0.52
+    },
+    {
+      "source": "We will run the database migration tomorrow.",
+      "reference": "データベースのマイグレーションは明日実行します。",
+      "translated": "明日、データベースの移行を実施します。",
+      "latency_ms": 446.5,
+      "char_similarity": 0.538
+    },
+    {
+      "source": "Please complete testing before deploying to production.",
+      "reference": "本番環境にデプロイする前にテストを完了してください。",
+      "translated": "本番環境へのデプロイ前に、必ずテストを完了させてください。",
+      "latency_ms": 793.8,
+      "char_similarity": 0.71
+    },
+    {
+      "source": "Excuse me, could you say that again?",
+      "reference": "すみません、もう一度言っていただけますか？",
+      "translated": "すみません、もう一度言っていただけますか？",
+      "latency_ms": 491.4,
+      "char_similarity": 1.0
+    },
+    {
+      "source": "I agree with that point.",
+      "reference": "その点については同意します。",
+      "translated": "その点に賛成です。",
+      "latency_ms": 399.6,
+      "char_similarity": 0.353
+    },
+    {
+      "source": "Could you explain in more detail?",
+      "reference": "詳しく説明していただけますか？",
+      "translated": "もう少し詳しく説明していただけますか？",
+      "latency_ms": 400.4,
+      "char_similarity": 0.824
+    },
+    {
+      "source": "I believe we need the whole team to cooperate to solve this problem.",
+      "reference": "この問題を解決するためには、チーム全体で協力する必要があると考えています。",
+      "translated": "この問題を解決するには、チーム全員が協力する必要があると思います。",
+      "latency_ms": 663.1,
+      "char_similarity": 0.743
+    },
+    {
+      "source": "Let's re-examine priorities to minimize schedule delays.",
+      "reference": "スケジュールの遅延を最小限に抑えるため、優先順位を再検討しましょう。",
+      "translated": "スケジュール遅延を最小限に抑えるため、優先順位を再検討しましょう。",
+      "latency_ms": 880.7,
+      "char_similarity": 0.969
+    },
+    {
+      "source": "We plan to improve the UI based on customer feedback.",
+      "reference": "お客様からのフィードバックに基づいて、UIを改善する計画です。",
+      "translated": "顧客フィードバックに基づき、UI の改善を計画しています。",
+      "latency_ms": 708.4,
+      "char_similarity": 0.686
+    }
+  ]
+}

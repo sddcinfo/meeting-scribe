@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover lets the page extend behind the iOS browser
+       chrome so env(safe-area-inset-*) picks up the correct insets;
+       without this, iPhone content gets clipped by the home indicator
+       / bottom toolbar.  See `static/TESTING_VIEWPORTS.md` for the
+       canonical device list this page is QA'd against. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>How It Works — Meeting Scribe</title>
+  <!-- System fonts only — no external font loads (hotspot has no internet) -->
+  <!-- Cache-bust query bumps on every CSS/JS edit so iOS Safari /
+       Chrome iOS don't serve stale assets after a design pass.  Bump
+       both values together after any tweak to the css or js file. -->
+  <link rel="stylesheet" href="css/how-it-works.css?v=20260419e">
+</head>
+<body data-lang="both">
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <nav class="nav-bar">
+    <a href="how-it-works.html" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      <span class="nav-logo-text">Meeting Scribe</span>
+    </a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn active" data-lang="both">Both</button>
+        <button class="lang-btn" data-lang="ja">JA</button>
+      </div>
+      <a href="https://github.com/sddcinfo/meeting-scribe" class="nav-link" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- ═══ HERO ═══ -->
+    <section class="hero">
+      <div class="hero-pulse">
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-core"></div>
+      </div>
+      <div class="bi-inline">
+        <h1 class="hero-title lang-en">How Meeting Scribe Works</h1>
+        <h1 class="hero-title lang-ja">Meeting Scribeの仕組み</h1>
+      </div>
+      <div class="bi hero-bi">
+        <p class="hero-subtitle lang-en">
+          Real-time multilingual meeting transcription on NVIDIA GB10. Pick any two of 20 supported languages for live translation — 10 of them TTS-capable for synthesized interpretation audio streamed to guests on the local WiFi hotspot — with speaker identification, all running locally on a single device.
+        </p>
+        <p class="hero-subtitle lang-ja">
+          NVIDIA GB10上でリアルタイムの多言語会議文字起こし。対応する20言語から任意のペアを選んでライブ翻訳（うち10言語はTTS対応で、ローカルWiFiホットスポットのゲストへ配信するニアリアルタイムの通訳音声トラックに使えます）、話者識別も搭載し、すべて1台のデバイスでローカルに動作します。
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ THE EXPERIENCE ═══ -->
+    <section class="section" id="experience">
+      <div class="bi-inline">
+        <div class="section-label lang-en">01 — The Experience</div>
+        <div class="section-label lang-ja">01 — 体験</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">One room. Two languages. Everyone understood.</h2>
+        <h2 class="section-title lang-ja">1つの部屋、2つの言語、全員が理解できる。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">
+          The host runs the meeting from a single device. Each utterance is transcribed in its original language and translated into the paired language in real time, with speaker labels attached. Guests connect to the GB10's own WiFi hotspot, open the guest page, pick their preferred language, and hear a near-real-time interpretation audio track spoken back in that language.
+        </p>
+        <p class="section-desc lang-ja">
+          ホストは1台のデバイスで会議を進行します。各発話は原語で文字起こしされ、ペア言語へリアルタイム翻訳され、話者ラベルが付与されます。ゲストはGB10自身のWiFiホットスポットに接続し、ゲストページで希望の言語を選ぶと、ニアリアルタイムの通訳音声トラックをその言語で聴くことができます。
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ PIPELINE OVERVIEW ═══ -->
+    <section class="section pipeline-overview" id="pipeline">
+      <div class="bi-inline">
+        <div class="section-label lang-en">02 — Under the Hood</div>
+        <div class="section-label lang-ja">02 — 内部構造</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">The pipeline</h2>
+        <h2 class="section-title lang-ja">パイプライン</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Five stages, from microphone to screen. Each runs asynchronously, connected by event streams. Audio flows in, translated text flows out on the host display, and a near-real-time interpretation audio track is streamed to any hotspot guest who has opted in.</p>
+        <p class="section-desc lang-ja">マイクから画面まで5つのステージで構成。各ステージは非同期で動作し、イベントストリームで接続。音声が入力され、翻訳テキストがホスト画面に出力され、オプトインしたホットスポットゲストにはニアリアルタイムの通訳音声トラックが配信されます。</p>
+      </div>
+
+      <div class="pipeline-track" style="margin-top:var(--space-lg);">
+        <div class="pipeline-line"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="audio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Audio Capture</span><span class="pipeline-node-label lang-ja">音声キャプチャ</span></div><div class="pipeline-node-sub">16kHz s16le PCM via WebSocket</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="asr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Speech Recognition</span><span class="pipeline-node-label lang-ja">音声認識</span></div><div class="pipeline-node-sub">Qwen3-ASR-1.7B via vLLM</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="translation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Translation</span><span class="pipeline-node-label lang-ja">翻訳</span></div><div class="pipeline-node-sub">Qwen3.6-35B-A3B-FP8 via vLLM</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="speaker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Speaker Identification</span><span class="pipeline-node-label lang-ja">話者識別</span></div><div class="pipeline-node-sub">pyannote 4-speaker diarization</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="tts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Interpretation Audio</span><span class="pipeline-node-label lang-ja">通訳音声</span></div><div class="pipeline-node-sub">Qwen3-TTS-12Hz-0.6B via faster-qwen3-tts</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ ARCHITECTURE DIAGRAM ═══ -->
+    <section class="section" id="architecture">
+      <div class="bi-inline">
+        <div class="section-label lang-en">03 — Architecture</div>
+        <div class="section-label lang-ja">03 — アーキテクチャ</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Service topology</h2>
+        <h2 class="section-title lang-ja">サービス構成</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Four model types run independently on the GB10. The TTS model runs as two replicas (ports 8002 and 8012) with round-robin load balancing to double synthesis throughput, since each replica can only synthesize one utterance at a time. The translation model is shared with the auto-sre coding agent on port 8010 to keep the memory footprint small. The FastAPI application orchestrates them all via HTTP and WebSocket connections.</p>
+        <p class="section-desc lang-ja">4種類のモデルがGB10上で独立して動作します。TTSモデルは2つのレプリカ（ポート8002と8012）でラウンドロビン負荷分散を行い、各レプリカが一度に1つの発話しか合成できないため、合成スループットを2倍にします。翻訳モデルはポート8010でauto-sreのコーディングエージェントと共有し、メモリフットプリントを小さく保ちます。FastAPIアプリケーションがHTTPとWebSocket接続で統合します。</p>
+      </div>
+
+      <div class="topology reveal" aria-label="Service topology — FastAPI app to four model services on the GB10">
+        <div class="topo-grid">
+          <div class="topo-host">
+            <div class="topo-host-label"><span class="lang-en">Application</span><span class="lang-ja">アプリケーション</span></div>
+            <div class="topo-host-name">FastAPI server</div>
+            <div class="topo-host-meta">
+              <code>:8080</code> admin HTTPS<br>
+              <code>:80</code> guest HTTP (hotspot)
+            </div>
+          </div>
+          <div class="topo-services">
+            <div class="topo-service" data-stage="asr">
+              <span class="topo-port">:8003</span>
+              <span class="topo-service-dot" aria-hidden="true"></span>
+              <div>
+                <span class="topo-service-name"><span class="lang-en">Speech recognition</span><span class="lang-ja">音声認識</span></span>
+                <code class="topo-service-model">Qwen3-ASR-1.7B</code>
+              </div>
+              <span class="topo-service-port">vLLM</span>
+            </div>
+            <div class="topo-service" data-stage="translation">
+              <span class="topo-port">:8010</span>
+              <span class="topo-service-dot" aria-hidden="true"></span>
+              <div>
+                <span class="topo-service-name"><span class="lang-en">Translation (shared)</span><span class="lang-ja">翻訳（共有）</span></span>
+                <code class="topo-service-model">Qwen/Qwen3.6-35B-A3B-FP8</code>
+              </div>
+              <span class="topo-service-port">vLLM nightly</span>
+            </div>
+            <div class="topo-service" data-stage="speaker">
+              <span class="topo-port">:8001</span>
+              <span class="topo-service-dot" aria-hidden="true"></span>
+              <div>
+                <span class="topo-service-name"><span class="lang-en">Diarization</span><span class="lang-ja">ダイアライゼーション</span></span>
+                <code class="topo-service-model">pyannote speaker-diarization-3.1</code>
+              </div>
+              <span class="topo-service-port">Docker</span>
+            </div>
+            <div class="topo-service" data-stage="tts">
+              <span class="topo-port">:8002 / :8012</span>
+              <span class="topo-service-dot" aria-hidden="true"></span>
+              <div>
+                <span class="topo-service-name"><span class="lang-en">Text-to-speech (×2 replicas)</span><span class="lang-ja">音声合成（×2レプリカ）</span></span>
+                <code class="topo-service-model">Qwen3-TTS-12Hz-0.6B-Base</code>
+              </div>
+              <span class="topo-service-port">faster-qwen3-tts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 1: AUDIO CAPTURE ═══ -->
+    <section class="stage" data-stage="audio" id="audio">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">1</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Audio Capture</h3><h3 class="stage-title lang-ja">音声キャプチャ</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">The browser captures audio from the device microphone using the Web Audio API. An <strong>AudioWorklet</strong> processor runs on a dedicated thread, accumulating ~250 ms chunks at the device's native rate (typically 44.1 or 48 kHz) and converting them to <strong>s16le PCM</strong>.</p>
+            <p class="lang-ja">ブラウザはWeb Audio APIでマイクの音声を取得します。専用スレッドで動作する<strong>AudioWorklet</strong>が、デバイスのネイティブレート（通常44.1/48 kHz）で約250 msのチャンクを蓄積し、<strong>s16le PCM</strong>に変換します。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">Each chunk is sent over a WebSocket connection as a binary frame prefixed with a 4-byte little-endian sample-rate header. No JSON, no base64 — pure binary for minimum latency. The server reads the header and resamples to <span class="metric-inline">16 kHz mono</span> using torchaudio's Kaiser-windowed sinc kernel, avoiding the aliasing that browser-side linear interpolation would introduce.</p>
+            <p class="lang-ja">各チャンクはWebSocket接続でバイナリフレームとして送信され、先頭に4バイトのリトルエンディアンのサンプルレートヘッダが付きます。JSONもbase64も使わず、純粋なバイナリで最小レイテンシを実現します。サーバーはヘッダを読み取り、torchaudioのKaiser窓sincカーネルで<span class="metric-inline">16 kHzモノラル</span>にリサンプリングします。これによりブラウザ側の線形補間で発生するエイリアシングを回避します。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">Microphone</span><span class="flow-arrow">→</span>
+            <span class="flow-node">AudioWorklet</span><span class="flow-arrow">→</span>
+            <span class="flow-node">s16le PCM</span><span class="flow-arrow">→</span>
+            <span class="flow-node">WebSocket</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Server Resample 16kHz</span><span class="flow-arrow">→</span>
+            <span class="flow-node">ASR</span>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">Why server-side resampling?</div><div class="callout-title lang-ja">なぜサーバー側でリサンプリング？</div></div>
+            <div class="bi">
+              <span class="lang-en">Browser JS linear interpolation causes audible aliasing at the frequencies ASR models care about most. Sending native-rate PCM and resampling server-side with a proper anti-aliased sinc kernel gives a single authoritative resample path regardless of client device. The ~3× bandwidth cost at 48 kHz is trivial on local WiFi.</span>
+              <span class="lang-ja">ブラウザJSの線形補間は、ASRモデルが最も重視する周波数帯でエイリアシングを引き起こします。ネイティブレートのPCMをそのまま送信し、アンチエイリアス済みのsincカーネルでサーバー側リサンプリングを行うことで、クライアント端末によらず単一の正規リサンプル経路を確保できます。48 kHzでの3倍のバンド幅増はローカルWiFiでは問題になりません。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 2: SPEECH RECOGNITION ═══ -->
+    <section class="stage" data-stage="asr" id="asr">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">2</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Speech Recognition</h3><h3 class="stage-title lang-ja">音声認識</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en"><strong>Qwen3-ASR-1.7B</strong> runs via vLLM on port 8003, providing streaming speech recognition with 52-language support. Incoming 16 kHz audio accumulates in a <span class="metric-inline">1.5-second</span> buffer. When the buffer fills, a simple RMS energy gate decides whether it contains speech; if so, it is sent to vLLM for transcription with automatic language detection — no manual language selection required.</p>
+            <p class="lang-ja"><strong>Qwen3-ASR-1.7B</strong>がvLLM経由でポート8003で動作し、52言語対応のストリーミング音声認識を提供します。受信した16 kHz音声は<span class="metric-inline">1.5秒</span>のバッファに蓄積され、バッファが満たされると簡易なRMSエネルギーゲートで音声有無を判定し、音声が含まれていれば自動言語判別付きでvLLMに送信します。手動での言語選択は不要です。対応する会議言語は20登録済み（うちTTS対応10、翻訳専用10）です。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">The model produces transcript segments with language tags. Meeting Scribe supports any pair from 20 registered languages: the 10 TTS-capable ones (English, Chinese, Japanese, Korean, French, German, Spanish, Italian, Portuguese, Russian) get full round-trip with synthesized interpretation audio; the 10 translate-only ones (Dutch, Arabic, Thai, Vietnamese, Indonesian, Malay, Hindi, Turkish, Polish, Ukrainian) get ASR + translation only. The language pair is chosen at meeting start and constrains which detected languages get translated.</p>
+            <p class="lang-ja">モデルは言語タグ付きの文字起こしセグメントを生成します。Meeting Scribeは登録済みの20言語から任意のペアをサポートします。TTS対応10言語（英語、中国語、日本語、韓国語、フランス語、ドイツ語、スペイン語、イタリア語、ポルトガル語、ロシア語）はASR→翻訳→合成音声の完全ラウンドトリップ、翻訳専用10言語（オランダ語、アラビア語、タイ語、ベトナム語、インドネシア語、マレー語、ヒンディー語、トルコ語、ポーランド語、ウクライナ語）はASR + 翻訳のみに対応します。言語ペアは会議開始時に選択し、翻訳対象となる検出言語を制限します。</p>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">Hallucination filtering</div><div class="callout-title lang-ja">ハルシネーション対策</div></div>
+            <div class="bi">
+              <span class="lang-en">ASR models sometimes hallucinate during silence or noise. Meeting Scribe applies multi-layer filtering: a block-list of known Whisper-family hallucinations (e.g. "thank you for watching", "ご視聴ありがとうございました"), rejection of segments whose first three words are identical, rejection of text where a single character accounts for over 50% of the content, and rejection of any word longer than 60 characters.</span>
+              <span class="lang-ja">ASRモデルは無音やノイズ区間でハルシネーションを起こすことがあります。Meeting Scribeは多層フィルタで対策します：Whisper系の既知ハルシネーション文（例「thank you for watching」「ご視聴ありがとうございました」）のブロックリスト、先頭3単語が同一のセグメントの除去、1文字がテキスト全体の50%超を占める場合の除去、60文字を超える単語を含むセグメントの除去。</span>
+            </div>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">1.5s buffer</span><span class="flow-arrow">→</span>
+            <span class="flow-node">VAD</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Qwen3-ASR</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Filter</span><span class="flow-arrow">→</span>
+            <span class="flow-node">TranscriptEvent</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 3: TRANSLATION ═══ -->
+    <section class="stage" data-stage="translation" id="translation">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">3</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Translation</h3><h3 class="stage-title lang-ja">翻訳</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en"><strong>Qwen/Qwen3.6-35B-A3B-FP8</strong> serves multilingual translation via vLLM on port 8010, supporting any pair from the 20 registered languages. If you also run <a href="https://github.com/sddcinfo/auto-sre">auto-sre</a> on the same box, both point at this endpoint, keeping the resident memory footprint small. The live system prompt anchors the model with two meeting-scoped few-shot exemplars on the EN↔JA path — the direction with validated quality numbers — and falls back to a generic professional-translator prompt for every other pair. Finalized transcript segments enter a <strong>merge gate</strong> that briefly holds and combines adjacent utterances from the same speaker in the same language within a 2-second gap — reducing translation overhead for short, fragmented speech.</p>
+            <p class="lang-ja"><strong>Qwen/Qwen3.6-35B-A3B-FP8</strong>がvLLM経由でポート8010で多言語翻訳を提供し、登録済み20言語から任意のペアに対応します。同じ端末で<a href="https://github.com/sddcinfo/auto-sre">auto-sre</a>も動かす場合、両者が同じエンドポイントを参照し、常駐メモリを小さく抑えられます。ライブのシステムプロンプトには、品質を検証済みのEN↔JA方向に対して、会議スタイルの少数例（few-shot）を2件埋め込み、それ以外のペアでは汎用のプロフェッショナル翻訳者プロンプトにフォールバックします。確定した文字起こしセグメントは<strong>マージゲート</strong>に入り、同一話者・同一言語・2秒以内の隣接発話を結合。短い断片的な発話の翻訳オーバーヘッドを削減します。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">Merged segments are placed in an async queue with <span class="metric-inline">4 concurrent workers</span>, a capacity of 50 items, and a 30-second timeout per translation. When the queue is full, the oldest unstarted item is dropped — the system never falls behind during sustained conversation. The live path is intentionally <em>stateless</em> per request to honour the ~400 ms latency SLO; longer-context anchoring lives on the trailing refinement path described in section 05.</p>
+            <p class="lang-ja">結合されたセグメントは非同期キューに入れられます。<span class="metric-inline">並行ワーカー4本</span>、最大50アイテム、翻訳あたり30秒のタイムアウト。満杯時は未着手の最古アイテムを破棄するため、連続的な会話中でもリアルタイム性が維持されます。ライブ経路は約400 msのレイテンシSLOを守るため、リクエストごとに<em>ステートレス</em>です。長めのコンテキスト参照は、セクション05で説明する追従型リファインメント経路で行います。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">TranscriptEvent</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Merge Gate</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Async Queue</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Qwen3.6-FP8 vLLM</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Display</span>
+          </div>
+
+          <div class="bi">
+            <p class="lang-en">Each translation moves through a lifecycle with animated status indicators:</p>
+            <p class="lang-ja">各翻訳はライフサイクルを経て処理され、アニメーション付きインジケータで表示されます：</p>
+          </div>
+
+          <div class="lifecycle">
+            <div class="lifecycle-state"><span class="lifecycle-dot pending"></span>pending</div>
+            <span class="lifecycle-arrow"></span>
+            <div class="lifecycle-state"><span class="lifecycle-dot in-progress"></span>in_progress</div>
+            <span class="lifecycle-arrow"></span>
+            <div class="lifecycle-state"><span class="lifecycle-dot done"></span>done</div>
+            <span class="lifecycle-arrow" data-kind="or"></span>
+            <div class="lifecycle-state"><span class="lifecycle-dot failed"></span>failed</div>
+            <span class="lifecycle-arrow" data-kind="or"></span>
+            <div class="lifecycle-state"><span class="lifecycle-dot skipped"></span>skipped</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 4: SPEAKER IDENTIFICATION ═══ -->
+    <section class="stage" data-stage="speaker" id="speaker">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">4</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Speaker Identification</h3><h3 class="stage-title lang-ja">話者識別</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en"><strong>pyannote.audio</strong> neural diarization runs as a Docker container on port 8001, supporting up to 4 concurrent speakers. The model performs GPU-accelerated speaker clustering, assigning each audio segment to a distinct speaker identity in real time.</p>
+            <p class="lang-ja"><strong>pyannote.audio</strong>ニューラルダイアライゼーションがDockerコンテナとしてポート8001で動作し、最大4人の同時話者に対応。GPUで高速話者クラスタリングを行い、各音声セグメントをリアルタイムで話者に割り当てます。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">Before a meeting begins, participants can enroll their voice by speaking for 3-10 seconds. For speaker naming, the same <strong>Qwen3.6-35B</strong> instance that handles translation extracts names from transcript context via LLM inference — when a speaker introduces themselves or is addressed by name, the system automatically assigns the name to their voice cluster.</p>
+            <p class="lang-ja">会議の開始前に、参加者は3〜10秒の発話で声を登録できます。話者名の特定には、翻訳に使うのと同じ<strong>Qwen3.6-35B</strong>インスタンスが、文字起こしコンテキストからLLM推論で名前を抽出。自己紹介や名前で呼ばれた際に、自動的に声のクラスタに名前を割り当てます。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">Enrollment</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Voice Embedding</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Voiceprint</span>
+          </div>
+          <div class="flow" style="margin-top:var(--space-sm);">
+            <span class="flow-node">Live audio</span><span class="flow-arrow">→</span>
+            <span class="flow-node">pyannote</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Cluster match</span><span class="flow-arrow">→</span>
+            <span class="flow-node">LLM name extraction</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Named speaker</span>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">Optional by design</div><div class="callout-title lang-ja">任意の機能として設計</div></div>
+            <div class="bi">
+              <span class="lang-en">Speaker identification is entirely optional. Meetings can start without enrollment — speakers get cluster labels (Speaker 1, 2) based on voice similarity. Names can be added anytime, or the LLM will extract them automatically from conversation context.</span>
+              <span class="lang-ja">話者識別は完全にオプションです。登録なしで会議を開始でき、声の類似性に基づいてクラスタラベル（話者1、話者2）が自動割り当て。名前はいつでも追加でき、LLMが会話コンテキストから自動抽出することもできます。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ STAGE 5: INTERPRETATION AUDIO ═══ -->
+    <section class="stage" data-stage="tts" id="tts">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">5</div>
+          <div class="bi-inline"><h3 class="stage-title lang-en">Interpretation Audio</h3><h3 class="stage-title lang-ja">通訳音声</h3></div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">Once a translation is finalized, <strong>Qwen3-TTS-12Hz-0.6B-Base</strong> — served by faster-qwen3-tts on port 8002 — synthesizes the translated text into a near-real-time audio track. The track is streamed as WAV frames over a dedicated <code>/api/ws/audio-out</code> WebSocket to guests connected on the GB10's local WiFi hotspot, letting each guest hear the meeting interpreted into their chosen language.</p>
+            <p class="lang-ja">翻訳が確定すると、ポート8002のfaster-qwen3-tts経由で<strong>Qwen3-TTS-12Hz-0.6B-Base</strong>が翻訳テキストをニアリアルタイムの音声トラックに合成します。このトラックは専用の<code>/api/ws/audio-out</code> WebSocketでWAVフレームとして配信され、GB10のローカルWiFiホットスポットに接続したゲストは、自分が選んだ言語で会議を聞くことができます。</p>
+          </div>
+
+          <div class="bi">
+            <p class="lang-en">Each guest opens the guest page, taps <strong>Listen</strong>, and picks a language. The audio-out socket is restricted to hotspot clients by the server middleware — it is not exposed to public networks. Guests can also switch between <em>translation only</em> and <em>full interpretation</em> (which also passes through the original speaker's audio for utterances in their chosen language).</p>
+            <p class="lang-ja">ゲストはゲストページを開き、<strong>Listen</strong>をタップして言語を選択します。Audio-outソケットはサーバーのミドルウェアによってホットスポットクライアントのみに制限されており、公開ネットワークには公開されません。ゲストは<em>翻訳のみ</em>モードと、<em>フル通訳</em>モード（選択言語の原音もそのまま流れる）を切り替えることもできます。</p>
+          </div>
+
+          <div class="flow">
+            <span class="flow-node">Translation</span><span class="flow-arrow">→</span>
+            <span class="flow-node">faster-qwen3-tts</span><span class="flow-arrow">→</span>
+            <span class="flow-node">WAV frame</span><span class="flow-arrow">→</span>
+            <span class="flow-node">ws/audio-out</span><span class="flow-arrow">→</span>
+            <span class="flow-node">Guest device</span>
+          </div>
+
+          <div class="callout">
+            <div class="bi-inline"><div class="callout-title lang-en">GPU on demand</div><div class="callout-title lang-ja">必要なときだけGPU</div></div>
+            <div class="bi">
+              <span class="lang-en">TTS synthesis is only invoked while at least one guest is actively listening. If no hotspot client has the audio-out socket open, the stage is skipped entirely — no GPU cycles spent on audio nobody will hear. A single-slot semaphore + newest-segment-wins scheduler keeps the queue from falling behind, so guests always hear the latest finalized translation rather than a stale backlog.</span>
+              <span class="lang-ja">TTS合成は少なくとも1人のゲストが実際に聴いているときだけ実行されます。ホットスポットクライアントが誰もaudio-outソケットを開いていなければ、このステージは完全にスキップされ、誰も聞かない音声のためにGPUサイクルを消費しません。シングルスロットのセマフォと「最新セグメント優先」のスケジューラにより、キューが遅延せず、ゲストは常に最新の確定翻訳を聞けます。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ WIFI HOTSPOT & CLIENT ACCESS ═══ -->
+    <section class="section" id="network">
+      <div class="bi-inline">
+        <div class="section-label lang-en">04 — Network Access</div>
+        <div class="section-label lang-ja">04 — ネットワークアクセス</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">WiFi hotspot and client access</h2>
+        <h2 class="section-title lang-ja">WiFiホットスポットとクライアントアクセス</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">The GB10 creates its own WiFi hotspot via <code>meeting-scribe wifi up</code>, turning a single device into a self-contained meeting server. A QR code is displayed on the host page for quick connection. A captive portal automatically redirects connected guests to the guest live view — no URL entry needed.</p>
+        <p class="section-desc lang-ja">GB10が<code>meeting-scribe wifi up</code>で独自のWiFiホットスポットを作成し、1台のデバイスで自己完結型の会議サーバーになります。ホストページにQRコードを表示して簡単に接続可能。キャプティブポータルが接続したゲストを自動的にゲストライブビューへリダイレクトします。</p>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Server-side middleware restricts guest traffic to a small whitelist: the captive-portal probes, the guest page, the public <code>/api/status</code> + <code>/api/languages</code> endpoints, the read-only transcript WebSocket, and the <code>/api/ws/audio-out</code> interpretation-audio socket. Admin controls, meeting history and other static assets are blocked for hotspot clients. For outbound internet during meetings, iPhone USB tethering provides an upstream path without interfering with the local hotspot network.</p>
+        <p class="section-desc lang-ja">サーバーサイドのミドルウェアはゲストトラフィックを小さなホワイトリストに制限します：キャプティブポータルのプローブ、ゲストページ、パブリックな<code>/api/status</code>と<code>/api/languages</code>、読み取り専用の文字起こしWebSocket、通訳音声用の<code>/api/ws/audio-out</code>ソケットのみです。管理操作や会議履歴、その他の静的アセットはホットスポットクライアントからブロックされます。会議中の外部インターネットにはiPhoneのUSBテザリングを使用し、ローカルホットスポットネットワークに干渉せずにアップストリーム経路を確保します。</p>
+      </div>
+
+      <div class="flow">
+        <span class="flow-node">GB10 Hotspot</span><span class="flow-arrow">→</span>
+        <span class="flow-node">QR Code</span><span class="flow-arrow">→</span>
+        <span class="flow-node">Client WiFi</span><span class="flow-arrow">→</span>
+        <span class="flow-node">Captive Portal</span><span class="flow-arrow">→</span>
+        <span class="flow-node">Meeting Page</span>
+      </div>
+    </section>
+
+    <!-- ═══ POST-MEETING PROCESSING ═══ -->
+    <section class="section" id="post-meeting">
+      <div class="bi-inline">
+        <div class="section-label lang-en">05 — Post-Meeting</div>
+        <div class="section-label lang-ja">05 — 会議後処理</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">From live to polished</h2>
+        <h2 class="section-title lang-ja">ライブから完成版へ</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Raw PCM audio is always preserved — every meeting has a complete audio record. The optional <strong>refinement worker</strong> trails live transcription by 45 seconds and re-processes 10-second batches at higher quality, then translates each batch with a rolling window of recent meeting context folded into the system prompt. The context window (default 4 prior segments) anchors the LLM on the meeting's running topic, speakers, and proper-nouns so fragmented utterances — common in Japanese, where subjects drop and sentences trail off in particles — are translated faithfully rather than hallucinated into free-standing English sentences. Quality and the latency/token-cost trade-off were measured by the 2026-04-19 sweep against a real meeting; window=4 is the production sweet spot.</p>
+        <p class="section-desc lang-ja">生のPCM音声は常に保存され、全ての会議に完全な音声記録があります。オプションの<strong>リファインメントワーカー</strong>はライブ文字起こしを45秒遅れで追従し、10秒バッチで高品質に再処理してから、直近の会議コンテキスト（デフォルト4セグメント）をシステムプロンプトに組み込んで翻訳します。これにより、話題・話者・固有名詞にLLMをアンカーし、主語が落ちたり助詞で途切れたりしがちな日本語の断片的な発話も、英文として勝手に補完するのではなく忠実に翻訳されます。品質とレイテンシ／トークンコストのトレードオフは、2026-04-19の実会議スイープで計測しており、window=4が本番のスイートスポットです。</p>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">When enabled, the polished transcript (<code>polished.json</code>) lands alongside the live journal and includes speaker lanes, detected speaker names, and a full timeline.  The worker itself is gated by a server config knob (<code>refinement_context_window_segments</code>); the live path is sufficient for most meetings, so refinement is opt-in for use cases that visibly read the polished pane. Either way, after the meeting stops a podcast-style player with speaker timeline and transcript playback becomes available for review.</p>
+        <p class="section-desc lang-ja">有効化すると、ポリッシュされた文字起こし（<code>polished.json</code>）がライブジャーナルと並んで生成され、話者レーン、検出された話者名、完全なタイムラインが含まれます。ワーカー自体はサーバーの設定（<code>refinement_context_window_segments</code>）でゲートされており、ほとんどの会議ではライブ経路で十分なため、リファインメントはポリッシュ画面を実際に読むユースケース向けにオプトインです。いずれにせよ会議終了後には、話者タイムラインと文字起こし再生付きのポッドキャストスタイルプレーヤーでレビューできます。</p>
+      </div>
+    </section>
+
+    <!-- ═══ DATA FLOW ═══ -->
+    <section class="section" id="data-flow">
+      <div class="bi-inline">
+        <div class="section-label lang-en">06 — Data Flow</div>
+        <div class="section-label lang-ja">06 — データフロー</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Lifecycle of a meeting</h2>
+        <h2 class="section-title lang-ja">会議のライフサイクル</h2>
+      </div>
+
+      <div class="pipeline-track" style="margin-top:var(--space-lg);">
+        <div class="pipeline-line"></div>
+
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="audio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Room Setup</span><span class="pipeline-node-label lang-ja">ルーム設定</span></div><div class="pipeline-node-sub">Drag tables/seats, enroll speakers</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="asr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Start Meeting</span><span class="pipeline-node-label lang-ja">会議開始</span></div><div class="pipeline-node-sub">Audio recording begins, ASR processes live</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="translation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Live Transcription</span><span class="pipeline-node-label lang-ja">ライブ文字起こし</span></div><div class="pipeline-node-sub">Bilingual transcript with inline translations</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="speaker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Speaker Tracking</span><span class="pipeline-node-label lang-ja">話者追跡</span></div><div class="pipeline-node-sub">Diarization assigns speakers, names extracted</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="tts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Stop Meeting</span><span class="pipeline-node-label lang-ja">会議終了</span></div><div class="pipeline-node-sub">Refinement processes remaining audio</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="display"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Review</span><span class="pipeline-node-label lang-ja">レビュー</span></div><div class="pipeline-node-sub">Podcast player, speaker timeline, transcript playback</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ HARDWARE ═══ -->
+    <section class="section" id="hardware">
+      <div class="bi-inline">
+        <div class="section-label lang-en">07 — Hardware</div>
+        <div class="section-label lang-ja">07 — ハードウェア</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">NVIDIA GB10</h2>
+        <h2 class="section-title lang-ja">NVIDIA GB10</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Meeting Scribe runs on a single NVIDIA GB10 — a Grace CPU paired with a Blackwell GPU sharing 128 GB of unified memory. Weights for the full model stack add up to roughly 47 GB (ASR + Qwen3.6-FP8 translation + diarization + dual TTS). Under the production vLLM recipe (<code>gpu_memory_utilization=0.70</code>) the translation server reserves additional headroom for the KV cache; total VRAM utilisation runs around 93% at steady state with all five containers co-resident. The translation model is shared with the auto-sre coding agent rather than loaded twice.</p>
+        <p class="section-desc lang-ja">Meeting Scribeは1台のNVIDIA GB10上で動作します。Grace CPUとBlackwell GPUが128 GBのユニファイドメモリを共有します。フルモデルスタックの重みは合計で約47 GB（ASR + Qwen3.6-FP8翻訳 + ダイアライゼーション + TTS×2）です。本番のvLLMレシピ（<code>gpu_memory_utilization=0.70</code>）では、翻訳サーバーがKVキャッシュ用にさらに余裕を確保するため、5つのコンテナを同居させた定常状態のVRAM使用率は約93%になります。翻訳モデルは2回ロードせず、auto-sreのコーディングエージェントと共有します。</p>
+      </div>
+
+      <!-- GB10 spec card grid — the hardware anchor points that
+           explain why every other number on the page lands where it
+           does (128 GB pool → 0.70 utilisation → 89 GB vLLM
+           reservation, 273 GB/s memory bandwidth, SM121 = Blackwell
+           architecture with its own FP8 kernel quirks). -->
+      <div class="spec-grid reveal" aria-label="NVIDIA GB10 specifications">
+        <div class="spec-card">
+          <div class="spec-card-label">GPU</div>
+          <div class="spec-card-value">NVIDIA Blackwell</div>
+          <div class="spec-card-meta">SM121 architecture</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-card-label">CPU</div>
+          <div class="spec-card-value">NVIDIA Grace</div>
+          <div class="spec-card-meta">20 cores · ARM64</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-card-label"><span class="lang-en">Unified memory</span><span class="lang-ja">ユニファイドメモリ</span></div>
+          <div class="spec-card-value">128 GB</div>
+          <div class="spec-card-meta">LPDDR5X · 273 GB/s</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-card-label"><span class="lang-en">Stack</span><span class="lang-ja">スタック</span></div>
+          <div class="spec-card-value">CUDA 13.0</div>
+          <div class="spec-card-meta">vLLM 0.19.1 · driver 580.126</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ RESOURCE REQUIREMENTS ═══ -->
+    <section class="resources-section stage" data-stage="resources" id="resources">
+      <div class="bi-inline">
+        <div class="section-label lang-en">08 — Resource Requirements</div>
+        <div class="section-label lang-ja">08 — 必要リソース</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Model stack</h2>
+        <h2 class="section-title lang-ja">モデルスタック</h2>
+      </div>
+
+      <div class="resource-table-wrap">
+        <table class="resource-table">
+          <thead>
+            <tr>
+              <th><span class="lang-en">Component</span><span class="lang-ja">コンポーネント</span></th>
+              <th><span class="lang-en">Model</span><span class="lang-ja">モデル</span></th>
+              <th><span class="lang-en">Memory</span><span class="lang-ja">メモリ</span></th>
+              <th><span class="lang-en">Port</span><span class="lang-ja">ポート</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ASR</td>
+              <td>Qwen3-ASR-1.7B</td>
+              <td><span class="mv">~5 GB</span></td>
+              <td><span class="mv">8003</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Translation (shared)</span><span class="lang-ja">翻訳（共有）</span></td>
+              <td>Qwen/Qwen3.6-35B-A3B-FP8</td>
+              <td><span class="mv">~35 GB weights</span></td>
+              <td><span class="mv">8010</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Diarization</span><span class="lang-ja">ダイアライゼーション</span></td>
+              <td>pyannote speaker-diarization-3.1</td>
+              <td><span class="mv">~2 GB</span></td>
+              <td><span class="mv">8001</span></td>
+            </tr>
+            <tr>
+              <td>TTS <span class="lang-en">(×2 replicas)</span><span class="lang-ja">（×2レプリカ）</span></td>
+              <td>Qwen3-TTS-12Hz-0.6B-Base</td>
+              <td><span class="mv">~5 GB total</span></td>
+              <td><span class="mv">8002, 8012</span></td>
+            </tr>
+            <tr class="total-row">
+              <td><strong><span class="lang-en">Weights total</span><span class="lang-ja">重みの合計</span></strong></td>
+              <td></td>
+              <td><strong><span class="mv">~47 GB</span></strong></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">+ vLLM KV cache reservation</span><span class="lang-ja">＋vLLM KVキャッシュ予約</span></td>
+              <td><span class="lang-en">at <code>gpu_memory_utilization=0.70</code></span><span class="lang-ja"><code>gpu_memory_utilization=0.70</code>時</span></td>
+              <td><strong><span class="mv">~89 GB</span></strong></td>
+              <td></td>
+            </tr>
+            <tr class="total-row">
+              <td><strong><span class="lang-en">Steady-state VRAM</span><span class="lang-ja">定常VRAM使用</span></strong></td>
+              <td></td>
+              <td><strong><span class="mv">~117 GB / 128 GB (≈93%)</span></strong></td>
+              <td></td>
+            </tr>
+            <tr class="group-row">
+              <td colspan="4"><span class="lang-en">System Requirements</span><span class="lang-ja">システム要件</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Recommended</span><span class="lang-ja">推奨</span></td>
+              <td></td>
+              <td><strong><span class="mv">128 GB</span></strong> <span class="lang-en">(GB10 unified memory)</span><span class="lang-ja">（GB10ユニファイドメモリ）</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Minimum (with reduced models)</span><span class="lang-ja">最小（軽量モデル使用時）</span></td>
+              <td></td>
+              <td><strong><span class="mv">64 GB</span></strong></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Memory-budget bar: visualises how the 128 GB unified pool is
+           apportioned across the model stack at steady state.  Segment
+           widths are percentages of 128 GB; values match the resource
+           table above and the recipe at
+           autosre/backends/recipes/qwen3.6-fp8-nightly.yaml. -->
+      <div class="memory-budget reveal" aria-label="Steady-state memory budget across the GB10 unified pool">
+        <div class="memory-budget-title">
+          <span><span class="lang-en">Unified-memory budget — steady state</span><span class="lang-ja">ユニファイドメモリの内訳（定常）</span></span>
+          <span class="memory-budget-total">128 GB total · ~117 GB (≈93%) used</span>
+        </div>
+        <div class="memory-bar" role="img" aria-label="Memory allocation: ASR 4%, translation weights 27%, KV cache reservation 42%, diarization 2%, TTS 4%, headroom 21%">
+          <span class="memory-bar-segment" data-stage="asr"         style="flex-basis: 3.9%;"  title="ASR — Qwen3-ASR-1.7B (~5 GB)"></span>
+          <span class="memory-bar-segment" data-stage="translation" style="flex-basis: 27.3%;" title="Translation weights — Qwen3.6-FP8 (~35 GB)"></span>
+          <span class="memory-bar-segment" data-stage="kv"          style="flex-basis: 42.2%;" title="vLLM KV-cache reservation (~54 GB beyond weights at gpu_memory_utilization=0.70)"></span>
+          <span class="memory-bar-segment" data-stage="speaker"     style="flex-basis: 1.6%;"  title="Diarization — pyannote 3.1 (~2 GB)"></span>
+          <span class="memory-bar-segment" data-stage="tts"         style="flex-basis: 3.9%;"  title="TTS pool — Qwen3-TTS ×2 replicas (~5 GB)"></span>
+          <span class="memory-bar-segment" data-stage="headroom"    style="flex-basis: 21.1%;" title="Free headroom — OS + container + co-resident workloads (~27 GB)"></span>
+        </div>
+        <div class="memory-legend">
+          <span class="memory-legend-item"><span class="memory-legend-swatch" data-stage="asr"></span>ASR <span class="memory-legend-pct">~5 GB</span></span>
+          <span class="memory-legend-item"><span class="memory-legend-swatch" data-stage="translation"></span><span class="lang-en">Translation weights</span><span class="lang-ja">翻訳重み</span> <span class="memory-legend-pct">~35 GB</span></span>
+          <span class="memory-legend-item"><span class="memory-legend-swatch" data-stage="kv"></span><span class="lang-en">KV cache</span><span class="lang-ja">KVキャッシュ</span> <span class="memory-legend-pct">~54 GB</span></span>
+          <span class="memory-legend-item"><span class="memory-legend-swatch" data-stage="speaker"></span><span class="lang-en">Diarization</span><span class="lang-ja">ダイアライゼーション</span> <span class="memory-legend-pct">~2 GB</span></span>
+          <span class="memory-legend-item"><span class="memory-legend-swatch" data-stage="tts"></span>TTS <span class="memory-legend-pct">~5 GB</span></span>
+          <span class="memory-legend-item"><span class="memory-legend-swatch" data-stage="headroom"></span><span class="lang-en">Headroom</span><span class="lang-ja">ヘッドルーム</span> <span class="memory-legend-pct">~27 GB</span></span>
+        </div>
+      </div>
+
+      <div class="resource-notes">
+        <div class="resource-note">
+          <div class="resource-note-title"><span class="resource-note-dot" style="background:var(--text-accent)"></span> <span class="lang-en">GB10 Unified Memory</span><span class="lang-ja">GB10ユニファイドメモリ</span></div>
+          <div class="bi">
+            <span class="lang-en">The GB10's 128 GB unified memory is shared between the Grace CPU and Blackwell GPU. All inference servers load their models into this shared pool. The TTS model runs as two replicas for round-robin throughput, and the translation model on port 8010 is shared with the auto-sre coding agent rather than loaded twice. The headroom that remains after vLLM's KV-cache reservation absorbs scribe's ASR/TTS buffers and any co-resident workloads.</span>
+            <span class="lang-ja">GB10の128 GBユニファイドメモリはGrace CPUとBlackwell GPUで共有されます。すべての推論サーバーがこの共有プールにモデルをロードします。TTSモデルはラウンドロビン・スループットのために2つのレプリカとして動作し、ポート8010の翻訳モデルはauto-sreのコーディングエージェントと共有されます。vLLMのKVキャッシュ予約後に残るヘッドルームで、scribeのASR／TTSバッファや同居ワークロードを吸収します。</span>
+          </div>
+        </div>
+        <div class="resource-note">
+          <div class="resource-note-title"><span class="resource-note-dot" style="background:var(--text-accent)"></span> <span class="lang-en">Translation recipe — production-hardened</span><span class="lang-ja">翻訳レシピ — 本番向け強化済み</span></div>
+          <div class="bi">
+            <span class="lang-en">Production runs <code>vllm/vllm-openai:nightly</code> with <code>--attention-backend=flashinfer</code>, <code>--quantization=fp8</code>, <code>max_num_seqs=8</code>, <code>max_num_batched_tokens=4096</code>. Two stability env vars are required on GB10 / SM121 to cover a known cuBLAS internal-error path in the MoE router gate's BF16 GEMM under burst concurrency: <code>CUBLAS_WORKSPACE_CONFIG=:4096:8</code> (pre-sizes eight 4 MiB workspaces) and <code>VLLM_MARLIN_USE_ATOMIC_ADD=1</code>. The recipe lives at <code>repos/auto-sre/autosre/backends/recipes/qwen3.6-fp8-nightly.yaml</code>; the rationale is documented in <code>reports/reliability/cublas_crash_2026-04-18.md</code>.</span>
+            <span class="lang-ja">本番は<code>vllm/vllm-openai:nightly</code>を<code>--attention-backend=flashinfer</code>、<code>--quantization=fp8</code>、<code>max_num_seqs=8</code>、<code>max_num_batched_tokens=4096</code>で実行します。GB10／SM121では、バーストな同時実行下のMoEルーターGateのBF16 GEMMで起こるcuBLASの内部エラーを回避するため、2つの安定化環境変数が必須です：<code>CUBLAS_WORKSPACE_CONFIG=:4096:8</code>（8×4 MiBのワークスペースを事前確保）と<code>VLLM_MARLIN_USE_ATOMIC_ADD=1</code>。レシピは<code>repos/auto-sre/autosre/backends/recipes/qwen3.6-fp8-nightly.yaml</code>にあり、根拠は<code>reports/reliability/cublas_crash_2026-04-18.md</code>に記録されています。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="page-footer">
+      <a href="https://github.com/sddcinfo/meeting-scribe" class="footer-cta" target="_blank" rel="noopener">
+        <span class="lang-en">View on GitHub</span>
+        <span class="lang-ja">GitHubで見る</span>
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <div class="footer-attr">meeting scribe — real-time multilingual transcription on NVIDIA GB10</div>
+    </footer>
+
+    <!-- ═══ TERMINOLOGY ═══
+         Reference column for technical terms used inline above.  Frame:
+         editorial — eyebrow + title + lede on the left, dense term list
+         on the right.  Terms in the body link here via .gloss-link.   -->
+    <section class="glossary" id="glossary">
+      <div class="section-inner">
+        <header class="glossary-header">
+          <div>
+            <div class="glossary-eyebrow"><span class="lang-en">09 — Reference</span><span class="lang-ja">09 — 参考</span></div>
+            <h2><span class="lang-en">Terminology</span><span class="lang-ja">用語集</span></h2>
+          </div>
+          <p class="glossary-lede">
+            <span class="lang-en">Every acronym used above, in one place.  The dotted underlines in the body link here.</span>
+            <span class="lang-ja">本文で使われている略語を一箇所にまとめています。本文中の点線下線はこのセクションへのリンクです。</span>
+          </p>
+        </header>
+        <dl class="glossary-grid">
+          <div class="glossary-item" id="gloss-asr">
+            <dt>ASR</dt>
+            <dd><span class="lang-en">Automatic Speech Recognition — converts spoken audio into text.  Meeting Scribe uses <code>Qwen3-ASR-1.7B</code>.</span><span class="lang-ja">自動音声認識 — 音声をテキストに変換。<code>Qwen3-ASR-1.7B</code>を使用。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-tts">
+            <dt>TTS</dt>
+            <dd><span class="lang-en">Text-to-Speech — synthesises natural speech from text.  <code>Qwen3-TTS-12Hz-0.6B-Base</code> drives the interpretation audio track for hotspot guests.</span><span class="lang-ja">テキスト音声合成 — テキストから自然な音声を生成。<code>Qwen3-TTS-12Hz-0.6B-Base</code>がホットスポットゲスト向け通訳音声を生成。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-vllm">
+            <dt>vLLM</dt>
+            <dd><span class="lang-en">High-throughput inference engine for large language models.  Serves Qwen3-ASR on <code>:8003</code> and the shared Qwen3.6-FP8 translation model on <code>:8010</code> via an OpenAI-compatible API.  TTS uses two <code>faster-qwen3-tts</code> replicas on <code>:8002</code> + <code>:8012</code>.</span><span class="lang-ja">LLM向けの高スループット推論エンジン。<code>:8003</code>でQwen3-ASR、<code>:8010</code>で共有Qwen3.6-FP8翻訳モデルをOpenAI互換APIで提供。TTSは<code>:8002</code>と<code>:8012</code>の2レプリカ。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-pcm">
+            <dt>PCM</dt>
+            <dd><span class="lang-en">Pulse-Code Modulation — raw uncompressed digital audio.  Meeting audio is captured as 16-bit signed PCM at 16 kHz.</span><span class="lang-ja">パルス符号変調 — 非圧縮デジタル音声。16 kHzの16ビット符号付きPCMで収録。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-moe">
+            <dt>MoE</dt>
+            <dd><span class="lang-en">Mixture of Experts — model architecture that activates only a subset of parameters per token.  Lets a 35 B-parameter model run at ~3 B-active compute cost on the GB10.</span><span class="lang-ja">Mixture of Experts — トークンごとに一部のパラメータだけを活性化する構造。35 Bパラメータのモデルを実効~3 BのコストでGB10上で動作させます。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-fp8">
+            <dt>FP8</dt>
+            <dd><span class="lang-en">8-bit floating-point weights.  The Qwen3.6 production checkpoint ships natively in FP8; vLLM auto-detects the quant and serves it through the Triton FP8 GEMM path on SM121.</span><span class="lang-ja">8ビット浮動小数点重み。Qwen3.6本番チェックポイントはFP8でリリースされており、vLLMが量子化を自動検出してSM121のTriton FP8 GEMMパスで動作させます。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-kv">
+            <dt>KV cache</dt>
+            <dd><span class="lang-en">vLLM's per-request key/value tensors holding the running attention state.  Reserved up-front based on <code>gpu_memory_utilization</code>; the dominant non-weight memory cost in the steady-state budget.</span><span class="lang-ja">推論中のアテンション状態を保持するキー／バリューテンソル。<code>gpu_memory_utilization</code>に基づいて事前確保され、重み以外の主要メモリ消費要因。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-vram">
+            <dt>VRAM</dt>
+            <dd><span class="lang-en">Video RAM — GPU memory used for model inference.  The GB10 unifies 128 GB across the Grace CPU and Blackwell GPU.</span><span class="lang-ja">ビデオRAM — 推論に使用するGPUメモリ。GB10はGrace CPUとBlackwell GPUで128 GBを共有プールとして共有。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-websocket">
+            <dt>WebSocket</dt>
+            <dd><span class="lang-en">Persistent bidirectional browser-server connection.  Used for binary PCM ingestion, live transcript delivery, and the read-only audio-out socket to hotspot guests.</span><span class="lang-ja">ブラウザとサーバー間の永続双方向接続。バイナリPCMの取り込み、ライブ文字起こしの配信、ホットスポットゲスト向け読み取り専用オーディオアウトに使用。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-diarization">
+            <dt>Diarization</dt>
+            <dd><span class="lang-en">"Who spoke when" — clustering audio segments by voice characteristics.  Powered by <code>pyannote.audio 3.1</code> on its own port-8001 container.</span><span class="lang-ja">「いつ誰が話したか」 — 音声特徴で発話を話者ごとにクラスタ化。<code>pyannote.audio 3.1</code>がポート8001の専用コンテナで動作。</span></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/how-it-works.js?v=20260419e"></script>
+</body>
+</html>

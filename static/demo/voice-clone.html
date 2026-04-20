@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Clone Demo — Meeting Scribe</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg-card: #181b24;
+      --bg-raised: #1e2230;
+      --border: #2a2e3d;
+      --text: #e8eaf0;
+      --text-secondary: #9ca3b8;
+      --text-muted: #5f6580;
+      --primary: #4a9eff;
+      --primary-dim: #2d5f99;
+      --success: #4ade80;
+      --recording: #ef4444;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 640px;
+      width: 100%;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    header h1 span { color: var(--primary); }
+    header p {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-title .step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary-dim);
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #5aa8ff; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-record {
+      background: var(--recording);
+      color: #fff;
+      width: 100%;
+    }
+    .btn-record:hover { background: #f87171; }
+    .btn-record.recording {
+      animation: pulse-rec 1s ease-in-out infinite;
+    }
+    @keyframes pulse-rec {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+
+    .record-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .record-viz {
+      width: 100%;
+      height: 40px;
+      background: var(--bg-raised);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+    .record-viz-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-dim), var(--primary));
+      width: 0%;
+      transition: width 0.1s;
+      border-radius: var(--radius-sm);
+    }
+    .record-status {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      min-height: 1.2em;
+    }
+    .record-status.active { color: var(--recording); }
+    .record-status.done { color: var(--success); }
+
+    .prompt-sentence {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.85rem;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text);
+      font-style: italic;
+    }
+    .prompt-hint {
+      display: block;
+      font-style: normal;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      letter-spacing: 0.02em;
+    }
+
+    .text-input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .text-input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-raised);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      resize: vertical;
+      min-height: 60px;
+      transition: border-color 0.15s;
+    }
+    .text-input:focus { outline: none; border-color: var(--primary); }
+    .text-input::placeholder { color: var(--text-muted); }
+
+    .lang-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .lang-row label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .lang-select {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-raised);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .result-card {
+      display: none;
+    }
+    .result-card.visible { display: block; }
+    .result-row {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+    .result-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .result-text.translated { color: var(--primary); }
+
+    .play-btn-row {
+      display: flex;
+      gap: 0.75rem;
+      padding-top: 0.75rem;
+    }
+
+    .status-bar {
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      min-height: 2em;
+    }
+    .status-bar.error { color: var(--recording); }
+    .status-bar.processing { color: var(--primary); }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--text-secondary); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-tts { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }
+    .badge-offline { background: color-mix(in srgb, var(--recording) 15%, transparent); color: var(--recording); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/demo" class="back-link">&larr; Back to Demos</a>
+
+    <header>
+      <h1>Voice <span>Clone</span> Demo</h1>
+      <p>Record your voice, type or speak a sentence, choose a target language, and hear yourself speak it — in real time, with your own voice.</p>
+      <div style="margin-top:0.75rem">
+        <span class="badge badge-tts" id="badge-tts">Checking TTS...</span>
+      </div>
+    </header>
+
+    <!-- Step 1: Record voice reference -->
+    <div class="card">
+      <div class="card-title"><span class="step">1</span> Record Your Voice (5 seconds)</div>
+      <div class="prompt-sentence" id="prompt-sentence">
+        "The birch canoe slid on the smooth planks. Glue the sheet to the dark blue background."
+        <span class="prompt-hint">Read this sentence out loud at a natural pace — it's phonetically balanced for best cloning quality.</span>
+      </div>
+      <div class="record-area">
+        <div class="record-viz"><div class="record-viz-bar" id="rec-bar"></div></div>
+        <button class="btn btn-record" id="btn-record">Tap to Record 5 seconds</button>
+        <div class="record-status" id="rec-status"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Enter text -->
+    <div class="card">
+      <div class="card-title"><span class="step">2</span> Text to Translate</div>
+      <div class="text-input-area">
+        <textarea class="text-input" id="input-text" placeholder="Type a sentence, or leave empty to transcribe your recording..." rows="2"></textarea>
+        <div class="lang-row">
+          <label>Translate to:</label>
+          <select class="lang-select" id="target-lang"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Translate & Speak -->
+    <div class="card">
+      <div class="card-title"><span class="step">3</span> Translate &amp; Speak</div>
+      <button class="btn btn-primary" id="btn-translate" disabled style="width:100%">
+        Translate &amp; Speak in Your Voice
+      </button>
+      <div class="status-bar" id="status"></div>
+    </div>
+
+    <!-- Result -->
+    <div class="card result-card" id="result-card">
+      <div class="card-title">Result</div>
+      <div class="result-row">
+        <div class="result-label">Original (<span id="res-src-lang">—</span>)</div>
+        <div class="result-text" id="res-original">—</div>
+      </div>
+      <div class="result-row">
+        <div class="result-label">Translated (<span id="res-tgt-lang">—</span>)</div>
+        <div class="result-text translated" id="res-translated">—</div>
+      </div>
+      <div class="play-btn-row">
+        <button class="btn-ghost" id="btn-play-result" disabled>Play Result</button>
+        <button class="btn-ghost" id="btn-play-original" disabled>Play Original Recording</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = '';
+
+// State
+let voiceAudioPCM = null;   // Int16Array (16kHz s16le)
+let resultAudioPCM = null;  // Int16Array (24kHz s16le)
+let resultSampleRate = 24000;
+let isRecording = false;
+
+// Elements
+const btnRecord = document.getElementById('btn-record');
+const recBar = document.getElementById('rec-bar');
+const recStatus = document.getElementById('rec-status');
+const inputText = document.getElementById('input-text');
+const targetLang = document.getElementById('target-lang');
+const btnTranslate = document.getElementById('btn-translate');
+const statusEl = document.getElementById('status');
+const resultCard = document.getElementById('result-card');
+const badgeTTS = document.getElementById('badge-tts');
+
+// Init: fetch languages and check TTS status
+async function init() {
+  try {
+    const [langResp, statusResp] = await Promise.all([
+      fetch(`${API}/api/languages`),
+      fetch(`${API}/api/status`)
+    ]);
+    const langData = await langResp.json();
+    const statusData = await statusResp.json();
+
+    // Populate language dropdown
+    (langData.languages || []).forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.code;
+      opt.textContent = `${l.native_name || l.name} (${l.code})`;
+      targetLang.appendChild(opt);
+    });
+    // Default to English
+    targetLang.value = 'en';
+
+    // Check TTS availability
+    if (statusData.backends?.tts) {
+      badgeTTS.textContent = 'TTS Available';
+      badgeTTS.className = 'badge badge-tts';
+    } else {
+      badgeTTS.textContent = 'TTS Offline';
+      badgeTTS.className = 'badge badge-offline';
+    }
+  } catch (e) {
+    badgeTTS.textContent = 'Server Unreachable';
+    badgeTTS.className = 'badge badge-offline';
+  }
+}
+init();
+
+// Recording
+let recStream = null;
+let recCtx = null;
+let recProc = null;
+let recChunks = [];
+let recStartTime = 0;
+let recRafId = null;
+const MIN_DURATION = 3;     // hard minimum — need enough audio for TTS to clone
+const TARGET_DURATION = 5;  // suggested length — the prompt sentence takes ~5s
+
+async function startRecording() {
+  recChunks = [];
+  recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  recCtx = new AudioContext();
+  if (recCtx.state === 'suspended') await recCtx.resume();
+  const src = recCtx.createMediaStreamSource(recStream);
+  recProc = recCtx.createScriptProcessor(4096, 1, 1);
+  recStartTime = Date.now();
+  isRecording = true;
+
+  recProc.onaudioprocess = (e) => {
+    recChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  };
+  src.connect(recProc);
+  recProc.connect(recCtx.destination);
+
+  btnRecord.classList.add('recording');
+  recStatus.className = 'record-status active';
+
+  // Drive the timer/visuals off rAF rather than the audio callback so the
+  // countdown keeps updating even between audio chunks.
+  const tick = () => {
+    if (!isRecording) return;
+    const elapsed = (Date.now() - recStartTime) / 1000;
+    const pct = Math.min(100, (elapsed / TARGET_DURATION) * 100);
+    recBar.style.width = pct + '%';
+
+    if (elapsed < MIN_DURATION) {
+      const remaining = Math.max(0, MIN_DURATION - elapsed);
+      recStatus.textContent = `Recording... keep going for ${remaining.toFixed(1)}s more (minimum)`;
+      btnRecord.textContent = `Recording ${elapsed.toFixed(1)}s...`;
+      btnRecord.disabled = true;
+    } else {
+      recStatus.textContent = `Recording ${elapsed.toFixed(1)}s — tap Stop when you're done (longer is better, up to ~10s)`;
+      btnRecord.textContent = 'Stop Recording';
+      btnRecord.disabled = false;
+    }
+    recRafId = requestAnimationFrame(tick);
+  };
+  recRafId = requestAnimationFrame(tick);
+}
+
+async function stopRecording() {
+  if (!isRecording) return;
+  const elapsed = (Date.now() - recStartTime) / 1000;
+  if (elapsed < MIN_DURATION) return; // button should already be disabled, belt-and-braces
+  isRecording = false;
+
+  if (recRafId != null) { cancelAnimationFrame(recRafId); recRafId = null; }
+  recProc?.disconnect();
+  recStream?.getTracks().forEach(t => t.stop());
+
+  // Combine and resample to 16kHz
+  const total = recChunks.reduce((s, c) => s + c.length, 0);
+  const full = new Float32Array(total);
+  let offset = 0;
+  for (const c of recChunks) { full.set(c, offset); offset += c.length; }
+
+  const srcRate = recCtx?.sampleRate || 48000;
+  const ratio = srcRate / 16000;
+  const outLen = Math.floor(total / ratio);
+  const resampled = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    resampled[i] = full[Math.min(Math.floor(i * ratio), total - 1)];
+  }
+
+  // Convert to s16le
+  voiceAudioPCM = new Int16Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const v = Math.max(-1, Math.min(1, resampled[i]));
+    voiceAudioPCM[i] = v < 0 ? v * 32768 : v * 32767;
+  }
+
+  await recCtx?.close();
+  recCtx = null;
+
+  const durationSec = outLen / 16000;
+  recBar.style.width = Math.min(100, (durationSec / TARGET_DURATION) * 100) + '%';
+  recStatus.textContent = `Recorded ${durationSec.toFixed(1)}s of voice reference`;
+  recStatus.className = 'record-status done';
+  btnRecord.textContent = 'Re-record';
+  btnRecord.disabled = false;
+  btnRecord.classList.remove('recording');
+  btnTranslate.disabled = false;
+}
+
+// Tap to toggle record state (start → stop)
+btnRecord.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (isRecording) stopRecording();
+  else startRecording();
+});
+
+// Translate & Speak
+btnTranslate.addEventListener('click', async () => {
+  if (!voiceAudioPCM) {
+    statusEl.textContent = 'Please record your voice first';
+    statusEl.className = 'status-bar error';
+    return;
+  }
+
+  btnTranslate.disabled = true;
+  statusEl.textContent = 'Processing... (ASR, Translation, TTS)';
+  statusEl.className = 'status-bar processing';
+  resultCard.classList.remove('visible');
+
+  try {
+    // Encode voice audio as base64
+    const audioBytes = new Uint8Array(voiceAudioPCM.buffer);
+    let binary = '';
+    for (let i = 0; i < audioBytes.length; i++) {
+      binary += String.fromCharCode(audioBytes[i]);
+    }
+    const audioB64 = btoa(binary);
+
+    const resp = await fetch(`${API}/api/demo/voice-clone`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio_b64: audioB64,
+        text: inputText.value.trim(),
+        target_language: targetLang.value,
+      })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data.error || 'Request failed');
+    }
+
+    // Display results
+    document.getElementById('res-original').textContent = data.original_text || '—';
+    document.getElementById('res-translated').textContent = data.translated_text || '—';
+    document.getElementById('res-src-lang').textContent = (data.source_language || '').toUpperCase();
+    document.getElementById('res-tgt-lang').textContent = (data.target_language || '').toUpperCase();
+    resultCard.classList.add('visible');
+    resultSampleRate = data.sample_rate || 24000;
+
+    // Decode result audio
+    if (data.audio_b64) {
+      const raw = atob(data.audio_b64);
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      resultAudioPCM = new Int16Array(bytes.buffer);
+      document.getElementById('btn-play-result').disabled = false;
+      statusEl.textContent = 'Done! Click Play Result to hear your voice-cloned translation.';
+      statusEl.className = 'status-bar';
+
+      // Auto-play result
+      playPCM(resultAudioPCM, resultSampleRate);
+    } else {
+      resultAudioPCM = null;
+      document.getElementById('btn-play-result').disabled = true;
+      statusEl.textContent = 'Translation complete (TTS not available for audio output)';
+      statusEl.className = 'status-bar';
+    }
+
+    document.getElementById('btn-play-original').disabled = !voiceAudioPCM;
+  } catch (e) {
+    statusEl.textContent = `Error: ${e.message}`;
+    statusEl.className = 'status-bar error';
+  } finally {
+    btnTranslate.disabled = false;
+  }
+});
+
+// Audio playback using Web Audio API
+async function playPCM(pcm, sampleRate) {
+  const ctx = new AudioContext();
+  if (ctx.state === 'suspended') await ctx.resume();
+  const buf = ctx.createBuffer(1, pcm.length, sampleRate);
+  const channel = buf.getChannelData(0);
+  for (let i = 0; i < pcm.length; i++) {
+    channel[i] = pcm[i] / 32768;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buf;
+  source.connect(ctx.destination);
+  source.onended = () => ctx.close();
+  source.start();
+}
+
+document.getElementById('btn-play-result')?.addEventListener('click', () => {
+  if (resultAudioPCM) playPCM(resultAudioPCM, resultSampleRate);
+});
+
+document.getElementById('btn-play-original')?.addEventListener('click', () => {
+  if (voiceAudioPCM) playPCM(voiceAudioPCM, 16000);
+});
+</script>
+</body>
+</html>

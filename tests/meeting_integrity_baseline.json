@@ -1,0 +1,220 @@
+{
+  "_comment": "Pre-existing integrity issues per meeting. New issues will fail the test. When an issue is fixed, re-run with UPDATE_INTEGRITY_BASELINE=1 to refresh this file.",
+  "total_meetings": 62,
+  "total_findings": 266,
+  "known_issues": {
+    "071af5b0-5dab-4679-9d17-00898f8f982e": [
+      "lanes-extra-clusters"
+    ],
+    "0ac34e70-2adb-4ecc-9c1d-d6239ae07cf9": [
+      "cluster-identity-drift"
+    ],
+    "128ec484-a310-41b5-8bae-c4a6e45f4423": [
+      "cluster-identity-drift"
+    ],
+    "18984813-0b27-4897-b06e-e55195adb027": [
+      "small-unnamed-cluster"
+    ],
+    "1f9f8e92-08e3-4d14-a81f-508f76d55992": [
+      "low-speech-coverage"
+    ],
+    "211129ef-b9fa-4cfd-a039-c1b88b7ffb8f": [
+      "lanes-extra-clusters"
+    ],
+    "2264c053-8a0f-47b0-8f34-bb9d2a6e8a9b": [
+      "invalid-state"
+    ],
+    "256c45dc-8d04-4a26-8513-bc5153e26921": [
+      "missing-required-file",
+      "timeline-count-mismatch"
+    ],
+    "27fcd98e-cc58-4ac0-844a-0c9b9e945f10": [
+      "cluster-identity-drift"
+    ],
+    "28e55f5f-9ecb-4ab4-b6c1-96198eb76e26": [
+      "small-unnamed-cluster"
+    ],
+    "2f04aab4-c13b-413d-80a2-e42abb08c716": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "33178775-0575-4823-9aa6-2fcb602bf1ec": [
+      "small-unnamed-cluster"
+    ],
+    "33d6e898-dd73-4a41-a9fc-a002b2cf860c": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "38d4efb0-8c67-4a7e-a542-caa78f437a05": [
+      "lane-entry-count-mismatch",
+      "low-speech-coverage"
+    ],
+    "38f6f201-7e47-41e0-ae67-f8cbce4cae33": [
+      "small-unnamed-cluster"
+    ],
+    "3be5a260-92b5-4fb8-8104-971338f90892": [
+      "low-speech-coverage",
+      "small-unnamed-cluster"
+    ],
+    "3c05d5ea-7e8d-42e7-a95b-f3cc95d60f0c": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "3ec3823a-bf0e-4110-a9d7-8075ceb21e42": [
+      "cluster-identity-drift"
+    ],
+    "3fb4b9b0-2a0c-4c9d-b889-e0ecc1917c1e": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "4cee0e9b-45c4-4c86-91c5-f2d31952ceaf": [
+      "cluster-identity-drift"
+    ],
+    "4e2e5335-4e88-47c4-9de1-1f1798e99d9c": [
+      "small-unnamed-cluster"
+    ],
+    "4edc0a55-8219-4b25-9e8c-fdcf8630e2be": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "4f491a53-0498-45d2-9c9c-cfe30eca4bef": [
+      "cluster-identity-drift"
+    ],
+    "5029650e-e3f8-457b-920f-5d03dc74df88": [
+      "lanes-extra-clusters"
+    ],
+    "57247778-d3f7-4cf3-b64b-7e3cfd599eb0": [
+      "small-unnamed-cluster"
+    ],
+    "58a310fc-1f7e-4bd6-a4aa-843b52f826ce": [
+      "lane-entry-count-mismatch"
+    ],
+    "709c98ea-9119-4542-a1c6-3666fb13bbc9": [
+      "orphan-micro-cluster"
+    ],
+    "73d3fbbd-ea1b-477a-b200-6ba043d97065": [
+      "lanes-extra-clusters"
+    ],
+    "74ec9b44-19ab-4169-8b39-de204b1fafbc": [
+      "missing-required-file",
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "7d1f28fc-e549-4369-84f7-039bdfbb072c": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "867fbde3-79e3-4863-afab-632bf0e53f86": [
+      "small-unnamed-cluster"
+    ],
+    "896811c3-8a54-4a81-bb8c-13ef1e289793": [
+      "small-unnamed-cluster"
+    ],
+    "9155877f-a6b0-492e-a9c5-e9de0646b584": [
+      "cluster-identity-drift"
+    ],
+    "95ef86e2-6a48-43c0-9242-226d0da4ae5e": [
+      "lanes-extra-clusters",
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "99c4f3f8-29c0-4067-83e8-e9ed8e0d41a9": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "9d186199-4d42-4f2f-a737-5a96e75d6c8a": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "a1a028c8-af32-4475-9d7e-190226cad006": [
+      "lanes-extra-clusters",
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "a40d179a-38eb-4374-a7a7-d6a4af06301f": [
+      "small-unnamed-cluster"
+    ],
+    "a695af17-c0d7-4036-ac7b-782f1db455a4": [
+      "low-speech-coverage",
+      "small-unnamed-cluster"
+    ],
+    "a6cd7223-c758-4bb7-972a-f8ce0a1d5efc": [
+      "invalid-state"
+    ],
+    "aaa9054b-e072-4871-a8f5-b89f32e04e77": [
+      "small-unnamed-cluster"
+    ],
+    "ac6d9117-01d7-47d3-8b39-7e68b3d6a4e0": [
+      "low-speech-coverage"
+    ],
+    "af1c2447-260f-4dbf-a5cf-ccb044988288": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "afb89c21-0816-4f13-8e80-cee08fda4c97": [
+      "cluster-identity-drift"
+    ],
+    "b0040a09-0f8d-4060-8f63-3080a52afe77": [
+      "lane-entry-count-mismatch"
+    ],
+    "b4cd58c8-8025-4f2e-a2fe-4f59e8f08534": [
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "b78c70c9-eff5-4347-a242-a93dde66963f": [
+      "cluster-identity-drift"
+    ],
+    "bc3686cb-b805-444b-be6b-946c8e9106e9": [
+      "small-unnamed-cluster"
+    ],
+    "bd1652db-2e11-437a-a805-d32e805efcf9": [
+      "lanes-extra-clusters",
+      "small-unnamed-cluster"
+    ],
+    "c4c913f8-1c43-4de8-99df-1bccffa87a10": [
+      "small-unnamed-cluster"
+    ],
+    "d0b34bc8-e27d-4272-a9a1-5792890e8421": [
+      "detected-speakers-missing-clusters"
+    ],
+    "d3ab7b95-72c8-44d4-9d67-d5d5dffefbf1": [
+      "small-unnamed-cluster"
+    ],
+    "d813c4e5-d04a-403a-91ca-82f9677c3abc": [
+      "small-unnamed-cluster"
+    ],
+    "dba10719-544f-44a7-8dcf-7e440df36c89": [
+      "missing-required-file",
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "e1b495fa-987a-4ec6-bf31-0cfa53fd50c3": [
+      "lane-entry-count-mismatch"
+    ],
+    "e6b1a2a6-adf9-4a91-b971-b3a74af8ee8e": [
+      "detected-speakers-missing-clusters"
+    ],
+    "f006a5c9-5492-4d9b-86d1-d095ddd1ce17": [
+      "lanes-extra-clusters",
+      "orphan-micro-cluster"
+    ],
+    "f40b9d56-ebdc-4429-aee4-688e792aceb7": [
+      "cluster-identity-drift"
+    ],
+    "f45c9d54-5ea5-429b-8514-58ecde6d1ae4": [
+      "low-speech-coverage",
+      "orphan-micro-cluster",
+      "small-unnamed-cluster"
+    ],
+    "fc48161b-bb07-418e-86ec-ca229b9daf12": [
+      "invalid-state"
+    ],
+    "fe77b412-d06b-4f96-9574-4afe1a15e146": [
+      "cluster-identity-drift",
+      "low-speech-coverage"
+    ],
+    "test": [
+      "invalid-state"
+    ]
+  }
+}

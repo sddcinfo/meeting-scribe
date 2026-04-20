@@ -1,0 +1,35 @@
+# Translation — shared with autosre coding agent
+# Uses Intel/Qwen3.5-35B-A3B-int4-AutoRound on port 8010 (managed by autosre).
+# No dedicated container — translation piggybacks on the coding model.
+
+model_key: translation
+model_id: Intel/Qwen3.5-35B-A3B-int4-AutoRound
+short_name: Qwen3.5-35B Translation (shared)
+description: "Shared model for translation + coding (INT4 AutoRound, 3B active)"
+
+mode: shared  # Managed by autosre, not by meeting-scribe
+tensor_parallel: 1
+port: 8010
+max_model_len: 131072
+gpu_memory_utilization: 0.30
+max_num_seqs: 8
+
+quantization: inc
+kv_cache_dtype: auto
+
+extra_args:
+  - "--enable-prefix-caching"
+  - "--load-format=fastsafetensors"
+  - "--enforce-eager"
+  - "--enable-auto-tool-choice"
+  - "--tool-call-parser=qwen3_coder"
+
+capabilities:
+  tool_calling: true
+  reasoning: true
+  multimodal: false
+  max_context: 131072
+  active_params: "3B"
+  total_params: "35B"
+
+best_for: "Real-time JA↔EN translation, speaker name extraction, coding agent"

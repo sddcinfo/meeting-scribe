@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Scribe</title>
+  <!-- System fonts only — no external font loads (hotspot has no internet) -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <script>
+    // GitHub Pages serves static/ as the site root — redirect to docs
+    if (location.hostname.endsWith('github.io')) {
+      location.replace('how-it-works.html');
+    }
+  </script>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- TTS stall toast — populated by scribe-app.js checkStatus when
+       tts.health transitions to stalled or an unhandled crash lands in
+       /api/status.crash. Hidden by default. -->
+  <div id="tts-toast" class="tts-toast" aria-live="polite"></div>
+
+  <header id="main-header">
+    <div class="header-left">
+      <button class="header-icon-btn" id="btn-home" title="Home" aria-label="Home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+      </button>
+      <button class="hamburger" id="btn-hamburger" title="Meetings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <button class="logo-mark" id="btn-logo-record" title="Start / Stop Recording" aria-label="Start or stop recording">
+        <div class="pulse-ring"></div>
+        <div class="pulse-core"></div>
+      </button>
+    </div>
+    <div class="header-right">
+      <span class="header-subtitle" id="status-line">Initializing...</span>
+      <div class="header-qr" id="header-qr"></div>
+      <div class="backend-pills" id="backend-pills"></div>
+      <div class="audio-meter" id="audio-meter">
+        <div class="meter-bar" id="meter-bar"></div>
+      </div>
+      <button
+        class="header-icon-btn"
+        id="btn-settings"
+        title="Settings"
+        aria-label="Open settings"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="settings-panel"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Meetings panel (slide-over, toggled by hamburger) -->
+  <div class="meetings-panel" id="meetings-panel">
+    <div class="meetings-header">
+      <h3>Meetings</h3>
+      <button id="btn-new-meeting" class="btn-ghost">+ New</button>
+    </div>
+    <!-- Tab switcher: All keeps strict chronological order; Favorites shows
+         only starred meetings so favoriting doesn't reorder the timeline. -->
+    <div class="meetings-tabs" role="tablist" aria-label="Meeting filter">
+      <button class="meetings-tab active" data-tab="all" role="tab" aria-selected="true">All</button>
+      <button class="meetings-tab" data-tab="favorites" role="tab" aria-selected="false">★ Favorites</button>
+    </div>
+    <div class="meetings-list" id="meetings-list"></div>
+  </div>
+  <div class="meetings-backdrop" id="meetings-backdrop"></div>
+
+  <!-- Settings panel (slide-over from the right, toggled by gear icon) -->
+  <div
+    class="settings-panel"
+    id="settings-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="settings-panel-title"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="settings-header">
+      <h3 id="settings-panel-title">Settings</h3>
+      <button
+        id="btn-settings-close"
+        class="btn-ghost"
+        title="Close settings"
+        aria-label="Close settings"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="settings-body">
+      <section class="settings-section">
+        <h4>WiFi Hotspot</h4>
+        <div class="settings-field">
+          <label for="setting-wifi-mode">Mode</label>
+          <select id="setting-wifi-mode">
+            <option value="">Loading…</option>
+          </select>
+          <p class="settings-field-help">
+            Off = no AP. Meeting = rotating SSID + captive portal for guests.
+            Admin = fixed SSID, admin UI reachable over WiFi (no portal).
+          </p>
+          <p class="settings-field-live" id="wifi-live-status"></p>
+        </div>
+        <div class="settings-field" id="admin-ssid-group">
+          <label for="setting-admin-ssid">Admin SSID</label>
+          <input type="text" id="setting-admin-ssid" maxlength="32" placeholder="Dell Admin">
+          <p class="settings-field-help">
+            Fixed SSID for admin mode. 1-32 printable ASCII characters.
+          </p>
+        </div>
+        <div class="settings-field" id="admin-password-group">
+          <label for="setting-admin-password">Admin password</label>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <input type="password" id="setting-admin-password" minlength="8" maxlength="63"
+                   placeholder="Leave blank to keep current">
+            <button type="button" id="btn-toggle-admin-pw" class="btn-icon" title="Show/hide password"
+                    style="padding:0.25rem 0.5rem;font-size:0.85rem">Show</button>
+          </div>
+          <p class="settings-field-help">
+            8-63 printable ASCII characters (WPA3 passphrase). Leave blank to keep the current password.
+          </p>
+        </div>
+        <div class="settings-field">
+          <label for="setting-wifi-regdomain">Regulatory domain</label>
+          <select id="setting-wifi-regdomain" aria-describedby="setting-wifi-regdomain-help">
+            <option value="">Loading…</option>
+          </select>
+          <p id="setting-wifi-regdomain-help" class="settings-field-help">
+            Country the WiFi radio should transmit under. Affects 5 GHz channel
+            availability and TX power caps. Applied to the hotspot and saved
+            for future boots.
+          </p>
+          <p class="settings-field-live" id="regdomain-live"></p>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h4>Development</h4>
+        <div class="settings-field">
+          <label class="settings-toggle" for="setting-dev-mode">
+            <input type="checkbox" id="setting-dev-mode">
+            <span>Dev mode</span>
+          </label>
+          <p class="settings-field-help">
+            Keep the hotspot SSID and password consistent across meeting
+            starts. When enabled, new meetings reuse the current AP
+            credentials instead of rotating them.
+          </p>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h4>Voice output</h4>
+        <div class="settings-field">
+          <label for="setting-tts-voice-mode">Default voice</label>
+          <select id="setting-tts-voice-mode" aria-describedby="setting-tts-voice-mode-help">
+            <option value="">Loading…</option>
+          </select>
+          <p id="setting-tts-voice-mode-help" class="settings-field-help">
+            Studio voice uses Qwen3-TTS's built-in studio-quality speakers
+            (fastest, commercial-safe, one curated voice per language).
+            Participant voice clones each meeting speaker's own voice from
+            the live audio (more personal, adds ~0.8 s per segment).
+            Listeners can still override per session.
+          </p>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h4>Display</h4>
+        <div class="settings-field">
+          <label for="setting-timezone">Timezone</label>
+          <select id="setting-timezone" aria-describedby="setting-timezone-help">
+            <option value="">Loading…</option>
+          </select>
+          <p id="setting-timezone-help" class="settings-field-help">
+            IANA timezone for displaying meeting timestamps. Leave blank to
+            use the server's local time.
+          </p>
+        </div>
+      </section>
+    </div>
+    <div class="settings-footer">
+      <div class="settings-status" id="settings-status" role="status" aria-live="polite"></div>
+      <button id="btn-settings-save" class="btn-primary">Save</button>
+    </div>
+  </div>
+  <div class="settings-backdrop" id="settings-backdrop"></div>
+
+  <main>
+    <!-- ═══ SETUP MODE ═══ -->
+    <div id="room-setup" class="room-setup">
+      <div class="room-canvas" id="room-canvas"></div>
+      <div class="setup-footer">
+        <div class="preset-selector" id="preset-selector">
+          <button class="preset-btn" data-preset="boardroom" data-default-seats="8" title="Boardroom · 8 seats">
+            <svg width="18" height="12" viewBox="0 0 18 12"><ellipse cx="9" cy="6" rx="8" ry="5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="round" data-default-seats="6" title="Round · 6 seats">
+            <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="square" data-default-seats="4" title="Square · 4 seats">
+            <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn active" data-preset="rectangle" data-default-seats="2" title="Rectangle · 2 seats">
+            <svg width="18" height="12" viewBox="0 0 18 12"><rect x="1" y="1" width="16" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="classroom" data-default-seats="8" title="Classroom · 8 seats">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="1" y="1" width="14" height="2" rx="1" fill="currentColor" opacity="0.3"/><circle cx="4" cy="7" r="1.5" fill="currentColor"/><circle cx="8" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="u_shape" data-default-seats="10" title="U-Shape · 10 seats">
+            <svg width="14" height="12" viewBox="0 0 14 12"><path d="M2 2v8h10V2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="pods" data-default-seats="12" title="Pods · 12 seats">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="1" y="1" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/><rect x="10" y="1" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/><rect x="1" y="7" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/><rect x="10" y="7" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="freeform" data-default-seats="4" title="Free-form · 4 seats">
+            <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="3" cy="4" r="1.5" fill="currentColor"/><circle cx="10" cy="3" r="1.5" fill="currentColor"/><circle cx="6" cy="9" r="1.5" fill="currentColor"/><circle cx="11" cy="11" r="1.5" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="add-table-group">
+          <button id="btn-add-table" class="btn-add-seat" title="Add a table with the chosen number of seats around it">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M12 10v4M10 12h4"/></svg>
+            Table +
+          </button>
+          <input type="number" id="seat-count-input" class="seat-count-input" min="1" max="20" value="2" title="Number of seats to place around the new table" aria-label="Seats">
+          <span class="add-table-group-label">seats</span>
+        </div>
+        <button id="btn-add-seat" class="btn-add-seat" title="Add a single seat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Seat
+        </button>
+        <button id="btn-clear-layout" class="btn-add-seat" title="Clear the layout back to empty">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Clear
+        </button>
+        <div class="language-selector" id="language-selector" role="group" aria-label="Meeting languages">
+          <select id="lang-a-select" class="lang-select" aria-label="First meeting language">
+            <!-- Populated by JS from /api/languages -->
+          </select>
+          <span class="lang-pair-sep" aria-hidden="true">↔</span>
+          <select id="lang-b-select" class="lang-select" aria-label="Second meeting language (or None for a single-language meeting)">
+            <!-- "None" = single-language meeting (no translation). Prepended by JS
+                 so it is always the first option; remaining entries come from
+                 /api/languages. -->
+            <option value="__none__">None (single language)</option>
+          </select>
+        </div>
+        <div class="setup-hint" id="setup-hint">Enroll each speaker's voice to begin</div>
+        <!-- One-click shortcut: start a single-language meeting using the
+             currently-selected LEFT language. Regardless of what the right
+             dropdown says, clicking this skips translation end-to-end and
+             takes the user straight into a monolingual meeting. Pairs with
+             the primary Start Meeting button for the bilingual path. -->
+        <button id="btn-start-solo" class="btn-start-solo" title="Start a single-language meeting (no translation)">
+          Solo
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <button id="btn-start-meeting" class="btn-start-meeting">
+          Start Meeting
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ MEETING MODE ═══ -->
+    <div id="meeting-mode" style="display:none">
+      <!-- Meeting summary bar — past-meeting review only, slim header that opens the finalization modal -->
+      <div class="meeting-summary-panel" id="meeting-summary-panel" style="display:none"></div>
+
+      <!-- Compact table + speakers strip -->
+      <div class="meeting-table-strip" id="meeting-table-strip"></div>
+
+      <!-- Speaker timeline (meeting review) -->
+      <div class="speaker-timeline" id="speaker-timeline" style="display:none">
+        <div class="speaker-timeline-lanes" id="speaker-timeline-lanes"></div>
+        <div class="speaker-timeline-cursor" id="speaker-timeline-cursor"></div>
+        <div class="speaker-timeline-times" id="speaker-timeline-times"></div>
+      </div>
+
+      <!-- Real-time metrics dashboard (split-view alongside transcript) -->
+      <div class="metrics-dashboard" id="metrics-dashboard" style="display:none">
+        <div class="metrics-panel-header">
+          <span class="metrics-panel-title">Performance</span>
+          <span class="metrics-panel-badge" id="mc-status">LIVE</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-card-label">ASR</div>
+            <div class="metric-card-value" id="mc-asr">—</div>
+            <div class="metric-card-sub" id="mc-asr-sub"></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Translation</div>
+            <div class="metric-card-value" id="mc-trans">—</div>
+            <div class="metric-card-sub" id="mc-trans-sub"></div>
+          </div>
+          <div class="metric-card metric-card-wide">
+            <div class="metric-card-label">GPU VRAM</div>
+            <div class="metric-bar-container">
+              <div class="metric-bar" id="mc-vram-bar" style="width:0%"></div>
+            </div>
+            <div class="metric-card-value" id="mc-vram">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Audio</div>
+            <div class="metric-card-value" id="mc-audio">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Connections</div>
+            <div class="metric-card-value" id="mc-health">—</div>
+          </div>
+          <div class="metric-card metric-card-wide">
+            <div class="metric-card-label">Backends</div>
+            <div class="metric-card-value metric-backends" id="mc-backends">—</div>
+          </div>
+        </div>
+        <div class="backend-detail-panel" id="backend-detail-panel"></div>
+        <div class="backend-detail-panel" id="system-resources-panel"></div>
+      </div>
+
+      <!-- Control bar -->
+      <div class="control-bar" id="control-bar">
+        <button id="btn-record" class="btn-record" aria-label="Stop recording">
+          <span class="btn-record-icon"></span>
+          <span class="btn-record-label"></span>
+        </button>
+        <button id="btn-cancel-meeting" class="btn-cancel-meeting" title="Cancel meeting — discard all data">Cancel</button>
+        <button id="btn-force-stop" class="btn-force-stop" style="display:none" title="DEV: Reset transcript (keep recording)">Reset</button>
+        <div class="control-meta">
+          <span class="timer" id="timer">00:00</span>
+          <span class="segment-count" id="segment-count">0 segments</span>
+        </div>
+        <div class="control-actions">
+          <label class="tts-mute-label" title="Mute TTS audio">
+            <input type="checkbox" id="tts-mute">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+          </label>
+          <button id="btn-listen" class="btn-ghost btn-listen-toggle" title="Listen to real-time interpreted audio">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+            </svg>
+            Listen
+          </button>
+          <select id="listen-lang" class="listen-lang-select" style="display:none" title="Interpretation language">
+          </select>
+          <select id="listen-mode" class="listen-lang-select" style="display:none" title="Interpretation mode">
+            <option value="translation">Translation only</option>
+            <option value="full">Full (pass-through + translation)</option>
+          </select>
+          <button id="btn-metrics" class="btn-ghost" title="Toggle metrics dashboard">Metrics</button>
+          <button id="btn-one-on-one" class="btn-ghost" title="1:1 conversation mode">1:1</button>
+          <button id="btn-col-a" class="btn-ghost" title="Show only Language A" style="display:none"></button>
+          <button id="btn-col-b" class="btn-ghost" title="Show only Language B" style="display:none"></button>
+          <button id="btn-toggle-live" class="btn-ghost" title="Open pop-out translation view">Pop-out</button>
+          <button id="btn-toggle-table" class="btn-ghost" title="Toggle virtual table">Table</button>
+          <button id="btn-compact" class="btn-ghost" title="Compact horizontal view">Compact</button>
+          <button id="btn-scroll-dir" class="btn-ghost" title="Toggle transcript order (newest first / oldest first)">↑ Newest first</button>
+          <button id="btn-clear" class="btn-ghost" title="Clear transcript">Clear</button>
+        </div>
+      </div>
+
+      <!-- Transcript columns (unified grid for row alignment) -->
+      <div class="transcript-columns">
+        <!-- Column headers hidden — compact view is now the default -->
+        <div class="transcript-col-headers" style="display:none">
+          <div class="col-header">
+            <span class="col-header-label">Live</span>
+            <span class="col-header-hint">All languages</span>
+          </div>
+          <div class="col-header">
+            <span class="col-header-label" id="col-lang-a-label">Language A</span>
+            <span class="col-header-hint" id="col-lang-a-hint">original + translated</span>
+          </div>
+          <div class="col-header">
+            <span class="col-header-label" id="col-lang-b-label">Language B</span>
+            <span class="col-header-hint" id="col-lang-b-hint">original + translated</span>
+          </div>
+        </div>
+        <div class="transcript-grid-scroll" id="transcript-grid"></div>
+      </div>
+
+      <!-- 1:1 Conversation Mode (hidden by default) -->
+      <div class="one-on-one-container" id="one-on-one-container" style="display:none">
+        <div class="one-on-one-pane one-on-one-left">
+          <div class="one-on-one-header">
+            <span class="one-on-one-speaker" id="oo-speaker-left">Speaker A</span>
+            <button class="btn-ghost one-on-one-swap" id="oo-swap" title="Swap speakers">&#8644;</button>
+          </div>
+          <div class="one-on-one-scroll" id="oo-left"></div>
+        </div>
+        <div class="one-on-one-divider"></div>
+        <div class="one-on-one-pane one-on-one-right">
+          <div class="one-on-one-header">
+            <span class="one-on-one-speaker" id="oo-speaker-right">Speaker B</span>
+          </div>
+          <div class="one-on-one-scroll" id="oo-right"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LANDING PAGE ═══ -->
+    <div id="landing-mode" class="landing-mode" style="display:none">
+      <div class="landing-scroll">
+        <div class="landing-hero">
+          <div class="landing-hero-badge">Real-time multilingual transcription</div>
+          <h2>Your meetings, <br>understood in every language</h2>
+          <p>Meeting Scribe captures live audio, transcribes in real time, and translates between any pair of 10 supported languages — all running locally on your hardware.</p>
+          <div class="landing-cta-row">
+            <button class="landing-cta" id="landing-start-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              Start a Meeting
+            </button>
+            <!-- Quick-start shortcut: skips the room-setup screen entirely
+                 and fires a monolingual English meeting. For the common
+                 "I just want to record a solo session in English" case,
+                 this is one click instead of five. -->
+            <button class="landing-cta-quick" id="landing-quick-english-btn" title="Skip setup and start a single-language English meeting">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Quick start English
+            </button>
+          </div>
+        </div>
+
+        <div class="landing-steps">
+          <div class="landing-step">
+            <div class="landing-step-num">1</div>
+            <div>
+              <h3>Set up the room</h3>
+              <p>Choose a table layout and add seats for each participant. Optionally enroll speakers by recording a short voice sample so the system can identify who is speaking.</p>
+            </div>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">2</div>
+            <div>
+              <h3>Start the meeting</h3>
+              <p>Hit "Start Meeting" and speak normally. Audio is captured from your device microphone and the live transcript shows each utterance in its original language with the translation shown alongside.</p>
+            </div>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">3</div>
+            <div>
+              <h3>Speak in any supported language</h3>
+              <p>The system automatically detects the spoken language. Each utterance is transcribed in its original language and translated to the paired language in real time. Speaker identification labels who said what.</p>
+            </div>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">4</div>
+            <div>
+              <h3>Review when finished</h3>
+              <p>When you stop the meeting, an AI summary is generated with topics, decisions, action items, and speaker participation stats. Download the transcript as Markdown, plain text, or a ZIP archive.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-features">
+          <h3>Capabilities</h3>
+          <div class="landing-features-grid">
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+              </div>
+              <strong>Live Transcription</strong>
+              <p>Speech-to-text with sub-second latency</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <strong>Real-time Translation</strong>
+              <p>Any pair of 10 languages, bidirectional</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <strong>Speaker Identification</strong>
+              <p>Knows who said what via voice diarization</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <strong>AI Meeting Summary</strong>
+              <p>Topics, decisions, and action items</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <strong>Fully Local</strong>
+              <p>All processing on-device, nothing leaves your network</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              </div>
+              <strong>Interpretation Audio</strong>
+              <p>Near-real-time translated audio track streamed to hotspot guests in their chosen language</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-footer-note">
+          <a href="/how-it-works" class="landing-tech-link">Technical architecture &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW MODE (past meeting) ═══ -->
+    <div id="view-mode" style="display:none">
+      <div class="transcript-columns">
+        <div class="transcript-col">
+          <div class="col-header"><span class="col-header-label">Transcript</span></div>
+          <div class="col-scroll" id="view-scroll">
+            <div class="transcript-empty" id="view-empty">
+              <p>Select a meeting from the sidebar</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Audio player bar (bottom of screen for past meeting review) -->
+  <div class="player-bar" id="player-bar" style="display:none">
+    <button class="player-play" id="player-play">▶</button>
+    <span class="player-time" id="player-current">00:00</span>
+    <input type="range" class="player-scrub" id="player-scrub" min="0" max="100" value="0" step="0.1">
+    <span class="player-time" id="player-duration">00:00</span>
+    <select class="player-speed" id="player-speed">
+      <option value="1">1x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
+  </div>
+
+  <!-- Modal overlay -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none">
+    <div class="modal-card" id="modal-card"></div>
+  </div>
+
+  <!-- Room editor overlay — used mid-meeting and in review mode -->
+  <div class="room-editor-overlay" id="room-editor-overlay" style="display:none">
+    <div class="room-editor-header">
+      <div class="room-editor-title">
+        <span id="room-editor-title-text">Edit Room Layout</span>
+        <span class="room-editor-mode-badge" id="room-editor-mode-badge"></span>
+      </div>
+      <div class="room-editor-actions">
+        <button class="preset-btn" data-preset="boardroom" title="Boardroom">
+          <svg width="18" height="12" viewBox="0 0 18 12"><ellipse cx="9" cy="6" rx="8" ry="5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="preset-btn" data-preset="round" title="Round">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="preset-btn" data-preset="rectangle" title="Rectangle">
+          <svg width="18" height="12" viewBox="0 0 18 12"><rect x="1" y="1" width="16" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button id="room-editor-add-table" class="btn-add-seat" title="Add table">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M12 10v4M10 12h4"/></svg>
+          Table
+        </button>
+        <button id="room-editor-add-seat" class="btn-add-seat" title="Add seat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Seat
+        </button>
+        <button id="room-editor-close" class="btn-ghost" title="Close editor">Done</button>
+      </div>
+    </div>
+    <div class="room-editor-body">
+      <div class="room-editor-canvas" id="room-editor-canvas"></div>
+      <div class="room-editor-sidebar" id="room-editor-sidebar" style="display:none">
+        <div class="sidebar-title">Detected Voices</div>
+        <div class="sidebar-sub">Drag a voice onto a seat to assign it</div>
+        <div class="cluster-chips" id="cluster-chips"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/js/scribe-app.js"></script>
+</body>
+</html>

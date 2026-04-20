@@ -1,0 +1,117 @@
+{
+  "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+  "label": "diarize-serial-concurrency-10",
+  "timestamp": "2026-04-14T03:40:46",
+  "state": "complete",
+  "audio_ms": 5330145,
+  "bench_wall_ms": 1520259,
+  "phase_timings_ms": {},
+  "quality": {
+    "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+    "audio_ms": 5330145,
+    "all_passed": false,
+    "checks": [
+      {
+        "name": "alignment",
+        "passed": true,
+        "detail": "duration_drift=+0ms tail_gap=2145ms last_end=5328000ms audio=5330145ms",
+        "metrics": {
+          "timeline_duration_ms": 5330145,
+          "audio_ms": 5330145,
+          "duration_drift_ms": 0,
+          "last_segment_end_ms": 5328000,
+          "tail_gap_ms": 2145,
+          "segment_count": 1328
+        }
+      },
+      {
+        "name": "seq_density",
+        "passed": true,
+        "detail": "seq=[] expected=[]",
+        "metrics": {
+          "seq_indices": [],
+          "speaker_count": 0
+        }
+      },
+      {
+        "name": "no_orphan_lane",
+        "passed": true,
+        "detail": "lane_keys=[]",
+        "metrics": {
+          "lane_keys": []
+        }
+      },
+      {
+        "name": "journal_detected_agreement",
+        "passed": false,
+        "detail": "journal_clusters={1: 65, 2: 86, 3: 130, 4: 11, 5: 30, 6: 15} unknown=[1, 2, 3, 4, 5, 6]",
+        "metrics": {
+          "journal_cluster_dist": {
+            "1": 65,
+            "2": 86,
+            "3": 130,
+            "4": 11,
+            "5": 30,
+            "6": 15
+          },
+          "unknown_cluster_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "valid_seq_indices": []
+        }
+      },
+      {
+        "name": "no_empty_speakers",
+        "passed": true,
+        "detail": "empty_events=0/337",
+        "metrics": {
+          "empty_count": 0,
+          "total_finals": 337
+        }
+      },
+      {
+        "name": "coverage",
+        "passed": true,
+        "detail": "empty_buckets=0/178",
+        "metrics": {
+          "total_buckets": 178,
+          "empty_bucket_count": 0,
+          "empty_bucket_indices": []
+        }
+      },
+      {
+        "name": "name_preservation",
+        "passed": false,
+        "detail": "name_coverage=0% (0/6) per_event_accuracy=0% (0/1262)",
+        "metrics": {
+          "original_unique_names": [
+            "Brad",
+            "Danny",
+            "Joel",
+            "Mark",
+            "Nakul",
+            "Nikul"
+          ],
+          "preserved_names": [],
+          "missing_names": [
+            "Brad",
+            "Danny",
+            "Joel",
+            "Mark",
+            "Nakul",
+            "Nikul"
+          ],
+          "name_coverage_pct": 0.0,
+          "per_event_accurate": 0,
+          "per_event_checked": 1262,
+          "per_event_accuracy_pct": 0.0
+        }
+      }
+    ]
+  }
+}

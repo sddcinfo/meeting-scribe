@@ -1,0 +1,13 @@
+# Raw fixture data lives OUTSIDE the repo (see plan `vLLM Consolidation +
+# Omni Spike` Phase A fixture-storage rules). The manifest and synthetic
+# directory are the only things that belong under version control.
+*.wav
+*.flac
+*.mp3
+*.ogg
+*.m4a
+*.txt
+*.json
+*.srt
+!MANIFEST.yaml
+!synthetic/**

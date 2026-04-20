@@ -1,0 +1,45 @@
+{
+  "label": "Qwen3.5-35B-v2-FLASHINFER",
+  "url": "http://localhost:8000",
+  "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "timestamp": "2026-04-09 15:09:52",
+  "vllm_config": {
+    "driver": "580.126.09",
+    "gpu": "NVIDIA GB10"
+  },
+  "results": [
+    {
+      "concurrency": 1,
+      "num_requests": 30,
+      "wall_time_s": 12.35,
+      "throughput_rps": 2.43,
+      "latency_p50_ms": 403.0,
+      "latency_p90_ms": 504.7,
+      "latency_p99_ms": 587.0,
+      "latency_mean_ms": 411.7,
+      "errors": 0
+    },
+    {
+      "concurrency": 4,
+      "num_requests": 30,
+      "wall_time_s": 7.42,
+      "throughput_rps": 4.04,
+      "latency_p50_ms": 811.4,
+      "latency_p90_ms": 1840.8,
+      "latency_p99_ms": 2087.1,
+      "latency_mean_ms": 963.1,
+      "errors": 0
+    },
+    {
+      "concurrency": 8,
+      "num_requests": 30,
+      "wall_time_s": 8.35,
+      "throughput_rps": 3.59,
+      "latency_p50_ms": 1379.6,
+      "latency_p90_ms": 4429.0,
+      "latency_p99_ms": 4826.7,
+      "latency_mean_ms": 2129.6,
+      "errors": 0
+    }
+  ]
+}

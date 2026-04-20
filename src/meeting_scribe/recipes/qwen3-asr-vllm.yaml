@@ -1,0 +1,39 @@
+# Qwen3-ASR — Speech Recognition via vLLM
+# Primary ASR backend. Superior Japanese quality.
+# 52 languages, 97.9% language ID accuracy.
+
+model_key: asr-vllm
+model_id: Qwen/Qwen3-ASR-1.7B
+short_name: Qwen3-ASR-1.7B
+description: "ASR with superior Japanese quality (52 languages)"
+
+mode: solo
+tensor_parallel: 1
+port: 8003
+max_model_len: 4096
+gpu_memory_utilization: 0.04  # Model is ~3GB; 0.10 (=12GB) caused
+# OOM crash-loops when the 35B translate + autosre 35B were already
+# consuming 94 GB of the 121 GB GPU. 0.04 = 4.8 GB is plenty for the
+# model + activations at max_num_seqs=4.
+max_num_seqs: 4
+
+kv_cache_dtype: null
+quantization: null
+
+extra_args:
+  - "--enforce-eager"
+  # fastsafetensors is ~19x faster than plain safetensors on GB10's
+  # NVMe — the 1.7B ASR model goes from ~60-90s cold load down to
+  # ~5-10s. Critical for the new `meeting-scribe gb10 restart-container`
+  # flow (CUDA recovery should never take more than ~10s).
+  - "--load-format=fastsafetensors"
+
+capabilities:
+  tool_calling: false
+  reasoning: false
+  multimodal: true  # Audio input
+  max_context: 4096
+  active_params: "1.7B"
+  total_params: "1.7B"
+
+best_for: "Real-time multilingual ASR, especially Japanese"

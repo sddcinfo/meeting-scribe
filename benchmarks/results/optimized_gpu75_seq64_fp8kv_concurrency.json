@@ -1,0 +1,63 @@
+{
+  "label": "optimized_gpu75_seq64_fp8kv",
+  "url": "http://localhost:8000",
+  "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+  "timestamp": "2026-04-09 00:30:00",
+  "results": [
+    {
+      "concurrency": 1,
+      "num_requests": 30,
+      "wall_time_s": 13.14,
+      "throughput_rps": 2.28,
+      "latency_p50_ms": 441.9,
+      "latency_p90_ms": 547.5,
+      "latency_p99_ms": 636.1,
+      "latency_mean_ms": 438.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 4,
+      "num_requests": 30,
+      "wall_time_s": 6.94,
+      "throughput_rps": 4.32,
+      "latency_p50_ms": 655.7,
+      "latency_p90_ms": 2464.9,
+      "latency_p99_ms": 2522.9,
+      "latency_mean_ms": 897.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 8,
+      "num_requests": 30,
+      "wall_time_s": 9.08,
+      "throughput_rps": 3.31,
+      "latency_p50_ms": 1478.7,
+      "latency_p90_ms": 5153.0,
+      "latency_p99_ms": 5934.2,
+      "latency_mean_ms": 2323.7,
+      "errors": 0
+    },
+    {
+      "concurrency": 16,
+      "num_requests": 30,
+      "wall_time_s": 3.05,
+      "throughput_rps": 9.85,
+      "latency_p50_ms": 1340.1,
+      "latency_p90_ms": 1992.8,
+      "latency_p99_ms": 2429.9,
+      "latency_mean_ms": 1426.9,
+      "errors": 0
+    },
+    {
+      "concurrency": 32,
+      "num_requests": 30,
+      "wall_time_s": 1.88,
+      "throughput_rps": 15.92,
+      "latency_p50_ms": 1636.4,
+      "latency_p90_ms": 1781.6,
+      "latency_p99_ms": 1880.6,
+      "latency_mean_ms": 1635.7,
+      "errors": 0
+    }
+  ]
+}

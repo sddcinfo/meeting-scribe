@@ -1,0 +1,154 @@
+{
+  "url": "http://localhost:8022",
+  "profile": "cloned",
+  "concurrency": 4,
+  "total_requests": 20,
+  "success": 0,
+  "errors": 20,
+  "p50_ttfa_ms": null,
+  "p95_ttfa_ms": null,
+  "p50_total_ms": null,
+  "p95_total_ms": null,
+  "per_request": [
+    {
+      "request_id": 0,
+      "ttfa_ms": null,
+      "total_ms": 7535.683971000253,
+      "bytes": 0,
+      "error": "RemoteProtocolError: peer closed connection without sending complete message body (incomplete chunked read)"
+    },
+    {
+      "request_id": 1,
+      "ttfa_ms": null,
+      "total_ms": 7534.239823999087,
+      "bytes": 0,
+      "error": "RemoteProtocolError: peer closed connection without sending complete message body (incomplete chunked read)"
+    },
+    {
+      "request_id": 2,
+      "ttfa_ms": null,
+      "total_ms": 7532.917295000516,
+      "bytes": 0,
+      "error": "RemoteProtocolError: peer closed connection without sending complete message body (incomplete chunked read)"
+    },
+    {
+      "request_id": 3,
+      "ttfa_ms": null,
+      "total_ms": 7531.988082999305,
+      "bytes": 0,
+      "error": "RemoteProtocolError: peer closed connection without sending complete message body (incomplete chunked read)"
+    },
+    {
+      "request_id": 4,
+      "ttfa_ms": null,
+      "total_ms": 13.149737002095208,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 5,
+      "ttfa_ms": null,
+      "total_ms": 11.753685997973662,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 6,
+      "ttfa_ms": null,
+      "total_ms": 10.563751002337085,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 7,
+      "ttfa_ms": null,
+      "total_ms": 7.826532000763109,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 8,
+      "ttfa_ms": null,
+      "total_ms": 7.023898000625195,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 9,
+      "ttfa_ms": null,
+      "total_ms": 9.321830999397207,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 10,
+      "ttfa_ms": null,
+      "total_ms": 5.8335780013294425,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 11,
+      "ttfa_ms": null,
+      "total_ms": 5.8883320016320795,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 12,
+      "ttfa_ms": null,
+      "total_ms": 7.767074999719625,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 13,
+      "ttfa_ms": null,
+      "total_ms": 7.757811999908881,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 14,
+      "ttfa_ms": null,
+      "total_ms": 6.600963999517262,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 15,
+      "ttfa_ms": null,
+      "total_ms": 5.352676002075896,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 16,
+      "ttfa_ms": null,
+      "total_ms": 6.934201002877671,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 17,
+      "ttfa_ms": null,
+      "total_ms": 6.5300200003548525,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 18,
+      "ttfa_ms": null,
+      "total_ms": 5.6169669987866655,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    },
+    {
+      "request_id": 19,
+      "ttfa_ms": null,
+      "total_ms": 4.527945999143412,
+      "bytes": 0,
+      "error": "HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8022/v1/audio/speech'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+    }
+  ]
+}

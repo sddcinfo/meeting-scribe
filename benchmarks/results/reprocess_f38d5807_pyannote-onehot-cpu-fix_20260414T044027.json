@@ -1,0 +1,124 @@
+{
+  "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+  "label": "pyannote-onehot-cpu-fix",
+  "timestamp": "2026-04-14T04:40:27",
+  "state": "complete",
+  "audio_ms": 5330145,
+  "bench_wall_ms": 779344,
+  "phase_timings_ms": {
+    "load_audio": 54,
+    "diarize": 241436,
+    "asr": 168579,
+    "translate": 350460,
+    "preserve_corrections": 9,
+    "speaker_data": 36,
+    "summary": 18648,
+    "TOTAL": 779262
+  },
+  "quality": {
+    "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+    "audio_ms": 5330145,
+    "all_passed": true,
+    "checks": [
+      {
+        "name": "alignment",
+        "passed": true,
+        "detail": "duration_drift=+0ms tail_gap=5793ms last_end=5324352ms audio=5330145ms",
+        "metrics": {
+          "timeline_duration_ms": 5330145,
+          "audio_ms": 5330145,
+          "duration_drift_ms": 0,
+          "last_segment_end_ms": 5324352,
+          "tail_gap_ms": 5793,
+          "segment_count": 2301
+        }
+      },
+      {
+        "name": "seq_density",
+        "passed": true,
+        "detail": "seq=[1, 2, 3, 4, 5, 6, 7] expected=[1, 2, 3, 4, 5, 6, 7]",
+        "metrics": {
+          "seq_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "speaker_count": 7
+        }
+      },
+      {
+        "name": "no_orphan_lane",
+        "passed": true,
+        "detail": "lane_keys=['1', '2', '3', '4', '5', '6', '7']",
+        "metrics": {
+          "lane_keys": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      {
+        "name": "journal_detected_agreement",
+        "passed": true,
+        "detail": "journal_clusters={1: 486, 2: 609, 3: 866, 4: 116, 5: 160, 6: 59, 7: 5} unknown=[]",
+        "metrics": {
+          "journal_cluster_dist": {
+            "1": 486,
+            "2": 609,
+            "3": 866,
+            "4": 116,
+            "5": 160,
+            "6": 59,
+            "7": 5
+          },
+          "unknown_cluster_ids": [],
+          "valid_seq_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        }
+      },
+      {
+        "name": "no_empty_speakers",
+        "passed": true,
+        "detail": "empty_events=0/2301",
+        "metrics": {
+          "empty_count": 0,
+          "total_finals": 2301
+        }
+      },
+      {
+        "name": "coverage",
+        "passed": true,
+        "detail": "empty_buckets=0/178",
+        "metrics": {
+          "total_buckets": 178,
+          "empty_bucket_count": 0,
+          "empty_bucket_indices": []
+        }
+      },
+      {
+        "name": "name_preservation",
+        "passed": true,
+        "detail": "no .bak \u2014 skipped (meeting had no prior corrections)",
+        "metrics": {
+          "skipped": true
+        }
+      }
+    ]
+  }
+}

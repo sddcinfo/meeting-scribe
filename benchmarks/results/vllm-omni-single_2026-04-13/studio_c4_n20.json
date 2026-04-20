@@ -1,0 +1,154 @@
+{
+  "url": "http://localhost:8022",
+  "profile": "studio",
+  "concurrency": 4,
+  "total_requests": 20,
+  "success": 20,
+  "errors": 0,
+  "p50_ttfa_ms": 725.8597589989222,
+  "p95_ttfa_ms": 1274.766838099822,
+  "p50_total_ms": 14278.758219999872,
+  "p95_total_ms": 30911.466917050344,
+  "per_request": [
+    {
+      "request_id": 0,
+      "ttfa_ms": 601.2091529992176,
+      "total_ms": 7567.153578998841,
+      "bytes": 115200,
+      "error": null
+    },
+    {
+      "request_id": 1,
+      "ttfa_ms": 496.1831559994607,
+      "total_ms": 29153.896560997964,
+      "bytes": 948480,
+      "error": null
+    },
+    {
+      "request_id": 2,
+      "ttfa_ms": 726.8144219997339,
+      "total_ms": 9891.500390000147,
+      "bytes": 230400,
+      "error": null
+    },
+    {
+      "request_id": 3,
+      "ttfa_ms": 786.2427760010178,
+      "total_ms": 31003.970620000473,
+      "bytes": 1025280,
+      "error": null
+    },
+    {
+      "request_id": 4,
+      "ttfa_ms": 246.10315400059335,
+      "total_ms": 3589.8699409990513,
+      "bytes": 149760,
+      "error": null
+    },
+    {
+      "request_id": 5,
+      "ttfa_ms": 550.6153579990496,
+      "total_ms": 22142.306116002146,
+      "bytes": 844800,
+      "error": null
+    },
+    {
+      "request_id": 6,
+      "ttfa_ms": 1100.2125529994373,
+      "total_ms": 5332.389407001756,
+      "bytes": 149760,
+      "error": null
+    },
+    {
+      "request_id": 7,
+      "ttfa_ms": 986.3853690003452,
+      "total_ms": 20359.609083003306,
+      "bytes": 794880,
+      "error": null
+    },
+    {
+      "request_id": 8,
+      "ttfa_ms": 724.9050959981105,
+      "total_ms": 3244.9392109992914,
+      "bytes": 153600,
+      "error": null
+    },
+    {
+      "request_id": 9,
+      "ttfa_ms": 463.02992600249127,
+      "total_ms": 20019.451362000837,
+      "bytes": 760320,
+      "error": null
+    },
+    {
+      "request_id": 10,
+      "ttfa_ms": 482.34893799963174,
+      "total_ms": 2990.1863209997828,
+      "bytes": 96000,
+      "error": null
+    },
+    {
+      "request_id": 11,
+      "ttfa_ms": 847.5957980008388,
+      "total_ms": 25117.561762999685,
+      "bytes": 933120,
+      "error": null
+    },
+    {
+      "request_id": 12,
+      "ttfa_ms": 1283.5587139998097,
+      "total_ms": 5324.173269000312,
+      "bytes": 149760,
+      "error": null
+    },
+    {
+      "request_id": 13,
+      "ttfa_ms": 854.7654479989433,
+      "total_ms": 23093.261443998927,
+      "bytes": 875520,
+      "error": null
+    },
+    {
+      "request_id": 14,
+      "ttfa_ms": 737.519173999317,
+      "total_ms": 3622.796512001514,
+      "bytes": 157440,
+      "error": null
+    },
+    {
+      "request_id": 15,
+      "ttfa_ms": 351.4344239993079,
+      "total_ms": 22961.315994998586,
+      "bytes": 837120,
+      "error": null
+    },
+    {
+      "request_id": 16,
+      "ttfa_ms": 1018.3808649999264,
+      "total_ms": 4454.629231000581,
+      "bytes": 142080,
+      "error": null
+    },
+    {
+      "request_id": 17,
+      "ttfa_ms": 391.7136899981415,
+      "total_ms": 18666.016049999598,
+      "bytes": 768000,
+      "error": null
+    },
+    {
+      "request_id": 18,
+      "ttfa_ms": 689.1189270027098,
+      "total_ms": 5934.383280000475,
+      "bytes": 172800,
+      "error": null
+    },
+    {
+      "request_id": 19,
+      "ttfa_ms": 1107.7211960000568,
+      "total_ms": 19025.098788999458,
+      "bytes": 840960,
+      "error": null
+    }
+  ]
+}
