@@ -150,16 +150,32 @@ echo "[bootstrap] running 'meeting-scribe setup' for app-layer config"
 echo
 meeting-scribe setup "$@"
 
-# ── 7. Bring up the in-tree model backends ───────────────────────
+# ── 7. Pre-pull HF model weights ──────────────────────────────────
+# The model containers run with HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1
+# and mount ${HF_CACHE_DIR:-/data/huggingface} as their HF cache. They
+# will crash-loop with LocalEntryNotFoundError if weights aren't there
+# before they start. Plan ~12 GB pyannote + ~3 GB ASR weights, ~5–15 min.
+echo
+if [[ ! -d /data/huggingface ]]; then
+    echo "[bootstrap] creating /data/huggingface"
+    if sudo -n test -w /data 2>/dev/null; then
+        sudo -n install -d -o "$USER" -g "$(id -gn)" -m 0775 /data/huggingface
+    else
+        mkdir -p /data/huggingface 2>/dev/null || \
+            echo "[bootstrap] could not create /data/huggingface — chmod /data and retry"
+    fi
+fi
+echo "[bootstrap] pre-pulling HF model weights ('meeting-scribe gb10 pull-models')"
+meeting-scribe gb10 pull-models || \
+    echo "[bootstrap] pull-models reported issues — see above. The containers will crash-loop without weights."
+
+# ── 8. Bring up the in-tree model backends ───────────────────────
 # ``meeting-scribe gb10 up`` builds + starts the pyannote-diarize, scribe-asr
 # and scribe-tts containers. First run pulls the ~24 GB vllm-openai base
-# image, builds the local ASR layer, and pulls HF model weights. Plan
-# 15–30 min on a cold customer device. Idempotent on rerun (no-ops if the
-# containers are already healthy). Translate is NOT started here — it
-# lives in auto-sre (sister-cloned in step 5); run ``autosre start`` after.
+# image and builds the local ASR layer. Idempotent on rerun. Translate
+# is NOT started here — it lives in auto-sre (sister-cloned in step 5).
 echo
 echo "[bootstrap] starting model backends ('meeting-scribe gb10 up')"
-echo "[bootstrap] first run is 15–30 min for the image pull + HF weights"
 meeting-scribe gb10 up || \
     echo "[bootstrap] gb10 up reported issues — try 'meeting-scribe gb10 status' for details"
 
