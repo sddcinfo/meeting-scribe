@@ -67,7 +67,7 @@ jobs:
 
       - name: Open or update tracking issue
         if: steps.pypi.outputs.exit_code == '1' || steps.models.outputs.exit_code == '1'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
