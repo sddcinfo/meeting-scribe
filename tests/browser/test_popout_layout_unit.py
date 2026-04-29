@@ -33,7 +33,7 @@ _HOST = """<!doctype html>
 
 
 @pytest.fixture
-def unit_server() -> Generator[dict[str, Any], None, None]:
+def unit_server() -> Generator[dict[str, Any]]:
     app = FastAPI()
 
     @app.get("/")

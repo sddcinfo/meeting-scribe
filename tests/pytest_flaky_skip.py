@@ -36,7 +36,7 @@ def _load_quarantine() -> dict:
     return data.get("entries", {}) or {}
 
 
-def pytest_collection_modifyitems(config, items):  # noqa: ANN001
+def pytest_collection_modifyitems(config, items):
     quarantine = _load_quarantine()
     if not quarantine:
         return

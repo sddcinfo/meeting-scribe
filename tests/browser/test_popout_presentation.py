@@ -57,7 +57,7 @@ _HOST = """<!doctype html>
 
 
 @pytest.fixture
-def presentation_server() -> Generator[dict[str, Any], None, None]:
+def presentation_server() -> Generator[dict[str, Any]]:
     app = FastAPI()
 
     @app.get("/")

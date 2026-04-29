@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from benchmarks._consent_check import check_manifest, enforce_consent
 
 

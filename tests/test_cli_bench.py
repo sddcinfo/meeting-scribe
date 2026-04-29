@@ -56,7 +56,6 @@ def test_bench_start_writes_state_and_stop_cleans_up(temp_state, monkeypatch) ->
     # Stub slo_probe spawn with a sleep loop the test can SIGTERM.
     class _FakeProc:
         def __init__(self):
-            import os
             import sys
 
             self._proc = bench_mod.subprocess.Popen(

@@ -81,7 +81,8 @@ class _ServerThread(threading.Thread):
         self._server.run()
 
     def wait_ready(self, timeout: float = 10.0) -> None:
-        import time, urllib.request
+        import time
+        import urllib.request
         self._started.wait(timeout)
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -97,7 +98,7 @@ class _ServerThread(threading.Thread):
 
 
 @pytest.fixture(scope="module")
-def webkit_server() -> Generator[str, None, None]:
+def webkit_server() -> Generator[str]:
     app = _build_app()
     thread = _ServerThread(app)
     thread.start()

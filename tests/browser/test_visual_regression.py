@@ -163,7 +163,7 @@ class _ServerThread(threading.Thread):
 
 
 @pytest.fixture(scope="module")
-def vr_server() -> Generator[str, None, None]:
+def vr_server() -> Generator[str]:
     app = _build_app()
     thread = _ServerThread(app)
     thread.start()

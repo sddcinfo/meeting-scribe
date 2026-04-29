@@ -36,7 +36,6 @@ exercised) and stub the rest of the surface the popout init touches.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import socket
 import threading
@@ -197,7 +196,7 @@ def _build_app(harness: _MeetingState) -> FastAPI:
     # to every connected WS — the same code path the real server uses
     # via `_broadcast` / `_broadcast_json`.
     @app.post("/test/broadcast")
-    async def broadcast(request_payload: dict):  # noqa: ANN001
+    async def broadcast(request_payload: dict):
         text = json.dumps(request_payload)
         # If it's a transcript event (has segment_id), persist to journal
         # so reconnect-replay catches up.
@@ -259,7 +258,7 @@ class _ServerThread(threading.Thread):
 
 
 @pytest.fixture
-def live_meeting_server() -> Generator[dict[str, Any], None, None]:
+def live_meeting_server() -> Generator[dict[str, Any]]:
     """Start a live FastAPI app with stubbed backends + real WS routing.
 
     The popout and admin pages connect to the *same* server instance,
@@ -354,19 +353,19 @@ def _capture_console(page) -> list[str]:
     """
     log: list[str] = []
 
-    def _on_console(msg) -> None:  # noqa: ANN001
+    def _on_console(msg) -> None:
         try:
             log.append(f"[console.{msg.type}] {msg.text}")
         except Exception as e:  # pragma: no cover
             log.append(f"[console-listener-err] {e}")
 
-    def _on_pageerror(exc) -> None:  # noqa: ANN001
+    def _on_pageerror(exc) -> None:
         log.append(f"[pageerror] {exc}")
 
-    def _on_ws(ws) -> None:  # noqa: ANN001
+    def _on_ws(ws) -> None:
         log.append(f"[ws.open] {ws.url}")
 
-        def _frame_recv(payload) -> None:  # noqa: ANN001
+        def _frame_recv(payload) -> None:
             # Playwright passes the payload string/bytes directly to the
             # framereceived/framesent listeners — there's no `.payload`
             # attribute on the argument.
@@ -377,7 +376,7 @@ def _capture_console(page) -> list[str]:
             except Exception as e:  # pragma: no cover
                 log.append(f"[ws<-listener-err] {e}")
 
-        def _frame_sent(payload) -> None:  # noqa: ANN001
+        def _frame_sent(payload) -> None:
             try:
                 if isinstance(payload, bytes):
                     payload = payload.decode("utf-8", errors="replace")
@@ -393,7 +392,7 @@ def _capture_console(page) -> list[str]:
             lambda err: log.append(f"[ws.error] {ws.url} {err}"),
         )
 
-    def _on_response(resp) -> None:  # noqa: ANN001
+    def _on_response(resp) -> None:
         if resp.status >= 400:
             log.append(f"[http {resp.status}] {resp.url}")
 
@@ -570,7 +569,7 @@ def test_speaker_pulse_does_not_clear_popout_grid(browser, live_meeting_server):
             raise AssertionError(
                 f"{e}\n\n--- popout console + WS frames (last 60) ---\n"
                 + "\n".join(log[-60:])
-            )
+            ) from e
 
         before = popout_page.evaluate(
             "() => window._gridRenderer._segmentMap.size"
