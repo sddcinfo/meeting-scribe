@@ -18,6 +18,7 @@ This makes it safe to compare runs: any change to reprocess.py should
 land a fresh report and you can diff the JSON to see if timings improved
 and whether any quality metric regressed.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -117,7 +118,7 @@ async def run_bench(meeting_id: str, label: str, save: bool) -> dict:
     print(f"\n=== reprocess bench: {meeting_id} (label={label}) ===")
     pcm = meeting_dir / "audio" / "recording.pcm"
     audio_ms = int(os.path.getsize(pcm) / 2 / 16000 * 1000) if pcm.exists() else 0
-    print(f"audio: {audio_ms/60000:.2f}min")
+    print(f"audio: {audio_ms / 60000:.2f}min")
 
     # Sanity check state
     state = _get_state(meeting_id)
@@ -135,7 +136,7 @@ async def run_bench(meeting_id: str, label: str, save: bool) -> dict:
     deadline = bench_start + POLL_TIMEOUT_S
     final_state = _poll_until_complete(meeting_id, deadline)
     bench_wall_ms = int((time.monotonic() - bench_start) * 1000)
-    print(f"[{_ts()}] reprocess finished: state={final_state} wall={bench_wall_ms/1000:.1f}s")
+    print(f"[{_ts()}] reprocess finished: state={final_state} wall={bench_wall_ms / 1000:.1f}s")
 
     if final_state != "complete":
         return {
@@ -151,7 +152,7 @@ async def run_bench(meeting_id: str, label: str, save: bool) -> dict:
     timings = _parse_phase_timings(meeting_id, log_pos)
     print("\n--- phase timings ---")
     for phase, wall in timings.items():
-        print(f"  {phase:<24} {wall:>8} ms  ({wall/1000:>6.1f}s)")
+        print(f"  {phase:<24} {wall:>8} ms  ({wall / 1000:>6.1f}s)")
     if "TOTAL" in timings:
         print(f"  {'(bench overhead)':<24} {bench_wall_ms - timings['TOTAL']:>8} ms")
 
@@ -192,7 +193,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Bench + validate a reprocess run.")
     ap.add_argument("meeting", help="meeting_id")
     ap.add_argument("--label", default="current", help="label for the JSON report filename")
-    ap.add_argument("--save", action="store_true", help="save JSON report under benchmarks/results/")
+    ap.add_argument(
+        "--save", action="store_true", help="save JSON report under benchmarks/results/"
+    )
     args = ap.parse_args()
 
     report = asyncio.run(run_bench(args.meeting, args.label, args.save))

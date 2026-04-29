@@ -18,6 +18,7 @@ Environment:
 This script is intentionally stdlib-only so it can be launched by a
 ``python3`` with CAP_NET_BIND_SERVICE — no venv, no imports, no surprises.
 """
+
 import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer

@@ -1,8 +1,8 @@
 """Verify scribe-main sends the expected `priority` field on outgoing
-vLLM requests. Guards against priority scheduling being a no-op on the
-consolidated Omni instance, and against the 2026-04-14 regression
-where summary.py and refinement.py were sending -5 and -8 respectively
-instead of -10 (priority inversion that let refinement block summary).
+vLLM requests. Guards against priority scheduling silently dropping
+to a no-op, and against the 2026-04-14 regression where summary.py
+and refinement.py were sending -5 and -8 respectively instead of
+-10 (priority inversion that let refinement block summary).
 
 Priority ladder (lower wins):
   -20  live ASR partials (user hears silence otherwise)
@@ -11,6 +11,7 @@ Priority ladder (lower wins):
    10  autosre coding agent
    20  plan-review runner
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
@@ -39,9 +40,9 @@ class TestPriorityHeaders:
 
         async def fake_post(path, json, **kw):
             captured.update(json)
-            return _fake_response({
-                "choices": [{"message": {"content": "language English<asr_text>hello"}}]
-            })
+            return _fake_response(
+                {"choices": [{"message": {"content": "language English<asr_text>hello"}}]}
+            )
 
         be._client = AsyncMock()
         be._client.post = fake_post
@@ -83,10 +84,13 @@ class TestPriorityHeaders:
         class _Streamer:
             async def __aenter__(self_inner):
                 return self_inner
+
             async def __aexit__(self_inner, *a):
                 return False
+
             def raise_for_status(self_inner):
                 pass
+
             async def aiter_bytes(self_inner):
                 if False:
                     yield b""
@@ -94,16 +98,16 @@ class TestPriorityHeaders:
 
         class _FakeClient:
             is_closed = False
+
             def stream(self_inner, method, url, json=None, **kw):
                 captured.update(json or {})
                 return _Streamer()
+
             async def aclose(self_inner):
                 pass
 
         be._http_client = _FakeClient()
-        async for _ in be.synthesize_stream(
-            text="hello", language="en", studio_voice="aiden"
-        ):
+        async for _ in be.synthesize_stream(text="hello", language="en", studio_voice="aiden"):
             pass
 
         assert captured.get("priority") == -10
@@ -118,6 +122,7 @@ class TestSummaryPriority:
 
     def test_summary_source_sends_priority_minus_10(self):
         from pathlib import Path
+
         src = (Path(__file__).parent.parent / "src" / "meeting_scribe" / "summary.py").read_text()
         # generate_summary defaults to priority=-10 (same tier as live
         # translation). The value is parameterized via _call_vllm_summary
@@ -138,7 +143,10 @@ class TestRefinementPriority:
 
     def test_refinement_source_sends_priority_minus_10(self):
         from pathlib import Path
-        src = (Path(__file__).parent.parent / "src" / "meeting_scribe" / "refinement.py").read_text()
+
+        src = (
+            Path(__file__).parent.parent / "src" / "meeting_scribe" / "refinement.py"
+        ).read_text()
         assert '"priority": -10' in src
         assert '"priority": -8' not in src
         # There are TWO priority fields in refinement (ASR pass + translate pass);
@@ -156,6 +164,7 @@ class TestReprocessNoPriority:
 
     def test_reprocess_source_no_priority(self):
         from pathlib import Path
+
         src = (Path(__file__).parent.parent / "src" / "meeting_scribe" / "reprocess.py").read_text()
         assert '"priority"' not in src, (
             "reprocess.py must NOT set a priority field — it should "

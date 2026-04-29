@@ -1,7 +1,9 @@
 """Container lifecycle for meeting-scribe's model stack.
 
-Builds spark-vllm-docker images, starts/stops model containers,
-and manages the multi-container GB10 deployment.
+Docker Compose (`docker-compose.gb10.yml`) is the single source of truth
+for which images run. This module provides the helpers that aren't
+compose's job: listing scribe-prefixed containers and pulling
+HuggingFace models into the local cache.
 """
 
 from __future__ import annotations
@@ -23,78 +25,20 @@ else:
 
 logger = logging.getLogger(__name__)
 
-# spark-vllm-docker repos
-SPARK_VLLM_REPO = "https://github.com/eugr/spark-vllm-docker.git"
-TURBOQUANT_REPO = "https://github.com/bjk110/spark_vllm_docker.git"
-TURBOQUANT_BRANCH = "feat/turboquant"
-
 # Container naming prefix
 CONTAINER_PREFIX = "scribe"
 
-# Default build/storage directory on GB10
-DATA_MOUNT = "/data"
-BUILD_DIR = f"{DATA_MOUNT}/spark-vllm"
-
-
-def build_vllm_image(
-    ssh: Runner,
-    *,
-    turboquant: bool = False,
-) -> str:
-    """Build spark-vllm-docker image on the GB10 node.
-
-    Args:
-        ssh: SSH connection to the GB10 node.
-        turboquant: If True, build from bjk110's TurboQuant branch.
-
-    Returns:
-        Docker image tag that was built.
-    """
-    if turboquant:
-        repo = TURBOQUANT_REPO
-        branch = TURBOQUANT_BRANCH
-        tag = "bjk110/spark-vllm:turboquant"
-    else:
-        repo = SPARK_VLLM_REPO
-        branch = "main"
-        tag = "eugr/spark-vllm:latest"
-
-    # Clone or update repo
-    result = ssh.run(["test", "-d", f"{BUILD_DIR}/.git"], check=False)
-    if result.returncode == 0:
-        logger.info("Updating spark-vllm-docker at %s", BUILD_DIR)
-        ssh.run(
-            [
-                "bash",
-                "-c",
-                f"cd {BUILD_DIR} && git fetch origin && git checkout {branch} && git pull",
-            ],
-            timeout=120,
-        )
-    else:
-        logger.info("Cloning spark-vllm-docker from %s", repo)
-        ssh.run(
-            ["git", "clone", "-b", branch, repo, BUILD_DIR],
-            timeout=300,
-        )
-
-    # Build Docker image (~20-30 minutes)
-    logger.info("Building Docker image: %s (this may take 20-30 minutes)", tag)
-    ssh.run(
-        ["bash", "-c", f"cd {BUILD_DIR} && docker build -t {tag} ."],
-        timeout=3600,
-    )
-
-    return tag
-
 
 #
-# NOTE: ``start_container``, ``stop_container``, ``restart_container``,
-# and ``stop_all_containers`` were removed on 2026-04-14. The stack
-# is now managed exclusively through ``docker-compose.gb10.yml``;
-# the CLI wraps compose via ``infra/compose.py``. Recipes remain
-# useful for pull-models + test assertions but are no longer the
-# runtime launch path.
+# NOTE: ``build_vllm_image`` (custom spark-vllm-docker / TurboQuant build)
+# was removed in 1.5.0. ASR + TTS now run on stock ``vllm/vllm-openai``
+# pulled by docker compose. Set ``SCRIBE_VLLM_IMAGE`` if you need to
+# override the default.
+#
+# ``start_container``, ``stop_container``, ``restart_container``, and
+# ``stop_all_containers`` were removed on 2026-04-14. The stack is
+# managed exclusively through ``docker-compose.gb10.yml``; the CLI
+# wraps compose via ``infra/compose.py``.
 #
 # If you need per-container lifecycle operations, use:
 #

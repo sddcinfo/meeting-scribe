@@ -5,6 +5,7 @@ That means: short text passes through, unknown languages pass through,
 weak signals pass through, single-language pairs pass through. Only
 confident disagreements between lingua and the ASR tag flip the label.
 """
+
 from __future__ import annotations
 
 import pytest

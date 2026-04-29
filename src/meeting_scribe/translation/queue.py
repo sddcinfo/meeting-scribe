@@ -22,9 +22,11 @@ import os
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from meeting_scribe.models import TranscriptEvent, TranslationStatus
+from meeting_scribe.util.atomic_io import atomic_append_jsonl, read_jsonl
 
 if TYPE_CHECKING:
     from meeting_scribe.backends.base import TranslateBackend
@@ -144,6 +146,26 @@ def _merge_events(a: TranscriptEvent, b: TranscriptEvent) -> TranscriptEvent:
 
 
 # ---------------------------------------------------------------------------
+# Quiesce result (A4)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class QuiesceResult:
+    """Outcome of ``TranslationQueue.quiesce_meeting()``.
+
+    Carries metadata only — the actual backlog items live in
+    ``backlog_path`` on disk. Caller MUST read the file if it needs
+    item content; never trust the in-memory list (which doesn't exist).
+    """
+
+    drained_clean: bool
+    backlog_path: Path
+    item_count: int
+    deferred_post_quiesce: int = 0
+
+
+# ---------------------------------------------------------------------------
 # Translation queue
 # ---------------------------------------------------------------------------
 
@@ -244,6 +266,24 @@ class TranslationQueue:
         # work — those drain normally.
         self._paused: bool = False
 
+        # ── Quiesce state (A4) ────────────────────────────────────
+        # Once ``_quiesce_active[meeting_id]`` is True, every
+        # ``submit()`` for that meeting persists directly to the
+        # on-disk ``pending_translations.jsonl`` BEFORE returning,
+        # then drops out without entering the live queue. The file
+        # is the authoritative store for any not-yet-translated
+        # work; in-memory state is never the source of truth once
+        # quiesce starts.
+        #
+        # Quiesce stays active for a meeting forever — by the time
+        # ``quiesce_meeting()`` returns, finalize is in progress and
+        # any further hypothetical late submits should still go
+        # durable. New meetings get fresh entries via the existing
+        # ``bind_meeting()`` flow.
+        self._quiesce_active: dict[str, bool] = {}
+        self._backlog_path: dict[str, Path] = {}
+        self._deferred_count: dict[str, int] = {}
+
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
@@ -326,6 +366,32 @@ class TranslationQueue:
             baseline_targets, optional_targets = self._derive_targets(event)
         baseline_targets = baseline_targets or frozenset()
         optional_targets = (optional_targets or frozenset()) - baseline_targets
+
+        # ── Quiesce hot-path (A4): persist inline before returning ──
+        # If this meeting has started finalize, the queue is no longer
+        # the source of truth — pending_translations.jsonl is. Persist
+        # the work directly under the lock so a process crash between
+        # this return and finalize completion still preserves the
+        # backlog. The file IS the durable store; we never enter the
+        # live queue for quiesced work.
+        active_mid = self._active_meeting_id or ""
+        if active_mid and self._quiesce_active.get(active_mid):
+            async with self._lock:
+                if self._quiesce_active.get(active_mid):
+                    self._persist_to_backlog(
+                        meeting_id=active_mid,
+                        event=event,
+                        baseline_targets=baseline_targets,
+                        optional_targets=optional_targets,
+                    )
+                    self._deferred_count[active_mid] = self._deferred_count.get(active_mid, 0) + 1
+                    logger.info(
+                        "translation.persisted_to_backlog meeting=%s seg=%s targets=%d",
+                        active_mid,
+                        event.segment_id,
+                        len(baseline_targets) + len(optional_targets),
+                    )
+                    return
 
         async with self._lock:
             if self._pending_merge is not None:
@@ -555,15 +621,16 @@ class TranslationQueue:
         it is bound to the same meeting the queue is bound to.
 
         Never returns cross-meeting data; never accesses a stale pool.
-        The server-side module-global ``refinement_worker`` is the
-        only handle; we import lazily so tests that don't stand up
-        the full server can still exercise the queue.
+        ``refinement_worker`` lives on
+        ``meeting_scribe.runtime.state``; we import lazily so tests
+        that don't stand up the full server can still exercise the
+        queue.
         """
         try:
-            from meeting_scribe import server as _server
+            from meeting_scribe.runtime import state as _state
         except Exception:
             return None
-        worker = getattr(_server, "refinement_worker", None)
+        worker = getattr(_state, "refinement_worker", None)
         if worker is None:
             return None
         if getattr(worker, "_meeting_id", None) != self._active_meeting_id:
@@ -765,6 +832,160 @@ class TranslationQueue:
             return
         self._paused = False
         logger.info("Translation queue intake resumed")
+
+    # ------------------------------------------------------------------
+    # Quiesce + persisted backlog (A4)
+    # ------------------------------------------------------------------
+
+    def _persist_to_backlog(
+        self,
+        *,
+        meeting_id: str,
+        event: TranscriptEvent,
+        baseline_targets: frozenset[str],
+        optional_targets: frozenset[str],
+    ) -> None:
+        """Append one record per (segment_id, target_lang) to the backlog file.
+
+        Caller MUST hold ``self._lock``. The file is written via
+        ``atomic_append_jsonl`` so each line is durable on disk before
+        this returns (fsync per record).
+
+        Idempotency replay key is ``(meeting_id, segment_id, target_lang)``;
+        the recovery task will skip items that the journal already shows
+        as translated.
+        """
+        path = self._backlog_path.get(meeting_id)
+        if path is None:
+            logger.error(
+                "Quiesce backlog path missing for meeting=%s — refusing to persist",
+                meeting_id,
+            )
+            return
+        all_targets = baseline_targets | optional_targets
+        if not all_targets:
+            return
+        for target in sorted(all_targets):
+            atomic_append_jsonl(
+                path,
+                {
+                    "meeting_id": meeting_id,
+                    "segment_id": event.segment_id,
+                    "target_lang": target,
+                    "source_text": event.text,
+                    "source_lang": event.language,
+                    "is_baseline": target in baseline_targets,
+                    "queued_at": time.time(),
+                    "attempt_count": 0,
+                },
+            )
+
+    async def quiesce_meeting(
+        self,
+        meeting_id: str,
+        meeting_dir: Path,
+        *,
+        deadline_s: float = 30.0,
+    ) -> QuiesceResult:
+        """Quiesce a meeting's translation work to a durable backlog file.
+
+        The contract:
+          1. Flips ``_quiesce_active[meeting_id] = True`` under the lock.
+             From this instant, every ``submit()`` for this meeting
+             persists inline to ``meeting_dir/pending_translations.jsonl``
+             before returning — the file is the authoritative store.
+          2. Releases the lock so workers can drain in-flight items
+             into the journal normally.
+          3. Polls (under the lock) until either no item with
+             ``meeting_id == meeting_id and started and not cancelled``
+             remains, or ``deadline_s`` elapses.
+          4. Re-acquires the lock and persists every still-queued item
+             (and any cancelled-but-incomplete in-flight) to the same
+             backlog file. Marks them cancelled so workers skip them.
+          5. Quiesce stays ACTIVE for this meeting forever — by the
+             time we return, finalize is in progress; any further late
+             submits should still go durable. New meetings get fresh
+             state via ``bind_meeting()``.
+
+        Returns ``QuiesceResult`` with file path + line count. The file
+        IS the truth; never trust an in-memory snapshot.
+        """
+        backlog_path = meeting_dir / "pending_translations.jsonl"
+
+        async with self._lock:
+            self._backlog_path[meeting_id] = backlog_path
+            self._quiesce_active[meeting_id] = True
+            self._deferred_count.setdefault(meeting_id, 0)
+
+            # Flush merge gate while we have the lock so its held event
+            # doesn't escape into the live queue post-quiesce.
+            if self._pending_merge is not None:
+                ev, base, opt = self._pending_merge
+                self._pending_merge = None
+                if (self._active_meeting_id or "") == meeting_id:
+                    self._persist_to_backlog(
+                        meeting_id=meeting_id,
+                        event=ev,
+                        baseline_targets=base,
+                        optional_targets=opt,
+                    )
+                else:
+                    # Different meeting was bound; re-enqueue normally.
+                    await self._enqueue(
+                        ev,
+                        baseline_targets=base,
+                        optional_targets=opt,
+                    )
+
+        # Wait for in-flight workers to drain (they may complete and
+        # write to the journal — which we want — or still be running).
+        deadline = time.monotonic() + deadline_s
+        while True:
+            async with self._lock:
+                in_flight = sum(
+                    1
+                    for it in self._items
+                    if it.meeting_id == meeting_id and it.started and not it.cancelled
+                )
+            if in_flight == 0:
+                break
+            if time.monotonic() >= deadline:
+                logger.warning(
+                    "Quiesce deadline reached meeting=%s with %d in-flight — "
+                    "items will be persisted to backlog",
+                    meeting_id,
+                    in_flight,
+                )
+                break
+            await asyncio.sleep(0.1)
+
+        # Final pass: persist remaining queued + cancel any in-flight
+        # that didn't complete in time. They will be replayed on
+        # recovery via the (segment_id, target_lang) idempotency key.
+        async with self._lock:
+            remaining = [it for it in self._items if it.meeting_id == meeting_id]
+            for item in remaining:
+                if item.cancelled:
+                    continue
+                # Persist regardless of started: a started-but-not-done
+                # item is racing the deadline; recovery will skip it
+                # if the journal already has the result.
+                self._persist_to_backlog(
+                    meeting_id=meeting_id,
+                    event=item.event,
+                    baseline_targets=item.baseline_targets,
+                    optional_targets=item.optional_targets,
+                )
+                item.cancelled = True
+
+        item_count = len(read_jsonl(backlog_path))
+        deferred = self._deferred_count.get(meeting_id, 0)
+        return QuiesceResult(
+            drained_clean=item_count == 0,
+            backlog_path=backlog_path,
+            item_count=item_count,
+            deferred_post_quiesce=deferred,
+        )
 
     def cancel_all(self) -> int:
         """Force-cancel every not-yet-started item in the queue.

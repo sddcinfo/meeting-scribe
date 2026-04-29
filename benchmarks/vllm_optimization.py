@@ -65,7 +65,9 @@ SEGMENTS = [
 ]
 
 
-async def _translate_one(client: httpx.AsyncClient, url: str, model: str, text: str) -> tuple[float, str]:
+async def _translate_one(
+    client: httpx.AsyncClient, url: str, model: str, text: str
+) -> tuple[float, str]:
     """Translate a single segment, return (latency_ms, translated_text)."""
     t0 = time.monotonic()
     try:
@@ -144,11 +146,11 @@ async def benchmark_concurrency(
 
 async def run_benchmark(url: str, concurrency_levels: list[int], label: str) -> dict:
     """Run full benchmark across concurrency levels."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Benchmark: {label}")
     print(f"URL: {url}")
     print(f"Concurrency levels: {concurrency_levels}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Get server info and vLLM config
     async with httpx.AsyncClient(timeout=10) as c:
@@ -161,17 +163,22 @@ async def run_benchmark(url: str, concurrency_levels: list[int], label: str) -> 
 
     # Capture vLLM container config for reproducibility
     import subprocess
+
     vllm_config = {}
     try:
         cmd_out = subprocess.run(
-            ["docker", "inspect", "autosre-vllm-local", "--format", "{{join .Config.Cmd \" \"}}"],
-            capture_output=True, text=True, timeout=5,
+            ["docker", "inspect", "autosre-vllm-local", "--format", '{{join .Config.Cmd " "}}'],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if cmd_out.returncode == 0:
             vllm_config["command"] = cmd_out.stdout.strip()
         driver_out = subprocess.run(
             ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if driver_out.returncode == 0:
             vllm_config["driver"] = driver_out.stdout.strip()
@@ -185,7 +192,9 @@ async def run_benchmark(url: str, concurrency_levels: list[int], label: str) -> 
         result = await benchmark_concurrency(url, conc)
         results.append(result)
         print(f"  Throughput: {result['throughput_rps']} req/s")
-        print(f"  Latency p50/p90/p99: {result['latency_p50_ms']}/{result['latency_p90_ms']}/{result['latency_p99_ms']}ms")
+        print(
+            f"  Latency p50/p90/p99: {result['latency_p50_ms']}/{result['latency_p90_ms']}/{result['latency_p99_ms']}ms"
+        )
         print(f"  Wall time: {result['wall_time_s']}s, Errors: {result['errors']}")
 
     output = {
@@ -198,11 +207,13 @@ async def run_benchmark(url: str, concurrency_levels: list[int], label: str) -> 
     }
 
     # Summary table
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"{'Conc':>5} {'RPS':>8} {'p50ms':>8} {'p90ms':>8} {'p99ms':>8} {'Errors':>6}")
     print("-" * 60)
-    for r in results:
-        print(f"{r['concurrency']:>5} {r['throughput_rps']:>8.1f} {r['latency_p50_ms']:>8.1f} {r['latency_p90_ms']:>8.1f} {r['latency_p99_ms']:>8.1f} {r['errors']:>6}")
+    for row in results:
+        print(
+            f"{row['concurrency']:>5} {row['throughput_rps']:>8.1f} {row['latency_p50_ms']:>8.1f} {row['latency_p90_ms']:>8.1f} {row['latency_p99_ms']:>8.1f} {row['errors']:>6}"
+        )
 
     return output
 
@@ -212,9 +223,9 @@ def compare_results(file_a: str, file_b: str):
     a = json.loads(Path(file_a).read_text())
     b = json.loads(Path(file_b).read_text())
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"A: {a['label']} | B: {b['label']}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"{'Conc':>5} | {'A RPS':>8} {'A p50':>8} | {'B RPS':>8} {'B p50':>8} | {'Δ RPS':>8}")
     print("-" * 70)
 
@@ -228,14 +239,18 @@ def compare_results(file_a: str, file_b: str):
         b_rps = br.get("throughput_rps", 0)
         delta = b_rps - a_rps
         sign = "+" if delta > 0 else ""
-        print(f"{conc:>5} | {a_rps:>8.1f} {ar.get('latency_p50_ms',0):>7.0f}ms | {b_rps:>8.1f} {br.get('latency_p50_ms',0):>7.0f}ms | {sign}{delta:>7.1f}")
+        print(
+            f"{conc:>5} | {a_rps:>8.1f} {ar.get('latency_p50_ms', 0):>7.0f}ms | {b_rps:>8.1f} {br.get('latency_p50_ms', 0):>7.0f}ms | {sign}{delta:>7.1f}"
+        )
 
 
 async def main():
     parser = argparse.ArgumentParser(description="vLLM optimization benchmark for GB10")
     parser.add_argument("--url", default="http://localhost:8010")
     parser.add_argument("--label", default="current")
-    parser.add_argument("--concurrency", default="1,4,8,16", help="Comma-separated concurrency levels")
+    parser.add_argument(
+        "--concurrency", default="1,4,8,16", help="Comma-separated concurrency levels"
+    )
     parser.add_argument("--requests", type=int, default=30, help="Requests per concurrency level")
     parser.add_argument("--compare", nargs=2, metavar="FILE")
     parser.add_argument("--output-dir", default="benchmarks/results")

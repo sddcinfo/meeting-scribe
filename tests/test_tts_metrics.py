@@ -15,6 +15,10 @@ from meeting_scribe.models import (
     TranslationState,
     TranslationStatus,
 )
+from meeting_scribe.runtime import state as runtime_state
+from meeting_scribe.server_support import crash_tracking
+from meeting_scribe.server_support.metrics_helpers import _percentile_dict
+from meeting_scribe.tts.worker import _record_segment_lag
 
 
 def _make_event(text: str = "Hello") -> TranscriptEvent:
@@ -39,14 +43,15 @@ def _make_event(text: str = "Hello") -> TranscriptEvent:
 
 @pytest.fixture(autouse=True)
 def reset_server_state():
-    from meeting_scribe import server
+    from meeting_scribe.runtime import metrics as runtime_metrics
+    from meeting_scribe.runtime import state as runtime_state
 
-    server.metrics.reset()
-    server._tts_in_flight = 0
-    server._tts_inflight_started.clear()
-    server._tts_stall_candidate_since = None
-    server._tts_degraded_candidate_since = None
-    server._crash_state = None
+    runtime_state.metrics.reset()
+    runtime_state.tts_in_flight = 0
+    runtime_state.tts_inflight_started.clear()
+    runtime_metrics._tts_stall_candidate_since = None
+    runtime_metrics._tts_degraded_candidate_since = None
+    crash_tracking._crash_state = None
     yield
 
 
@@ -56,14 +61,10 @@ class TestPercentileGuard:
     def test_empty_deque(self):
         from collections import deque
 
-        from meeting_scribe.server import _percentile_dict
-
         d = _percentile_dict(deque(maxlen=256))
         assert d == {"p50": None, "p95": None, "p99": None, "sample_count": 0}
 
     def test_one_sample(self):
-        from meeting_scribe.server import _percentile_dict
-
         d = _percentile_dict([42.0])
         assert d["sample_count"] == 1
         assert d["p50"] is None
@@ -75,62 +76,60 @@ class TestTTSHealthEvaluator:
     def _run_eval_tick(self, monkeypatch):
         """Helper: run one iteration of the health evaluator body.
 
-        We can't easily await the full _tts_health_evaluator coroutine
+        We can't easily await the full tts_health_evaluator coroutine
         under pytest — it sleeps forever. So we reproduce its decision
         logic inline using the same constants, matching what the
         real function does on one tick.
         """
-        from meeting_scribe import server
+        from meeting_scribe.runtime import metrics as runtime_metrics
+        from meeting_scribe.server_support.metrics_helpers import _percentile
 
         now = time.monotonic()
-        qsize = server._tts_queue.qsize() if server._tts_queue else 0
-        in_flight = server._tts_in_flight
+        qsize = runtime_state.tts_queue.qsize() if runtime_state.tts_queue else 0
+        in_flight = runtime_state.tts_in_flight
         queue_saturated = (
-            in_flight >= server._TTS_CONTAINER_MAX_CONCURRENCY
-            and qsize >= server._TTS_QUEUE_MAXSIZE
+            in_flight >= runtime_state.TTS_CONTAINER_MAX_CONCURRENCY
+            and qsize >= runtime_state.TTS_QUEUE_MAXSIZE
         )
-        e2e_p95 = server._percentile(sorted(server.metrics.end_to_end_lag_ms), 0.95)
+        e2e_p95 = _percentile(sorted(runtime_state.metrics.end_to_end_lag_ms), 0.95)
         no_progress_stall = (
             in_flight > 0
-            and server.metrics.last_delivery_at > 0
-            and (now - server.metrics.last_delivery_at) > server._TTS_NO_PROGRESS_STALL_S
+            and runtime_state.metrics.last_delivery_at > 0
+            and (now - runtime_state.metrics.last_delivery_at)
+            > runtime_metrics._TTS_NO_PROGRESS_STALL_S
         )
         stall_condition = no_progress_stall or (e2e_p95 is not None and e2e_p95 > 6000)
         degraded_condition = queue_saturated or (e2e_p95 is not None and e2e_p95 > 3500)
         return now, stall_condition, degraded_condition
 
     def test_healthy_by_default(self):
-        from meeting_scribe import server
 
         _, stall, degraded = self._run_eval_tick(None)
         assert not stall
         assert not degraded
-        assert server.metrics.tts_health_state == "healthy"
+        assert runtime_state.metrics.tts_health_state == "healthy"
 
     def test_degraded_when_p95_high(self):
-        from meeting_scribe import server
 
         # Inject 30 lag samples at 4500 ms
         for _ in range(30):
-            server.metrics.end_to_end_lag_ms.append(4500.0)
+            runtime_state.metrics.end_to_end_lag_ms.append(4500.0)
         _, stall, degraded = self._run_eval_tick(None)
         assert not stall
         assert degraded
 
     def test_stalled_when_p95_very_high(self):
-        from meeting_scribe import server
 
         for _ in range(30):
-            server.metrics.end_to_end_lag_ms.append(7000.0)
+            runtime_state.metrics.end_to_end_lag_ms.append(7000.0)
         _, stall, _ = self._run_eval_tick(None)
         assert stall
 
     def test_no_progress_stall_detected(self):
-        from meeting_scribe import server
 
         # Simulate in-flight with no recent delivery.
-        server._tts_in_flight = 1
-        server.metrics.last_delivery_at = time.monotonic() - 10.0
+        runtime_state.tts_in_flight = 1
+        runtime_state.metrics.last_delivery_at = time.monotonic() - 10.0
         _, stall, _ = self._run_eval_tick(None)
         assert stall
 
@@ -139,14 +138,13 @@ class TestWorkersBusyCounter:
     """[P1-3-i1] workers_busy == in_flight, not task count."""
 
     def test_workers_busy_reflects_in_flight(self):
-        from meeting_scribe import server
 
-        server._tts_in_flight = 0
-        d = server.metrics.to_dict()
+        runtime_state.tts_in_flight = 0
+        d = runtime_state.metrics.to_dict()
         assert d["tts"]["workers_busy"] == 0
 
-        server._tts_in_flight = 1
-        d = server.metrics.to_dict()
+        runtime_state.tts_in_flight = 1
+        d = runtime_state.metrics.to_dict()
         assert d["tts"]["workers_busy"] == 1
 
 
@@ -154,29 +152,26 @@ class TestRecordSegmentLagListenerIndependent:
     """[P1-5-i2 + P1-3-i3] segment lag recorded ONCE, not per listener."""
 
     def test_single_segment_produces_single_sample(self):
-        from meeting_scribe import server
-
         evt = _make_event("hello")
         # Simulate the synthesis-complete path: _record_segment_lag is called
         # exactly once per segment, regardless of how many listeners receive it.
-        server._record_segment_lag(evt, now=time.monotonic() + 1.0)
-        server._record_segment_lag(evt, now=time.monotonic() + 1.5)  # second segment
+        _record_segment_lag(evt, now=time.monotonic() + 1.0)
+        _record_segment_lag(evt, now=time.monotonic() + 1.5)  # second segment
         # Two segments → two samples in the SLA histograms
-        assert len(server.metrics.end_to_end_lag_ms) == 2
+        assert len(runtime_state.metrics.end_to_end_lag_ms) == 2
 
 
 class TestCrashState:
     """[P2-1-i2] crash metadata is sanitised."""
 
     def test_crash_exposes_only_opaque_code(self):
-        from meeting_scribe import server
 
         try:
             raise RuntimeError("secret internal detail — api_key=xyz")
         except RuntimeError as e:
-            server._record_crash("tts_worker", e)
+            crash_tracking._record_crash("tts_worker", e)
 
-        state = server._sanitised_crash_state()
+        state = crash_tracking._sanitised_crash_state()
         assert state is not None
         assert state["state"] == "crashed"
         assert state["component"] == "tts_worker"
@@ -187,19 +182,17 @@ class TestCrashState:
         assert len(state["code"]) == 64  # full sha256 hexdigest
 
     def test_reports_null_when_no_crash(self):
-        from meeting_scribe import server
 
-        server._crash_state = None
-        assert server._sanitised_crash_state() is None
+        crash_tracking._crash_state = None
+        assert crash_tracking._sanitised_crash_state() is None
 
 
 class TestMetricsApiStatusShape:
     """The /api/status payload must include all the new TTS + listener fields."""
 
     def test_to_dict_has_all_tts_fields(self):
-        from meeting_scribe import server
 
-        d = server.metrics.to_dict()
+        d = runtime_state.metrics.to_dict()
         assert "tts" in d
         assert "listener" in d
         assert "loop_lag_ms" in d
@@ -253,9 +246,9 @@ class TestLoopLagMonitorRecords:
 
     @pytest.mark.asyncio
     async def test_monitor_records_at_least_one_sample(self):
-        from meeting_scribe import server
+        from meeting_scribe.runtime.health_monitors import loop_lag_monitor
 
-        task = asyncio.create_task(server._loop_lag_monitor())
+        task = asyncio.create_task(loop_lag_monitor())
         try:
             # Let it tick at least twice (each tick sleeps 0.5 s).
             await asyncio.sleep(1.2)
@@ -265,4 +258,63 @@ class TestLoopLagMonitorRecords:
                 await task
             except asyncio.CancelledError:
                 pass
-        assert len(server.metrics.loop_lag_ms) >= 2
+        assert len(runtime_state.metrics.loop_lag_ms) >= 2
+
+
+class TestSilenceWatchdogStaleTimestampGuard:
+    """Regression guard for the 2026-04-28 ``no_audio (31185s)`` warning.
+
+    ``state.last_audio_chunk_ts`` is bumped by ws.audio_input on every
+    frame regardless of meeting state — a stray admin-tab WS, a prior
+    meeting, anything. If the watchdog only checks ``last_audio_chunk_ts``
+    it fires immediately when the next meeting starts and reports the
+    cumulative gap as silence age. The fix anchors age against
+    ``max(last_audio_chunk_ts, metrics.meeting_start)``.
+    """
+
+    @pytest.mark.asyncio
+    async def test_does_not_fire_on_stale_pre_meeting_timestamp(self, monkeypatch):
+        """Stale chunk_ts older than the current meeting's start does
+        not produce a no_audio warning."""
+
+        from meeting_scribe.runtime import health_monitors
+
+        captured: list[dict] = []
+
+        async def _capture(payload: dict) -> None:
+            captured.append(payload)
+
+        # Intercept the broadcast so we can assert no warning fires.
+        monkeypatch.setattr(health_monitors, "_broadcast_json", _capture)
+
+        # Simulate: a stray frame landed long before any meeting (or
+        # under a prior meeting that's since ended).
+        runtime_state.last_audio_chunk_ts = time.monotonic() - 60.0
+        runtime_state.silence_warn_sent = False
+
+        # Now a brand-new meeting starts NOW. Its meeting_start is
+        # younger than last_audio_chunk_ts, so the gap from
+        # last_audio_chunk_ts is irrelevant.
+        runtime_state.metrics.meeting_start = time.monotonic()
+
+        class _FakeMeeting:
+            meeting_id = "test-stale-ts-guard"
+
+        runtime_state.current_meeting = _FakeMeeting()
+
+        try:
+            task = asyncio.create_task(health_monitors.silence_watchdog_loop())
+            await asyncio.sleep(2.5)  # well over the 1.0s poll
+        finally:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            runtime_state.current_meeting = None
+            runtime_state.last_audio_chunk_ts = 0.0
+            runtime_state.silence_warn_sent = False
+            runtime_state.metrics.meeting_start = 0.0
+
+        no_audio = [p for p in captured if p.get("reason") == "no_audio"]
+        assert no_audio == [], f"watchdog fired against stale pre-meeting timestamp: {no_audio}"

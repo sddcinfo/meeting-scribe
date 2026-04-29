@@ -125,8 +125,7 @@ class VllmASRBackend(ASRBackend):
 
         if not pair:
             self._cached_prompt = (
-                "Transcribe the audio in the original spoken language. "
-                "Do not translate."
+                "Transcribe the audio in the original spoken language. Do not translate."
             )
         else:
             # Map each ISO code to its English name (e.g. "nl" → "Dutch").
@@ -293,9 +292,8 @@ class VllmASRBackend(ASRBackend):
                         ],
                         "max_tokens": 512,
                         "temperature": 0.0,
-                        # Live ASR is the tightest-SLA path on the Omni-consolidation
-                        # stack (user hears silence otherwise). vLLM priority: lower
-                        # = earlier. See plan `vLLM Consolidation + Omni Spike`.
+                        # Live ASR is the tightest-SLA path in the stack (user
+                        # hears silence otherwise). vLLM priority: lower = earlier.
                         "priority": -20,
                     },
                 )
@@ -317,9 +315,7 @@ class VllmASRBackend(ASRBackend):
                             correct_segment_language,
                         )
 
-                        corrected = correct_segment_language(
-                            text, lang, self._language_pair
-                        )
+                        corrected = correct_segment_language(text, lang, self._language_pair)
                         if corrected != lang:
                             lang = corrected
                     except Exception:

@@ -14,7 +14,7 @@
 set -e
 
 MODEL_9B="lovedheart/Qwen3.5-9B-FP8"
-VLLM_IMAGE="ghcr.io/bjk110/vllm-spark:turboquant"
+VLLM_IMAGE="${SCRIBE_VLLM_IMAGE:-vllm/vllm-openai:latest}"
 
 echo "=== BENCHMARKING Qwen3.5-9B-FP8 vs 35B ==="
 echo "This will temporarily stop the translation container."

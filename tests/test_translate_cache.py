@@ -4,6 +4,7 @@ The cache skips the vLLM round-trip when the exact (src, tgt, text)
 tuple was just translated. Targets the ~15-20 % repeated-filler phrases
 seen in real meeting logs.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -166,9 +167,7 @@ async def test_cache_hits_when_context_matches(backend, monkeypatch):
     """Same text + same prior_context → cache hit (no second backend call)."""
     tmp_log = Path("/tmp/test_cache_hit.jsonl")
     tmp_log.unlink(missing_ok=True)
-    monkeypatch.setattr(
-        "meeting_scribe.backends.translate_vllm._TRANS_LOG_PATH", tmp_log
-    )
+    monkeypatch.setattr("meeting_scribe.backends.translate_vllm._TRANS_LOG_PATH", tmp_log)
 
     call_count = 0
 
@@ -198,9 +197,7 @@ async def test_cache_misses_when_context_differs(backend, monkeypatch):
     """Same text + different prior_context → second call goes to backend."""
     tmp_log = Path("/tmp/test_cache_miss.jsonl")
     tmp_log.unlink(missing_ok=True)
-    monkeypatch.setattr(
-        "meeting_scribe.backends.translate_vllm._TRANS_LOG_PATH", tmp_log
-    )
+    monkeypatch.setattr("meeting_scribe.backends.translate_vllm._TRANS_LOG_PATH", tmp_log)
 
     call_count = 0
 
@@ -218,12 +215,8 @@ async def test_cache_misses_when_context_differs(backend, monkeypatch):
 
     backend._client.post = fake_post
 
-    r1 = await backend.translate(
-        "hello", "ja", "en", prior_context=[("x", "X")]
-    )
-    r2 = await backend.translate(
-        "hello", "ja", "en", prior_context=[("y", "Y")]
-    )
+    r1 = await backend.translate("hello", "ja", "en", prior_context=[("x", "X")])
+    r2 = await backend.translate("hello", "ja", "en", prior_context=[("y", "Y")])
     assert r1 == "translated-1"
     assert r2 == "translated-2"
     assert call_count == 2

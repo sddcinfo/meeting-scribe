@@ -43,6 +43,24 @@
       </div>
       <button
         class="header-icon-btn"
+        id="btn-diagnostics"
+        title="Diagnostics — system health & logs"
+        aria-label="Open diagnostics"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="diagnostics-panel"
+      >
+        <!-- Heart-pulse: signals "system health". The dot anchored to
+             top-right turns red when /api/status reports a crash or any
+             backend with consecutive_failures > 0, so the icon itself
+             flags trouble without needing to open the panel. -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h4l2-6 4 12 2-6h6"/>
+        </svg>
+        <span class="header-badge-dot" id="diag-health-dot" aria-hidden="true"></span>
+      </button>
+      <button
+        class="header-icon-btn"
         id="btn-settings"
         title="Settings"
         aria-label="Open settings"
@@ -120,11 +138,10 @@
         </div>
         <div class="settings-field" id="admin-password-group">
           <label for="setting-admin-password">Admin password</label>
-          <div style="display:flex;gap:0.5rem;align-items:center">
+          <div class="settings-admin-pw-row">
             <input type="password" id="setting-admin-password" minlength="8" maxlength="63"
                    placeholder="Leave blank to keep current">
-            <button type="button" id="btn-toggle-admin-pw" class="btn-icon" title="Show/hide password"
-                    style="padding:0.25rem 0.5rem;font-size:0.85rem">Show</button>
+            <button type="button" id="btn-toggle-admin-pw" class="btn-icon" title="Show/hide password">Show</button>
           </div>
           <p class="settings-field-help">
             8-63 printable ASCII characters (WPA3 passphrase). Leave blank to keep the current password.
@@ -189,6 +206,69 @@
           </p>
         </div>
       </section>
+
+      <section class="settings-section settings-section-terminal">
+        <h4>Terminal access</h4>
+        <div class="term-access-card" id="term-access-card" data-state="loading">
+          <div class="term-access-head">
+            <span class="term-access-dot" aria-hidden="true"></span>
+            <span class="term-access-title" id="term-access-title">Checking…</span>
+            <span class="term-access-meta" id="term-access-meta"></span>
+          </div>
+          <p class="term-access-body">
+            The embedded terminal is gated by a shared admin secret. Once
+            authorized, this browser carries a 7-day signed cookie so you
+            don't need to paste the secret again.
+          </p>
+          <div class="term-access-secret">
+            <label for="term-access-secret-input">Admin secret</label>
+            <div class="term-access-secret-row">
+              <input
+                type="password"
+                id="term-access-secret-input"
+                class="term-access-secret-input"
+                readonly
+                value=""
+                autocomplete="off"
+                spellcheck="false"
+              >
+              <button type="button" class="btn-icon" id="btn-term-secret-reveal" title="Show / hide">Show</button>
+              <button type="button" class="btn-icon" id="btn-term-secret-copy" title="Copy to clipboard">Copy</button>
+            </div>
+            <p class="settings-field-help" id="term-access-secret-path"></p>
+          </div>
+          <div class="term-access-actions">
+            <button type="button" class="btn-primary-inline" id="btn-term-authorize">
+              Authorize this browser
+            </button>
+            <button type="button" class="btn-ghost-inline" id="btn-term-deauthorize" hidden>
+              Forget authorization
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-field">
+          <label for="setting-term-font-size">Font size</label>
+          <div class="term-font-row">
+            <button type="button" class="btn-icon" id="btn-term-font-dec" title="Decrease">A−</button>
+            <input
+              type="range"
+              id="setting-term-font-size"
+              min="9"
+              max="26"
+              step="1"
+              value="13"
+              aria-describedby="setting-term-font-size-help"
+            >
+            <button type="button" class="btn-icon" id="btn-term-font-inc" title="Increase">A+</button>
+            <span class="term-font-value" id="term-font-value">13px</span>
+          </div>
+          <p id="setting-term-font-size-help" class="settings-field-help">
+            Ctrl + / Ctrl − inside the terminal does the same thing.
+            Ctrl 0 resets.
+          </p>
+        </div>
+      </section>
     </div>
     <div class="settings-footer">
       <div class="settings-status" id="settings-status" role="status" aria-live="polite"></div>
@@ -196,6 +276,155 @@
     </div>
   </div>
   <div class="settings-backdrop" id="settings-backdrop"></div>
+
+  <!-- Diagnostics panel — first-class system health + log viewer.
+       Slide-over from the right (wider than settings). All content is
+       admin-gated server-side; if the user isn't authorized, the panel
+       prompts them to authorize via Settings → Terminal access. -->
+  <div
+    class="diagnostics-panel"
+    id="diagnostics-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="diagnostics-panel-title"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="diag-header">
+      <h3 id="diagnostics-panel-title">Diagnostics</h3>
+      <div class="diag-header-tabs" role="tablist">
+        <button class="diag-tab active" data-tab="health" role="tab" aria-selected="true">Health</button>
+        <button class="diag-tab" data-tab="issues" role="tab" aria-selected="false">Issues <span class="diag-tab-badge" id="diag-issues-badge"></span></button>
+        <button class="diag-tab" data-tab="server-log" role="tab" aria-selected="false">Server log</button>
+        <button class="diag-tab" data-tab="meeting-log" role="tab" aria-selected="false">Meeting terminal log</button>
+      </div>
+      <button id="btn-diagnostics-close" class="btn-ghost" title="Close diagnostics" aria-label="Close diagnostics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Forbidden banner: shown when /api/diag/* returns 403. -->
+    <div class="diag-forbidden" id="diag-forbidden" hidden>
+      <div class="diag-forbidden-body">
+        <strong>Authorize this browser to view diagnostics</strong>
+        <p>Diagnostics surfaces server logs and process state, so it's restricted to admin browsers. Open <em>Settings → Terminal access</em> and click <em>Authorize this browser</em>, then reopen Diagnostics.</p>
+        <button class="btn-primary-inline" id="diag-go-authorize">Open Settings</button>
+      </div>
+    </div>
+
+    <div class="diag-body" id="diag-body">
+
+      <!-- ── Tab: Health ────────────────────────────────────────── -->
+      <section class="diag-tab-panel active" data-tab-panel="health">
+        <div class="diag-crash-banner" id="diag-crash-banner" hidden>
+          <strong>Unhandled crash detected.</strong>
+          <span id="diag-crash-detail"></span>
+        </div>
+
+        <h4 class="diag-section-title">Backends</h4>
+        <div class="diag-card-grid" id="diag-backends-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+
+        <h4 class="diag-section-title">System resources</h4>
+        <div class="diag-card-grid" id="diag-system-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+
+        <h4 class="diag-section-title">Containers</h4>
+        <div class="diag-card-grid" id="diag-containers-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+
+        <h4 class="diag-section-title">Event loop</h4>
+        <div class="diag-card-grid" id="diag-loop-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+      </section>
+
+      <!-- ── Tab: Issues ────────────────────────────────────────── -->
+      <section class="diag-tab-panel" data-tab-panel="issues">
+        <div class="diag-toolbar">
+          <label>
+            Min level
+            <select id="diag-issues-level">
+              <option value="WARNING" selected>Warning</option>
+              <option value="ERROR">Error</option>
+              <option value="CRITICAL">Critical</option>
+            </select>
+          </label>
+          <label>
+            Component
+            <input type="text" id="diag-issues-component" placeholder="e.g. translation, slides, tts" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-issues-autorefresh" checked>
+            <span>Auto-refresh</span>
+          </label>
+          <button class="btn-ghost-inline" id="diag-issues-refresh">Refresh</button>
+          <button class="btn-ghost-inline" id="diag-issues-clear">Clear view</button>
+        </div>
+        <div class="diag-issues-list" id="diag-issues-list"></div>
+      </section>
+
+      <!-- ── Tab: Server log ────────────────────────────────────── -->
+      <section class="diag-tab-panel" data-tab-panel="server-log">
+        <div class="diag-toolbar">
+          <label>
+            Min level
+            <select id="diag-srvlog-level">
+              <option value="">All</option>
+              <option value="INFO">Info</option>
+              <option value="WARNING">Warning</option>
+              <option value="ERROR">Error</option>
+            </select>
+          </label>
+          <label>
+            Search
+            <input type="text" id="diag-srvlog-search" placeholder="substring filter" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-srvlog-live" checked>
+            <span>Live tail</span>
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-srvlog-autoscroll" checked>
+            <span>Autoscroll</span>
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-srvlog-wrap">
+            <span>Wrap lines</span>
+          </label>
+          <a class="btn-ghost-inline" id="diag-srvlog-download" href="/api/diag/log/server?lines=5000" download="server.log">Download</a>
+        </div>
+        <div class="diag-log-viewer" id="diag-srvlog-viewer" data-wrap="false"></div>
+      </section>
+
+      <!-- ── Tab: Meeting terminal log ─────────────────────────── -->
+      <section class="diag-tab-panel" data-tab-panel="meeting-log">
+        <p class="diag-tab-help">Terminal output captured by autosre during a meeting (per-meeting tmux scrollback).</p>
+        <div class="diag-toolbar">
+          <label>
+            Meeting
+            <select id="diag-mtglog-select">
+              <option value="">Loading meetings…</option>
+            </select>
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-mtglog-wrap">
+            <span>Wrap lines</span>
+          </label>
+          <button class="btn-ghost-inline" id="diag-mtglog-refresh">Refresh</button>
+        </div>
+        <div class="diag-log-viewer" id="diag-mtglog-viewer" data-wrap="false">
+          <div class="diag-empty">Select a meeting to view its terminal log.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="diagnostics-backdrop" id="diagnostics-backdrop"></div>
 
   <main>
     <!-- ═══ SETUP MODE ═══ -->
@@ -249,23 +478,13 @@
             <!-- Populated by JS from /api/languages -->
           </select>
           <span class="lang-pair-sep" aria-hidden="true">↔</span>
-          <select id="lang-b-select" class="lang-select" aria-label="Second meeting language (or None for a single-language meeting)">
-            <!-- "None" = single-language meeting (no translation). Prepended by JS
-                 so it is always the first option; remaining entries come from
-                 /api/languages. -->
-            <option value="__none__">None (single language)</option>
+          <select id="lang-b-select" class="lang-select" aria-label="Second meeting language">
+            <!-- Populated by JS from /api/languages. The setup screen is
+                 always bilingual — single-language meetings live behind
+                 the "Quick start English" button on the homepage. -->
           </select>
         </div>
         <div class="setup-hint" id="setup-hint">Enroll each speaker's voice to begin</div>
-        <!-- One-click shortcut: start a single-language meeting using the
-             currently-selected LEFT language. Regardless of what the right
-             dropdown says, clicking this skips translation end-to-end and
-             takes the user straight into a monolingual meeting. Pairs with
-             the primary Start Meeting button for the bilingual path. -->
-        <button id="btn-start-solo" class="btn-start-solo" title="Start a single-language meeting (no translation)">
-          Solo
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </button>
         <button id="btn-start-meeting" class="btn-start-meeting">
           Start Meeting
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
@@ -335,7 +554,7 @@
           <span class="btn-record-icon"></span>
           <span class="btn-record-label"></span>
         </button>
-        <button id="btn-cancel-meeting" class="btn-cancel-meeting" title="Cancel meeting — discard all data">Cancel</button>
+        <button id="btn-cancel-meeting" class="btn-cancel-meeting" title="Cancel meeting: discard all data">Cancel</button>
         <button id="btn-force-stop" class="btn-force-stop" style="display:none" title="DEV: Reset transcript (keep recording)">Reset</button>
         <div class="control-meta">
           <span class="timer" id="timer">00:00</span>
@@ -371,6 +590,25 @@
           <button id="btn-compact" class="btn-ghost" title="Compact horizontal view">Compact</button>
           <button id="btn-scroll-dir" class="btn-ghost" title="Toggle transcript order (newest first / oldest first)">↑ Newest first</button>
           <button id="btn-clear" class="btn-ghost" title="Clear transcript">Clear</button>
+        </div>
+      </div>
+
+      <!-- Admin slide controls — visible only when a deck is loaded
+           for the current meeting. Lets the operator see the ORIGINAL
+           slide and advance it from the admin view; the popout (and
+           every other connected viewer) follow the same broadcast. -->
+      <div id="admin-slide-bar" class="admin-slide-bar" style="display:none">
+        <button id="admin-slide-upload-btn" class="btn-ghost admin-slide-upload" title="Upload PPTX">
+          Upload PPTX
+          <input type="file" id="admin-slide-upload-input" accept=".pptx,.potx,.pptm,.ppsx,.ppsm" style="display:none">
+        </button>
+        <div class="admin-slide-thumb-wrap">
+          <img id="admin-slide-thumb" alt="Current slide (original)">
+        </div>
+        <div class="admin-slide-controls">
+          <button id="admin-slide-prev" class="btn-ghost" title="Previous slide (←)">◀</button>
+          <span id="admin-slide-label">— / —</span>
+          <button id="admin-slide-next" class="btn-ghost" title="Next slide (→)">▶</button>
         </div>
       </div>
 
@@ -419,7 +657,7 @@
         <div class="landing-hero">
           <div class="landing-hero-badge">Real-time multilingual transcription</div>
           <h2>Your meetings, <br>understood in every language</h2>
-          <p>Meeting Scribe captures live audio, transcribes in real time, and translates between any pair of 10 supported languages — all running locally on your hardware.</p>
+          <p>Meeting Scribe captures live audio, transcribes in real time, and translates between any pair of 10 supported languages, all running locally on your hardware.</p>
           <div class="landing-cta-row">
             <button class="landing-cta" id="landing-start-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
@@ -591,6 +829,21 @@
       </div>
     </div>
   </div>
+
+  <!-- Popout layout modules — loaded before scribe-app.js so it can
+       register transcript/slides/terminal with the panel registry and
+       mount the active preset on popout boot. -->
+  <script src="/static/js/popout-layout.js"></script>
+  <script src="/static/js/popout-layout-presets.js"></script>
+  <script src="/static/js/popout-layout-storage.js"></script>
+  <script src="/static/js/popout-layout-resizer.js"></script>
+  <script src="/static/js/popout-panel-registry.js"></script>
+  <script src="/static/js/popout-layout-render.js"></script>
+
+  <!-- Diagnostics view: native UI for system health + log inspection.
+       Loaded before scribe-app.js so the open/close hook is bound by
+       the time the header buttons start firing click events. -->
+  <script src="/static/js/diagnostics-panel.js"></script>
 
   <script type="module" src="/static/js/scribe-app.js"></script>
 </body>

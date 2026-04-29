@@ -149,7 +149,10 @@ class VllmTranslateBackend(TranslateBackend):
         # calls in the sample we measured. OrderedDict is cheap enough.
         from collections import OrderedDict
 
-        self._cache: OrderedDict[tuple[str, str, str], str] = OrderedDict()
+        # Key is (source_lang, target_lang, normalized_text, ctx_hash).
+        # B3 added ctx_hash so an utterance with a different rolling
+        # history doesn't alias to the same cache slot.
+        self._cache: OrderedDict[tuple[str, str, str, str], str] = OrderedDict()
         self._cache_max = 256
         self._cache_hits = 0
         self._cache_misses = 0

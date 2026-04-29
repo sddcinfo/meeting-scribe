@@ -25,7 +25,14 @@ import pytest
 
 pytest.importorskip("av")
 
-from meeting_scribe import server
+from meeting_scribe.audio.output_pipeline import (
+    _deliver_audio_to_listener,
+    _send_audio_to_listeners,
+    _send_passthrough_audio,
+)
+from meeting_scribe.runtime import state
+from meeting_scribe.server_support.sessions import ClientSession
+from meeting_scribe.ws import audio_output
 
 SAMPLE_RATE_TTS = 24000
 SAMPLE_RATE_PASSTHROUGH = 16000
@@ -66,28 +73,28 @@ def _run(coro):
         loop.close()
 
 
-def _make_pref(audio_format: str | None = None) -> server.ClientSession:
-    return server.ClientSession(
+def _make_pref(audio_format: str | None = None) -> ClientSession:
+    return ClientSession(
         preferred_language="en",
         send_audio=True,
         interpretation_mode="translation",
         voice_mode="studio",
         audio_format=audio_format,
-        grace_deadline=time.monotonic() + server._AUDIO_FORMAT_GRACE_S,
+        grace_deadline=time.monotonic() + audio_output._AUDIO_FORMAT_GRACE_S,
     )
 
 
 def _register_ws(ws, pref):
     """Helper to populate server globals for a FakeWs (cleanup in finally)."""
-    server._audio_out_clients.add(ws)
-    server._audio_out_prefs[ws] = pref
+    state._audio_out_clients.add(ws)
+    state._audio_out_prefs[ws] = pref
 
 
 def _cleanup_ws(*ws_list):
     """Remove FakeWs entries from server globals."""
     for ws in ws_list:
-        server._audio_out_clients.discard(ws)
-        server._audio_out_prefs.pop(ws, None)
+        state._audio_out_clients.discard(ws)
+        state._audio_out_prefs.pop(ws, None)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -98,13 +105,13 @@ def _cleanup_ws(*ws_list):
 def test_create_session_adds_to_prefs():
     ws = FakeWs()
     try:
-        pref = server._create_audio_out_session(ws)
-        assert ws in server._audio_out_prefs
+        pref = audio_output._create_audio_out_session(ws)
+        assert ws in state._audio_out_prefs
         assert pref.audio_format is None
         assert pref.send_audio is True
         assert pref.grace_deadline > time.monotonic() - 1.0
     finally:
-        server._audio_out_prefs.pop(ws, None)
+        state._audio_out_prefs.pop(ws, None)
 
 
 def test_unregister_closes_encoder_cleans_dicts():
@@ -114,10 +121,10 @@ def test_unregister_closes_encoder_cleans_dicts():
     pref.mse_encoder = mock_encoder
     _register_ws(ws, pref)
 
-    server._unregister_audio_out_client(ws)
+    audio_output._unregister_audio_out_client(ws)
 
-    assert ws not in server._audio_out_clients
-    assert ws not in server._audio_out_prefs
+    assert ws not in state._audio_out_clients
+    assert ws not in state._audio_out_prefs
     mock_encoder.close.assert_called_once()
 
 
@@ -126,12 +133,12 @@ def test_unregister_idempotent():
     pref = _make_pref("wav-pcm")
     _register_ws(ws, pref)
 
-    server._unregister_audio_out_client(ws)
+    audio_output._unregister_audio_out_client(ws)
     # Second call should not raise
-    server._unregister_audio_out_client(ws)
+    audio_output._unregister_audio_out_client(ws)
 
-    assert ws not in server._audio_out_clients
-    assert ws not in server._audio_out_prefs
+    assert ws not in state._audio_out_clients
+    assert ws not in state._audio_out_prefs
 
 
 def test_handle_message_set_format_mse():
@@ -139,9 +146,11 @@ def test_handle_message_set_format_mse():
     pref = _make_pref(None)
     _register_ws(ws, pref)
     try:
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_format", "format": "mse-fmp4-aac"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_format", "format": "mse-fmp4-aac"})
+            )
+        )
         assert ack is not None
         parsed = json.loads(ack)
         assert parsed == {"type": "format_ack", "format": "mse-fmp4-aac"}
@@ -155,9 +164,11 @@ def test_handle_message_set_format_wav():
     pref = _make_pref(None)
     _register_ws(ws, pref)
     try:
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_format", "format": "wav-pcm"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_format", "format": "wav-pcm"})
+            )
+        )
         assert ack is not None
         parsed = json.loads(ack)
         assert parsed == {"type": "format_ack", "format": "wav-pcm"}
@@ -171,9 +182,11 @@ def test_handle_message_invalid_format():
     pref = _make_pref(None)
     _register_ws(ws, pref)
     try:
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_format", "format": "opus-ogg"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_format", "format": "opus-ogg"})
+            )
+        )
         assert ack is None
         assert pref.audio_format is None
     finally:
@@ -185,9 +198,11 @@ def test_handle_message_set_language():
     pref = _make_pref("wav-pcm")
     _register_ws(ws, pref)
     try:
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_language", "language": "ja"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_language", "language": "ja"})
+            )
+        )
         assert ack is None
         assert pref.preferred_language == "ja"
     finally:
@@ -199,15 +214,19 @@ def test_handle_message_set_mode_and_voice():
     pref = _make_pref("wav-pcm")
     _register_ws(ws, pref)
     try:
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_mode", "mode": "full"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_mode", "mode": "full"})
+            )
+        )
         assert ack is None
         assert pref.interpretation_mode == "full"
 
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_voice", "voice": "cloned"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_voice", "voice": "cloned"})
+            )
+        )
         assert ack is None
         assert pref.voice_mode == "cloned"
     finally:
@@ -221,9 +240,11 @@ def test_handle_message_format_switch_closes_old_encoder():
     pref.mse_encoder = mock_encoder
     _register_ws(ws, pref)
     try:
-        ack = _run(server._handle_audio_out_message(
-            ws, pref, json.dumps({"type": "set_format", "format": "wav-pcm"})
-        ))
+        ack = _run(
+            audio_output._handle_audio_out_message(
+                ws, pref, json.dumps({"type": "set_format", "format": "wav-pcm"})
+            )
+        )
         assert ack is not None
         assert pref.audio_format == "wav-pcm"
         mock_encoder.close.assert_called_once()
@@ -236,7 +257,7 @@ def test_handle_message_malformed_json():
     ws = FakeWs()
     pref = _make_pref("wav-pcm")
     original_format = pref.audio_format
-    ack = _run(server._handle_audio_out_message(ws, pref, "not json {{{"))
+    ack = _run(audio_output._handle_audio_out_message(ws, pref, "not json {{{"))
     assert ack is None
     assert pref.audio_format == original_format
 
@@ -244,9 +265,9 @@ def test_handle_message_malformed_json():
 def test_handle_message_missing_type():
     ws = FakeWs()
     pref = _make_pref("wav-pcm")
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"format": "mse-fmp4-aac"})
-    ))
+    ack = _run(
+        audio_output._handle_audio_out_message(ws, pref, json.dumps({"format": "mse-fmp4-aac"}))
+    )
     assert ack is None
     assert pref.audio_format == "wav-pcm"
 
@@ -255,9 +276,11 @@ def test_handle_message_unknown_type():
     ws = FakeWs()
     pref = _make_pref("wav-pcm")
     original_lang = pref.preferred_language
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"type": "set_volume", "volume": 0.5})
-    ))
+    ack = _run(
+        audio_output._handle_audio_out_message(
+            ws, pref, json.dumps({"type": "set_volume", "volume": 0.5})
+        )
+    )
     assert ack is None
     assert pref.preferred_language == original_lang
 
@@ -265,9 +288,11 @@ def test_handle_message_unknown_type():
 def test_handle_message_wrong_field_types():
     ws = FakeWs()
     pref = _make_pref(None)
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"type": "set_format", "format": 42})
-    ))
+    ack = _run(
+        audio_output._handle_audio_out_message(
+            ws, pref, json.dumps({"type": "set_format", "format": 42})
+        )
+    )
     assert ack is None
     assert pref.audio_format is None
 
@@ -278,34 +303,28 @@ def test_handle_message_missing_payload_fields():
 
     # set_format with no "format" key → .get("format","") → "" not valid → no-op
     pref = _make_pref(None)
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"type": "set_format"})
-    ))
+    ack = _run(audio_output._handle_audio_out_message(ws, pref, json.dumps({"type": "set_format"})))
     assert ack is None
     assert pref.audio_format is None
 
     # set_language with no "language" key → .get("language","") → _norm_lang("") → falsy → no mutation
     pref = _make_pref("wav-pcm")
     pref.preferred_language = "en"
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"type": "set_language"})
-    ))
+    ack = _run(
+        audio_output._handle_audio_out_message(ws, pref, json.dumps({"type": "set_language"}))
+    )
     assert ack is None
     assert pref.preferred_language == "en"
 
     # set_mode with no "mode" key → .get("mode","translation") → "translation" (valid default)
     pref.interpretation_mode = "full"
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"type": "set_mode"})
-    ))
+    ack = _run(audio_output._handle_audio_out_message(ws, pref, json.dumps({"type": "set_mode"})))
     assert ack is None
     assert pref.interpretation_mode == "translation"  # reset to default
 
     # set_voice with no "voice" key → .get("voice","studio") → "studio" (valid default)
     pref.voice_mode = "cloned"
-    ack = _run(server._handle_audio_out_message(
-        ws, pref, json.dumps({"type": "set_voice"})
-    ))
+    ack = _run(audio_output._handle_audio_out_message(ws, pref, json.dumps({"type": "set_voice"})))
     assert ack is None
     assert pref.voice_mode == "studio"  # reset to default
 
@@ -332,7 +351,7 @@ def test_concurrent_mixed_format_fanout():
         pcm = _sine_pcm(0.500)
 
         async def _drive():
-            await server._send_audio_to_listeners(pcm, "en", "studio")
+            await _send_audio_to_listeners(pcm, "en", "studio")
 
         _run(_drive())
 
@@ -369,7 +388,7 @@ def test_language_filtering_in_fanout():
         pcm = _sine_pcm(0.100)
 
         async def _drive():
-            sent = await server._send_audio_to_listeners(pcm, "en", "studio")
+            sent = await _send_audio_to_listeners(pcm, "en", "studio")
             return sent
 
         sent = _run(_drive())
@@ -392,13 +411,13 @@ def test_grace_window_buffers_then_flush_delivers():
         pcm_b = _sine_pcm(0.100)
 
         async def _drive():
-            await server._deliver_audio_to_listener(ws, pref, pcm_a, SAMPLE_RATE_TTS, None)
-            await server._deliver_audio_to_listener(ws, pref, pcm_b, SAMPLE_RATE_TTS, None)
+            await _deliver_audio_to_listener(ws, pref, pcm_a, SAMPLE_RATE_TTS, None)
+            await _deliver_audio_to_listener(ws, pref, pcm_b, SAMPLE_RATE_TTS, None)
             assert len(ws.binary_frames) == 0
             assert len(pref.pending_audio) == 2
             # Resolve format
             pref.audio_format = "wav-pcm"
-            await server._flush_pending_audio(ws, pref)
+            await audio_output._flush_pending_audio(ws, pref)
 
         _run(_drive())
         assert len(ws.binary_frames) == 2
@@ -433,7 +452,7 @@ def test_passthrough_filters_by_mode_and_language():
         pcm = _sine_pcm(0.100, rate=SAMPLE_RATE_PASSTHROUGH)
 
         async def _drive():
-            await server._send_passthrough_audio(pcm, "en")
+            await _send_passthrough_audio(pcm, "en")
 
         _run(_drive())
 

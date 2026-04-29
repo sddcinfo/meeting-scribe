@@ -10,6 +10,7 @@ Usage:
 
 Re-run after any change (e.g. furigana generation) to see the delta.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,6 +29,7 @@ import numpy as np
 
 # ─── Synthetic inputs ─────────────────────────────────────────────────────
 
+
 def _synthetic_wav_bytes(seconds: float = 1.5, sr: int = 16000, freq: int = 220) -> bytes:
     t = np.linspace(0, seconds, int(sr * seconds), endpoint=False)
     a = (0.3 * np.sin(2 * np.pi * freq * t) * 32767).astype(np.int16)
@@ -41,7 +43,11 @@ def _synthetic_wav_bytes(seconds: float = 1.5, sr: int = 16000, freq: int = 220)
 
 
 _ASR_B64 = base64.b64encode(_synthetic_wav_bytes()).decode()
-_DIARIZE_PCM = (0.3 * np.sin(2 * np.pi * 220 * np.linspace(0, 3.0, 48000, endpoint=False)) * 32767).astype(np.int16).tobytes()
+_DIARIZE_PCM = (
+    (0.3 * np.sin(2 * np.pi * 220 * np.linspace(0, 3.0, 48000, endpoint=False)) * 32767)
+    .astype(np.int16)
+    .tobytes()
+)
 
 _JA_PHRASES = [
     "今日はいい天気ですね。",
@@ -67,6 +73,7 @@ _EN_PHRASES = [
 
 # ─── Probes ───────────────────────────────────────────────────────────────
 
+
 async def probe_asr(client: httpx.AsyncClient) -> float:
     """POST /v1/chat/completions with a synthetic audio clip. Returns ms."""
     body = {
@@ -90,9 +97,35 @@ async def probe_asr(client: httpx.AsyncClient) -> float:
     return (time.monotonic() - t0) * 1000.0
 
 
+_TRANSLATE_MODEL_CACHE: str | None = None
+
+
+async def _translate_model_id(client: httpx.AsyncClient) -> str:
+    """Auto-discover the served translation model via /v1/models.
+
+    Hard-coding the model name used to couple this bench to a
+    specific quantisation (Intel Qwen3.5-INT4 AutoRound). After the
+    2026-04-19 switch to Qwen3.6-FP8 the hardcoded ID started
+    returning 404. Discover at runtime so swapping backends doesn't
+    require editing every benchmark.
+    """
+    global _TRANSLATE_MODEL_CACHE
+    if _TRANSLATE_MODEL_CACHE is not None:
+        return _TRANSLATE_MODEL_CACHE
+    r = await client.get("http://localhost:8010/v1/models", timeout=10)
+    r.raise_for_status()
+    data = r.json().get("data") or []
+    if not data:
+        raise RuntimeError(
+            "vLLM /v1/models returned an empty list — is the translation backend loaded?"
+        )
+    _TRANSLATE_MODEL_CACHE = data[0]["id"]
+    return _TRANSLATE_MODEL_CACHE
+
+
 async def probe_translate(client: httpx.AsyncClient, text: str, src: str, tgt: str) -> float:
     body = {
-        "model": "Intel/Qwen3.5-35B-A3B-int4-AutoRound",
+        "model": await _translate_model_id(client),
         "messages": [
             {"role": "system", "content": f"Translate from {src} to {tgt}."},
             {"role": "user", "content": text},
@@ -141,11 +174,23 @@ async def probe_scribe_status(_client: httpx.AsyncClient) -> dict:
 
 # ─── Harness ──────────────────────────────────────────────────────────────
 
+
 def _percentiles(samples: list[float]) -> dict:
     if not samples:
-        return {"n": 0, "min": None, "p50": None, "p95": None, "p99": None, "max": None, "mean": None}
+        return {
+            "n": 0,
+            "min": None,
+            "p50": None,
+            "p95": None,
+            "p99": None,
+            "max": None,
+            "mean": None,
+        }
     s = sorted(samples)
-    def pct(p): return s[min(len(s) - 1, int(len(s) * p))]
+
+    def pct(p):
+        return s[min(len(s) - 1, int(len(s) * p))]
+
     return {
         "n": len(s),
         "min": round(s[0], 1),
@@ -157,9 +202,7 @@ def _percentiles(samples: list[float]) -> dict:
     }
 
 
-async def sequential_probe(
-    name: str, coroutine_factory, iterations: int
-) -> dict:
+async def sequential_probe(name: str, coroutine_factory, iterations: int) -> dict:
     samples: list[float] = []
     async with httpx.AsyncClient() as c:
         for _ in range(iterations):
@@ -168,15 +211,15 @@ async def sequential_probe(
     return {"probe": name, "mode": "sequential", "latency_ms": _percentiles(samples)}
 
 
-async def concurrent_probe(
-    name: str, coroutine_factory, concurrency: int, total: int
-) -> dict:
+async def concurrent_probe(name: str, coroutine_factory, concurrency: int, total: int) -> dict:
     samples: list[float] = []
     sem = asyncio.Semaphore(concurrency)
     async with httpx.AsyncClient() as c:
+
         async def one():
             async with sem:
                 samples.append(await coroutine_factory(c))
+
         await asyncio.gather(*(one() for _ in range(total)))
     return {
         "probe": name,
@@ -211,19 +254,20 @@ async def main() -> None:
 
     # 2. Sequential probes (warm cache state, single-stream latency)
     print("== sequential probes ==")
-    results["asr_sequential"] = await sequential_probe(
-        "asr", probe_asr, args.sequential_iters
-    )
+    results["asr_sequential"] = await sequential_probe("asr", probe_asr, args.sequential_iters)
     print(f"  asr: {results['asr_sequential']['latency_ms']}")
 
     # Translate: rotate through JA and EN phrases so the LRU cache doesn't
     # dominate the sample. We're measuring cold model latency + throughput.
     async def _translate_ja_en(c):
         import random
+
         t = random.choice(_JA_PHRASES)
         return await probe_translate(c, t, "ja", "en")
+
     async def _translate_en_ja(c):
         import random
+
         t = random.choice(_EN_PHRASES)
         return await probe_translate(c, t, "en", "ja")
 
@@ -325,18 +369,26 @@ async def main() -> None:
     # Short-form summary
     print(f"\n== {args.label} SUMMARY ==")
     for key in (
-        "asr_sequential", "translate_ja_en_sequential", "translate_en_ja_sequential",
+        "asr_sequential",
+        "translate_ja_en_sequential",
+        "translate_en_ja_sequential",
         "diarize_sequential",
     ):
         r = results[key]
         lm = r["latency_ms"]
-        print(f"  {r['probe']:22s} p50={lm['p50']}ms p95={lm['p95']}ms p99={lm['p99']}ms n={lm['n']}")
+        print(
+            f"  {r['probe']:22s} p50={lm['p50']}ms p95={lm['p95']}ms p99={lm['p99']}ms n={lm['n']}"
+        )
     for key in ("asr_concurrent", "translate_concurrent", "diarize_concurrent"):
         r = results[key]
         lm = r["latency_ms"]
         print(f"  {r['probe']:22s} {r['mode']:30s} p50={lm['p50']}ms p95={lm['p95']}ms")
-    print(f"  mixed wall={results['mixed_stress']['wall_ms']}ms (ASR+translate+diarize concurrently)")
-    print(f"  loop_lag p99 before={results['loop_lag_delta']['p99_before']} after={results['loop_lag_delta']['p99_after']}")
+    print(
+        f"  mixed wall={results['mixed_stress']['wall_ms']}ms (ASR+translate+diarize concurrently)"
+    )
+    print(
+        f"  loop_lag p99 before={results['loop_lag_delta']['p99_before']} after={results['loop_lag_delta']['p99_after']}"
+    )
     print(f"  gpu_pct {gpu_before.get('vram_pct')} → {gpu_after.get('vram_pct')}")
 
 

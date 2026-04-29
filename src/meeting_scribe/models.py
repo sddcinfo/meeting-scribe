@@ -28,7 +28,8 @@ class TranslationStatus(StrEnum):
 class MeetingState(StrEnum):
     """Meeting lifecycle state machine.
 
-    created → recording → finalizing → complete | interrupted
+    created -> recording -> finalizing -> complete | interrupted
+    complete -> reprocessing -> complete   (transient, cleared on success)
     """
 
     CREATED = "created"
@@ -36,6 +37,12 @@ class MeetingState(StrEnum):
     FINALIZING = "finalizing"
     COMPLETE = "complete"
     INTERRUPTED = "interrupted"
+    # Set by reprocess_meeting() at step 0 and cleared at step 7. If the
+    # server is killed mid-reprocess (e.g. systemd TimeoutStopUSec fires),
+    # the flag persists. Listed in the enum so MeetingMeta can round-trip
+    # a reprocessing meta.json through pydantic; recover_interrupted()
+    # flips it back to COMPLETE on the next startup.
+    REPROCESSING = "reprocessing"
 
 
 class SpeakerAttribution(BaseModel):
@@ -152,6 +159,7 @@ class MeetingMeta(BaseModel):
     def is_monolingual(self) -> bool:
         """True iff the meeting has a single language (no translation work)."""
         return len(self.language_pair) == 1
+
     enrolled_speakers: dict[str, str] = Field(default_factory=dict)
     # User-toggled "useful for demo / reference" mark. Surfaced in the
     # meetings list so favorites are easy to spot at a glance.

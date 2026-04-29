@@ -25,6 +25,7 @@ The manifest captures the inputs that drove the run (model ids, language
 pair, expected_speakers, code git hash, wall-clock per phase) so two
 versions are comparable beyond just the content diff.
 """
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -121,12 +122,12 @@ def snapshot_meeting(
         "git_commit": _git_commit(),
         "inputs": inputs or {},
     }
-    (snap_dir / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2)
-    )
+    (snap_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
     logger.info(
         "Snapshot created: %s (%d files, label=%r)",
-        snap_dir.name, len(copied), label,
+        snap_dir.name,
+        len(copied),
+        label,
     )
     return snap_dir
 
@@ -209,9 +210,7 @@ def _summarize_journal(path: Path) -> dict[str, Any]:
         "segment_count": len(finals),
         "language_counts": lang_counts,
         "translated_segments": translated_count,
-        "translation_coverage": (
-            round(translated_count / len(finals), 4) if finals else 0.0
-        ),
+        "translation_coverage": (round(translated_count / len(finals), 4) if finals else 0.0),
         "total_text_chars": chars_total,
         "unique_clusters_in_journal": len(cluster_ids),
         "total_speech_ms": speech_ms,
@@ -350,14 +349,51 @@ def diff_versions(
         }
         out["totals"][verdict] += 1
 
-    _grade("transcript.segment_count", bj.get("segment_count", 0), cj.get("segment_count", 0), higher_better=True)
-    _grade("transcript.total_text_chars", bj.get("total_text_chars", 0), cj.get("total_text_chars", 0), higher_better=True)
-    _grade("transcript.translation_coverage", bj.get("translation_coverage", 0), cj.get("translation_coverage", 0), higher_better=True)
-    _grade("transcript.total_speech_ms", bj.get("total_speech_ms", 0), cj.get("total_speech_ms", 0), higher_better=True)
-    _grade("speakers.count", bs.get("count", 0), cs.get("count", 0), higher_better=False)  # fewer is usually better (less over-clustering)
-    _grade("summary.key_insights", bm.get("key_insights_count", 0), cm.get("key_insights_count", 0), higher_better=True)
-    _grade("summary.action_items", bm.get("action_items_count", 0), cm.get("action_items_count", 0), higher_better=True)
-    _grade("summary.executive_chars", bm.get("executive_summary_chars", 0), cm.get("executive_summary_chars", 0), higher_better=True)
+    _grade(
+        "transcript.segment_count",
+        bj.get("segment_count", 0),
+        cj.get("segment_count", 0),
+        higher_better=True,
+    )
+    _grade(
+        "transcript.total_text_chars",
+        bj.get("total_text_chars", 0),
+        cj.get("total_text_chars", 0),
+        higher_better=True,
+    )
+    _grade(
+        "transcript.translation_coverage",
+        bj.get("translation_coverage", 0),
+        cj.get("translation_coverage", 0),
+        higher_better=True,
+    )
+    _grade(
+        "transcript.total_speech_ms",
+        bj.get("total_speech_ms", 0),
+        cj.get("total_speech_ms", 0),
+        higher_better=True,
+    )
+    _grade(
+        "speakers.count", bs.get("count", 0), cs.get("count", 0), higher_better=False
+    )  # fewer is usually better (less over-clustering)
+    _grade(
+        "summary.key_insights",
+        bm.get("key_insights_count", 0),
+        cm.get("key_insights_count", 0),
+        higher_better=True,
+    )
+    _grade(
+        "summary.action_items",
+        bm.get("action_items_count", 0),
+        cm.get("action_items_count", 0),
+        higher_better=True,
+    )
+    _grade(
+        "summary.executive_chars",
+        bm.get("executive_summary_chars", 0),
+        cm.get("executive_summary_chars", 0),
+        higher_better=True,
+    )
 
     # Language distribution change — surface as info, not graded
     out["language_distribution"] = {

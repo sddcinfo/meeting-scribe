@@ -1,0 +1,1049 @@
+[
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.index",
+    "methods": [
+      "GET"
+    ],
+    "name": "index",
+    "path": "/",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.bootstrap.register_bootstrap_routes.<locals>.bootstrap_page",
+    "methods": [
+      "GET"
+    ],
+    "name": "bootstrap_page",
+    "path": "/admin/bootstrap",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.bootstrap.register_bootstrap_routes.<locals>.authorize",
+    "methods": [
+      "POST"
+    ],
+    "name": "authorize",
+    "path": "/api/admin/authorize",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.bootstrap.register_bootstrap_routes.<locals>.deauthorize",
+    "methods": [
+      "POST"
+    ],
+    "name": "deauthorize",
+    "path": "/api/admin/deauthorize",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.post_admin_drain",
+    "methods": [
+      "POST"
+    ],
+    "name": "post_admin_drain",
+    "path": "/api/admin/drain",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.get_eager_summary_status",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_eager_summary_status",
+    "path": "/api/admin/eager-summary-status",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.post_admin_pause_translation",
+    "methods": [
+      "POST"
+    ],
+    "name": "post_admin_pause_translation",
+    "path": "/api/admin/pause-translation",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.get_admin_refinement_stats",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_admin_refinement_stats",
+    "path": "/api/admin/refinement-stats",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.post_admin_resume_translation",
+    "methods": [
+      "POST"
+    ],
+    "name": "post_admin_resume_translation",
+    "path": "/api/admin/resume-translation",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.get_admin_settings",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_admin_settings",
+    "path": "/api/admin/settings",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.put_admin_settings",
+    "methods": [
+      "PUT"
+    ],
+    "name": "put_admin_settings",
+    "path": "/api/admin/settings",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.bootstrap.register_bootstrap_routes.<locals>.terminal_access",
+    "methods": [
+      "GET"
+    ],
+    "name": "terminal_access",
+    "path": "/api/admin/terminal-access",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_rfc8910",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_rfc8910",
+    "path": "/api/captive",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.diagnostics.debug_diarize",
+    "methods": [
+      "GET"
+    ],
+    "name": "debug_diarize",
+    "path": "/api/debug/diarize",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.demo_voice_clone",
+    "methods": [
+      "POST"
+    ],
+    "name": "demo_voice_clone",
+    "path": "/api/demo/voice-clone",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.diagnostics.get_diag_issues",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_diag_issues",
+    "path": "/api/diag/issues",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.diagnostics.diag_listener_post",
+    "methods": [
+      "POST"
+    ],
+    "name": "diag_listener_post",
+    "path": "/api/diag/listener",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.diagnostics.diag_listeners_get",
+    "methods": [
+      "GET"
+    ],
+    "name": "diag_listeners_get",
+    "path": "/api/diag/listeners",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.diagnostics.get_diag_server_log",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_diag_server_log",
+    "path": "/api/diag/log/server",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.diagnostics.stream_diag_server_log",
+    "methods": [
+      "GET"
+    ],
+    "name": "stream_diag_server_log",
+    "path": "/api/diag/log/server/stream",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.status.get_languages",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_languages",
+    "path": "/api/languages",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.cancel_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "cancel_meeting",
+    "path": "/api/meeting/cancel",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.dev_reset_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "dev_reset_meeting",
+    "path": "/api/meeting/dev-reset",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.start_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "start_meeting",
+    "path": "/api/meeting/start",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.stop_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "stop_meeting",
+    "path": "/api/meeting/stop",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.get_wifi_info",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_wifi_info",
+    "path": "/api/meeting/wifi",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.admin.get_polished_status",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_polished_status",
+    "path": "/api/meeting/{meeting_id}/polished-status",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.list_meetings",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_meetings",
+    "path": "/api/meetings",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.delete_meeting",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "delete_meeting",
+    "path": "/api/meetings/{meeting_id}",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_meeting",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_meeting",
+    "path": "/api/meetings/{meeting_id}",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.update_meeting",
+    "methods": [
+      "PATCH"
+    ],
+    "name": "update_meeting",
+    "path": "/api/meetings/{meeting_id}",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.ask_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "ask_meeting",
+    "path": "/api/meetings/{meeting_id}/ask",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_meeting_audio",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_meeting_audio",
+    "path": "/api/meetings/{meeting_id}/audio",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.speaker.rename_cluster",
+    "methods": [
+      "PUT"
+    ],
+    "name": "rename_cluster",
+    "path": "/api/meetings/{meeting_id}/clusters/{cluster_id}/name",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.list_meeting_decks",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_meeting_decks",
+    "path": "/api/meetings/{meeting_id}/decks",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.set_active_meeting_deck",
+    "methods": [
+      "PUT"
+    ],
+    "name": "set_active_meeting_deck",
+    "path": "/api/meetings/{meeting_id}/decks/active",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.speaker.update_segment_speaker",
+    "methods": [
+      "PUT"
+    ],
+    "name": "update_segment_speaker",
+    "path": "/api/meetings/{meeting_id}/events/{segment_id}/speaker",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.export_meeting",
+    "methods": [
+      "GET"
+    ],
+    "name": "export_meeting",
+    "path": "/api/meetings/{meeting_id}/export",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.finalize_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "finalize_meeting",
+    "path": "/api/meetings/{meeting_id}/finalize",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_polished",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_polished",
+    "path": "/api/meetings/{meeting_id}/polished",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.reprocess_meeting_endpoint",
+    "methods": [
+      "POST"
+    ],
+    "name": "reprocess_meeting_endpoint",
+    "path": "/api/meetings/{meeting_id}/reprocess",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_lifecycle.resume_meeting",
+    "methods": [
+      "POST"
+    ],
+    "name": "resume_meeting",
+    "path": "/api/meetings/{meeting_id}/resume",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.get_meeting_room",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_meeting_room",
+    "path": "/api/meetings/{meeting_id}/room",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.put_meeting_room_layout",
+    "methods": [
+      "PUT"
+    ],
+    "name": "put_meeting_room_layout",
+    "path": "/api/meetings/{meeting_id}/room/layout",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.get_slides_metadata",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_slides_metadata",
+    "path": "/api/meetings/{meeting_id}/slides",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.set_current_slide",
+    "methods": [
+      "PUT"
+    ],
+    "name": "set_current_slide",
+    "path": "/api/meetings/{meeting_id}/slides/current",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.get_slides_original_pdf",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_slides_original_pdf",
+    "path": "/api/meetings/{meeting_id}/slides/original.pdf",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.get_slides_source_pptx",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_slides_source_pptx",
+    "path": "/api/meetings/{meeting_id}/slides/source.pptx",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.upload_slides",
+    "methods": [
+      "POST"
+    ],
+    "name": "upload_slides",
+    "path": "/api/meetings/{meeting_id}/slides/upload",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.get_slide_original",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_slide_original",
+    "path": "/api/meetings/{meeting_id}/slides/{index}/original",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.get_slide_translated",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_slide_translated",
+    "path": "/api/meetings/{meeting_id}/slides/{index}/translated",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.speaker.get_meeting_speakers",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_meeting_speakers",
+    "path": "/api/meetings/{meeting_id}/speakers",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.speaker.assign_speaker_to_seat",
+    "methods": [
+      "POST"
+    ],
+    "name": "assign_speaker_to_seat",
+    "path": "/api/meetings/{meeting_id}/speakers/assign",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_meeting_summary",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_meeting_summary",
+    "path": "/api/meetings/{meeting_id}/summary",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_summary_status",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_summary_status",
+    "path": "/api/meetings/{meeting_id}/summary-status",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.slides.get_terminal_log",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_terminal_log",
+    "path": "/api/meetings/{meeting_id}/terminal-log",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_timeline",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_timeline",
+    "path": "/api/meetings/{meeting_id}/timeline",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.get_tts_audio",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_tts_audio",
+    "path": "/api/meetings/{meeting_id}/tts/{segment_id}",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.list_meeting_versions",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_meeting_versions",
+    "path": "/api/meetings/{meeting_id}/versions",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.meeting_crud.diff_meeting_versions",
+    "methods": [
+      "GET"
+    ],
+    "name": "diff_meeting_versions",
+    "path": "/api/meetings/{meeting_id}/versions/diff",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.enroll_speaker",
+    "methods": [
+      "POST"
+    ],
+    "name": "enroll_speaker",
+    "path": "/api/room/enroll",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.enroll_detect_name",
+    "methods": [
+      "POST"
+    ],
+    "name": "enroll_detect_name",
+    "path": "/api/room/enroll/detect-name",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.rename_speaker",
+    "methods": [
+      "POST"
+    ],
+    "name": "rename_speaker",
+    "path": "/api/room/enroll/rename",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.get_room_layout",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_room_layout",
+    "path": "/api/room/layout",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.put_room_layout",
+    "methods": [
+      "PUT"
+    ],
+    "name": "put_room_layout",
+    "path": "/api/room/layout",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.get_presets",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_presets",
+    "path": "/api/room/presets",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.get_speakers",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_speakers",
+    "path": "/api/room/speakers",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.room.remove_speaker",
+    "methods": [
+      "DELETE"
+    ],
+    "name": "remove_speaker",
+    "path": "/api/room/speakers/{enrollment_id}",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.status.get_status",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_status",
+    "path": "/api/status",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.router.register_terminal_routes.<locals>.list_sessions",
+    "methods": [
+      "GET"
+    ],
+    "name": "list_sessions",
+    "path": "/api/terminal/sessions",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.router.register_terminal_routes.<locals>.reset_session",
+    "methods": [
+      "POST"
+    ],
+    "name": "reset_session",
+    "path": "/api/terminal/sessions/{name}/reset",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.router.register_terminal_routes.<locals>.mint_ticket",
+    "methods": [
+      "POST"
+    ],
+    "name": "mint_ticket",
+    "path": "/api/terminal/ticket",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.router.register_terminal_routes.<locals>.kill_tmux",
+    "methods": [
+      "POST"
+    ],
+    "name": "kill_tmux",
+    "path": "/api/terminal/tmux/kill",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.ws.audio_input.websocket_audio",
+    "name": "websocket_audio",
+    "path": "/api/ws",
+    "type": "APIWebSocketRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.ws.audio_output.websocket_audio_out",
+    "name": "websocket_audio_out",
+    "path": "/api/ws/audio-out",
+    "type": "APIWebSocketRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.router.register_terminal_routes.<locals>.terminal_ws",
+    "name": "terminal_ws",
+    "path": "/api/ws/terminal",
+    "type": "APIWebSocketRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.ws.view_broadcast.websocket_view",
+    "name": "websocket_view",
+    "path": "/api/ws/view",
+    "type": "APIWebSocketRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_204",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_204",
+    "path": "/canonical.html",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_windows",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_windows",
+    "path": "/connecttest.txt",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.demo_landing",
+    "methods": [
+      "GET"
+    ],
+    "name": "demo_landing",
+    "path": "/demo",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.demo_landing",
+    "methods": [
+      "GET"
+    ],
+    "name": "demo_landing",
+    "path": "/demo/",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.demo_guest_page",
+    "methods": [
+      "GET"
+    ],
+    "name": "demo_guest_page",
+    "path": "/demo/guest",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.demo_voice_clone_page",
+    "methods": [
+      "GET"
+    ],
+    "name": "demo_voice_clone_page",
+    "path": "/demo/voice-clone",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "fastapi.applications.FastAPI.setup.<locals>.swagger_ui_html",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
+    "name": "swagger_ui_html",
+    "path": "/docs",
+    "type": "Route"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "fastapi.applications.FastAPI.setup.<locals>.swagger_ui_redirect",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
+    "name": "swagger_ui_redirect",
+    "path": "/docs/oauth2-redirect",
+    "type": "Route"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_204",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_204",
+    "path": "/gen_204",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_204",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_204",
+    "path": "/generate_204",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_apple",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_apple",
+    "path": "/hotspot-detect.html",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.how_it_works",
+    "methods": [
+      "GET"
+    ],
+    "name": "how_it_works",
+    "path": "/how-it-works",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.status.get_metrics",
+    "methods": [
+      "GET"
+    ],
+    "name": "get_metrics",
+    "path": "/metrics",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_ncsi",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_ncsi",
+    "path": "/ncsi.txt",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "fastapi.applications.FastAPI.setup.<locals>.openapi",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
+    "name": "openapi",
+    "path": "/openapi.json",
+    "type": "Route"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.routes.views.reader_view",
+    "methods": [
+      "GET"
+    ],
+    "name": "reader_view",
+    "path": "/reader",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_204",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_204",
+    "path": "/redirect",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "fastapi.applications.FastAPI.setup.<locals>.redoc_html",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
+    "name": "redoc_html",
+    "path": "/redoc",
+    "type": "Route"
+  },
+  {
+    "dependencies": [],
+    "mounted_app": "StaticFiles",
+    "name": "static",
+    "path": "/static",
+    "type": "Mount"
+  },
+  {
+    "dependencies": [],
+    "endpoint": "meeting_scribe.hotspot.captive_portal.captive_firefox",
+    "methods": [
+      "GET"
+    ],
+    "name": "captive_firefox",
+    "path": "/success.txt",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  }
+]

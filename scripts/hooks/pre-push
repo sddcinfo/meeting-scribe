@@ -1,0 +1,14 @@
+#!/bin/bash
+# Pre-push hook — invokes the Opus 4.7 classifier to enforce the
+# regression-test gate. Bypassable with `git push --no-verify`, but
+# leave a `.git-waivers/<sha>.txt` audit trail when you do.
+#
+# Install: git config core.hooksPath scripts/hooks/
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+python3 scripts/hooks/classify_push.py
+python3 scripts/hooks/check_flaky_age.py

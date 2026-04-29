@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+import threading
 import time
 from dataclasses import dataclass, field
 
@@ -113,6 +114,11 @@ class SystemResources:
 _container_cache: list | None = None
 _container_cache_time: float = 0.0
 _CONTAINER_CACHE_TTL = 10.0
+# Stale-while-revalidate guard: True while a background `docker stats`
+# call is running so concurrent /api/status callers don't spawn N
+# parallel subprocesses against the docker daemon.
+_container_refresh_in_flight: bool = False
+_container_refresh_lock = threading.Lock()
 
 # Cache for system resources (avoids 50ms CPU sample + docker stats per call)
 _sys_cache: SystemResources | None = None
@@ -149,26 +155,23 @@ def _read_cpu_usage() -> float:
         return 0.0
 
 
-def _get_container_stats() -> list[dict]:
-    """Get resource usage for running scribe containers via docker stats."""
-    global _container_cache, _container_cache_time
-
-    now = time.monotonic()
-    if _container_cache is not None and now - _container_cache_time < _CONTAINER_CACHE_TTL:
-        return _container_cache
-
+def _docker_stats_blocking() -> list[dict] | None:
+    """Run `docker stats --no-stream` and parse. Returns None on failure."""
     try:
         result = subprocess.run(
             [
-                "docker", "stats", "--no-stream",
-                "--format", "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.PIDs}}",
+                "docker",
+                "stats",
+                "--no-stream",
+                "--format",
+                "{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.PIDs}}",
             ],
             capture_output=True,
             text=True,
             timeout=8,
         )
         if result.returncode != 0:
-            return _container_cache or []
+            return None
 
         containers = []
         for line in result.stdout.strip().splitlines():
@@ -182,7 +185,6 @@ def _get_container_stats() -> list[dict]:
             mem_raw = parts[2]  # e.g. "4.5GiB / 128GiB"
             pids = parts[3]
 
-            # Parse memory
             mem_mb = 0
             try:
                 used_str = mem_raw.split("/")[0].strip()
@@ -193,18 +195,67 @@ def _get_container_stats() -> list[dict]:
             except Exception:
                 pass
 
-            containers.append({
-                "name": name,
-                "cpu_pct": float(cpu) if cpu else 0.0,
-                "mem_mb": mem_mb,
-                "pids": int(pids) if pids.isdigit() else 0,
-            })
-
-        _container_cache = containers
-        _container_cache_time = now
+            containers.append(
+                {
+                    "name": name,
+                    "cpu_pct": float(cpu) if cpu else 0.0,
+                    "mem_mb": mem_mb,
+                    "pids": int(pids) if pids.isdigit() else 0,
+                }
+            )
         return containers
     except Exception:
-        return _container_cache or []
+        return None
+
+
+def _refresh_container_cache_async() -> None:
+    """Background-thread refresh of the container stats cache."""
+    global _container_cache, _container_cache_time, _container_refresh_in_flight
+    try:
+        fresh = _docker_stats_blocking()
+        if fresh is not None:
+            _container_cache = fresh
+            _container_cache_time = time.monotonic()
+    finally:
+        with _container_refresh_lock:
+            _container_refresh_in_flight = False
+
+
+def _get_container_stats() -> list[dict]:
+    """Get resource usage for running scribe containers via docker stats.
+
+    Stale-while-revalidate: a populated cache is returned immediately,
+    even if older than the TTL. Once stale, a background thread refreshes
+    it (deduped via ``_container_refresh_in_flight``) so the next call
+    sees fresh data without anyone paying the 1.5–2 s ``docker stats``
+    cost on the request path.
+    """
+    global _container_cache, _container_cache_time, _container_refresh_in_flight
+
+    now = time.monotonic()
+    fresh_enough = (
+        _container_cache is not None and now - _container_cache_time < _CONTAINER_CACHE_TTL
+    )
+    if fresh_enough:
+        return _container_cache  # type: ignore[return-value]
+
+    if _container_cache is not None:
+        with _container_refresh_lock:
+            if not _container_refresh_in_flight:
+                _container_refresh_in_flight = True
+                threading.Thread(
+                    target=_refresh_container_cache_async,
+                    name="container-stats-refresh",
+                    daemon=True,
+                ).start()
+        return _container_cache
+
+    fresh = _docker_stats_blocking()
+    if fresh is None:
+        return []
+    _container_cache = fresh
+    _container_cache_time = now
+    return fresh
 
 
 def get_system_resources() -> SystemResources | None:

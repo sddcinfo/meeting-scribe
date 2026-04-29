@@ -72,7 +72,7 @@ class Sample:
 
 def load_builtin_samples() -> list[Sample]:
     """Load built-in benchmark samples from benchmarks/samples/."""
-    samples = []
+    samples: list[Sample] = []
     manifest = SAMPLES_DIR / "manifest.json"
     if not manifest.exists():
         return samples
@@ -163,6 +163,7 @@ class FasterWhisperModel(ASRModel):
 
     def transcribe(self, audio: np.ndarray, language_hint: str = "") -> TranscriptionResult:
         self._ensure_loaded()
+        assert self._model is not None  # _ensure_loaded guarantees this
         kwargs = {}
         if language_hint:
             kwargs["language"] = language_hint
@@ -264,9 +265,9 @@ def run_benchmark(
     results = []
 
     for model in models:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Model: {model.name}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         for sample in samples:
             print(f"\n  Sample: {sample.name} ({sample.language})")
@@ -282,7 +283,9 @@ def run_benchmark(
 
                 print(f"    Reference:  {sample.reference[:80]}...")
                 print(f"    Hypothesis: {result.text[:80]}...")
-                print(f"    WER: {wer:.1%}  CER: {cer:.1%}  Latency: {result.latency_ms:.0f}ms  RTF: {rtf:.2f}")
+                print(
+                    f"    WER: {wer:.1%}  CER: {cer:.1%}  Latency: {result.latency_ms:.0f}ms  RTF: {rtf:.2f}"
+                )
                 print(f"    Lang detect: {result.language} (expected: {sample.language})")
 
                 results.append(
@@ -323,9 +326,9 @@ def run_benchmark(
 
 def print_summary(results: list[BenchmarkResult]) -> None:
     """Print a summary comparison table."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("BENCHMARK SUMMARY")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     # Group by model
     models = sorted(set(r.model for r in results))
@@ -334,8 +337,10 @@ def print_summary(results: list[BenchmarkResult]) -> None:
     for lang in languages:
         lang_label = {"en": "English", "ja": "Japanese"}.get(lang, lang)
         print(f"\n  {lang_label}:")
-        print(f"  {'Model':<30} {'Avg WER':>8} {'Avg CER':>8} {'Avg Latency':>12} {'Avg RTF':>8} {'Lang Acc':>8}")
-        print(f"  {'-'*30} {'-'*8} {'-'*8} {'-'*12} {'-'*8} {'-'*8}")
+        print(
+            f"  {'Model':<30} {'Avg WER':>8} {'Avg CER':>8} {'Avg Latency':>12} {'Avg RTF':>8} {'Lang Acc':>8}"
+        )
+        print(f"  {'-' * 30} {'-' * 8} {'-' * 8} {'-' * 12} {'-' * 8} {'-' * 8}")
 
         for model in models:
             model_lang = [r for r in results if r.model == model and r.language == lang]
@@ -388,7 +393,7 @@ def generate_samples_from_meetings(meetings_dir: Path, max_samples: int = 5) -> 
     corresponding audio slice from recording.pcm.
     """
     SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
-    manifest = []
+    manifest: list[dict] = []
 
     for meeting_dir in sorted(meetings_dir.iterdir()):
         if not meeting_dir.is_dir():
@@ -445,7 +450,9 @@ def generate_samples_from_meetings(meetings_dir: Path, max_samples: int = 5) -> 
                     "end_ms": end_ms,
                 }
             )
-            print(f"  Extracted: {name} ({lang}, {(end_ms-start_ms)/1000:.1f}s): {text[:60]}...")
+            print(
+                f"  Extracted: {name} ({lang}, {(end_ms - start_ms) / 1000:.1f}s): {text[:60]}..."
+            )
 
         if len(manifest) >= max_samples:
             break
@@ -461,7 +468,9 @@ def generate_samples_from_meetings(meetings_dir: Path, max_samples: int = 5) -> 
 def main():
     parser = argparse.ArgumentParser(description="ASR Model Benchmark Suite")
     parser.add_argument("--model", choices=["qwen3-asr", "faster-whisper", "all"], default="all")
-    parser.add_argument("--generate-samples", action="store_true", help="Generate samples from meetings")
+    parser.add_argument(
+        "--generate-samples", action="store_true", help="Generate samples from meetings"
+    )
     parser.add_argument("--samples-dir", type=Path, default=SAMPLES_DIR)
     parser.add_argument("--max-samples", type=int, default=10, help="Max samples to generate")
     parser.add_argument("--asr-url", default="http://localhost:8003", help="Qwen3-ASR vLLM URL")

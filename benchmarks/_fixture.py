@@ -4,6 +4,7 @@ Resolves samples by ID from MANIFEST.yaml, checksums them against the
 on-disk files under /data/meeting-scribe-fixtures/ (or --fixture-dir),
 and fails loudly if anything drifts. Never logs transcript text.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -66,9 +67,7 @@ def load_samples(
         if not path.exists():
             # Transcripts and ref JSON live next to the audio; harnesses
             # look them up themselves. Absence of audio is fatal.
-            raise FileNotFoundError(
-                f"Manifest sample {entry['id']!r} missing at {path}"
-            )
+            raise FileNotFoundError(f"Manifest sample {entry['id']!r} missing at {path}")
         if verify_checksums:
             actual = _sha256_file(path)
             if actual != entry["sha256"]:

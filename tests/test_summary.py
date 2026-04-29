@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
-import pytest
 
 from meeting_scribe.summary import SUMMARY_SYSTEM_PROMPT, SUMMARY_USER_PROMPT
 
@@ -36,35 +33,30 @@ class TestSummaryPrompt:
 
 
 class TestSummaryOutput:
-    """Validate summary.json structure from real meetings."""
+    """Validate summary.json round-trip + schema."""
 
-    def test_real_meeting_summary_structure(self):
-        """Check summary structure from the f38d5807 meeting if available."""
-        summary_path = (
-            Path(__file__).parent.parent
-            / "meetings"
-            / "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0"
-            / "summary.json"
+    def test_synthetic_summary_round_trips(self, tmp_path):
+        """Build a representative summary doc, write it, re-read it, and
+        assert the structure that consumers (frontend + versions._summarize_summary_doc)
+        rely on. Uses a synthetic fixture so the test is hermetic — no
+        dependency on whatever meetings happen to be on disk."""
+        path = tmp_path / "summary.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "executive_summary": "A 3-line summary of the meeting.",
+                    "topics": [{"title": "Roadmap", "summary": "Q3 launches"}],
+                    "decisions": [{"text": "Ship 1.5.0 next Tuesday"}],
+                    "action_items": [{"owner": "Alice", "text": "draft post"}],
+                    "key_quotes": [],
+                    "key_insights": [],
+                    "schema_version": 3,
+                }
+            )
         )
-        if not summary_path.exists():
-            pytest.skip("Meeting f38d5807 not available")
-
-        summary = json.loads(summary_path.read_text())
+        summary = json.loads(path.read_text())
         assert "executive_summary" in summary
         assert isinstance(summary.get("topics"), list)
         assert isinstance(summary.get("action_items"), list)
-
-    def test_real_meeting_97cd_summary(self):
-        """Check summary from 97cd1d18 meeting."""
-        summary_path = (
-            Path(__file__).parent.parent
-            / "meetings"
-            / "97cd1d18-89f9-4d2f-b3d2-3b88a087bb0d"
-            / "summary.json"
-        )
-        if not summary_path.exists():
-            pytest.skip("Meeting 97cd1d18 not available")
-
-        summary = json.loads(summary_path.read_text())
-        assert "executive_summary" in summary
         assert len(summary["executive_summary"]) > 10
+        assert summary["schema_version"] == 3

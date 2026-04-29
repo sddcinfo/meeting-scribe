@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Smoke-test the multilingual self-introduction name extractor."""
+
 from __future__ import annotations
 
 import sys

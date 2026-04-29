@@ -148,7 +148,16 @@ class RefinementWorker:
         self.last_error_count: int = 0
 
     async def start(self) -> None:
-        """Start the refinement background task."""
+        """Start the refinement background task.
+
+        May be wrapped in ``asyncio.create_task`` by the server so the
+        HTTP start response returns without waiting for ASR/translate
+        model-id probes. If the enclosing meeting ends during that
+        window, the server-side cancellation in ``_drain_refinement``
+        takes precedence; this coroutine additionally re-checks its own
+        ``_stop_event`` just before arming ``_run_loop`` so a late
+        completion never attaches to a dead meeting.
+        """
         self._asr_client = httpx.AsyncClient(base_url=self._asr_url, timeout=60)
         self._translate_client = httpx.AsyncClient(base_url=self._translate_url, timeout=60)
 
@@ -166,18 +175,33 @@ class RefinementWorker:
         except Exception as e:
             logger.warning("Refinement: Translation model detection failed: %s", e)
 
+        # Late-arrival guard: if stop() was called while we were awaiting
+        # the model-id probes above, do NOT arm the run loop.
+        if self._stop_event.is_set():
+            logger.info(
+                "Refinement worker start aborted post-probe for meeting %s (stop signaled)",
+                self._meeting_id,
+            )
+            return
+
         self._task = asyncio.create_task(self._run_loop(), name="refinement-worker")
         logger.info("Refinement worker started for meeting %s", self._meeting_id)
 
     async def stop(self) -> None:
-        """Stop the worker, process remaining audio, save results."""
+        """Stop the worker, process remaining audio, save results.
+
+        Safe to call even if ``start()`` never armed ``_run_loop`` — e.g.
+        when the server cancelled the backgrounded start task before it
+        could complete. In that case ``_task`` is None and
+        ``_process_remaining`` is skipped because the worker never
+        ingested anything.
+        """
         self._stop_event.set()
         if self._task:
             await self._task
-
-        # Process remaining audio (no trail — process everything)
-        await self._process_remaining()
-        self._save_polished()
+            # Process remaining audio (no trail — process everything)
+            await self._process_remaining()
+            self._save_polished()
 
         if self._asr_client:
             await self._asr_client.aclose()

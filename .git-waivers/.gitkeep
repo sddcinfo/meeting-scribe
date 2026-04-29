@@ -1,0 +1,3 @@
+# Audit trail for `git push --no-verify` bypasses of the regression-test gate.
+# Each file is named <commit-sha>.txt and contains a one-line reason.
+# See scripts/hooks/classify_push.py for the gate logic.

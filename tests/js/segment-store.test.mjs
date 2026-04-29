@@ -309,6 +309,99 @@ test('multi-target: translations survive a higher-rev update that omits them', (
   assert.equal(seg.translations?.fr?.text, 'Je suis Tanaka');
 });
 
+// ── REGRESSION: control messages must not phantom-clear the renderer ──────
+//
+// The popout's /api/ws/view handler only filters lifecycle + speaker_rename
+// + slide_* messages — every other control broadcast (speaker_pulse,
+// seat_update, room_layout_update, speaker_remap, summary_regenerated,
+// meeting_warning, audio_drift, tts_audio, …) falls through to
+// `ingestFromLiveWs → store.ingest`. Those messages have no segment_id.
+//
+// If `ingest()` doesn't gate on segment_id, it fires listeners with
+// segment_id=undefined; CompactGridRenderer.update treats the falsy id as
+// a "store cleared" signal and calls _clear(), wiping the popout's grid
+// every 200 ms (speaker_pulse cadence during an active meeting). The
+// popout then only ever shows the sliver of utterances received between
+// pulses — visibly diverging from the main window's full transcript.
+//
+// The explicit-clear path goes through `clear()`, which still notifies
+// listeners with (null, null, false) — so this guard does not break
+// intentional resets.
+test('regression: control messages without segment_id are ignored', () => {
+  const store = new SegmentStore();
+  store.ingest(asrFinal());
+  let calls = 0;
+  let lastId;
+  store.subscribe((id) => { calls++; lastId = id; });
+
+  // speaker_pulse shape — reaches store.ingest via the popout fallthrough.
+  store.ingest({ type: 'speaker_pulse', active_speakers: [], timestamp_ms: 1234 });
+  store.ingest({ type: 'seat_update', speaker_name: 'Tanaka' });
+  store.ingest({ type: 'audio_drift', drift_ms: 600 });
+  store.ingest({ type: 'speaker_remap', renames: { 5: 4 } });
+
+  assert.equal(calls, 0, 'control messages must not fire transcript listeners');
+  assert.equal(store.count, 1, 'store must not gain phantom segments');
+  assert.equal(store.segments.has(undefined), false,
+    'control messages must not insert an undefined-keyed segment');
+
+  // Sanity: explicit clear() still notifies (id===null) so the renderer
+  // can reset on real resets.
+  store.clear();
+  assert.equal(lastId, null);
+});
+
+// ── REGRESSION: listener fan-out is isolated; one throw must not abort the
+// rest of the listener chain ─────────────────────────────────────────────
+//
+// Found in `tests/browser/test_cross_window_sync.py` while testing the
+// popout: a separate listener (the admin `#segment-count` chip updater)
+// threw `Cannot set properties of null` because that element doesn't exist
+// in popout-mode DOM. Set iteration aborted on the throw, and the next
+// listener — the CompactGridRenderer subscription — never ran. Popout
+// transcript stayed permanently empty even though events DID land in
+// the store.
+//
+// Each subscriber must be isolated so one buggy/wrong-context listener
+// can't take down the rest of the fan-out.
+test('regression: a throwing listener does not block subsequent listeners', () => {
+  const store = new SegmentStore();
+  const calls = [];
+  store.subscribe(() => { throw new Error('listener 0 boom'); });
+  store.subscribe((id) => { calls.push(['l1', id]); });
+  store.subscribe((id) => { calls.push(['l2', id]); });
+
+  // Suppress the expected console.error so the test output stays clean.
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    store.ingest(asrFinal());
+  } finally {
+    console.error = origError;
+  }
+
+  assert.deepEqual(calls, [['l1', SEG], ['l2', SEG]],
+    'subscribers after a throwing one must still fire');
+});
+
+test('regression: a throwing listener on clear() does not block subsequent listeners', () => {
+  const store = new SegmentStore();
+  store.ingest(asrFinal());
+  const cleared = [];
+  store.subscribe(() => { throw new Error('boom on clear'); });
+  store.subscribe((id) => { cleared.push(id); });
+
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    store.clear();
+  } finally {
+    console.error = origError;
+  }
+
+  assert.deepEqual(cleared, [null], 'clear() must still notify all subscribers');
+});
+
 // ── Multi-segment isolation ────────────────────────────────────────────────
 
 test('updates on one segment do not leak into another', () => {

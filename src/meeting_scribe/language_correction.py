@@ -21,6 +21,7 @@ rates per language pair. The stats are intentionally process-global —
 the live ASR backend and the reprocess pipeline both feed into the
 same counters so a benchmark script can read them via ``snapshot()``.
 """
+
 from __future__ import annotations
 
 import logging
@@ -311,7 +312,11 @@ def correct_segment_language(
         latency_ms = (time.perf_counter() - t0) * 1000
         logger.info(
             "Lingua corrected ASR tag: %r → %r (conf=%.2f, %.1fms) on %r",
-            asr_lang, top_iso, top_score, latency_ms, text[:40],
+            asr_lang,
+            top_iso,
+            top_score,
+            latency_ms,
+            text[:40],
         )
         correction_stats.record(
             outcome="overridden",

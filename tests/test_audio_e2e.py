@@ -472,17 +472,23 @@ class TestDeepBackendHealth:
         revised event (higher ``revision``) with the correct attribution,
         and the UI swaps the label in place.
         """
-        server_path = Path(__file__).parent.parent / "src" / "meeting_scribe" / "server.py"
-        content = server_path.read_text()
+        src_root = Path(__file__).parent.parent / "src" / "meeting_scribe"
+        # Search across the meeting-scribe source tree — the fallback used to live in server.py
+        # but the speaker catch-up machinery now lives in runtime/meeting_loops.py and the
+        # pending-events queue in runtime/state.py.
+        all_content = "\n".join(p.read_text() for p in src_root.rglob("*.py"))
         # The old fallback must be gone.
-        assert 'source="time_proximity"' not in content, (
+        assert 'source="time_proximity"' not in all_content, (
             "time-proximity pseudo-cluster fallback still present — "
             "Part B refactor requires it to be removed in favour of "
             "the speaker catch-up loop"
         )
         # The new catch-up machinery must exist.
-        assert "_speaker_catchup_loop" in content, "speaker catch-up loop missing"
-        assert "_pending_speaker_events" in content, "pending-events queue missing"
+        catchup_path = src_root / "runtime" / "meeting_loops.py"
+        assert "_speaker_catchup_loop" in catchup_path.read_text(), (
+            "speaker catch-up loop missing from runtime/meeting_loops.py"
+        )
+        assert "_pending_speaker_events" in all_content, "pending-events queue missing"
 
     def test_diarization_uses_global_cluster_stabilization(self) -> None:
         """Regression guard: diarization backend must stabilize cluster IDs

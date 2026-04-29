@@ -22,6 +22,10 @@ meetings/
 CLAUDE.md
 .claude.json
 
+# Internal-only docs (kept out of public repo)
+STRATEGIC_REVIEW.md
+COMPETITIVE-LANDSCAPE.md
+
 # macOS
 .DS_Store
 
@@ -44,11 +48,37 @@ CLAUDE.md
 *.flac
 *.pcm
 
+# Allowlist: validate-fixture audio is short, sanitized, and required
+# by `meeting-scribe validate --full`.
+!tests/fixtures/validate/*.wav
+
 # Benchmark audio samples — contain voice recordings, never commit
 benchmarks/samples/
 
 # Benchmark results — synthetic test data only, safe to commit
 # benchmarks/results/  (allowed)
 
+# 2026-Q2 model-challenger bench — only decision_gate.md may land in repo.
+# All raw outputs (per-sample JSON, WAVs, MOS forms, RTTM, transcripts)
+# live offline at /data/meeting-scribe-fixtures/bench-runs/.  Belt + braces:
+# even if a script writes to the wrong place, git will not pick it up.
+reports/2026-Q2-bench/**/*.json
+reports/2026-Q2-bench/**/*.jsonl
+reports/2026-Q2-bench/**/*.csv
+reports/2026-Q2-bench/**/*.wav
+reports/2026-Q2-bench/**/*.txt
+reports/2026-Q2-bench/**/*.rttm
+
 # ML model cache
 .cache/
+
+# Coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+
+# Runtime diagnostics log (rotated by meeting_scribe.diagnostics)
+diagnostics/server.log
+diagnostics/server.log.*
+# Per-run validate reports (keep schema in code, not on disk)
+diagnostics/validate-*.json

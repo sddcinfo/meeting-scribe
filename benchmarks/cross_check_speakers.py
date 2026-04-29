@@ -44,6 +44,7 @@ Usage::
     ./cross_check_speakers.py <meeting_id>
     ./cross_check_speakers.py meetings/<meeting_dir>
 """
+
 from __future__ import annotations
 
 import argparse
@@ -234,8 +235,7 @@ def cross_check(meeting_dir: Path) -> Report:
         if sid not in lane_segment_cluster:
             report.fail(
                 "journal_event_without_lane",
-                f"seg={sid} cluster={cid} text={e.get('text','')!r} "
-                f"— no lane entry",
+                f"seg={sid} cluster={cid} text={e.get('text', '')!r} — no lane entry",
             )
 
     # G. detected.segment_count equals journal count per speaker.
@@ -305,18 +305,20 @@ def main() -> int:
     report = cross_check(md)
 
     if args.json:
-        print(json.dumps(
-            {
-                "meeting_id": report.meeting_id,
-                "ok": report.ok,
-                "failures": report.failures,
-                "findings": [
-                    {"severity": f.severity, "check": f.check, "detail": f.detail}
-                    for f in report.findings
-                ],
-            },
-            indent=2,
-        ))
+        print(
+            json.dumps(
+                {
+                    "meeting_id": report.meeting_id,
+                    "ok": report.ok,
+                    "failures": report.failures,
+                    "findings": [
+                        {"severity": f.severity, "check": f.check, "detail": f.detail}
+                        for f in report.findings
+                    ],
+                },
+                indent=2,
+            )
+        )
     else:
         print(f"\n=== Cross-check: {report.meeting_id} ===\n")
         if not report.findings:

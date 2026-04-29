@@ -478,11 +478,17 @@ async def generate_draft_summary(
     model: str | None = None,
     max_transcript_chars: int = _DEFAULT_MAX_TRANSCRIPT_CHARS,
 ) -> tuple[dict | None, int]:
-    """Generate a draft summary during live recording (low priority).
+    """Generate a draft summary during live recording (medium priority).
 
-    Uses priority 5 so live translation (priority -10) always wins on
-    the shared vLLM instance. The draft is NOT saved to disk — the caller
-    caches it in memory and decides whether to promote it at stop time.
+    Uses priority -5 — between translation's -10 and refinement's 5.
+    Translation still preempts under contention so real-time UX is
+    untouched, but TTS / furigana / refinement no longer block draft
+    generation entirely. Bumped from +5 in A2 step 3 after meeting
+    `3db4286e-...` showed the previous priority left the draft far
+    behind the actual transcript at stop time (531 / 1565 events).
+
+    The draft is NOT saved to disk — the caller caches it in memory
+    and decides whether to promote it at stop time.
 
     Returns:
         (summary_dict_or_None, event_count)
@@ -496,7 +502,7 @@ async def generate_draft_summary(
         vllm_url,
         user_prompt,
         model=model,
-        priority=5,
+        priority=-5,
     )
 
     if error:

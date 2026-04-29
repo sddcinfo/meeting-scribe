@@ -64,13 +64,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 EXIT_OK = 0
-EXIT_SOFT_FAIL = 1           # Phase 1/2 retriable failure (e.g. Docker late).
-EXIT_HARD_FAIL = 64          # Phase 0 failure other than blocker marker.
-EXIT_BLOCKED = 65            # BOOT_BLOCKED file present. Non-retriable.
+EXIT_SOFT_FAIL = 1  # Phase 1/2 retriable failure (e.g. Docker late).
+EXIT_HARD_FAIL = 64  # Phase 0 failure other than blocker marker.
+EXIT_BLOCKED = 65  # BOOT_BLOCKED file present. Non-retriable.
 
 # ---------------------------------------------------------------------------
 # State locations
 # ---------------------------------------------------------------------------
+
 
 def _state_dir() -> Path:
     """Return the persistent preflight state directory.
@@ -98,6 +99,7 @@ def preflight_audit_path() -> Path:
 # ---------------------------------------------------------------------------
 # Check dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CheckResult:
@@ -127,6 +129,7 @@ class CheckContext:
 # ---------------------------------------------------------------------------
 # Phase 0 — hard gates (filesystem-only, cheap, non-retriable)
 # ---------------------------------------------------------------------------
+
 
 def _check_no_boot_blocker(ctx: CheckContext) -> CheckResult:
     t0 = time.monotonic()
@@ -229,6 +232,7 @@ def _check_compose_file_parses(ctx: CheckContext) -> CheckResult:
 # Phase 1 — remediation (Docker-dependent, retriable)
 # ---------------------------------------------------------------------------
 
+
 def _check_docker_daemon(ctx: CheckContext) -> CheckResult:
     """Probe the Docker daemon. Retries for up to 30s so a slow-to-start
     daemon on early boot doesn't fail the gate.
@@ -284,8 +288,10 @@ def _check_compose_cold_start_valid(ctx: CheckContext) -> CheckResult:
     t0 = time.monotonic()
 
     cmd = [
-        "docker", "compose",
-        "-f", str(ctx.compose_file),
+        "docker",
+        "compose",
+        "-f",
+        str(ctx.compose_file),
     ]
     if ctx.env_file.exists():
         cmd += ["--env-file", str(ctx.env_file)]
@@ -325,9 +331,7 @@ def _check_compose_cold_start_valid(ctx: CheckContext) -> CheckResult:
         rendered = json.loads(r.stdout or "{}")
         services = rendered.get("services") or {}
         ctx.compose_services = sorted(services.keys())
-        ctx.compose_images = sorted(
-            {s.get("image") for s in services.values() if s.get("image")}
-        )
+        ctx.compose_images = sorted({s.get("image") for s in services.values() if s.get("image")})
     except json.JSONDecodeError:
         # Older compose prints YAML by default; that's fine — we can still
         # accept the file as valid, we just don't get the parsed service list.
@@ -363,7 +367,10 @@ def _check_docker_images_present(ctx: CheckContext) -> CheckResult:
     for image in ctx.compose_images:
         r = subprocess.run(
             ["docker", "image", "inspect", image],
-            capture_output=True, text=True, check=False, timeout=10,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
         )
         if r.returncode != 0:
             missing.append(image)
@@ -387,6 +394,7 @@ def _check_docker_images_present(ctx: CheckContext) -> CheckResult:
 # ---------------------------------------------------------------------------
 # Phase 2 — live readiness
 # ---------------------------------------------------------------------------
+
 
 async def _probe_one(url: str, timeout: float) -> tuple[bool, str]:
     import httpx
@@ -524,17 +532,11 @@ def classify_exit(results: list[CheckResult]) -> int:
     ``BOOT_BLOCKED`` present → 65. Any Phase 0 hard failure → 64.
     Phase 1/2 failures → 1 (soft, retriable). Otherwise 0.
     """
-    if any(
-        (not r.passed) and r.name == "no_boot_blocker" for r in results
-    ):
+    if any((not r.passed) and r.name == "no_boot_blocker" for r in results):
         return EXIT_BLOCKED
-    if any(
-        (not r.passed) and r.phase == 0 and not r.warn_only for r in results
-    ):
+    if any((not r.passed) and r.phase == 0 and not r.warn_only for r in results):
         return EXIT_HARD_FAIL
-    if any(
-        (not r.passed) and not r.warn_only for r in results
-    ):
+    if any((not r.passed) and not r.warn_only for r in results):
         return EXIT_SOFT_FAIL
     return EXIT_OK
 
@@ -627,6 +629,7 @@ def write_boot_blocked(reason: str) -> None:
 # ---------------------------------------------------------------------------
 # CLI entry points (invoked from cli.py)
 # ---------------------------------------------------------------------------
+
 
 def cmd_manual(wait_seconds: float) -> int:
     """Run every phase live. Human-readable report. Operator tool.

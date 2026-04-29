@@ -188,6 +188,7 @@ def install_singleton(rc: _RuntimeConfig) -> None:
 # Convenience re-exports for per-request callers (keeps import blocks tidy):
 #   from meeting_scribe.runtime_config import get, reload_from_disk
 
+
 def get(key: str, default: Any = None) -> Any:
     return instance().get(key, default)
 

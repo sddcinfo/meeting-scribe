@@ -18,6 +18,12 @@ from meeting_scribe.models import (
     TranslationState,
     TranslationStatus,
 )
+from meeting_scribe.runtime import state as runtime_state
+from meeting_scribe.server_support.metrics_helpers import (
+    _percentile,
+    _percentile_dict,
+)
+from meeting_scribe.tts.worker import _enqueue_tts, _record_segment_lag
 
 
 def _make_event(
@@ -52,32 +58,30 @@ def _make_event(
 @pytest.fixture(autouse=True)
 def reset_server_state():
     """Reset module-level TTS state between tests."""
-    from meeting_scribe import server
+    from meeting_scribe.runtime import state as runtime_state
 
-    server._tts_in_flight = 0
-    server._tts_inflight_started.clear()
-    server.metrics.reset()
-    if server._tts_queue is not None:
-        while not server._tts_queue.empty():
+    runtime_state.tts_in_flight = 0
+    runtime_state.tts_inflight_started.clear()
+    runtime_state.metrics.reset()
+    if runtime_state.tts_queue is not None:
+        while not runtime_state.tts_queue.empty():
             try:
-                server._tts_queue.get_nowait()
-                server._tts_queue.task_done()
+                runtime_state.tts_queue.get_nowait()
+                runtime_state.tts_queue.task_done()
             except Exception:
                 break
     yield
-    server._tts_in_flight = 0
-    server._tts_inflight_started.clear()
+    runtime_state.tts_in_flight = 0
+    runtime_state.tts_inflight_started.clear()
 
 
 class TestProducerWhitelistFiller:
     """[P2-2-i1] Whitelist filler drop."""
 
     def test_drops_whitelisted_ack_when_backlog(self):
-        from meeting_scribe import server
-
-        server._tts_queue = asyncio.Queue(maxsize=3)
+        runtime_state.tts_queue = asyncio.Queue(maxsize=3)
         # Simulate backlog: put a dummy item so outstanding > 0
-        server._tts_queue.put_nowait(
+        runtime_state.tts_queue.put_nowait(
             (
                 _make_event("hello"),
                 "default",
@@ -86,26 +90,22 @@ class TestProducerWhitelistFiller:
             )
         )
         evt = _make_event("はい")
-        server._enqueue_tts(evt, "default")
-        assert server.metrics.tts_dropped_filler == 1
+        _enqueue_tts(evt, "default")
+        assert runtime_state.metrics.tts_dropped_filler == 1
         # Original dummy is still the only item
-        assert server._tts_queue.qsize() == 1
+        assert runtime_state.tts_queue.qsize() == 1
 
     def test_keeps_ack_when_idle(self):
-        from meeting_scribe import server
-
-        server._tts_queue = asyncio.Queue(maxsize=3)
+        runtime_state.tts_queue = asyncio.Queue(maxsize=3)
         evt = _make_event("はい")
-        server._enqueue_tts(evt, "default")
-        assert server.metrics.tts_dropped_filler == 0
-        assert server._tts_queue.qsize() == 1
+        _enqueue_tts(evt, "default")
+        assert runtime_state.metrics.tts_dropped_filler == 0
+        assert runtime_state.tts_queue.qsize() == 1
 
     def test_keeps_short_but_not_whitelisted_when_backlog(self):
-        from meeting_scribe import server
-
-        server._tts_queue = asyncio.Queue(maxsize=3)
+        runtime_state.tts_queue = asyncio.Queue(maxsize=3)
         # Backlog
-        server._tts_queue.put_nowait(
+        runtime_state.tts_queue.put_nowait(
             (
                 _make_event("hello"),
                 "default",
@@ -114,19 +114,17 @@ class TestProducerWhitelistFiller:
             )
         )
         evt = _make_event("No.")  # short but not in whitelist
-        server._enqueue_tts(evt, "default")
-        assert server.metrics.tts_dropped_filler == 0
-        assert server._tts_queue.qsize() == 2
+        _enqueue_tts(evt, "default")
+        assert runtime_state.metrics.tts_dropped_filler == 0
+        assert runtime_state.tts_queue.qsize() == 2
 
 
 class TestProducerStaleGate:
     """[P1-2-i1] stale-on-enqueue gate."""
 
     def test_drops_stale_when_deadline_already_blown(self):
-        from meeting_scribe import server
-
-        server._tts_queue = asyncio.Queue(maxsize=3)
-        server._tts_queue.put_nowait(
+        runtime_state.tts_queue = asyncio.Queue(maxsize=3)
+        runtime_state.tts_queue.put_nowait(
             (
                 _make_event("hello"),
                 "default",
@@ -135,54 +133,44 @@ class TestProducerStaleGate:
             )
         )
         evt = _make_event("Hello", utterance_end_at=time.monotonic() - 10.0)
-        server._enqueue_tts(evt, "default")
-        assert server.metrics.tts_dropped_stale_producer == 1
+        _enqueue_tts(evt, "default")
+        assert runtime_state.metrics.tts_dropped_stale_producer == 1
 
     def test_keeps_stale_when_no_backlog(self):
         # No backlog → still admit even if deadline is tight
-        from meeting_scribe import server
-
-        server._tts_queue = asyncio.Queue(maxsize=3)
+        runtime_state.tts_queue = asyncio.Queue(maxsize=3)
         evt = _make_event("Hello", utterance_end_at=time.monotonic() - 10.0)
-        server._enqueue_tts(evt, "default")
-        assert server.metrics.tts_dropped_stale_producer == 0
-        assert server._tts_queue.qsize() == 1
+        _enqueue_tts(evt, "default")
+        assert runtime_state.metrics.tts_dropped_stale_producer == 0
+        assert runtime_state.tts_queue.qsize() == 1
 
 
 class TestMissingOriginRefusal:
     """[P1-2-i5] event.utterance_end_at is None is a code bug."""
 
     def test_refuses_event_with_missing_origin(self):
-        from meeting_scribe import server
-
-        server._tts_queue = asyncio.Queue(maxsize=3)
+        runtime_state.tts_queue = asyncio.Queue(maxsize=3)
         evt = _make_event("Hello")
         evt.utterance_end_at = None
-        server._enqueue_tts(evt, "default")
-        assert server.metrics.tts_dropped_missing_origin == 1
-        assert server._tts_queue.qsize() == 0
+        _enqueue_tts(evt, "default")
+        assert runtime_state.metrics.tts_dropped_missing_origin == 1
+        assert runtime_state.tts_queue.qsize() == 0
 
 
 class TestPercentileHelper:
     """[P1-6-i1] guard against small-window NaN / crash."""
 
     def test_returns_none_for_empty(self):
-        from meeting_scribe.server import _percentile, _percentile_dict
-
         assert _percentile([], 0.5) is None
         d = _percentile_dict([])
         assert d == {"p50": None, "p95": None, "p99": None, "sample_count": 0}
 
     def test_returns_none_below_min_samples(self):
-        from meeting_scribe.server import _percentile_dict
-
         d = _percentile_dict([1.0, 2.0, 3.0])
         assert d["p50"] is None
         assert d["sample_count"] == 3
 
     def test_computes_quantiles_for_sufficient_samples(self):
-        from meeting_scribe.server import _percentile_dict
-
         d = _percentile_dict(list(range(1, 101)))  # 1..100
         assert d["sample_count"] == 100
         # Nearest-rank with round-half-to-even on (q * (n-1)):
@@ -198,27 +186,23 @@ class TestSegmentLagRecording:
     """[P1-5-i2 + P1-1-i1] segment-level lag, pre-fan-out, upstream split."""
 
     def test_upstream_and_post_translation_split(self):
-        from meeting_scribe import server
-
         evt = _make_event(
             "Hello",
             utterance_end_at=0.0,
             completed_at=2.0,
         )
-        server._record_segment_lag(evt, now=3.0)
-        assert list(server.metrics.end_to_end_lag_ms) == [3000.0]
-        assert list(server.metrics.upstream_lag_ms) == [2000.0]
-        assert list(server.metrics.tts_post_translation_lag_ms) == [1000.0]
+        _record_segment_lag(evt, now=3.0)
+        assert list(runtime_state.metrics.end_to_end_lag_ms) == [3000.0]
+        assert list(runtime_state.metrics.upstream_lag_ms) == [2000.0]
+        assert list(runtime_state.metrics.tts_post_translation_lag_ms) == [1000.0]
 
     def test_skips_when_utterance_end_missing(self):
-        from meeting_scribe import server
-
         evt = _make_event("Hello")
         evt.utterance_end_at = None
-        server._record_segment_lag(evt, now=5.0)
+        _record_segment_lag(evt, now=5.0)
         # Histograms should not grow
-        assert len(server.metrics.end_to_end_lag_ms) == 0
-        assert len(server.metrics.upstream_lag_ms) == 0
+        assert len(runtime_state.metrics.end_to_end_lag_ms) == 0
+        assert len(runtime_state.metrics.upstream_lag_ms) == 0
 
 
 class TestAsrVllmUtteranceEndAt:

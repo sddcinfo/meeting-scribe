@@ -280,9 +280,12 @@ def _libreoffice_pptx_to_pdf(pptx_path: Path, out_dir: Path) -> Path:
             subprocess.run(
                 [
                     "unoconvert",
-                    "--host", host,
-                    "--port", str(port),
-                    "--convert-to", "pdf",
+                    "--host",
+                    host,
+                    "--port",
+                    str(port),
+                    "--convert-to",
+                    "pdf",
                     str(pptx_path),
                     str(dest_pdf),
                 ],
@@ -668,9 +671,11 @@ def build_minimal_pptx(source_pptx: Path, keep_indices_0based: list[int], dest_p
                         else:
                             full = "ppt/" + target
                         drop_targets.add(full)
-                        drop_targets.add(full.replace(".xml", ".xml.rels").replace(
-                            "ppt/slides/", "ppt/slides/_rels/"
-                        ))
+                        drop_targets.add(
+                            full.replace(".xml", ".xml.rels").replace(
+                                "ppt/slides/", "ppt/slides/_rels/"
+                            )
+                        )
                 # Remove the sldId entry from the presentation
                 sldIdLst.remove(sldid)
 
@@ -894,22 +899,15 @@ def _detect_via_lingua(slides: list[SlideText]) -> str | None:
         return None
 
     corpus = " ".join(
-        run.text.strip()
-        for slide in slides
-        for run in slide.runs
-        if run.text and run.text.strip()
+        run.text.strip() for slide in slides for run in slide.runs if run.text and run.text.strip()
     ).strip()
     if not corpus:
         return None
 
     try:
-        detector = (
-            LanguageDetectorBuilder
-            .from_languages(
-                Language.ENGLISH, Language.JAPANESE, Language.CHINESE, Language.KOREAN
-            )
-            .build()
-        )
+        detector = LanguageDetectorBuilder.from_languages(
+            Language.ENGLISH, Language.JAPANESE, Language.CHINESE, Language.KOREAN
+        ).build()
         confs = detector.compute_language_confidence_values(corpus)
         if not confs:
             return None

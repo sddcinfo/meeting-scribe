@@ -9,6 +9,7 @@ The fix: callers pass an explicit `sample_offset` per chunk that
 reflects the TRUE position of this audio in the meeting's PCM file,
 and the backend uses it verbatim as the start of the current buffer.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -31,10 +32,11 @@ def backend():
     async def fake_post(url, json=None):
         resp = MagicMock()
         resp.raise_for_status = MagicMock()
-        resp.json = MagicMock(return_value={
-            "choices": [{"message": {"content": "language English<asr_text>hello"}}]
-        })
+        resp.json = MagicMock(
+            return_value={"choices": [{"message": {"content": "language English<asr_text>hello"}}]}
+        )
         return resp
+
     b._client.post = AsyncMock(side_effect=fake_post)
 
     captured: list[TranscriptEvent] = []
@@ -50,7 +52,7 @@ def _audio_chunk(ms: int) -> bytes:
     """Generate `ms` of non-silent s16le audio at 16 kHz."""
     n_samples = int(ms * SAMPLE_RATE / 1000)
     # Above VAD threshold (0.005 RMS) so ASR path actually emits
-    samples = (np.ones(n_samples, dtype=np.int16) * 2000)
+    samples = np.ones(n_samples, dtype=np.int16) * 2000
     return samples.tobytes()
 
 

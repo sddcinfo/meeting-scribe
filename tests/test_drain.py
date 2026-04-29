@@ -230,7 +230,9 @@ class TestForceCancel:
             # want 3 distinct queue entries for this test.
             await q.submit(_make_event("s1", "one", "ja", cluster_id=0))
             await q.submit(_make_event("s2", "two", "ja", start_ms=2000, end_ms=3000, cluster_id=1))
-            await q.submit(_make_event("s3", "three", "ja", start_ms=4000, end_ms=5000, cluster_id=2))
+            await q.submit(
+                _make_event("s3", "three", "ja", start_ms=4000, end_ms=5000, cluster_id=2)
+            )
             # Flush the merge gate so the last event is also queued.
             await q.flush_merge_gate()
 

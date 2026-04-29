@@ -4,13 +4,14 @@ The server wraps /api/meeting/start and /api/meeting/stop in a single
 asyncio.Lock so concurrent UI clicks, browser retries, and auto-recovery
 can't race through "create new meeting + open audio writer" twice.
 """
+
 from __future__ import annotations
 
 import asyncio
 
 import pytest
 
-from meeting_scribe import server as srv
+from meeting_scribe.server_support import lifecycle_lock as srv
 
 
 class TestLifecycleLockSingleton:

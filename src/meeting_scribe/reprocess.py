@@ -9,6 +9,45 @@ vLLM's batching (4+ concurrent requests = ~3x throughput).
 Usage:
     from meeting_scribe.reprocess import reprocess_meeting
     result = await reprocess_meeting(meeting_dir, asr_url, translate_url)
+
+ASR / translate seam — DELIBERATELY NOT shared with the live path
+-----------------------------------------------------------------
+``_transcribe_chunk`` and ``_translate_event`` look like duplicates of
+``backends.asr_vllm`` and ``backends.translate_vllm`` but they are not
+unifiable. The two paths solve different problems:
+
+* **Live ASR** (``backends/asr_vllm.py``) is stateful and incremental.
+  It buffers ~3.5 s of audio between ASR calls, builds a system prompt
+  naming the meeting's expected languages (kills Germanic→English bias
+  on the live buffer length), and runs at vLLM ``priority=-20`` so it
+  preempts every other request on the box. It also tracks
+  ``segment_id`` / ``revision`` for partial-result updates and drops
+  out-of-pair-language segments aggressively because the user hears the
+  TTS within ~600 ms.
+
+* **Reprocess ASR** (``_transcribe_chunk``) is stateless and one-shot.
+  Chunks are diarize-window-sized (4 s) — strictly larger than the live
+  buffers — and **the language-naming system prompt regresses
+  segment counts by 56 %** on those chunks (caught by ``meeting-scribe
+  versions diff`` after run #2 against e5b376b2). So reprocess deliberately
+  does NOT send the prompt, keeps temperature unconstrained, and runs
+  at default priority (live ASR/TTS/translate at -20 / -10 always
+  preempt it — a meeting in progress is never delayed).
+
+* **Live translate** uses ``translation.queue.TranslationQueue`` +
+  ``backends.translate_vllm.TranslateVllmBackend``: bounded queue with
+  per-segment cancellation, multi-worker concurrency, dedup against the
+  cache, and a per-replica retry/quarantine policy. Reprocess does not
+  need any of that — there are no users waiting and segments arrive in
+  one batch — so ``_translate_event`` is a thin one-shot HTTP wrapper.
+
+Pulling these into a shared seam was tried and rejected: the live path's
+state-keeping and SLA discipline drag every shared call site into
+ceremony reprocess does not need, and the prompt difference would have to
+be an else-branch on a parameter that is always set to the opposite
+value in the two callers — i.e. zero shared logic, just a different name
+for two different things. The shared parts that DO unify cleanly already
+live in ``meeting_scribe.pipeline.{diarize,quality,speaker_attach}``.
 """
 
 from __future__ import annotations
@@ -18,6 +57,7 @@ import base64
 import io
 import json
 import logging
+import os
 import shutil
 import time
 import uuid
@@ -28,6 +68,12 @@ from typing import Any
 
 import httpx
 import numpy as np
+
+from meeting_scribe.models import MeetingState
+from meeting_scribe.pipeline.diarize import (
+    _diarize_full_audio,
+)
+from meeting_scribe.storage import MeetingStorage
 
 logger = logging.getLogger(__name__)
 
@@ -183,726 +229,9 @@ async def _translate_event(
         logger.debug("Translation failed for %s: %s", event["segment_id"], e)
 
 
-async def _diarize_single_call(
-    pcm_data: bytes,
-    diarize_url: str,
-    max_speakers: int,
-    timeout: float,
-    time_offset_ms: int = 0,
-    min_speakers: int = 2,
-) -> list[dict]:
-    """POST a chunk of PCM to the diarization container and parse segments.
-
-    min_speakers=2 is critical — without this hint, pyannote collapses
-    ambiguous clustering into 1 speaker almost every time.
-
-    time_offset_ms is added to returned start/end so caller can map
-    chunk-local times back into the meeting timeline.
-    """
-    async with httpx.AsyncClient(timeout=timeout) as c:
-        r = await c.post(
-            f"{diarize_url}/v1/diarize",
-            content=pcm_data,
-            headers={
-                "Content-Type": "application/octet-stream",
-                "X-Sample-Rate": str(SAMPLE_RATE),
-                "X-Max-Speakers": str(max_speakers),
-                "X-Min-Speakers": str(min_speakers),
-            },
-        )
-        r.raise_for_status()
-        data = r.json()
-
-    segments = []
-    for seg in data.get("segments", []):
-        segments.append(
-            {
-                "start_ms": int(seg.get("start", 0) * 1000) + time_offset_ms,
-                "end_ms": int(seg.get("end", 0) * 1000) + time_offset_ms,
-                "local_cluster_id": int(seg.get("speaker_id", 0)),
-                "confidence": float(seg.get("confidence", 1.0)),
-                "embedding": seg.get("embedding"),  # list of floats, may be None
-            }
-        )
-    return segments
-
-
-# Cross-chunk merge threshold: cosine similarity above this counts as the
-# same speaker. Production pyannote pipelines on WeSpeaker ResNet34
-# embeddings sit in 0.70–0.80; we keep the initial pass strict to avoid
-# false-positive merges of distinct speakers, then rely on the ghost
-# consolidation below to fold in tiny fragments that obviously belong
-# somewhere. Override with MEETING_SCRIBE_DIARIZE_MERGE_THRESHOLD.
-import os as _os
-
-try:
-    _DEFAULT_MERGE_THRESHOLD = float(
-        _os.environ.get("MEETING_SCRIBE_DIARIZE_MERGE_THRESHOLD", "0.70")
-    )
-except ValueError:
-    _DEFAULT_MERGE_THRESHOLD = 0.70
-
-# Ghost-cluster heuristics. Mirrors pyannote's internal min_cluster_size=15
-# rule but applied to our cross-chunk merged output. A cluster is a "ghost"
-# if it has very little speech AND few segments. Ghosts get absorbed into
-# their nearest neighbor if the embedding is a reasonable match — looser
-# than the initial threshold since we already trust the fragment belongs
-# *somewhere*. If no neighbor matches, the ghost survives as-is.
-_GHOST_MAX_DURATION_MS = 15_000  # 15 s — matches pyannote min_cluster_size×~1s avg
-_GHOST_MAX_SEGMENTS = 10
-_GHOST_ABSORB_MIN_SIM = 0.55
-
-
-def _merge_clusters_via_embeddings(
-    chunk_segments_list: list[list[dict]],
-    merge_threshold: float | None = None,
-    expected_speakers: int | None = None,
-) -> list[dict]:
-    """Merge diarization clusters across chunks using embedding similarity.
-
-    Each chunk's diarization run uses its own local cluster IDs. To track
-    speakers across chunks, we compare embeddings: segments from different
-    chunks with cosine similarity >= threshold get the same global ID.
-
-    After cross-chunk merging, runs a consolidation pass that absorbs
-    ghost clusters (very little speech, small segment count) into their
-    nearest neighbor when the embedding match is reasonable. This catches
-    the common over-clustering pattern where pyannote splits one real
-    speaker across multiple noisy sub-clusters in different chunks.
-
-    If ``expected_speakers`` is given AND the consolidated cluster count
-    is still higher, runs an additional forced-absorption pass: the
-    smallest clusters get folded into their nearest neighbor (regardless
-    of the absorb-similarity floor) until the count matches.
-
-    Returns a flat list of segments with stable `cluster_id` across chunks.
-    Segments without embeddings get their own cluster IDs (best effort).
-    """
-    if merge_threshold is None:
-        merge_threshold = _DEFAULT_MERGE_THRESHOLD
-
-    global_centroids: dict[int, np.ndarray] = {}
-    global_counts: dict[int, int] = {}
-    next_global_id = 1
-
-    flat = []
-    for chunk_idx, segs in enumerate(chunk_segments_list):
-        # Within a single chunk, local cluster IDs are already consistent.
-        # Build a chunk-local → global map once per local ID per chunk.
-        local_to_global: dict[int, int] = {}
-        for seg in segs:
-            local_id = seg["local_cluster_id"]
-            if local_id in local_to_global:
-                # Reuse the global ID we already assigned for this local ID
-                # (consistent within the chunk)
-                gid = local_to_global[local_id]
-                if seg.get("embedding") is not None and gid in global_centroids:
-                    # Update centroid with new sample
-                    emb = np.array(seg["embedding"], dtype=np.float32)
-                    count = global_counts[gid]
-                    old = global_centroids[gid]
-                    global_centroids[gid] = (old * count + emb) / (count + 1)
-                    global_counts[gid] = count + 1
-            else:
-                # First time seeing this local ID — decide if it maps to an
-                # existing global cluster or a new one
-                emb_raw = seg.get("embedding")
-                if emb_raw is None:
-                    # No embedding → can't merge, allocate new global ID
-                    gid = next_global_id
-                    next_global_id += 1
-                else:
-                    emb_arr = np.array(emb_raw, dtype=np.float32)
-                    # Find best matching global centroid
-                    best_gid = None
-                    best_score = -1.0
-                    for g, centroid in global_centroids.items():
-                        num = float(np.dot(emb_arr, centroid))
-                        den = float(np.linalg.norm(emb_arr) * np.linalg.norm(centroid))
-                        if den <= 0:
-                            continue
-                        score = num / den
-                        if score > best_score:
-                            best_score = score
-                            best_gid = g
-                    if best_gid is not None and best_score >= merge_threshold:
-                        gid = best_gid
-                        # Update centroid
-                        count = global_counts[gid]
-                        old = global_centroids[gid]
-                        global_centroids[gid] = (old * count + emb_arr) / (count + 1)
-                        global_counts[gid] = count + 1
-                    else:
-                        gid = next_global_id
-                        next_global_id += 1
-                        global_centroids[gid] = emb_arr.copy()
-                        global_counts[gid] = 1
-                local_to_global[local_id] = gid
-                # (note: already assigned above for first-time case)
-
-            flat.append(
-                {
-                    "start_ms": seg["start_ms"],
-                    "end_ms": seg["end_ms"],
-                    "cluster_id": local_to_global[seg["local_cluster_id"]],
-                    "confidence": seg["confidence"],
-                }
-            )
-
-    flat.sort(key=lambda s: s["start_ms"])
-    pre_consolidate_count = len(global_centroids)
-
-    # ── Ghost-cluster consolidation ───────────────────────────
-    # Real-world failure: a 3-speaker meeting comes back with 6 clusters
-    # because pyannote split one speaker across noisy chunks. The post-
-    # merge embedding centroids tell us which small clusters are likely
-    # fragments of which big ones — absorb them.
-    if len(global_centroids) > 1 and len(flat) > 0:
-        # Aggregate per-cluster duration + segment count
-        per_cluster_segments: dict[int, int] = {}
-        per_cluster_duration_ms: dict[int, int] = {}
-        for seg in flat:
-            cid = seg["cluster_id"]
-            per_cluster_segments[cid] = per_cluster_segments.get(cid, 0) + 1
-            per_cluster_duration_ms[cid] = per_cluster_duration_ms.get(cid, 0) + max(
-                0, seg["end_ms"] - seg["start_ms"]
-            )
-
-        ghost_candidates = sorted(
-            (
-                gid for gid, dur in per_cluster_duration_ms.items()
-                if dur < _GHOST_MAX_DURATION_MS
-                and per_cluster_segments.get(gid, 0) <= _GHOST_MAX_SEGMENTS
-                and gid in global_centroids
-            ),
-            key=lambda g: per_cluster_duration_ms.get(g, 0),  # smallest first
-        )
-
-        absorbed: dict[int, int] = {}  # ghost_gid → host_gid
-        for ghost in ghost_candidates:
-            ghost_emb = global_centroids[ghost]
-            ghost_norm = float(np.linalg.norm(ghost_emb))
-            if ghost_norm <= 0:
-                continue
-            best_host = None
-            best_score = -1.0
-            for host_gid, host_emb in global_centroids.items():
-                if host_gid == ghost or host_gid in absorbed:
-                    continue
-                # Don't absorb into another ghost — only into "real" clusters
-                if per_cluster_duration_ms.get(host_gid, 0) < _GHOST_MAX_DURATION_MS:
-                    continue
-                host_norm = float(np.linalg.norm(host_emb))
-                if host_norm <= 0:
-                    continue
-                score = float(np.dot(ghost_emb, host_emb)) / (ghost_norm * host_norm)
-                if score > best_score:
-                    best_score = score
-                    best_host = host_gid
-            if best_host is not None and best_score >= _GHOST_ABSORB_MIN_SIM:
-                absorbed[ghost] = best_host
-                logger.info(
-                    "Diarize consolidation: absorbing ghost cluster %d "
-                    "(%d segs / %.1fs) → cluster %d (cosine=%.2f)",
-                    ghost,
-                    per_cluster_segments.get(ghost, 0),
-                    per_cluster_duration_ms.get(ghost, 0) / 1000.0,
-                    best_host,
-                    best_score,
-                )
-
-        if absorbed:
-            for seg in flat:
-                cid = seg["cluster_id"]
-                if cid in absorbed:
-                    seg["cluster_id"] = absorbed[cid]
-            # Recompute per-cluster duration after ghost absorption so the
-            # forced-count pass below sees the merged sizes.
-            per_cluster_duration_ms = {}
-            per_cluster_segments = {}
-            for seg in flat:
-                cid = seg["cluster_id"]
-                per_cluster_segments[cid] = per_cluster_segments.get(cid, 0) + 1
-                per_cluster_duration_ms[cid] = per_cluster_duration_ms.get(cid, 0) + max(
-                    0, seg["end_ms"] - seg["start_ms"]
-                )
-
-    # ── Forced absorption to expected_speakers (caller hint) ──
-    # When the user says "this meeting had N speakers", trust them: keep
-    # the N largest clusters and fold the rest into their nearest neighbor
-    # by embedding similarity, regardless of the absorb-floor. This is
-    # the "I know better than the model" lever — it's wrong if the user
-    # is wrong, but the user usually isn't.
-    if expected_speakers is not None and expected_speakers > 0 and flat:
-        live_clusters = list({s["cluster_id"] for s in flat})
-        if len(live_clusters) > expected_speakers:
-            sizes = sorted(
-                live_clusters,
-                key=lambda g: per_cluster_duration_ms.get(g, 0),
-                reverse=True,
-            )
-            keep = set(sizes[:expected_speakers])
-            drop = sizes[expected_speakers:]
-            forced: dict[int, int] = {}
-            for ghost in drop:
-                if ghost not in global_centroids:
-                    # Without an embedding, just attach to the largest cluster
-                    forced[ghost] = sizes[0]
-                    continue
-                ghost_emb = global_centroids[ghost]
-                ghost_norm = float(np.linalg.norm(ghost_emb))
-                best_host = sizes[0]
-                best_score = -1.0
-                for host_gid in keep:
-                    host_emb_opt = global_centroids.get(host_gid)
-                    if host_emb_opt is None:
-                        continue
-                    host_emb = host_emb_opt
-                    host_norm = float(np.linalg.norm(host_emb))
-                    if host_norm <= 0 or ghost_norm <= 0:
-                        continue
-                    score = float(np.dot(ghost_emb, host_emb)) / (ghost_norm * host_norm)
-                    if score > best_score:
-                        best_score = score
-                        best_host = host_gid
-                forced[ghost] = best_host
-                logger.info(
-                    "Diarize forced-absorb to expected_speakers=%d: "
-                    "cluster %d (%d segs / %.1fs) → cluster %d (cosine=%.2f)",
-                    expected_speakers,
-                    ghost,
-                    per_cluster_segments.get(ghost, 0),
-                    per_cluster_duration_ms.get(ghost, 0) / 1000.0,
-                    best_host,
-                    best_score,
-                )
-            for seg in flat:
-                if seg["cluster_id"] in forced:
-                    seg["cluster_id"] = forced[seg["cluster_id"]]
-
-    final_count = len({s["cluster_id"] for s in flat}) if flat else 0
-    logger.info(
-        "Merged %d chunks into %d global speakers (merge threshold=%.2f, "
-        "consolidated %d → %d)",
-        len(chunk_segments_list),
-        final_count,
-        merge_threshold,
-        pre_consolidate_count,
-        final_count,
-    )
-    return flat
-
-
-def _audio_quality_report(pcm_data: bytes) -> dict:
-    """Detect if a recording has been corrupted by the zero-gap writer bug.
-
-    Returns {zero_fill_pct, longest_zero_run_ms, usable}. Zero-fill >40%
-    means diarization is fundamentally broken for this meeting.
-    """
-    if len(pcm_data) < 4:
-        return {"zero_fill_pct": 0, "longest_zero_run_ms": 0, "usable": True}
-    samples = np.frombuffer(pcm_data, dtype=np.int16)
-    zero_mask = samples == 0
-    total_zero = int(zero_mask.sum())
-    pct = total_zero / len(samples) * 100
-
-    # Find longest contiguous zero run
-    longest = 0
-    current = 0
-    for z in zero_mask:
-        if z:
-            current += 1
-            if current > longest:
-                longest = current
-        else:
-            current = 0
-    longest_ms = int(longest / SAMPLE_RATE * 1000)
-
-    return {
-        "zero_fill_pct": round(pct, 1),
-        "longest_zero_run_ms": longest_ms,
-        "usable": pct < 40,
-    }
-
-
-async def _diarize_full_audio(
-    pcm_data: bytes,
-    diarize_url: str,
-    max_speakers: int = 10,
-    min_speakers: int = 2,
-    expected_speakers: int | None = None,
-) -> list[dict]:
-    """Run diarization on the ENTIRE meeting audio.
-
-    Strategy:
-      - ≤10 minutes: single call (fastest, best clustering).
-      - >10 minutes: split into 8-minute chunks with 45s overlap and
-        merge cluster IDs across chunks via embedding similarity.
-        Scales to any meeting length (tested mental model: 90 min = 12 chunks).
-
-    Returns a list of {start_ms, end_ms, cluster_id, confidence} with
-    stable cluster_ids across the whole meeting, sorted by start_ms.
-    """
-    total_samples = len(pcm_data) // BYTES_PER_SAMPLE
-    total_ms = int(total_samples / SAMPLE_RATE * 1000)
-
-    # Small meetings → single call. Pyannote already clustered the whole
-    # file together, so we trust its cluster IDs directly — no cross-call
-    # merging needed. Re-merging with cosine similarity can collapse
-    # distinct speakers back into one when their embeddings are noisy.
-    if total_ms <= 10 * 60 * 1000:
-        try:
-            segs = await _diarize_single_call(
-                pcm_data,
-                diarize_url,
-                max_speakers,
-                timeout=600.0,
-                min_speakers=min_speakers,
-            )
-            return [
-                {
-                    "start_ms": s["start_ms"],
-                    "end_ms": s["end_ms"],
-                    "cluster_id": s["local_cluster_id"],
-                    "confidence": s["confidence"],
-                }
-                for s in segs
-            ]
-        except Exception as e:
-            logger.warning("Single-call diarization failed: %s", e)
-            return []
-
-    # Long meetings → chunked with overlap.
-    #
-    # Why 4 minutes (was 8): real-world failure mode is the diarize worker
-    # dying mid-inference on big chunks under tight system memory. A
-    # 109MB / 60-min meeting was producing 9 × 480s chunks, each ~30MB of
-    # int16 PCM that pyannote expanded to float32 + intermediate tensors,
-    # and the worker disconnected partway through. Halving the chunk drops
-    # working set ~2x at the cost of ~2x cluster-merge stitching, which is
-    # cheap compared to losing a chunk entirely.
-    #
-    # Override via MEETING_SCRIBE_DIARIZE_CHUNK_SECONDS if a deployment has
-    # the headroom and wants the original behavior back.
-    import os as _os
-    try:
-        CHUNK_SECONDS = int(_os.environ.get("MEETING_SCRIBE_DIARIZE_CHUNK_SECONDS", "240"))
-    except ValueError:
-        CHUNK_SECONDS = 240
-    OVERLAP_SECONDS = 30  # overlap window for cluster stitching
-    chunk_bytes = CHUNK_SECONDS * SAMPLE_RATE * BYTES_PER_SAMPLE
-    stride_bytes = (CHUNK_SECONDS - OVERLAP_SECONDS) * SAMPLE_RATE * BYTES_PER_SAMPLE
-
-    tasks = []
-    for offset in range(0, len(pcm_data), stride_bytes):
-        chunk = pcm_data[offset : offset + chunk_bytes]
-        if len(chunk) < SAMPLE_RATE * BYTES_PER_SAMPLE * 5:
-            # <5s — not enough to diarize, skip
-            continue
-        offset_ms = int(offset / BYTES_PER_SAMPLE / SAMPLE_RATE * 1000)
-        tasks.append((offset, offset_ms, chunk))
-
-    logger.info(
-        "Chunked diarization: %.0fmin audio → %d chunks of %ds (%ds overlap)",
-        total_ms / 60000,
-        len(tasks),
-        CHUNK_SECONDS,
-        OVERLAP_SECONDS,
-    )
-
-    # Process chunks SERIALLY with automatic container recovery.
-    #
-    # Pyannote sortformer has a latent CUDA bug: after ~6-8 consecutive
-    # calls its context enters an unrecoverable 'unknown error' state
-    # and every subsequent call returns 500 in ~20 ms. On f38d5807
-    # (88 min audio = 13 chunks) this used to truncate the transcript
-    # at the 44-min mark and leave half the meeting un-diarized.
-    #
-    # Recovery strategy:
-    #
-    #   1. SERIAL calls only (parallel calls wedge CUDA even faster).
-    #   2. On N consecutive failures, assume the container is wedged
-    #      and restart it in-place via ``compose restart
-    #      pyannote-diarize``. A single container restart takes ~5-8 s
-    #      once fastsafetensors is enabled — far cheaper than losing
-    #      44 minutes of transcript to a circuit breaker.
-    #   3. Wait for the health endpoint to return 200 with
-    #      ``diarization_model: true``, then retry the failed chunk.
-    #   4. Cap the restart attempts per reprocess at
-    #      MAX_CONTAINER_RESTARTS so a hard-broken container (not
-    #      just wedged) doesn't loop forever.
-    MAX_CONSECUTIVE_FAILURES = 2
-    MAX_CONTAINER_RESTARTS = 3
-    all_chunk_segs: list[list[dict]] = []
-    consecutive_failures = 0
-    container_restarts = 0
-
-    async def _wait_for_diarize_health(timeout_s: float = 30.0) -> bool:
-        """Poll the pyannote container health endpoint until ready.
-
-        Returns True when the container reports it has both the
-        diarization and embedding models loaded.
-        """
-        import time as _t
-        deadline = _t.monotonic() + timeout_s
-        async with httpx.AsyncClient(timeout=3.0) as c:
-            while _t.monotonic() < deadline:
-                try:
-                    r = await c.get(f"{diarize_url}/health")
-                    if r.status_code == 200:
-                        j = r.json()
-                        if j.get("diarization_model") and j.get("embedding_model"):
-                            return True
-                except Exception:
-                    pass
-                await asyncio.sleep(1.0)
-        return False
-
-    async def _restart_diarize_container() -> bool:
-        """Restart the pyannote container via docker compose and wait
-        for its health endpoint to come back. Returns True on success."""
-        nonlocal container_restarts
-        if container_restarts >= MAX_CONTAINER_RESTARTS:
-            logger.error(
-                "Diarize container restart budget exhausted (%d) — "
-                "giving up on remaining chunks", container_restarts,
-            )
-            return False
-        container_restarts += 1
-        logger.warning(
-            "Restarting pyannote-diarize container (attempt %d/%d)...",
-            container_restarts, MAX_CONTAINER_RESTARTS,
-        )
-        try:
-            from meeting_scribe.infra.compose import compose_restart
-            await asyncio.to_thread(compose_restart, "pyannote-diarize", 30)
-        except Exception as e:
-            logger.error("compose restart pyannote-diarize failed: %s", e)
-            return False
-        if await _wait_for_diarize_health(timeout_s=30.0):
-            logger.info("pyannote-diarize recovered")
-            return True
-        logger.error("pyannote-diarize did not come back healthy after restart")
-        return False
-
-    async def _diarize_with_retry(chunk: bytes, offset_ms: int) -> list[dict] | None:
-        """Try a single diarize call; on consecutive failure, restart
-        the container and try again. Returns None if permanently broken."""
-        nonlocal consecutive_failures
-        try:
-            segs = await _diarize_single_call(
-                chunk, diarize_url, max_speakers,
-                timeout=240.0, time_offset_ms=offset_ms, min_speakers=min_speakers,
-            )
-            consecutive_failures = 0
-            return segs
-        except Exception as e:
-            consecutive_failures += 1
-            logger.warning("diarize call failed (%d consecutive): %s",
-                           consecutive_failures, e)
-            if consecutive_failures < MAX_CONSECUTIVE_FAILURES:
-                return None  # transient — let caller decide
-            # Circuit-breaker tripped. Restart the container and retry.
-            if not await _restart_diarize_container():
-                return None
-            consecutive_failures = 0
-            try:
-                segs = await _diarize_single_call(
-                    chunk, diarize_url, max_speakers,
-                    timeout=240.0, time_offset_ms=offset_ms, min_speakers=min_speakers,
-                )
-                return segs
-            except Exception as e2:
-                logger.error("diarize failed again after restart: %s", e2)
-                return None
-
-    for i, (_offset, offset_ms, chunk) in enumerate(tasks):
-        segs_maybe: list[dict] | None = await _diarize_with_retry(chunk, offset_ms)
-        if segs_maybe is None:
-            logger.warning(
-                "Skipping diarize chunk %d/%d — unable to recover",
-                i + 1, len(tasks),
-            )
-            continue
-        segs = segs_maybe
-        logger.info(
-            "Diarize chunk %d/%d: %d segments at offset %ds",
-            i + 1, len(tasks), len(segs), offset_ms // 1000,
-        )
-        all_chunk_segs.append(segs)
-
-    if not all_chunk_segs:
-        return []
-
-    # Merge via embedding similarity for cross-chunk cluster stability
-    return _merge_clusters_via_embeddings(
-        all_chunk_segs, expected_speakers=expected_speakers
-    )
-
-
-def _attach_speakers_to_events(
-    events: list[dict],
-    diarize_segments: list[dict],
-) -> None:
-    """Attach diarization clusters to ASR events, preserving overlap.
-
-    pyannote emits one diarization segment per (speaker, turn) — so an
-    ASR final that spans ~4 s of cross-talk gets multiple overlapping
-    diarize segments with different cluster_ids. Previously we took the
-    single best-overlapping one and dropped the rest, losing all signal
-    that two (or more) speakers were active. Now we keep every speaker
-    whose overlap is meaningful, ordered primary-first so downstream
-    code that reads `speakers[0]` still gets the dominant voice.
-
-    Inclusion rules (keep both thresholds narrow enough that a 200 ms
-    "mhm" interjection doesn't get tagged as co-speech):
-      * secondary speaker's overlap ≥ 30 % of the event's duration
-      * secondary speaker's overlap ≥ 50 % of the primary's overlap
-    """
-    if not diarize_segments:
-        # No diarization — leave events with empty speakers (fallback to
-        # time-proximity clustering done elsewhere)
-        return
-
-    _MIN_SECONDARY_FRAC_OF_EVENT = 0.30
-    _MIN_SECONDARY_FRAC_OF_PRIMARY = 0.50
-
-    # First pass: standard max-overlap primary + secondary assignment.
-    for event in events:
-        s, e = event.get("start_ms", 0), event.get("end_ms", 0)
-        ev_dur = max(1, e - s)
-        # Collect per-cluster overlap (pyannote may return multiple
-        # diarize segments for the same cluster across the event).
-        overlap_by_cluster: dict[int, float] = {}
-        conf_by_cluster: dict[int, float] = {}
-        for seg in diarize_segments:
-            overlap = max(0, min(e, seg["end_ms"]) - max(s, seg["start_ms"]))
-            if overlap <= 0:
-                continue
-            cid = seg["cluster_id"]
-            overlap_by_cluster[cid] = overlap_by_cluster.get(cid, 0) + overlap
-            # Keep the best confidence if multiple sub-segments exist.
-            conf_by_cluster[cid] = max(conf_by_cluster.get(cid, 0.0), seg.get("confidence", 1.0))
-        if not overlap_by_cluster:
-            continue
-
-        ranked = sorted(overlap_by_cluster.items(), key=lambda kv: -kv[1])
-        primary_cid, primary_overlap = ranked[0]
-        speakers_list = [
-            {
-                "cluster_id": primary_cid,
-                "identity": None,
-                "identity_confidence": conf_by_cluster[primary_cid],
-                "source": "diarization",
-                "display_name": None,
-            }
-        ]
-        for cid, ov in ranked[1:]:
-            if ov / ev_dur < _MIN_SECONDARY_FRAC_OF_EVENT:
-                continue
-            if ov / primary_overlap < _MIN_SECONDARY_FRAC_OF_PRIMARY:
-                continue
-            speakers_list.append(
-                {
-                    "cluster_id": cid,
-                    "identity": None,
-                    "identity_confidence": conf_by_cluster[cid],
-                    "source": "diarization_overlap",
-                    "display_name": None,
-                }
-            )
-        event["speakers"] = speakers_list
-        if len(speakers_list) > 1:
-            event["overlapping_speakers"] = True
-
-    # Second pass: minority-speaker recovery. Some speakers (especially
-    # the ones who only said "yes" or "mmm-hmm") have diarize segments
-    # that never WIN the primary overlap on any ASR event — so they'd
-    # disappear from detected_speakers even though pyannote correctly
-    # identified them as distinct voices. Catch this by cross-referencing
-    # the set of clusters pyannote actually found vs the set of clusters
-    # that ended up as primary on at least one event. Any cluster that
-    # got attributed to NO events gets rescued here: find the event
-    # with the highest total overlap on that cluster and promote the
-    # cluster to primary on THAT event (the previous primary becomes a
-    # secondary). Preserves "minority voice has ≥1 primary row" without
-    # fighting pyannote or lowering the overlap thresholds globally.
-    diarize_clusters = {seg["cluster_id"] for seg in diarize_segments}
-    primary_clusters_seen: set[int] = set()
-    for ev in events:
-        sp = (ev.get("speakers") or [])
-        if sp:
-            primary_clusters_seen.add(sp[0].get("cluster_id"))
-    missing = diarize_clusters - primary_clusters_seen
-
-    for miss_cid in missing:
-        # Find the event with the most total overlap on this cluster.
-        best_ev = None
-        best_ov = 0
-        for ev in events:
-            s, e = ev.get("start_ms", 0), ev.get("end_ms", 0)
-            ov = 0
-            for seg in diarize_segments:
-                if seg["cluster_id"] != miss_cid:
-                    continue
-                ov += max(0, min(e, seg["end_ms"]) - max(s, seg["start_ms"]))
-            if ov > best_ov:
-                best_ov = ov
-                best_ev = ev
-        if best_ev is None or best_ov <= 0:
-            # Cluster found by diarize but lives in an ASR gap. This
-            # happens when finalize re-diarizes a meeting whose ASR
-            # chunks were shaped by a PREVIOUS (different) diarize
-            # pass — the new cluster's time ranges don't coincide
-            # with any ASR event. Only fixable by running full
-            # /reprocess which re-shapes ASR chunks to match.
-            cluster_ranges = [
-                (seg["start_ms"], seg["end_ms"])
-                for seg in diarize_segments
-                if seg["cluster_id"] == miss_cid
-            ]
-            total_s = sum(e - s for s, e in cluster_ranges) / 1000 if cluster_ranges else 0
-            logger.warning(
-                "diarization_minority_rescue: cluster %s was found by "
-                "diarize (%d segments, %.1fs total) but has ZERO overlap "
-                "with any ASR event — this speaker will be invisible "
-                "unless you run /reprocess to re-chunk ASR.",
-                miss_cid, len(cluster_ranges), total_s,
-            )
-            continue
-        # Promote miss_cid to primary on best_ev. Existing primary (if
-        # any) moves to secondary position.
-        existing = best_ev.get("speakers") or []
-        existing_primary = existing[0] if existing else None
-        new_sp = [
-            {
-                "cluster_id": miss_cid,
-                "identity": None,
-                "identity_confidence": 1.0,
-                "source": "diarization_minority_rescue",
-                "display_name": None,
-            }
-        ]
-        if existing_primary is not None:
-            existing_primary = dict(existing_primary)
-            existing_primary["source"] = "diarization_demoted"
-            new_sp.append(existing_primary)
-        # Preserve other secondaries from the original assignment.
-        for sp_entry in existing[1:]:
-            if sp_entry.get("cluster_id") not in (miss_cid,):
-                new_sp.append(sp_entry)
-        best_ev["speakers"] = new_sp
-        if len(new_sp) > 1:
-            best_ev["overlapping_speakers"] = True
-        logger.info(
-            "diarization_minority_rescue: cluster %s had no primary — "
-            "promoted on event at %d-%dms (overlap=%dms)",
-            miss_cid, best_ev.get("start_ms", 0), best_ev.get("end_ms", 0), best_ov,
-        )
-
-
 async def reprocess_meeting(
     meeting_dir: Path,
+    storage: MeetingStorage,
     asr_url: str = "http://localhost:8003",
     translate_url: str = "http://localhost:8010",
     diarize_url: str = "http://localhost:8001",
@@ -913,13 +242,20 @@ async def reprocess_meeting(
     """Fully reprocess a meeting from its raw audio recording.
 
     Parallelized pipeline:
-    1. Back up journal, set state to "reprocessing"
+    1. transition_state(COMPLETE -> REPROCESSING), backup journal
     2. ASR: 4 concurrent workers process audio chunks
     3. Diarization: single call on the full audio (perfect cluster stability)
     4. Translation: 4 concurrent workers translate segments
     5. Attach speakers to events via time-range overlap
     6. Generate timeline, speaker data, summary
-    7. Set state to "complete"
+    7. transition_state(REPROCESSING -> COMPLETE)
+
+    The state flips go through ``MeetingStorage.transition_state`` so
+    the state-machine invariants (allowed source states, journal
+    handling, logging) stay uniform with the live recording path.
+    ``storage`` is a required parameter — both the server request
+    handler and the ``meeting-scribe reprocess`` CLI instantiate or
+    re-use a ``MeetingStorage`` rooted at the same ``meetings_dir``.
     """
     pcm_path = meeting_dir / "audio" / "recording.pcm"
     if not pcm_path.exists():
@@ -948,16 +284,30 @@ async def reprocess_meeting(
         tail = (" " + extra) if extra else ""
         logger.info(
             "reprocess_phase meeting=%s phase=%s wall_ms=%d%s",
-            meeting_dir.name, name, wall_ms, tail,
+            meeting_dir.name,
+            name,
+            wall_ms,
+            tail,
         )
 
     total_start = time.monotonic()
 
-    # 0. Set state + backup
+    # 0. Set state + backup. State flip goes through transition_state()
+    # so the source-state guard (only COMPLETE -> REPROCESSING is legal)
+    # fires if we get called on a still-recording meeting.
+    #
+    # Also write a PID+epoch lock file at ``meeting_dir/.reprocess.lock``
+    # BEFORE the state flip. This is the anti-race contract with
+    # ``MeetingStorage.recover_interrupted``: the recovery branch that
+    # flips REPROCESSING -> COMPLETE only fires when this lock is
+    # missing or stale. Without it, a live scribe restart in the
+    # middle of a CLI reprocess would see REPROCESSING and "recover"
+    # it to COMPLETE — then step 7's COMPLETE -> COMPLETE transition
+    # crashes the whole reprocess. 2026-04-21 mass-reprocess incident.
+    lock_path = meeting_dir / ".reprocess.lock"
+    lock_path.write_text(json.dumps({"pid": os.getpid(), "started_epoch": int(time.time())}))
     if meta_path.exists():
-        meta = json.loads(meta_path.read_text())
-        meta["state"] = "reprocessing"
-        meta_path.write_text(json.dumps(meta, indent=2))
+        storage.transition_state(meeting_dir.name, MeetingState.REPROCESSING)
 
     if journal_path.exists():
         shutil.copy2(journal_path, meeting_dir / "journal.jsonl.bak")
@@ -986,9 +336,24 @@ async def reprocess_meeting(
         # Snapshot failure must never block reprocess — log and continue.
         logger.exception("Pre-reprocess snapshot failed; continuing anyway")
 
-    # 1. Load audio
+    # 1. Load audio. Trim any trailing partial sample — a recording
+    # terminated mid-write (disk full, crash, SIGKILL) can leave an
+    # odd byte count that np.frombuffer(dtype=int16) rejects with
+    # "buffer size must be a multiple of element size". Dropping the
+    # last byte loses 31 µs of audio and unblocks the whole pipeline.
     phase_start("load_audio")
     pcm_data = pcm_path.read_bytes()
+    trailing_bytes = len(pcm_data) % BYTES_PER_SAMPLE
+    if trailing_bytes:
+        logger.warning(
+            "recording.pcm for %s has %d trailing byte(s) (size=%d, "
+            "not a multiple of %d) — truncating to the last whole sample",
+            meeting_dir.name,
+            trailing_bytes,
+            len(pcm_data),
+            BYTES_PER_SAMPLE,
+        )
+        pcm_data = pcm_data[:-trailing_bytes]
     total_samples = len(pcm_data) // BYTES_PER_SAMPLE
     duration_ms = int(total_samples / SAMPLE_RATE * 1000)
     phase_end("load_audio", f"audio_ms={duration_ms}")
@@ -1013,15 +378,37 @@ async def reprocess_meeting(
         else:
             diar_min = 2
             diar_max = 10
-        diarize_segments = await _diarize_full_audio(
-            pcm_data, diarize_url,
-            max_speakers=diar_max, min_speakers=diar_min,
+        diarize_result = await _diarize_full_audio(
+            pcm_data,
+            diarize_url,
+            max_speakers=diar_max,
+            min_speakers=diar_min,
             expected_speakers=expected_speakers,
         )
-        logger.info("Full-audio diarization: %d segments", len(diarize_segments))
+        # reprocess uses the standard segmentation to *shape* ASR chunks
+        # (each chunk inherits its overlapping diarize segment's
+        # cluster_id), so we keep ``diarize_segments`` aliased to the
+        # standard array for the rest of this function.  The exclusive
+        # array is preserved for downstream tooling that wants the
+        # single-speaker timeline (timeline.json + UI).
+        diarize_segments = diarize_result.segments
+        diarize_exclusive = diarize_result.exclusive_segments
+        logger.info(
+            "Full-audio diarization: %d standard / %d exclusive segments",
+            len(diarize_segments),
+            len(diarize_exclusive),
+        )
+        # Persist frame-level exclusive timeline as a sidecar artifact.
+        # Additive — UI ignores unknown files.  See
+        # plans/2026-Q3-followups.md Phase C2.
+        if diarize_exclusive:
+            from meeting_scribe.routes.meeting_lifecycle import _persist_exclusive_segments
+
+            _persist_exclusive_segments(meeting_dir, diarize_exclusive)
     except Exception as e:
         logger.warning("Diarization failed: %s", e)
         diarize_segments = []
+        diarize_exclusive = []
     phase_end("diarize", f"segments={len(diarize_segments)}")
 
     # If diarize failed, fall back to fixed-window chunking so we still
@@ -1104,7 +491,9 @@ async def reprocess_meeting(
         gap_chunks = sum(1 for c in asr_chunks if c[3] is None)
         logger.info(
             "Built %d ASR chunks (%d diarize-aligned, %d gap-fill with cluster_id=None)",
-            len(asr_chunks), len(asr_chunks) - gap_chunks, gap_chunks,
+            len(asr_chunks),
+            len(asr_chunks) - gap_chunks,
+            gap_chunks,
         )
 
     progress(3, 7, f"ASR: {len(asr_chunks)} diarize-aligned chunks ({CONCURRENCY} workers)")
@@ -1125,7 +514,12 @@ async def reprocess_meeting(
             pcm, start_ms, end_ms, cluster_id = chunk_data
             async with semaphore:
                 result = await _transcribe_chunk(
-                    client, asr_url, asr_model, pcm, start_ms, end_ms,
+                    client,
+                    asr_url,
+                    asr_model,
+                    pcm,
+                    start_ms,
+                    end_ms,
                     language_pair=language_pair,
                 )
                 completed += 1
@@ -1186,9 +580,7 @@ async def reprocess_meeting(
             async def translate_one(event):
                 nonlocal completed
                 async with semaphore:
-                    await _translate_event(
-                        client, translate_url, trans_model, event, language_pair
-                    )
+                    await _translate_event(client, translate_url, trans_model, event, language_pair)
                     completed += 1
                     if completed % 20 == 0:
                         progress(3, 7, f"Translated {completed}/{len(events)}")
@@ -1251,14 +643,13 @@ async def reprocess_meeting(
             name = corr.get("speaker_name") or ""
             if not name:
                 continue
-            old_named_ranges.append(
-                (old_seg.get("start_ms", 0), old_seg.get("end_ms", 0), name)
-            )
+            old_named_ranges.append((old_seg.get("start_ms", 0), old_seg.get("end_ms", 0), name))
 
         # Step 1 — find best-name per new event.
         from collections import Counter
+
         event_best_name: dict[str, str] = {}  # segment_id → name
-        event_cluster: dict[str, int] = {}    # segment_id → cluster_id
+        event_cluster: dict[str, int] = {}  # segment_id → cluster_id
         for new_e in events:
             new_start = new_e.get("start_ms", 0)
             new_end = new_e.get("end_ms", new_start)
@@ -1306,9 +697,7 @@ async def reprocess_meeting(
                 continue
             cluster_votes.setdefault(cid, Counter())[name] += 1
         dominant_by_cluster: dict[int, str] = {
-            cid: votes.most_common(1)[0][0]
-            for cid, votes in cluster_votes.items()
-            if votes
+            cid: votes.most_common(1)[0][0] for cid, votes in cluster_votes.items() if votes
         }
 
         # Step 3 — pin cluster display_name. Target the first event
@@ -1341,13 +730,15 @@ async def reprocess_meeting(
             sid = cluster_anchor.get(cid)
             if not sid:
                 continue
-            preserved_corrections.append({
-                "type": "speaker_correction",
-                "segment_id": sid,
-                "speaker_name": name,
-                "preserved_from_reprocess": True,
-                "scope": "cluster",
-            })
+            preserved_corrections.append(
+                {
+                    "type": "speaker_correction",
+                    "segment_id": sid,
+                    "speaker_name": name,
+                    "preserved_from_reprocess": True,
+                    "scope": "cluster",
+                }
+            )
 
         # Step 4 — per-event override for events whose best-name differs
         # from the cluster's dominant. Applies to events where the user
@@ -1366,13 +757,15 @@ async def reprocess_meeting(
             # chosen to match dominant, but be safe).
             if cluster_anchor.get(cid) == sid:
                 continue
-            preserved_corrections.append({
-                "type": "speaker_correction",
-                "segment_id": sid,
-                "speaker_name": name,
-                "preserved_from_reprocess": True,
-                "scope": "event",
-            })
+            preserved_corrections.append(
+                {
+                    "type": "speaker_correction",
+                    "segment_id": sid,
+                    "speaker_name": name,
+                    "preserved_from_reprocess": True,
+                    "scope": "event",
+                }
+            )
             per_event_count += 1
 
         unique_names = {c["speaker_name"] for c in preserved_corrections}
@@ -1393,7 +786,9 @@ async def reprocess_meeting(
         for corr in preserved_corrections:
             f.write(json.dumps(corr, ensure_ascii=False) + "\n")
 
-    phase_end("preserve_corrections", f"events={len(events)} corrections={len(preserved_corrections)}")
+    phase_end(
+        "preserve_corrections", f"events={len(events)} corrections={len(preserved_corrections)}"
+    )
 
     # 5. Generate timeline + speaker data via the SAME path server.py's
     # live finalize uses. This preserves seq_index assignment, orphan
@@ -1406,10 +801,13 @@ async def reprocess_meeting(
     phase_start("speaker_data")
     import importlib
     import json as _json
+
     srv = importlib.import_module("meeting_scribe.server")
     try:
         srv._generate_speaker_data(
-            meeting_dir, journal_path, _json,
+            meeting_dir,
+            journal_path,
+            _json,
             expected_speakers=expected_speakers,
         )
         srv._generate_timeline(meeting_dir.name, meeting_dir=meeting_dir)
@@ -1439,18 +837,23 @@ async def reprocess_meeting(
         summary = {"error": str(e)}
     phase_end("summary", f"ok={'error' not in summary}")
 
-    # 7. Finalize state
+    # 7. Finalize state + drop the lock. The lock goes away AFTER the
+    # state transitions back to COMPLETE so no observer can see
+    # "COMPLETE with a stale lock" in between.
     if meta_path.exists():
-        meta = json.loads(meta_path.read_text())
-        meta["state"] = "complete"
-        meta_path.write_text(json.dumps(meta, indent=2))
+        storage.transition_state(meeting_dir.name, MeetingState.COMPLETE)
+    lock_path.unlink(missing_ok=True)
 
     progress(7, 7, "Complete")
 
     total_wall_ms = int((time.monotonic() - total_start) * 1000)
     logger.info(
         "reprocess_phase meeting=%s phase=TOTAL wall_ms=%d audio_ms=%d events=%d speakers=%d",
-        meeting_dir.name, total_wall_ms, duration_ms, len(events), len(speaker_stats),
+        meeting_dir.name,
+        total_wall_ms,
+        duration_ms,
+        len(events),
+        len(speaker_stats),
     )
 
     return {

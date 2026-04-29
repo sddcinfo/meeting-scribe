@@ -177,7 +177,7 @@ class TestLoadCorpus:
         corpus = tmp_path / "c.jsonl"
         corpus.write_text(
             '{"source_lang": "fr", "target_lang": "de", "source_text": "Bonjour"}\n'
-            '# comment line\n'
+            "# comment line\n"
             '{"source_lang": "de", "target_lang": "fr", "source_text": "Hallo"}\n'
         )
         records = _load_corpus(str(corpus), direction="ja_to_en")

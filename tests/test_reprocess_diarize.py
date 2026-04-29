@@ -8,7 +8,18 @@ from __future__ import annotations
 
 import numpy as np
 
-from meeting_scribe.reprocess import _merge_clusters_via_embeddings
+from meeting_scribe.pipeline.diarize import _merge_clusters_via_embeddings as _merge_raw
+
+
+def _merge(*args, **kwargs):
+    """Test helper: unwrap the (standard, exclusive) tuple to keep
+    the existing assertions readable.  These tests only exercise the
+    standard-segment side of cross-chunk cluster merging."""
+    standard, _exclusive = _merge_raw(*args, **kwargs)
+    return standard
+
+
+_merge_clusters_via_embeddings = _merge
 
 
 def _emb(seed: int, dim: int = 192) -> list[float]:
@@ -288,13 +299,10 @@ class TestGhostClusterConsolidation:
         ]
         # Pin merge_threshold high so the ghost stays separate initially,
         # forcing the consolidation pass to do the work.
-        merged = _merge_clusters_via_embeddings(
-            [chunk1, chunk2], merge_threshold=0.95
-        )
+        merged = _merge_clusters_via_embeddings([chunk1, chunk2], merge_threshold=0.95)
         unique = {s["cluster_id"] for s in merged}
         assert len(unique) == 1, (
-            f"tiny ghost should be absorbed into similar big cluster, "
-            f"got clusters={unique}"
+            f"tiny ghost should be absorbed into similar big cluster, got clusters={unique}"
         )
 
     def test_dissimilar_ghost_survives_consolidation(self) -> None:
@@ -302,16 +310,11 @@ class TestGhostClusterConsolidation:
         # (The ghost is a real different person who only spoke briefly.)
         speaker_a = _emb(seed=20)
         speaker_b = _emb(seed=21)  # totally distinct embedding
-        chunk1 = [
-            self._segment(i * 1000, i * 1000 + 1000, 0, speaker_a)
-            for i in range(60)
-        ]
+        chunk1 = [self._segment(i * 1000, i * 1000 + 1000, 0, speaker_a) for i in range(60)]
         chunk2 = [
             self._segment(70_000, 73_000, 0, speaker_b),  # 3s ghost, distant
         ]
-        merged = _merge_clusters_via_embeddings(
-            [chunk1, chunk2], merge_threshold=0.95
-        )
+        merged = _merge_clusters_via_embeddings([chunk1, chunk2], merge_threshold=0.95)
         unique = {s["cluster_id"] for s in merged}
         assert len(unique) == 2, (
             "distant ghost should NOT be absorbed (it could be a real "
@@ -337,9 +340,7 @@ class TestGhostClusterConsolidation:
                     for j in range(count)
                 ]
             )
-        merged = _merge_clusters_via_embeddings(
-            chunks, merge_threshold=0.95, expected_speakers=2
-        )
+        merged = _merge_clusters_via_embeddings(chunks, merge_threshold=0.95, expected_speakers=2)
         unique = {s["cluster_id"] for s in merged}
         assert len(unique) == 2, (
             f"expected_speakers=2 must produce exactly 2 clusters; got {unique!r}"
@@ -350,7 +351,9 @@ class TestGhostClusterConsolidation:
         a = _emb(seed=40)
         b = _emb(seed=41)
         chunk1 = [self._segment(i * 1000, i * 1000 + 1000, 0, a) for i in range(50)]
-        chunk2 = [self._segment(60_000 + i * 1000, 60_000 + i * 1000 + 1000, 0, b) for i in range(50)]
+        chunk2 = [
+            self._segment(60_000 + i * 1000, 60_000 + i * 1000 + 1000, 0, b) for i in range(50)
+        ]
         merged = _merge_clusters_via_embeddings(
             [chunk1, chunk2], merge_threshold=0.95, expected_speakers=2
         )

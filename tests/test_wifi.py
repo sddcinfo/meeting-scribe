@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from meeting_scribe import wifi
+from meeting_scribe.server_support import settings_store as _settings_store
 
 
 def _mk_completed(
@@ -39,8 +40,8 @@ def _mk_completed(
 @pytest.fixture(autouse=True)
 def _reset_settings_cache() -> None:
     """Clear the module-level settings cache between tests."""
-    wifi._settings_cache = None
-    wifi._settings_cache_mtime = 0.0
+    _settings_store._settings_cache = None
+    _settings_store._settings_cache_mtime = 0.0
 
 
 @pytest.fixture
@@ -55,6 +56,7 @@ def state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def settings_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect SETTINGS_OVERRIDE_FILE to a per-test tmp path."""
     path = tmp_path / "settings.json"
+    monkeypatch.setattr(_settings_store, "SETTINGS_OVERRIDE_FILE", path)
     monkeypatch.setattr(wifi, "SETTINGS_OVERRIDE_FILE", path)
     return path
 
@@ -102,10 +104,7 @@ class TestReadLiveAPCredentials:
     @patch("meeting_scribe.wifi.subprocess.run")
     def test_happy_path(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(
-            stdout=(
-                "802-11-wireless.ssid:Dell Demo 7EC2\n"
-                "802-11-wireless-security.psk:4EEF0ACA\n"
-            ),
+            stdout=("802-11-wireless.ssid:Dell Demo 7EC2\n802-11-wireless-security.psk:4EEF0ACA\n"),
         )
         assert wifi._nmcli_read_live_ap_credentials() == ("Dell Demo 7EC2", "4EEF0ACA")
 
@@ -312,7 +311,8 @@ class TestCaptivePortalCleanup:
 
 class TestConfigurableRegdomain:
     def test_default_when_no_override_file(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         assert wifi._effective_regdomain() == "JP"
 
@@ -325,27 +325,25 @@ class TestConfigurableRegdomain:
         assert wifi._effective_regdomain() == "DE"
 
     def test_malformed_override_falls_back_to_default(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         settings_file.write_text("not json at all")
         assert wifi._effective_regdomain() == "JP"
 
     def test_non_string_override_falls_back(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         settings_file.write_text('{"wifi_regdomain": 42}\n')
         assert wifi._effective_regdomain() == "JP"
 
     def test_regdomain_modprobe_path_format(self) -> None:
-        assert wifi._regdomain_modprobe_path("JP") == Path(
-            "/etc/modprobe.d/cfg80211-jp.conf"
-        )
-        assert wifi._regdomain_modprobe_path("us") == Path(
-            "/etc/modprobe.d/cfg80211-us.conf"
-        )
+        assert wifi._regdomain_modprobe_path("JP") == Path("/etc/modprobe.d/cfg80211-jp.conf")
+        assert wifi._regdomain_modprobe_path("us") == Path("/etc/modprobe.d/cfg80211-us.conf")
 
-    @patch("meeting_scribe.wifi._current_regdomain")
-    @patch("meeting_scribe.wifi.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_regdomain_uses_override(
         self,
         mock_run: MagicMock,
@@ -367,7 +365,8 @@ class TestConfigurableRegdomain:
 
 class TestWifiConfig:
     def test_meeting_mode_generates_ssid_and_password(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         cfg = wifi.build_config("meeting")
         assert cfg.mode == "meeting"
@@ -379,17 +378,23 @@ class TestWifiConfig:
         assert cfg.ap_ip == wifi.AP_IP
 
     def test_admin_mode_reads_settings(self, settings_file: Path) -> None:
-        settings_file.write_text(json.dumps({
-            "admin_ssid": "My Admin Net",
-            "admin_password": "SECUREPASS",
-        }) + "\n")
+        settings_file.write_text(
+            json.dumps(
+                {
+                    "admin_ssid": "My Admin Net",
+                    "admin_password": "SECUREPASS",
+                }
+            )
+            + "\n"
+        )
         cfg = wifi.build_config("admin")
         assert cfg.mode == "admin"
         assert cfg.ssid == "My Admin Net"
         assert cfg.password == "SECUREPASS"
 
     def test_admin_mode_generates_password_when_missing(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         settings_file.parent.mkdir(parents=True, exist_ok=True)
         # No admin_password in settings
@@ -402,27 +407,33 @@ class TestWifiConfig:
         assert saved["admin_password"] == cfg.password
 
     def test_admin_mode_generates_password_when_too_short(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         settings_file.write_text('{"admin_ssid": "Admin", "admin_password": "short"}\n')
         cfg = wifi.build_config("admin")
         assert len(cfg.password) >= 8
 
     def test_admin_mode_default_ssid(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         cfg = wifi.build_config("admin")
         assert cfg.ssid == wifi.DEFAULT_ADMIN_SSID
 
     def test_meeting_mode_explicit_ssid_and_password(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
-        cfg = wifi.build_config("meeting", ssid="Custom SSID", password="CUSTOMPSK")  # sddc-precommit: ignore  -- test stub PSK
+        cfg = wifi.build_config(
+            "meeting", ssid="Custom SSID", password="CUSTOMPSK"
+        )  # sddc-precommit: ignore  -- test stub PSK
         assert cfg.ssid == "Custom SSID"
         assert cfg.password == "CUSTOMPSK"
 
     def test_off_mode(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         cfg = wifi.build_config("off")
         assert cfg.mode == "off"
@@ -430,7 +441,8 @@ class TestWifiConfig:
         assert cfg.password == ""
 
     def test_invalid_mode_raises(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         with pytest.raises(ValueError, match="Invalid wifi mode"):
             wifi.build_config("bogus")
@@ -441,7 +453,8 @@ class TestWifiConfig:
         assert cfg.regdomain == "US"
 
     def test_wifi_config_is_frozen(
-        self, settings_file: Path,
+        self,
+        settings_file: Path,
     ) -> None:
         cfg = wifi.build_config("meeting")
         with pytest.raises(AttributeError):
@@ -464,27 +477,28 @@ class TestBuildLiveConfig:
         # First call: _nmcli_read_live_ap_credentials (via _run_nmcli_sync)
         creds_result = _mk_completed(
             stdout=(
-                "802-11-wireless.ssid:Dell Demo ABCD\n"
-                "802-11-wireless-security.psk:TESTPASS1\n"
+                "802-11-wireless.ssid:Dell Demo ABCD\n802-11-wireless-security.psk:TESTPASS1\n"
             ),
         )
         # Second call: band/channel read
         band_result = _mk_completed(
-            stdout=(
-                "802-11-wireless.band:a\n"
-                "802-11-wireless.channel:149\n"
-            ),
+            stdout=("802-11-wireless.band:a\n802-11-wireless.channel:149\n"),
         )
         mock_run.side_effect = [creds_result, band_result]
 
         # Write a state file so mode can be read
-        state_file.write_text(json.dumps({
-            "ssid": "Dell Demo ABCD",
-            "password": "TESTPASS1",
-            "ap_ip": "10.42.0.1",
-            "port": 80,
-            "mode": "admin",
-        }) + "\n")
+        state_file.write_text(
+            json.dumps(
+                {
+                    "ssid": "Dell Demo ABCD",
+                    "password": "TESTPASS1",
+                    "ap_ip": "10.42.0.1",
+                    "port": 80,
+                    "mode": "admin",
+                }
+            )
+            + "\n"
+        )
 
         cfg = wifi._build_live_config()
         assert cfg is not None
@@ -522,10 +536,7 @@ class TestBuildLiveConfig:
         settings_file: Path,
     ) -> None:
         creds_result = _mk_completed(
-            stdout=(
-                "802-11-wireless.ssid:Demo\n"
-                "802-11-wireless-security.psk:PSK123\n"
-            ),
+            stdout=("802-11-wireless.ssid:Demo\n802-11-wireless-security.psk:PSK123\n"),
         )
         # Band/channel query returns empty
         band_result = _mk_completed(returncode=1)
@@ -640,7 +651,10 @@ class TestAdminPasswordWriteOnly:
     @patch("meeting_scribe.wifi._nmcli_ap_is_active", return_value=True)
     @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
     @patch("meeting_scribe.wifi._wpa_supplicant_ap_security", return_value=None)
-    @patch("meeting_scribe.wifi._current_regdomain", return_value="JP")
+    @patch(
+        "meeting_scribe.server_support.regdomain._current_regdomain",
+        return_value="JP",
+    )
     def test_status_returns_live_password_not_settings(
         self,
         mock_reg: MagicMock,
@@ -652,23 +666,33 @@ class TestAdminPasswordWriteOnly:
         settings_file: Path,
     ) -> None:
         # Settings has the configured password
-        settings_file.write_text(json.dumps({
-            "wifi_mode": "admin",
-            "admin_ssid": "Admin Net",
-            "admin_password": "SETTINGS_SECRET",
-        }) + "\n")
+        settings_file.write_text(
+            json.dumps(
+                {
+                    "wifi_mode": "admin",
+                    "admin_ssid": "Admin Net",
+                    "admin_password": "SETTINGS_SECRET",
+                }
+            )
+            + "\n"
+        )
 
         # nmcli reports different live credentials
         mock_creds.return_value = ("Admin Net", "LIVE_SECRET")
         mock_run.return_value = _mk_completed()
 
-        state_file.write_text(json.dumps({
-            "ssid": "Admin Net",
-            "password": "LIVE_SECRET",
-            "ap_ip": "10.42.0.1",
-            "port": 80,
-            "mode": "admin",
-        }) + "\n")
+        state_file.write_text(
+            json.dumps(
+                {
+                    "ssid": "Admin Net",
+                    "password": "LIVE_SECRET",
+                    "ap_ip": "10.42.0.1",
+                    "port": 80,
+                    "mode": "admin",
+                }
+            )
+            + "\n"
+        )
 
         status = wifi.wifi_status_sync()
         # The password in status comes from nmcli, not settings
@@ -697,7 +721,8 @@ class TestCaptivePortalSetup:
 
         # Find the tee call
         tee_calls = [
-            c for c in mock_run.call_args_list
+            c
+            for c in mock_run.call_args_list
             if any("tee" in str(a) for a in (c[0][0] if c[0] else []))
         ]
         assert len(tee_calls) >= 1, "Expected at least one sudo tee call"

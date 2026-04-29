@@ -6,6 +6,7 @@ failure modes we've been hunting (orphan lanes, non-contiguous seqs,
 empty speakers, journal/detected mismatch, drift, missing coverage,
 lost-name preservation).
 """
+
 from __future__ import annotations
 
 import json
@@ -16,8 +17,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "benchmarks"))
 from validate_meeting import validate_meeting
 
 
-def _make_meeting(tmp_path: Path, *, audio_ms: int, detected: list, lanes: dict,
-                  journal: list, timeline: dict, backup: list | None = None) -> Path:
+def _make_meeting(
+    tmp_path: Path,
+    *,
+    audio_ms: int,
+    detected: list,
+    lanes: dict,
+    journal: list,
+    timeline: dict,
+    backup: list | None = None,
+) -> Path:
     md = tmp_path / "m-test"
     md.mkdir()
     (md / "audio").mkdir()
@@ -43,16 +52,25 @@ def _final(sid: str, start: int, end: int, text: str, cid: int | None, identity:
     if cid is not None:
         sp.append({"cluster_id": cid, "identity": identity, "display_name": identity})
     return {
-        "segment_id": sid, "revision": 1, "is_final": True,
-        "start_ms": start, "end_ms": end, "text": text, "speakers": sp,
+        "segment_id": sid,
+        "revision": 1,
+        "is_final": True,
+        "start_ms": start,
+        "end_ms": end,
+        "text": text,
+        "speakers": sp,
     }
 
 
 def _speaker(cluster_id: int, seq_index: int, name: str, count: int = 1):
     return {
-        "cluster_id": cluster_id, "seq_index": seq_index, "display_name": name,
-        "segment_count": count, "total_speaking_ms": count * 1000,
-        "first_seen_ms": 0, "last_seen_ms": count * 1000,
+        "cluster_id": cluster_id,
+        "seq_index": seq_index,
+        "display_name": name,
+        "segment_count": count,
+        "total_speaking_ms": count * 1000,
+        "first_seen_ms": 0,
+        "last_seen_ms": count * 1000,
     }
 
 
@@ -72,8 +90,14 @@ class TestHealthyMeeting:
             timeline={
                 "duration_ms": 120_000,
                 "segments": [
-                    {"segment_id": f"s{i}", "start_ms": i * 30_000, "end_ms": i * 30_000 + 4000,
-                     "text": f"seg {i}", "language": "en", "speaker_id": 1}
+                    {
+                        "segment_id": f"s{i}",
+                        "start_ms": i * 30_000,
+                        "end_ms": i * 30_000 + 4000,
+                        "text": f"seg {i}",
+                        "language": "en",
+                        "speaker_id": 1,
+                    }
                     for i in range(4)  # one per 30s bucket
                 ],
             },
@@ -93,12 +117,22 @@ class TestHealthyMeeting:
 class TestAlignmentCheck:
     def test_timeline_shorter_than_audio_fails(self, tmp_path):
         md = _make_meeting(
-            tmp_path, audio_ms=120_000,
+            tmp_path,
+            audio_ms=120_000,
             detected=[_speaker(1, 1, "A")],
             lanes={"1": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 60_000, "text": "x", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 60_000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[_final("s1", 0, 60_000, "x", 1)],
         )
         result = validate_meeting(md)
@@ -111,17 +145,27 @@ class TestSeqDensity:
     def test_non_contiguous_seq_fails(self, tmp_path):
         # Simulates the old bug: cluster_id=0 ate seq_index=1, leaving 2,3,4
         md = _make_meeting(
-            tmp_path, audio_ms=60_000,
+            tmp_path,
+            audio_ms=60_000,
             detected=[
                 _speaker(1, 2, "A"),
                 _speaker(2, 3, "B"),
                 _speaker(3, 4, "C"),
             ],
             lanes={"2": [], "3": [], "4": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": f"s{i}", "start_ms": i * 30_000, "end_ms": i * 30_000 + 1000,
-                 "text": "x", "language": "en"} for i in range(2)
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": f"s{i}",
+                        "start_ms": i * 30_000,
+                        "end_ms": i * 30_000 + 1000,
+                        "text": "x",
+                        "language": "en",
+                    }
+                    for i in range(2)
+                ],
+            },
             journal=[
                 _final("s1", 0, 1000, "a", 2),
                 _final("s2", 30_000, 31_000, "b", 3),
@@ -136,13 +180,29 @@ class TestSeqDensity:
 class TestOrphanLane:
     def test_zero_lane_fails(self, tmp_path):
         md = _make_meeting(
-            tmp_path, audio_ms=60_000,
+            tmp_path,
+            audio_ms=60_000,
             detected=[_speaker(1, 1, "A")],
             lanes={"0": [{"start_ms": 0, "end_ms": 1000, "segment_id": "s0"}], "1": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 1000, "text": "x", "language": "en"},
-                {"segment_id": "s2", "start_ms": 30_000, "end_ms": 31_000, "text": "y", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                    {
+                        "segment_id": "s2",
+                        "start_ms": 30_000,
+                        "end_ms": 31_000,
+                        "text": "y",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[_final("s1", 0, 1000, "a", 1)],
         )
         result = validate_meeting(md)
@@ -153,13 +213,29 @@ class TestOrphanLane:
 class TestJournalDetectedAgreement:
     def test_journal_cluster_not_in_detected_fails(self, tmp_path):
         md = _make_meeting(
-            tmp_path, audio_ms=60_000,
+            tmp_path,
+            audio_ms=60_000,
             detected=[_speaker(1, 1, "A")],
             lanes={"1": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 1000, "text": "x", "language": "en"},
-                {"segment_id": "s2", "start_ms": 30_000, "end_ms": 31_000, "text": "y", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                    {
+                        "segment_id": "s2",
+                        "start_ms": 30_000,
+                        "end_ms": 31_000,
+                        "text": "y",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[
                 _final("s1", 0, 1000, "a", 1),
                 _final("s99", 30_000, 31_000, "dangling", 99),  # cluster 99 isn't in detected
@@ -174,13 +250,29 @@ class TestJournalDetectedAgreement:
 class TestEmptySpeakers:
     def test_empty_speakers_fails(self, tmp_path):
         md = _make_meeting(
-            tmp_path, audio_ms=60_000,
+            tmp_path,
+            audio_ms=60_000,
             detected=[_speaker(1, 1, "A")],
             lanes={"1": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 1000, "text": "x", "language": "en"},
-                {"segment_id": "s2", "start_ms": 30_000, "end_ms": 31_000, "text": "y", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                    {
+                        "segment_id": "s2",
+                        "start_ms": 30_000,
+                        "end_ms": 31_000,
+                        "text": "y",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[
                 _final("s1", 0, 1000, "a", 1),
                 _final("s2", 30_000, 31_000, "unattributed", None),  # empty speakers
@@ -196,12 +288,22 @@ class TestCoverage:
     def test_gap_in_middle_fails(self, tmp_path):
         # 2-minute meeting, segments only in the first 30s → last 3 buckets empty
         md = _make_meeting(
-            tmp_path, audio_ms=120_000,
+            tmp_path,
+            audio_ms=120_000,
             detected=[_speaker(1, 1, "A")],
             lanes={"1": []},
-            timeline={"duration_ms": 120_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 1000, "text": "x", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 120_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[_final("s1", 0, 1000, "a", 1)],
         )
         result = validate_meeting(md)
@@ -223,13 +325,29 @@ class TestNamePreservation:
             _final("o3", 20_000, 21_000, "c", 7),
         ]
         md = _make_meeting(
-            tmp_path, audio_ms=60_000,
+            tmp_path,
+            audio_ms=60_000,
             detected=[_speaker(1, 1, "Mark")],
             lanes={"1": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 1000, "text": "x", "language": "en"},
-                {"segment_id": "s2", "start_ms": 30_000, "end_ms": 31_000, "text": "y", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                    {
+                        "segment_id": "s2",
+                        "start_ms": 30_000,
+                        "end_ms": 31_000,
+                        "text": "y",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[_final("s1", 0, 1000, "a", 1)],
             backup=bak,
         )
@@ -241,13 +359,29 @@ class TestNamePreservation:
 
     def test_skipped_without_backup(self, tmp_path):
         md = _make_meeting(
-            tmp_path, audio_ms=60_000,
+            tmp_path,
+            audio_ms=60_000,
             detected=[_speaker(1, 1, "A")],
             lanes={"1": []},
-            timeline={"duration_ms": 60_000, "segments": [
-                {"segment_id": "s1", "start_ms": 0, "end_ms": 1000, "text": "x", "language": "en"},
-                {"segment_id": "s2", "start_ms": 30_000, "end_ms": 31_000, "text": "y", "language": "en"},
-            ]},
+            timeline={
+                "duration_ms": 60_000,
+                "segments": [
+                    {
+                        "segment_id": "s1",
+                        "start_ms": 0,
+                        "end_ms": 1000,
+                        "text": "x",
+                        "language": "en",
+                    },
+                    {
+                        "segment_id": "s2",
+                        "start_ms": 30_000,
+                        "end_ms": 31_000,
+                        "text": "y",
+                        "language": "en",
+                    },
+                ],
+            },
             journal=[_final("s1", 0, 1000, "a", 1)],
         )
         result = validate_meeting(md)

@@ -72,8 +72,7 @@ class GB10Config:
     """
 
     nodes: list[GB10Node] = field(default_factory=list)
-    docker_image: str = "ghcr.io/bjk110/vllm-spark:turboquant"
-    docker_image_turboquant: str = "ghcr.io/bjk110/vllm-spark:turboquant"
+    docker_image: str = "vllm/vllm-openai:latest"
     hf_cache_dir: str = "/data/huggingface"
     nccl_socket_ifname: str = "enp1s0f0np0"
 
@@ -104,7 +103,6 @@ class GB10Config:
         return {
             "nodes": [n.to_dict() for n in self.nodes],
             "docker_image": self.docker_image,
-            "docker_image_turboquant": self.docker_image_turboquant,
             "hf_cache_dir": self.hf_cache_dir,
             "nccl_socket_ifname": self.nccl_socket_ifname,
         }
@@ -116,9 +114,6 @@ class GB10Config:
         return cls(
             nodes=nodes,
             docker_image=data.get("docker_image", cls.docker_image),
-            docker_image_turboquant=data.get(
-                "docker_image_turboquant", cls.docker_image_turboquant
-            ),
             hf_cache_dir=data.get("hf_cache_dir", cls.hf_cache_dir),
             nccl_socket_ifname=data.get("nccl_socket_ifname", cls.nccl_socket_ifname),
         )

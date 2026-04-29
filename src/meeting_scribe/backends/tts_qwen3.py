@@ -1,8 +1,9 @@
-"""Qwen3-TTS voice cloning backend — vllm-omni edition.
+"""Qwen3-TTS voice cloning backend.
 
-Single-container, continuous-batched vllm-omni replaces the prior two-replica
-faster-qwen3-tts pool. Wire format: OpenAI-compatible /v1/audio/speech with
-stream=true response_format=pcm (raw int16 @ 24 kHz mono).
+Talks the OpenAI-compatible /v1/audio/speech wire format with
+stream=true response_format=pcm (raw int16 @ 24 kHz mono). Backed
+by `containers/tts/` (faster-qwen3-tts) in production; `tts_vllm_url`
+can point at one or more replicas (comma-separated).
 
 Two synthesis modes:
   - Studio: named speaker (aiden, vivian, ono_anna, sohee, uncle_fu).
@@ -43,7 +44,7 @@ _REF_AUDIO_MAX_SECONDS = 6.0
 _REF_AUDIO_SAMPLE_RATE = 24_000
 _REF_AUDIO_MAX_BYTES = 400 * 1024  # data-URI byte ceiling
 
-# vllm-omni streams raw int16 PCM at 24 kHz.
+# /v1/audio/speech with response_format=pcm streams raw int16 PCM at 24 kHz.
 _TTS_SAMPLE_RATE = 24_000
 
 
@@ -213,10 +214,10 @@ class Qwen3TTSBackend(TTSBackend):
         self._vllm_url = alive[0]  # for legacy single-url log paths
         self._mode = "vllm"
         if len(alive) == 1:
-            logger.info("TTS: vllm-omni ready at %s (single replica)", alive[0])
+            logger.info("TTS: ready at %s (single replica)", alive[0])
         else:
             logger.info(
-                "TTS: vllm-omni ready, %d replicas in pool: %s", len(alive), ", ".join(alive)
+                "TTS: ready, %d replicas in pool: %s", len(alive), ", ".join(alive)
             )
 
     async def stop(self) -> None:
@@ -367,10 +368,10 @@ class Qwen3TTSBackend(TTSBackend):
         Probe chain:
         1. ``GET /health`` — must return 200. This is the hard gate.
         2. ``GET /v1/models`` — treated as an INFORMATIONAL signal only.
-           The legacy faster-qwen3-tts container doesn't implement this
-           endpoint (returns 404); vllm-omni does. Not blocking.
+           The faster-qwen3-tts container doesn't implement this endpoint
+           (returns 404); vllm-class servers do. Not blocking.
         3. Warmed synth probe — SKIPPED when ``_last_error`` matches known
-           protocol mismatches against the legacy container, and skipped
+           protocol mismatches against the dedicated container, and skipped
            when we've seen a hard backend failure recently (avoids
            hammering a known-broken endpoint on every retry tick, which
            was contributing to event-loop lag).
@@ -440,7 +441,7 @@ class Qwen3TTSBackend(TTSBackend):
         voice_reference: np.ndarray | None = None,
         studio_voice: str | None = None,
     ) -> AsyncIterator[np.ndarray]:
-        """Stream float32 audio chunks from vllm-omni at 24 kHz mono.
+        """Stream float32 audio chunks from the TTS server at 24 kHz mono.
 
         Wire format: POST /v1/audio/speech with stream=true response_format=pcm.
         Response is raw int16 LE PCM @ _TTS_SAMPLE_RATE. HTTP chunk boundaries
@@ -477,7 +478,7 @@ class Qwen3TTSBackend(TTSBackend):
             "stream": True,
             "response_format": "pcm",
             # vLLM priority: lower = earlier under --scheduling-policy=priority.
-            # Live TTS preempts translate/coding when Omni consolidation lands.
+            # Live TTS preempts translate/coding paths.
             "priority": -10,
             # Deterministic seed so a listener hears the SAME studio voice
             # across every segment for a given language. Without this the

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Smoke-test the furigana backend: feed kanji, expect <ruby> markup."""
+
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +19,7 @@ async def main() -> int:
     failures = 0
     for text in cases:
         html = await backend.annotate(text)
-        ok = bool(html) and "<ruby>" in html
+        ok = bool(html) and "<ruby>" in (html or "")
         marker = "✓" if ok else "✗"
         print(f"{marker} {text!r:25} → {html or '(empty)'}")
         if not ok:

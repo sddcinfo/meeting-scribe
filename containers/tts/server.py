@@ -158,6 +158,8 @@ _DEFAULT_VOICES = {
     "male": _DEFAULT_VOICE_DIR / "voice_male.wav",
     "female": _DEFAULT_VOICE_DIR / "voice_female.wav",
 }
+
+
 def _default_ref_path() -> str:
     """Return path to the default voice reference (real meeting audio)."""
     return str(_DEFAULT_VOICES["male"])
@@ -168,8 +170,15 @@ def _default_ref_path() -> str:
 # is ignored and we fall back to the default reference clip.
 _CUSTOM_VOICE_SPEAKERS: frozenset[str] = frozenset(
     {
-        "Vivian", "Serena", "Uncle_Fu", "Dylan", "Eric",
-        "Ryan", "Aiden", "Ono_Anna", "Sohee",
+        "Vivian",
+        "Serena",
+        "Uncle_Fu",
+        "Dylan",
+        "Eric",
+        "Ryan",
+        "Aiden",
+        "Ono_Anna",
+        "Sohee",
     }
 )
 
@@ -196,10 +205,13 @@ def _synthesize_custom_voice(text: str, language: str, speaker: str) -> np.ndarr
     return np.asarray(wavs, dtype=np.float32)
 
 
-def _synthesize_faster(text: str, language: str, ref_audio: np.ndarray | None, ref_sr: int) -> np.ndarray:
+def _synthesize_faster(
+    text: str, language: str, ref_audio: np.ndarray | None, ref_sr: int
+) -> np.ndarray:
     """Synthesize using faster-qwen3-tts backend."""
     if ref_audio is not None:
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             tmp_path = tmp.name
             sf.write(tmp_path, ref_audio, ref_sr)
@@ -212,6 +224,7 @@ def _synthesize_faster(text: str, language: str, ref_audio: np.ndarray | None, r
             )
         finally:
             import os
+
             os.unlink(tmp_path)
     else:
         audio = _model.generate_voice_clone(
@@ -230,7 +243,9 @@ def _synthesize_faster(text: str, language: str, ref_audio: np.ndarray | None, r
     return audio.astype(np.float32)
 
 
-def _synthesize_baseline(text: str, language: str, ref_audio: np.ndarray | None, ref_sr: int) -> np.ndarray:
+def _synthesize_baseline(
+    text: str, language: str, ref_audio: np.ndarray | None, ref_sr: int
+) -> np.ndarray:
     """Synthesize using baseline qwen-tts backend."""
     if ref_audio is not None:
         wavs, _sr = _model.generate_voice_clone(
@@ -312,7 +327,9 @@ async def speech(req: SpeechRequest):
     named_speaker: str | None = None
     if req.voice and req.voice != "default" and len(req.voice) > 100:
         if len(req.voice) > MAX_VOICE_REF_SIZE:
-            raise HTTPException(400, f"Voice reference too large ({len(req.voice)} bytes, max {MAX_VOICE_REF_SIZE})")
+            raise HTTPException(
+                400, f"Voice reference too large ({len(req.voice)} bytes, max {MAX_VOICE_REF_SIZE})"
+            )
         try:
             ref_audio, ref_sr = _decode_voice_ref(req.voice)
             logger.info(
@@ -327,9 +344,16 @@ async def speech(req: SpeechRequest):
 
     # Map language codes to full names
     lang_map = {
-        "en": "English", "ja": "Japanese", "zh": "Chinese", "ko": "Korean",
-        "fr": "French", "de": "German", "es": "Spanish", "it": "Italian",
-        "pt": "Portuguese", "ru": "Russian",
+        "en": "English",
+        "ja": "Japanese",
+        "zh": "Chinese",
+        "ko": "Korean",
+        "fr": "French",
+        "de": "German",
+        "es": "Spanish",
+        "it": "Italian",
+        "pt": "Portuguese",
+        "ru": "Russian",
     }
     language = lang_map.get(req.language, req.language)
 
@@ -458,9 +482,16 @@ async def speech_stream(req: SpeechRequest):
         named_speaker = req.voice
 
     lang_map = {
-        "en": "English", "ja": "Japanese", "zh": "Chinese", "ko": "Korean",
-        "fr": "French", "de": "German", "es": "Spanish", "it": "Italian",
-        "pt": "Portuguese", "ru": "Russian",
+        "en": "English",
+        "ja": "Japanese",
+        "zh": "Chinese",
+        "ko": "Korean",
+        "fr": "French",
+        "de": "German",
+        "es": "Spanish",
+        "it": "Italian",
+        "pt": "Portuguese",
+        "ru": "Russian",
     }
     language = lang_map.get(req.language, req.language)
     chunk_size = int(os.environ.get("TTS_STREAM_CHUNK_SIZE", "8"))

@@ -17,7 +17,7 @@ class TestNameExtraction:
 
     @pytest.fixture(autouse=True)
     def _import(self):
-        from meeting_scribe.server import _extract_name_from_text
+        from meeting_scribe.speaker.name_extraction import extract_name as _extract_name_from_text
 
         self.extract = _extract_name_from_text
 

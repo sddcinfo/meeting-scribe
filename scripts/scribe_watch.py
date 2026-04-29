@@ -75,7 +75,10 @@ def fetch_systemd() -> tuple[int | None, str]:
     try:
         r = subprocess.run(
             ["systemctl", "--user", "show", SYSTEMD_UNIT, "-p", "MainPID", "-p", "ActiveState"],
-            capture_output=True, text=True, timeout=2, check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
         )
     except (FileNotFoundError, subprocess.SubprocessError):
         return None, "unknown"
@@ -96,9 +99,21 @@ def fetch_recent_errors(since_iso: str) -> list[str]:
     a list of fingerprint strings — caller dedups against last poll's set."""
     try:
         r = subprocess.run(
-            ["journalctl", "--user", "-u", SYSTEMD_UNIT, "--since", since_iso,
-             "-o", "cat", "--no-pager"],
-            capture_output=True, text=True, timeout=5, check=False,
+            [
+                "journalctl",
+                "--user",
+                "-u",
+                SYSTEMD_UNIT,
+                "--since",
+                since_iso,
+                "-o",
+                "cat",
+                "--no-pager",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
     except (FileNotFoundError, subprocess.SubprocessError):
         return []
@@ -151,8 +166,11 @@ def snapshot(api: dict | None, pid: int | None, state: str) -> dict:
 def diff_and_emit(prev: dict | None, cur: dict) -> None:
     if prev is None:
         # First poll — establish baseline. Emit a one-line "started" event.
-        emit("INFO", f"watch start · pid={cur['pid']} systemd={cur['systemd']} "
-                     f"meeting={cur['meeting_id'] or 'idle'}/{cur['meeting_state']}")
+        emit(
+            "INFO",
+            f"watch start · pid={cur['pid']} systemd={cur['systemd']} "
+            f"meeting={cur['meeting_id'] or 'idle'}/{cur['meeting_state']}",
+        )
         return
 
     # PID change → restart
@@ -169,8 +187,11 @@ def diff_and_emit(prev: dict | None, cur: dict) -> None:
 
     # Meeting transitions
     if cur.get("meeting_state") != prev.get("meeting_state"):
-        emit("INFO", f"meeting state: {prev.get('meeting_state')} → {cur.get('meeting_state')}"
-                     f" (id={cur['meeting_id'] or 'idle'})")
+        emit(
+            "INFO",
+            f"meeting state: {prev.get('meeting_state')} → {cur.get('meeting_state')}"
+            f" (id={cur['meeting_id'] or 'idle'})",
+        )
     elif cur.get("meeting_id") != prev.get("meeting_id"):
         emit("INFO", f"new meeting: {cur['meeting_id']} ({cur.get('meeting_state')})")
 
@@ -189,15 +210,21 @@ def diff_and_emit(prev: dict | None, cur: dict) -> None:
     # Translation failures
     new_fail = cur.get("translations_failed", 0) - prev.get("translations_failed", 0)
     if new_fail > 0:
-        emit("ERROR", f"{new_fail} new translation failures "
-                      f"(total: {cur['translations_failed']}/{cur['translations_completed']})")
+        emit(
+            "ERROR",
+            f"{new_fail} new translation failures "
+            f"(total: {cur['translations_failed']}/{cur['translations_completed']})",
+        )
 
     # TTS delivery health: submitted advancing but delivered stuck
     new_sub = cur["tts_submitted"] - prev["tts_submitted"]
     new_deliv = cur["tts_delivered"] - prev["tts_delivered"]
     if new_sub >= 3 and new_deliv == 0:
-        emit("ERROR", f"TTS submitted {new_sub} requests since last poll, delivered 0 "
-                      f"(total {cur['tts_delivered']}/{cur['tts_submitted']})")
+        emit(
+            "ERROR",
+            f"TTS submitted {new_sub} requests since last poll, delivered 0 "
+            f"(total {cur['tts_delivered']}/{cur['tts_submitted']})",
+        )
     elif cur["tts_health"] != prev["tts_health"] and cur["tts_health"]:
         level = "ERROR" if cur["tts_health"] != "healthy" else "INFO"
         emit(level, f"TTS health: {prev['tts_health']} → {cur['tts_health']}")
@@ -205,16 +232,18 @@ def diff_and_emit(prev: dict | None, cur: dict) -> None:
     # Loop-lag thresholds (only emit when crossing UP into a worse band, or
     # crossing DOWN into a better band — not while sustained in the same band)
     bands = [(5000, "5s+"), (2000, "2s+"), (500, "500ms+"), (0, "ok")]
+
     def band(p95: int) -> str:
         for thr, name in bands:
             if p95 >= thr:
                 return name
         return "ok"
+
     cur_band = band(cur["loop_lag_p95"])
     prev_band = band(prev["loop_lag_p95"])
     if cur_band != prev_band:
-        level = "ERROR" if cur_band in ("5s+", "2s+") else (
-            "WARN" if cur_band == "500ms+" else "INFO"
+        level = (
+            "ERROR" if cur_band in ("5s+", "2s+") else ("WARN" if cur_band == "500ms+" else "INFO")
         )
         emit(level, f"loop-lag p95: {prev_band} → {cur_band} ({cur['loop_lag_p95']}ms)")
 
@@ -228,10 +257,18 @@ def diff_and_emit(prev: dict | None, cur: dict) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--interval", type=int, default=10, help="poll interval seconds (default 10)")
-    ap.add_argument("--errors-window", type=int, default=20,
-                    help="seconds of journal to scan for new errors per poll (default 20)")
-    ap.add_argument("--max-iters", type=int, default=0,
-                    help="exit after N polls (0 = forever) — useful for smoke tests")
+    ap.add_argument(
+        "--errors-window",
+        type=int,
+        default=20,
+        help="seconds of journal to scan for new errors per poll (default 20)",
+    )
+    ap.add_argument(
+        "--max-iters",
+        type=int,
+        default=0,
+        help="exit after N polls (0 = forever) — useful for smoke tests",
+    )
     args = ap.parse_args()
 
     prev: dict | None = None

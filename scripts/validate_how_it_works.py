@@ -47,9 +47,7 @@ def _recipe_yamls() -> dict[str, str]:
 
 def _count_language_registry(src: str) -> int | None:
     """Count entries in LANGUAGE_REGISTRY dict from languages.py source."""
-    block = re.search(
-        r"LANGUAGE_REGISTRY.*?=\s*\{(.*?)\}", src, re.DOTALL
-    )
+    block = re.search(r"LANGUAGE_REGISTRY.*?=\s*\{(.*?)\}", src, re.DOTALL)
     if not block:
         return None
     return len(re.findall(r'^\s+"[a-z]{2}":\s+Language\(', block.group(1), re.MULTILINE))
@@ -64,19 +62,33 @@ def _tts_replica_count_from_config(src: str) -> int | None:
 
 
 def _extract_memory_table(html: str) -> dict[str, str]:
-    """Extract component → memory string from the resource table.
+    """Extract component -> memory string from the resource table.
 
-    Returns e.g. {"ASR": "~5 GB", "Translation": "~24 GB", ...}
+    Returns e.g. {"ASR": "~5 GB", "Translation": "~24 GB", ...}.
+
+    Row fingerprint: <tr> <td>LABEL</td> <td>...</td>
+                       <td>...<span class="mv">~X GB[ trailing text]</span></td>
+    The trailing text allowance is load-bearing — rows like "Translation
+    (shared)" carry "~35 GB weights" in the memory cell. The old regex
+    pinned </span> immediately after GB, which made the regex fall
+    through to the next row's GB-cell and label, producing wrong rows.
     """
+    # Capture each <tr> ... </tr> span individually, then grab the
+    # first column (label) and the first .mv GB cell inside that row.
     rows: dict[str, str] = {}
-    # Each table row: <td>LABEL</td> ... <td><span class="mv">~X GB</span></td>
-    for m in re.finditer(
-        r"<tr>\s*<td>(.*?)</td>\s*<td>.*?</td>\s*<td>.*?<span class=\"mv\">(~[\d.]+ GB)</span>.*?</td>",
-        html,
-        re.DOTALL,
-    ):
-        label = re.sub(r"<[^>]+>", "", m.group(1)).strip()
-        rows[label] = m.group(2)
+    for tr in re.finditer(r"<tr>(.*?)</tr>", html, re.DOTALL):
+        body = tr.group(1)
+        label_m = re.search(r"<td>(.*?)</td>", body, re.DOTALL)
+        mv_m = re.search(
+            r'<span\s+class="mv">\s*(~[\d.]+\s*GB)\b',
+            body,
+        )
+        if not label_m or not mv_m:
+            continue
+        label = re.sub(r"<[^>]+>", "", label_m.group(1)).strip()
+        if not label:
+            continue
+        rows[label] = mv_m.group(1).replace("  ", " ")
     return rows
 
 
@@ -180,8 +192,8 @@ def check_model_names(html: str) -> list[str]:
     # Models explicitly named in the HTML
     expected_models = [
         "Qwen3-ASR-1.7B",
-        "Qwen3.5-35B-A3B",      # partial match for the full INT4 name
-        "speaker-diarization-3.1",
+        "Qwen3.5-35B-A3B",  # partial match for the full INT4 name
+        "speaker-diarization-community-1",
         "Qwen3-TTS-12Hz-0.6B",  # partial match for Base variant
     ]
 
@@ -289,9 +301,7 @@ def check_language_count(html: str) -> list[str]:
     claimed = re.findall(r"(\d+)\s+(?:supported\s+)?(?:TTS-capable\s+)?languages", html)
     for c in claimed:
         if int(c) != actual_count:
-            errors.append(
-                f"HTML claims {c} languages but LANGUAGE_REGISTRY has {actual_count}"
-            )
+            errors.append(f"HTML claims {c} languages but LANGUAGE_REGISTRY has {actual_count}")
 
     return errors
 
@@ -320,9 +330,7 @@ def check_tts_replicas(html: str) -> list[str]:
     else:
         for claim in replica_claims:
             if int(claim) != config_count:
-                errors.append(
-                    f"HTML says ×{claim} TTS replicas but config has {config_count}"
-                )
+                errors.append(f"HTML says ×{claim} TTS replicas but config has {config_count}")
 
     return errors
 
@@ -351,9 +359,7 @@ def check_homepage(index_html: str) -> list[str]:
     # Badge should say "multilingual" not "bilingual"
     badge_m = re.search(r'landing-hero-badge">(.*?)<', index_html)
     if badge_m and "bilingual" in badge_m.group(1).lower():
-        errors.append(
-            "Homepage badge says 'bilingual' — should say 'multilingual'"
-        )
+        errors.append("Homepage badge says 'bilingual' — should say 'multilingual'")
 
     return errors
 
@@ -394,7 +400,9 @@ def validate() -> list[str]:
 def main() -> None:
     errors = validate()
     if errors:
-        print(f"how-it-works validation FAILED ({len(errors)} issue{'s' if len(errors) != 1 else ''}):")
+        print(
+            f"how-it-works validation FAILED ({len(errors)} issue{'s' if len(errors) != 1 else ''}):"
+        )
         for e in errors:
             print(f"  ✗ {e}")
         sys.exit(1)

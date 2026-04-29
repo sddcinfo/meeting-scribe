@@ -12,11 +12,10 @@ class TestRecipeLoader:
 
     def test_list_recipes_returns_all(self):
         recipes = list_recipes()
-        assert len(recipes) >= 4
+        assert len(recipes) >= 3
         assert "qwen3.5-35b-translation" in recipes
         assert "sortformer-4spk" in recipes
         assert "qwen3-asr-vllm" in recipes
-        assert "qwen3-tts-vllm" in recipes
 
     def test_load_by_filename(self):
         recipe = load_recipe("qwen3.5-35b-translation")
@@ -43,13 +42,6 @@ class TestRecipeContent:
         assert r["port"] == 8010
         assert r["gpu_memory_utilization"] == 0.30
         assert r["quantization"] == "inc"
-
-    def test_tts_recipe(self):
-        r = load_recipe("tts-vllm")
-        # Parallel-run port while legacy scribe-tts/scribe-tts-2 own 8002/8012.
-        assert r["port"] == 8022
-        assert r["container_type"] == "vllm"
-        assert "Qwen3-TTS" in r["model_id"]
 
     def test_diarization_recipe(self):
         r = load_recipe("diarization")

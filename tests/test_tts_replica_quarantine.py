@@ -86,9 +86,7 @@ def test_reprobe_after_cooldown_restores_url_on_success():
     for _ in range(Qwen3TTSBackend.MAX_CONSECUTIVE_FAILURES):
         b._mark_url_failure(URL_B, "HTTP 500")
     # Back-date the quarantine timestamp to simulate cooldown expiry.
-    b._quarantined[URL_B] = time.monotonic() - (
-        Qwen3TTSBackend._QUARANTINE_REPROBE_S + 1.0
-    )
+    b._quarantined[URL_B] = time.monotonic() - (Qwen3TTSBackend._QUARANTINE_REPROBE_S + 1.0)
     # URL_B is now eligible again for a probe; the next round-robin
     # cycle must include it.
     picks = set()
@@ -110,7 +108,7 @@ def test_all_quarantined_still_returns_a_best_effort_url():
     """
     b = _backend()
     now = time.monotonic()
-    b._quarantined[URL_A] = now - 1.0   # newer
+    b._quarantined[URL_A] = now - 1.0  # newer
     b._quarantined[URL_B] = now - 10.0  # older
     # Cooldown hasn't expired for either. _next_url should pick the
     # oldest-quarantined URL (URL_B) as the probe candidate.
@@ -149,9 +147,7 @@ def test_reprobe_failure_re_quarantines():
     old_ts = b._quarantined[URL_B]
 
     # Back-date to make reprobe eligible
-    b._quarantined[URL_B] = time.monotonic() - (
-        Qwen3TTSBackend._QUARANTINE_REPROBE_S + 1.0
-    )
+    b._quarantined[URL_B] = time.monotonic() - (Qwen3TTSBackend._QUARANTINE_REPROBE_S + 1.0)
     # The reprobe-eligible URL should be offered
     picks = set()
     for _ in range(6):

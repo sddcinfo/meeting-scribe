@@ -98,9 +98,14 @@ class TestMeetingMeta:
         m2 = MeetingMeta.model_validate_json(raw)
         assert m2.is_favorite is True
 
-        legacy_no_field = MeetingMeta().model_dump_json().replace(
-            '"is_favorite":false', ""
-        ).replace(',,', ',').replace('{,', '{').replace(',}', '}')
+        legacy_no_field = (
+            MeetingMeta()
+            .model_dump_json()
+            .replace('"is_favorite":false', "")
+            .replace(",,", ",")
+            .replace("{,", "{")
+            .replace(",}", "}")
+        )
         # Just verify the standard validator accepts a JSON missing the key
         m3 = MeetingMeta.model_validate_json('{"meeting_id": "abc"}')
         assert m3.is_favorite is False
@@ -163,15 +168,9 @@ class TestMeetingMetaLanguagePair:
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
-            MeetingMeta.model_validate_json(
-                '{"meeting_id": "abc", "language_pair": ["en", "en"]}'
-            )
+            MeetingMeta.model_validate_json('{"meeting_id": "abc", "language_pair": ["en", "en"]}')
         with pytest.raises(ValidationError):
-            MeetingMeta.model_validate_json(
-                '{"meeting_id": "abc", "language_pair": []}'
-            )
+            MeetingMeta.model_validate_json('{"meeting_id": "abc", "language_pair": []}')
         # Valid length-1 round-trips through JSON.
-        m = MeetingMeta.model_validate_json(
-            '{"meeting_id": "abc", "language_pair": ["en"]}'
-        )
+        m = MeetingMeta.model_validate_json('{"meeting_id": "abc", "language_pair": ["en"]}')
         assert m.is_monolingual is True

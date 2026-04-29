@@ -215,28 +215,28 @@ class TestDrainRegistry:
         isolation. Module-globals are mutated intentionally — the
         registry *is* process-global in production, so testing it
         requires reaching into it."""
-        from meeting_scribe import server
+        from meeting_scribe.server_support import refinement_drains as registry
 
-        server._refinement_drains.clear()
-        server._drain_seq = 0
-        return server
+        registry._refinement_drains.clear()
+        registry._drain_seq = 0
+        return registry
 
     @pytest.mark.asyncio
     async def test_kickoff_snapshot_visible_before_drain_completes(self):
-        server = self._fresh_registry()
+        registry = self._fresh_registry()
         worker = _FakeWorker(meeting_id="mtg-slow", stop_delay_s=0.5)
         # Set counters to nonzero so we can see the snapshot is the
         # live value at kickoff, not the post-drain value.
         worker.translate_call_count = 7
         worker.asr_call_count = 11
 
-        server._drain_seq += 1
-        drain_id = server._drain_seq
-        entry = server._DrainEntry(
+        registry._drain_seq += 1
+        drain_id = registry._drain_seq
+        entry = registry._DrainEntry(
             drain_id=drain_id,
             meeting_id=worker._meeting_id,
             task=asyncio.create_task(
-                server._drain_refinement(worker, worker._meeting_id, drain_id)
+                registry._drain_refinement(worker, worker._meeting_id, drain_id)
             ),
             state="draining",
             started_at=time.time(),
@@ -244,7 +244,7 @@ class TestDrainRegistry:
             asr_calls=worker.asr_call_count,
             errors_at_stop=worker.last_error_count,
         )
-        server._refinement_drains.append(entry)
+        registry._refinement_drains.append(entry)
 
         # Before drain completes: snapshot reflects kickoff values.
         assert entry.state == "draining"
@@ -263,18 +263,18 @@ class TestDrainRegistry:
     async def test_same_meeting_id_coexists_under_distinct_drain_ids(self):
         """P1 regression guard for iteration 4 finding #2: two drains
         for the same meeting_id must not overwrite each other."""
-        server = self._fresh_registry()
+        registry = self._fresh_registry()
         w1 = _FakeWorker(meeting_id="mtg-repeat", stop_delay_s=0.1)
         w2 = _FakeWorker(meeting_id="mtg-repeat", stop_delay_s=0.1)
 
         async def _kickoff(worker):
-            server._drain_seq += 1
-            drain_id = server._drain_seq
-            entry = server._DrainEntry(
+            registry._drain_seq += 1
+            drain_id = registry._drain_seq
+            entry = registry._DrainEntry(
                 drain_id=drain_id,
                 meeting_id=worker._meeting_id,
                 task=asyncio.create_task(
-                    server._drain_refinement(worker, worker._meeting_id, drain_id)
+                    registry._drain_refinement(worker, worker._meeting_id, drain_id)
                 ),
                 state="draining",
                 started_at=time.time(),
@@ -282,7 +282,7 @@ class TestDrainRegistry:
                 asr_calls=worker.asr_call_count,
                 errors_at_stop=worker.last_error_count,
             )
-            server._refinement_drains.append(entry)
+            registry._refinement_drains.append(entry)
             return entry
 
         e1 = await _kickoff(w1)
@@ -296,13 +296,13 @@ class TestDrainRegistry:
         assert e1.state == "complete"
         assert e2.state == "complete"
         # Both entries present, neither lost.
-        both = [e for e in server._refinement_drains if e.meeting_id == "mtg-repeat"]
+        both = [e for e in registry._refinement_drains if e.meeting_id == "mtg-repeat"]
         assert len(both) == 2
         assert {e.drain_id for e in both} == {e1.drain_id, e2.drain_id}
 
     @pytest.mark.asyncio
     async def test_drain_timeout_marks_partial(self):
-        server = self._fresh_registry()
+        registry = self._fresh_registry()
 
         class _HangForever:
             _meeting_id = "mtg-hang"
@@ -332,18 +332,18 @@ class TestDrainRegistry:
                 raise RuntimeError("simulated refinement crash")
 
         worker = _RaiseOnStop()
-        server._drain_seq += 1
-        drain_id = server._drain_seq
-        entry = server._DrainEntry(
+        registry._drain_seq += 1
+        drain_id = registry._drain_seq
+        entry = registry._DrainEntry(
             drain_id=drain_id,
             meeting_id=worker._meeting_id,
             task=asyncio.create_task(
-                server._drain_refinement(worker, worker._meeting_id, drain_id)
+                registry._drain_refinement(worker, worker._meeting_id, drain_id)
             ),
             state="draining",
             started_at=time.time(),
         )
-        server._refinement_drains.append(entry)
+        registry._refinement_drains.append(entry)
         await entry.task
 
         assert entry.state == "failed"

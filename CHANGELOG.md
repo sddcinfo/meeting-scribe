@@ -3,6 +3,34 @@
 All notable changes to meeting-scribe are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0] — 2026-04-29
+
+### Added
+- **Diarization on pyannote 4.0 (`speaker-diarization-community-1`)**: production swap from pyannote 3.x. Single-speaker exclusive timeline emitted alongside the standard segmentation; per-segment confidence scoring.
+- **`meeting-scribe validate`**: comprehensive end-to-end validation command that exercises the full pipeline against a fixture audio sample and emits a structured pass/fail report.
+- **Live transcript popout**: dedicated browser popout window with auto-reconnecting WebSocket, connection-state pill, resizable slide pane, and admin-side slide controls.
+- **Eager summary**: summaries pre-compute during recording; finalize completes faster.
+- **Cancel meeting**: cancel button deletes all artifacts on the spot.
+- **Slide translation parallelism**: adaptive batching + 4-way concurrent LibreOffice renders. ~6× faster than per-slide on a 20-slide deck. `SCRIBE_SLIDE_RENDER_PARALLELISM` (default 4, clamped to [1, 16]).
+- **Refinement worker (off by default)**: rolling polished transcript trailing 45s behind live. `SCRIBE_ENABLE_REFINEMENT=1` to enable. Strongly recommended to pair with a separate `SCRIBE_TRANSLATE_OFFLINE_VLLM_URL` to avoid degrading live-path latency.
+- **Split-backend env vars**: `SCRIBE_TRANSLATE_REALTIME_VLLM_URL` (smaller live-path model) and `SCRIBE_TRANSLATE_OFFLINE_VLLM_URL` (refinement-path model) now honoured by `_apply_env`.
+
+### Changed
+- **Modular package layout**: `server.py` decomposed from a 11k-line monolith into focused packages — `routes/` (API surface), `runtime/` (lifespan, state, metrics, init, background loops, health monitors, net), `pipeline/` (transcript-event router, diarize, quality, speaker_attach), `server_support/` (helpers), `ws/` (WebSocket handlers), `tts/worker.py`, `audio/output_pipeline.py`, `middlewares.py`, `hotspot/` (AP lifecycle, captive portal). `server.py` is now <800 LOC and only constructs the FastAPI app + wires routers.
+- **CLI split**: `cli.py` (3.4k LOC, 52 commands) atomically refactored into a 13-module `cli/` package — one module per topic group (`benchmark`, `config`, `gb10`, `library`, `lifecycle`, `meetings`, `precommit`, `queue`, `setup`, `terminal`, `versions`, `wifi`). Click registration unchanged; subcommand resolution loads only the relevant module.
+- **`hotspot/ap_control.py` ↔ `wifi.py` deduplication**: nmcli + state helpers consolidated (-263 LOC).
+- **Single canonical `atomic_write_json`**: `util/atomic_io.py` is the source of truth; the four prior copies in `wifi.py`, `hotspot/ap_control.py`, `slides/job.py`, `slides/worker.py` are gone.
+- **No back-compat shims in `server.py`**: 5 `noqa: E402, F401` re-exports removed; downstream callers retargeted to canonical paths.
+- **Live-path script-router fix**: same-script language pairs (e.g. en↔de) no longer go through the kana/Latin script router.
+- **Finalize correctness**: deferred A2 step 3 applied; A5 flipped to shadow by default for safer rollouts.
+- **vLLM image consolidation**: dropped the custom `ghcr.io/bjk110/vllm-spark:turboquant` build path. ASR now runs on `scribe-vllm-asr:latest` — a 4-line Dockerfile under `containers/vllm-asr/` that layers `vllm[audio]` extras (soundfile, av, soxr) on top of stock `vllm/vllm-openai:latest`. Translation continues to run on stock `vllm/vllm-openai` via autosre. Measured on 100 English fleurs samples: identical WER (p50 0.2609, p95 0.4751 — bit-equal), p50 latency −3.9% (687→660 ms), p95 latency −19.2% (1238→1000 ms). `SCRIBE_VLLM_IMAGE` env override remains for opt-in custom builds.
+- **Python floor bumped to 3.14**: matches `pyproject.toml requires-python` and `.mise.toml`.
+
+### Removed
+- **Ad-hoc TurboQuant build flow**: `--turboquant` flag on `meeting-scribe gb10 setup`, the `build_vllm_image()` SSH+clone+docker-build helper, and the `docker_image_turboquant` field in `GB10Config`. Anyone who needs a custom vLLM image can set `SCRIBE_VLLM_IMAGE` directly.
+- **Omni unified-backend scaffolding (unshipped)**: `containers/omni/` (Dockerfile + acceptance/build pin docs), the `omni-unified` compose service under the `omni-spike` profile, the `omni_asr_url` / `omni_tts_url` / `omni_translate_url` config fields and their `_apply_env` reads, the `omni_*_url` fallthroughs in `runtime/init.py` and `routes/meeting_lifecycle.py`, the 7 contract tests under `tests/omni/`, and the Omni references in module docstrings/comments. The consolidation never reached its acceptance gates (the rows in `containers/omni/ACCEPTANCE.md` were all blank); production has been on dedicated ASR + TTS + translate containers throughout. Re-add as a separate spike branch if revived.
+- **`vllm-tts` migration target (unshipped)**: `containers/tts-vllm/` (Dockerfile + Dockerfile.spike + README), the `vllm-tts` compose service under the `vllm-omni` profile, and the `qwen3-tts-vllm.yaml` recipe + its three test references. Same pattern as Omni — the migration parallel-run never started; production runs `qwen3-tts` + `qwen3-tts-2` on the dedicated faster-qwen3-tts container.
+
 ## [1.4.0] — 2026-04-16
 
 ### Added

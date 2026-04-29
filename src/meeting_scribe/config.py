@@ -5,9 +5,9 @@ via environment variables with sensible defaults for GB10 production.
 
 Backends:
     ASR:        Qwen3-ASR-1.7B via vLLM
-    Translate:  vLLM (Qwen3.5-35B)
+    Translate:  vLLM (Qwen3.6-35B-A3B-FP8)
     Diarize:    pyannote.audio
-    TTS:        Qwen3-TTS via vLLM-Omni
+    TTS:        Qwen3-TTS via faster-qwen3-tts
 
 Profiles:
     SCRIBE_PROFILE=gb10 sets all backends to GB10 production mode.
@@ -175,14 +175,6 @@ class ServerConfig:
     # TTS — comma-separated replica pool for round-robin (see DEFAULTS).
     tts_vllm_url: str = "http://localhost:8002,http://localhost:8012"
 
-    # Omni consolidation — per-modality routing flags (empty = use the dedicated
-    # *_vllm_url above; set = route that modality to the unified Omni instance).
-    # See plan `vLLM Consolidation + Omni Spike` (Phase D). Independent so one
-    # modality can roll forward / back without disturbing the others.
-    omni_asr_url: str = ""  # SCRIBE_OMNI_ASR_URL
-    omni_tts_url: str = ""  # SCRIBE_OMNI_TTS_URL
-    omni_translate_url: str = ""  # SCRIBE_OMNI_TRANSLATE_URL
-
     # Speaker name extraction
     name_extraction_backend: str = "auto"  # "regex" | "llm" | "auto"
 
@@ -267,10 +259,13 @@ class ServerConfig:
             translate_backend=_env("SCRIBE_TRANSLATE_BACKEND", cfg.translate_backend),
             translate_vllm_url=_env("SCRIBE_TRANSLATE_VLLM_URL", cfg.translate_vllm_url),
             translate_vllm_model=_env("SCRIBE_TRANSLATE_VLLM_MODEL", cfg.translate_vllm_model),
+            translate_realtime_vllm_url=_env(
+                "SCRIBE_TRANSLATE_REALTIME_VLLM_URL", cfg.translate_realtime_vllm_url
+            ),
+            translate_offline_vllm_url=_env(
+                "SCRIBE_TRANSLATE_OFFLINE_VLLM_URL", cfg.translate_offline_vllm_url
+            ),
             tts_vllm_url=_env("SCRIBE_TTS_VLLM_URL", cfg.tts_vllm_url),
-            omni_asr_url=_env("SCRIBE_OMNI_ASR_URL", cfg.omni_asr_url),
-            omni_tts_url=_env("SCRIBE_OMNI_TTS_URL", cfg.omni_tts_url),
-            omni_translate_url=_env("SCRIBE_OMNI_TRANSLATE_URL", cfg.omni_translate_url),
             name_extraction_backend=_env("SCRIBE_NAME_EXTRACTION", cfg.name_extraction_backend),
             gb10_host=_env("SCRIBE_GB10_HOST", cfg.gb10_host),
             wifi_regdomain=_env("SCRIBE_WIFI_REGDOMAIN", cfg.wifi_regdomain),

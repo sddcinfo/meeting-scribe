@@ -25,6 +25,7 @@ from meeting_scribe.slides.convert import (
     write_text_extract,
 )
 from meeting_scribe.slides.models import SlideMeta, StageProgress, StageStatus
+from meeting_scribe.util.atomic_io import atomic_write_json
 
 logger = logging.getLogger(__name__)
 
@@ -70,22 +71,6 @@ async def check_worker_available() -> bool:
         return False
 
 
-def _atomic_write_json(path: Path, data: dict) -> None:
-    """Atomic JSON write via tmp + rename.
-
-    The tmp filename carries a uuid suffix so concurrent writers to the
-    same target path (e.g. the extract-text and render-originals phases
-    both updating meta.json in parallel) can't race on the same tmp
-    file. Without the uuid, thread A's rename completes first and
-    thread B's rename then fails with FileNotFoundError — which skipped
-    text extraction and silently disabled translation on the 6-page
-    deck observed 2026-04-20.
-    """
-    tmp = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))
-    tmp.rename(path)
-
-
 # ── Phase 1: Fast validation (< 1 second) ───────────────────
 
 
@@ -99,7 +84,7 @@ def _validate_sync(pptx_bytes: bytes, output_dir: Path) -> dict:
     meta = SlideMeta(deck_id="worker")
     meta.stage = "validating"
     meta.stages["validating"].status = StageStatus.IN_PROGRESS
-    _atomic_write_json(output_dir / "meta.json", meta.to_dict())
+    atomic_write_json(output_dir / "meta.json", meta.to_dict())
 
     result = validate_pptx_contents(input_path)
     if not result.valid:
@@ -108,12 +93,12 @@ def _validate_sync(pptx_bytes: bytes, output_dir: Path) -> dict:
             error=result.error,
         )
         meta.error = result.error
-        _atomic_write_json(output_dir / "meta.json", meta.to_dict())
+        atomic_write_json(output_dir / "meta.json", meta.to_dict())
         raise RuntimeError(result.error)
 
     meta.total_slides = result.slide_count
     meta.stages["validating"].status = StageStatus.DONE
-    _atomic_write_json(output_dir / "meta.json", meta.to_dict())
+    atomic_write_json(output_dir / "meta.json", meta.to_dict())
     logger.info("Validation passed: %d slides", result.slide_count)
     return meta.to_dict()
 
@@ -137,12 +122,12 @@ def _extract_text_sync(output_dir: Path) -> dict:
 
     meta_dict["stage"] = "extracting_text"
     meta_dict.setdefault("stages", {})["extracting_text"] = {"status": "in_progress"}
-    _atomic_write_json(meta_path, meta_dict)
+    atomic_write_json(meta_path, meta_dict)
 
     slides = extract_text_from_pptx(input_path)
     write_text_extract(slides, output_dir / "text_extract.json")
     meta_dict["stages"]["extracting_text"] = {"status": "done"}
-    _atomic_write_json(meta_path, meta_dict)
+    atomic_write_json(meta_path, meta_dict)
 
     total_runs = sum(len(s.runs) for s in slides)
     logger.info("Extracted %d text runs from %d slides", total_runs, len(slides))
@@ -165,7 +150,7 @@ def _render_originals_sync(output_dir: Path, progress_cb=None) -> dict:
 
     meta_dict["stage"] = "rendering_original"
     meta_dict.setdefault("stages", {})["rendering_original"] = {"status": "in_progress"}
-    _atomic_write_json(meta_path, meta_dict)
+    atomic_write_json(meta_path, meta_dict)
 
     original_dir = output_dir / "original"
     original_dir.mkdir(exist_ok=True)
@@ -175,7 +160,7 @@ def _render_originals_sync(output_dir: Path, progress_cb=None) -> dict:
         "status": "done",
         "progress": f"{count}/{count}",
     }
-    _atomic_write_json(meta_path, meta_dict)
+    atomic_write_json(meta_path, meta_dict)
     logger.info("Rendered %d original slides", count)
     return meta_dict
 
@@ -236,17 +221,17 @@ def _run_reinsert_sync(
 
         meta_dict["stage"] = "reinserting"
         meta_dict.setdefault("stages", {})["reinserting"] = {"status": "in_progress"}
-        _atomic_write_json(meta_path, meta_dict)
+        atomic_write_json(meta_path, meta_dict)
 
         translated_pptx = output_dir / "translated.pptx"
         reinsert_translated_text(input_path, translations, translated_pptx)
         meta_dict["stages"]["reinserting"] = {"status": "done"}
-        _atomic_write_json(meta_path, meta_dict)
+        atomic_write_json(meta_path, meta_dict)
         logger.info("Reinserted translations into PPTX")
 
         meta_dict["stage"] = "rendering_translated"
         meta_dict["stages"]["rendering_translated"] = {"status": "in_progress"}
-        _atomic_write_json(meta_path, meta_dict)
+        atomic_write_json(meta_path, meta_dict)
 
         translated_dir = output_dir / "translated"
         translated_dir.mkdir(exist_ok=True)
@@ -262,7 +247,7 @@ def _run_reinsert_sync(
 
         meta_dict["completed_at"] = datetime.now(UTC).isoformat()
         meta_dict["stage"] = "complete"
-        _atomic_write_json(meta_path, meta_dict)
+        atomic_write_json(meta_path, meta_dict)
         logger.info("Rendered %d translated slides", count)
 
         return meta_dict
@@ -285,9 +270,7 @@ async def run_reinsert(
     """
     loop = asyncio.get_running_loop()
     cb = _make_thread_safe_progress(loop, progress_broadcast)
-    return await asyncio.to_thread(
-        _run_reinsert_sync, pptx_bytes, translations, output_dir, cb
-    )
+    return await asyncio.to_thread(_run_reinsert_sync, pptx_bytes, translations, output_dir, cb)
 
 
 # ── Express-lane partial render (first 1-2 translated slides) ─

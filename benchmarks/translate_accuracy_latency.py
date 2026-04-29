@@ -3,6 +3,7 @@
 Fixture: <fixture-dir>/translate/<id>.json with keys
   {"source": str, "source_lang": "ja"|"en", "target_lang": "ja"|"en", "reference": str}
 """
+
 from __future__ import annotations
 
 import argparse

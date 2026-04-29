@@ -4,8 +4,8 @@ Meeting-scribe used to have two parallel launch systems:
 
   1. ``docker-compose.gb10.yml`` — compose file with container_names,
      volumes, ports, labels for willfarrell/autoheal, profiles for
-     gated services (``omni-spike``), and a single source of truth
-     for the stack topology.
+     gated services (e.g. ``bench`` for benchmark sidecars), and a
+     single source of truth for the stack topology.
 
   2. ``src/meeting_scribe/recipes/*.yaml`` + ``infra/containers.py`` —
      a parallel path that reimplemented half of the above by reading
@@ -26,13 +26,14 @@ The refactor (2026-04-14):
     calls, exposing ``compose_up``, ``compose_down``, ``compose_restart``,
     and ``compose_services`` for the CLI to call.
   - ``infra/containers.py`` is now limited to docker-level helpers
-    (``list_containers``, ``pull_models``, ``build_vllm_image``) used
-    for pre-flight tasks before compose runs.
+    (``list_containers``, ``pull_models``) used for pre-flight tasks
+    before compose runs.
   - The recipe files stay useful for:
       - pull-models (iterates recipe model_ids)
       - test assertions (port expectations, model_id stability)
     but are NOT used by the runtime launch path.
 """
+
 from __future__ import annotations
 
 import logging
@@ -60,9 +61,7 @@ def _run(cmd: list[str], timeout: int) -> None:
     )
     if result.returncode != 0:
         stderr = result.stderr.strip() or result.stdout.strip()
-        raise RuntimeError(
-            f"docker compose failed (rc={result.returncode}): {stderr}"
-        )
+        raise RuntimeError(f"docker compose failed (rc={result.returncode}): {stderr}")
 
 
 def compose_up(
@@ -73,8 +72,8 @@ def compose_up(
     """Bring up the stack (detached). Optional service + profile filters.
 
     Without filters, starts every service in the compose file EXCEPT
-    those gated behind a profile (e.g. ``omni-unified`` under the
-    ``omni-spike`` profile stays off until explicitly requested).
+    those gated behind a profile (e.g. ``funcosyvoice`` under the
+    ``bench`` profile stays off until explicitly requested).
 
     Args:
         pull: Docker compose pull policy (``"never"``, ``"always"``,
@@ -137,7 +136,10 @@ def compose_services() -> list[str]:
     (including profile-gated ones)."""
     result = subprocess.run(
         _compose_cmd("config", "--services"),
-        capture_output=True, text=True, check=False, timeout=30,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
     )
     if result.returncode != 0:
         return []

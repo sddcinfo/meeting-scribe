@@ -20,6 +20,7 @@ State machine:
 
 from __future__ import annotations
 
+import json
 import logging
 import multiprocessing
 import multiprocessing.connection
@@ -40,9 +41,50 @@ _TRANSITIONS: dict[MeetingState, set[MeetingState]] = {
     MeetingState.CREATED: {MeetingState.RECORDING, MeetingState.INTERRUPTED},
     MeetingState.RECORDING: {MeetingState.FINALIZING, MeetingState.INTERRUPTED},
     MeetingState.FINALIZING: {MeetingState.COMPLETE, MeetingState.INTERRUPTED},
-    MeetingState.COMPLETE: set(),
+    MeetingState.COMPLETE: {MeetingState.REPROCESSING},
     MeetingState.INTERRUPTED: {MeetingState.RECORDING},  # resume
+    MeetingState.REPROCESSING: {MeetingState.COMPLETE},  # reprocess done / crash recovery
 }
+
+
+def _is_reprocess_active(meeting_dir: Path) -> bool:
+    """True if ``meeting_dir/.reprocess.lock`` exists AND names a
+    still-live process.
+
+    Used by ``MeetingStorage.recover_interrupted`` to distinguish a
+    crashed reprocess (recoverable) from one running right now in
+    another process (must not be touched). The lock is written by
+    ``reprocess_meeting`` at step 0 and removed at step 7.
+
+    Returns False on any parse error or when the PID is dead —
+    treating ambiguity as "not active" is safe because the worst
+    case is a recovery that races a live reprocess, which is the
+    status quo we are trying to fix. A false negative here is no
+    worse than today; a false positive (thinking it's active when
+    it isn't) would permanently strand the meeting in REPROCESSING.
+    """
+    lock = meeting_dir / ".reprocess.lock"
+    if not lock.exists():
+        return False
+    try:
+        payload = json.loads(lock.read_text())
+        pid = int(payload.get("pid", -1))
+    except (ValueError, OSError, json.JSONDecodeError):
+        return False
+    if pid <= 0:
+        return False
+    try:
+        # signal 0 is the POSIX "is this PID alive" probe — no
+        # signal delivered, just an errno check.
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        # Another user's PID — treat as alive (conservative). On a
+        # single-user dev box this branch shouldn't fire; on a multi-
+        # tenant host, better to strand the meeting than race.
+        return True
+    return True
 
 
 class AudioWriter:
@@ -214,7 +256,9 @@ class AudioWriterProcess:
         # audio-file position, not a post-restart zero. Without this,
         # ASR timestamps after a meeting resume collide with the
         # original transcript at t=0.
-        self._total_written = os.path.getsize(str(path)) if (append and os.path.exists(str(path))) else 0
+        self._total_written = (
+            os.path.getsize(str(path)) if (append and os.path.exists(str(path))) else 0
+        )
         self._last_elapsed_ms = 0
 
     def start(self) -> None:
@@ -507,6 +551,38 @@ class MeetingStorage:
                     "Recovered meeting %s: marked interrupted",
                     meta.meeting_id,
                 )
+            elif meta.state == MeetingState.REPROCESSING:
+                # REPROCESSING on disk has two interpretations:
+                #   (a) a prior reprocess was killed mid-flight (e.g.
+                #       systemd stop timeout) — we want to recover it
+                #       back to COMPLETE so the meeting is viewable.
+                #   (b) a reprocess is ACTIVELY RUNNING right now in
+                #       another process (the CLI ``full-reprocess``
+                #       path, or a second server). Flipping state
+                #       here would race the live reprocess and crash
+                #       its step-7 COMPLETE transition.
+                #
+                # The lock file at ``.reprocess.lock`` distinguishes
+                # them: reprocess_meeting writes it before step 0's
+                # state flip and removes it after step 7's. A lock
+                # whose PID is still alive means (b); a missing or
+                # stale-PID lock means (a). Only (a) is recovered.
+                if _is_reprocess_active(meeting_dir):
+                    logger.info(
+                        "Meeting %s: reprocess in progress (lock held) — "
+                        "leaving state=reprocessing, not recovering",
+                        meta.meeting_id,
+                    )
+                    continue
+                self.transition_state(meta.meeting_id, MeetingState.COMPLETE)
+                # Clean up the stale lock so a subsequent recovery pass
+                # doesn't trip the liveness check against a dead PID.
+                (meeting_dir / ".reprocess.lock").unlink(missing_ok=True)
+                count += 1
+                logger.info(
+                    "Recovered meeting %s: reprocess was killed; state -> complete",
+                    meta.meeting_id,
+                )
 
             # Delete any meeting (interrupted, complete, or just-recovered)
             # that has no final transcript events. These are the
@@ -731,11 +807,7 @@ class MeetingStorage:
         # the source text and are strictly more informative. Segments
         # without any translation keep their ASR-only entry.
         segments_with_translation = {sid for (sid, target) in seen if target}
-        surviving = [
-            b
-            for b in seen
-            if not (b[1] == "" and b[0] in segments_with_translation)
-        ]
+        surviving = [b for b in seen if not (b[1] == "" and b[0] in segments_with_translation)]
         surviving.sort(key=lambda b: (segment_order[b[0]], bucket_order[b]))
         deduped = [seen[b] for b in surviving]
         if len(deduped) > max_lines:

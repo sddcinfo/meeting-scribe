@@ -58,23 +58,23 @@ fi
 
 # ── 3. Python + venv ──────────────────────────────────────────────
 # Prefer mise if available (it pins Python per .tool-versions / mise.toml).
-# Fall back to system python3 — but guard for < 3.11 since scribe needs 3.11+.
+# Fall back to system python3 — but guard for < 3.14 since scribe needs 3.14+.
 if command -v mise >/dev/null 2>&1 && [[ -f mise.toml || -f .tool-versions ]]; then
     echo "[bootstrap] installing toolchain via mise"
     mise install
     PYBIN="$(mise exec -- which python)"
 else
     if ! command -v python3 >/dev/null 2>&1; then
-        echo "bootstrap.sh: no python3 on PATH. Install Python 3.11+ first." >&2
+        echo "bootstrap.sh: no python3 on PATH. Install Python 3.14+ first." >&2
         exit 1
     fi
     PYBIN="$(command -v python3)"
 fi
 
-# Hard floor: 3.11 (scribe uses 3.11+ syntax + deps). Fail loudly otherwise.
-"$PYBIN" - <<'PY' || { echo "bootstrap.sh: Python 3.11+ required" >&2; exit 1; }
+# Hard floor: 3.14 (matches pyproject.toml requires-python). Fail loudly otherwise.
+"$PYBIN" - <<'PY' || { echo "bootstrap.sh: Python 3.14+ required" >&2; exit 1; }
 import sys
-sys.exit(0 if sys.version_info >= (3, 11) else 1)
+sys.exit(0 if sys.version_info >= (3, 14) else 1)
 PY
 
 if [[ ! -d .venv ]]; then

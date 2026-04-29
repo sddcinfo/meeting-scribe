@@ -26,22 +26,102 @@ from meeting_scribe.speaker.romanization import romanize_name
 # want to treat as a person's name. Mostly English filler + the closed-class
 # pronouns / copulas of the supported Romance / Germanic languages.
 _NAME_STOPWORDS_LATIN: set[str] = {
-    "the", "a", "an", "it", "so", "just", "very", "really", "here", "there",
-    "not", "going", "ready", "happy", "sorry", "sure", "glad", "excited",
-    "able", "trying", "looking", "working", "coming", "leaving", "done",
-    "fine", "good", "great", "well", "okay", "back", "still", "also", "about",
-    "from", "with", "your", "this", "that", "what", "when", "all", "new",
-    "old", "big", "now", "like", "only", "yes", "no", "hi", "hello",
+    "the",
+    "a",
+    "an",
+    "it",
+    "so",
+    "just",
+    "very",
+    "really",
+    "here",
+    "there",
+    "not",
+    "going",
+    "ready",
+    "happy",
+    "sorry",
+    "sure",
+    "glad",
+    "excited",
+    "able",
+    "trying",
+    "looking",
+    "working",
+    "coming",
+    "leaving",
+    "done",
+    "fine",
+    "good",
+    "great",
+    "well",
+    "okay",
+    "back",
+    "still",
+    "also",
+    "about",
+    "from",
+    "with",
+    "your",
+    "this",
+    "that",
+    "what",
+    "when",
+    "all",
+    "new",
+    "old",
+    "big",
+    "now",
+    "like",
+    "only",
+    "yes",
+    "no",
+    "hi",
+    "hello",
     # Romance / Germanic copulas + pronouns
-    "soy", "es", "yo", "tu", "el", "la",
-    "je", "il", "elle", "moi", "toi", "suis", "appelle", "nom",
-    "ich", "bin", "mein", "name", "ist", "heisse", "heiße",
-    "io", "sono", "mi", "chiamo", "nome",
-    "eu", "sou", "meu", "chamo",
-    "ya", "menya", "zovut",
+    "soy",
+    "es",
+    "yo",
+    "tu",
+    "el",
+    "la",
+    "je",
+    "il",
+    "elle",
+    "moi",
+    "toi",
+    "suis",
+    "appelle",
+    "nom",
+    "ich",
+    "bin",
+    "mein",
+    "name",
+    "ist",
+    "heisse",
+    "heiße",
+    "io",
+    "sono",
+    "mi",
+    "chiamo",
+    "nome",
+    "eu",
+    "sou",
+    "meu",
+    "chamo",
+    "ya",
+    "menya",
+    "zovut",
     # Japanese romanized particles / copulas (ASR may romanize instead of using kana)
-    "desu", "watashi", "watashiwa", "boku", "ore", "namae",
-    "moushimasu", "iimasu", "kochira",
+    "desu",
+    "watashi",
+    "watashiwa",
+    "boku",
+    "ore",
+    "namae",
+    "moushimasu",
+    "iimasu",
+    "kochira",
 }
 
 # ── Capture classes ───────────────────────────────────────────────────────────
@@ -147,8 +227,69 @@ _BARE_TOKEN_RE = re.compile(
     r"[A-Za-z\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff\u0410-\u044f\uac00-\ud7af]+"
 )
 
-_JA_PARTICLES = ("の", "に", "を", "は", "が", "で", "と", "も",
-                 "から", "まで", "より", "です", "ます")
+_JA_PARTICLES = (
+    "の",
+    "に",
+    "を",
+    "は",
+    "が",
+    "で",
+    "と",
+    "も",
+    "から",
+    "まで",
+    "より",
+    "です",
+    "ます",
+)
+
+# Filler / interjection tokens that ASR emits when the buffer contains
+# background noise, throat-clearing, or an "umm" / "ah" sound. These
+# pass the script class check for CJK but are never someone's name.
+# Kept narrow so real short nicknames (さくら, 健, 莉) still enroll;
+# the blocklist only targets the specific filler words we've seen the
+# enrollment flow capture instead of a real name.
+_CJK_FILLER_TOKENS: frozenset[str] = frozenset(
+    {
+        # Chinese interjections (oh / ah / eh / uh)
+        "啊",
+        "哦",
+        "哎",
+        "嗯",
+        "呃",
+        "唉",
+        "哈",
+        "噢",
+        "欸",
+        # Hiragana fillers
+        "あ",
+        "あー",
+        "あの",
+        "あのー",
+        "え",
+        "えー",
+        "えっと",
+        "えっとー",
+        "うん",
+        "うーん",
+        "うーんと",
+        "そう",
+        "はい",
+        "はーい",
+        "ね",
+        "ねえ",
+        "まあ",
+        "まぁ",
+        "どう",
+        "ほう",
+        "ふむ",
+        # Katakana variants
+        "アー",
+        "エー",
+        "ウン",
+        "ウーン",
+    }
+)
 
 
 def _clean_name(raw: str) -> str | None:
@@ -209,8 +350,19 @@ def extract_name(text: str) -> str | None:
     if 1 <= len(bare_tokens) <= 4 and len({t.lower() for t in bare_tokens}) == 1:
         tok = bare_tokens[0]
         first = tok[0]
+        # CJK (Han + kana): require at least 2 characters AND reject
+        # known filler interjections. Before this gate, a single "啊"
+        # or kana fillers passed as a bare name because the script
+        # class alone let them through; the enrollment flow then
+        # stored a garbage voiceprint under that label. Real short
+        # CJK given names are overwhelmingly 2+ characters.
         if "\u3040" <= first <= "\u9fff":
-            if 1 <= len(tok) <= 6 and not any(p in tok for p in _JA_PARTICLES):
+            if (
+                2 <= len(tok) <= 6
+                and len(set(tok)) >= 2
+                and tok not in _CJK_FILLER_TOKENS
+                and not any(p in tok for p in _JA_PARTICLES)
+            ):
                 return romanize_name(tok)
         elif "\uac00" <= first <= "\ud7af":
             if 2 <= len(tok) <= 4:

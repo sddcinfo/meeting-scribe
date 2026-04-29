@@ -1,0 +1,59 @@
+{
+  "url": "http://localhost:8003",
+  "model": "Qwen/Qwen3-ASR-1.7B",
+  "overall": {
+    "samples": 5,
+    "metric": "wer",
+    "p50_error": 0.3333333333333333,
+    "p95_error": null,
+    "p50_total_ms": 563.4356209775433,
+    "p95_total_ms": null
+  },
+  "per_language": {
+    "en": {
+      "samples": 5,
+      "metric": "wer",
+      "p50_error": 0.3333333333333333,
+      "p95_error": null,
+      "p50_total_ms": 563.4356209775433,
+      "p95_total_ms": null
+    }
+  },
+  "per_sample": [
+    {
+      "id": "fleurs_en_us_000",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.3333333333333333,
+      "total_ms": 48655.88117297739
+    },
+    {
+      "id": "fleurs_en_us_001",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.3333333333333333,
+      "total_ms": 506.6314520081505
+    },
+    {
+      "id": "fleurs_en_us_002",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.4375,
+      "total_ms": 516.795708972495
+    },
+    {
+      "id": "fleurs_en_us_003",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.1875,
+      "total_ms": 569.586616999004
+    },
+    {
+      "id": "fleurs_en_us_004",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.375,
+      "total_ms": 563.4356209775433
+    }
+  ]
+}

@@ -45,6 +45,18 @@ export class SegmentStore {
 
   ingest(event) {
     const { segment_id, revision } = event;
+    // Non-transcript control messages (`speaker_pulse`, `seat_update`,
+    // `room_layout_update`, `speaker_remap`, `summary_regenerated`,
+    // `meeting_warning`, `audio_drift`, `tts_audio`, …) ride the same
+    // WebSocket as transcript events and reach popout viewers via the
+    // catch-all branch in the view-WS handler. They have no segment_id,
+    // so without this guard they fire listeners with segment_id=undefined
+    // and CompactGridRenderer interprets the falsy id as "store cleared"
+    // → wipes the popout transcript every time speaker_pulse fires
+    // (every 200 ms during a meeting). The popout would then only ever
+    // show the sliver of utterances that landed between pulses.
+    // Explicit clears go through `clear()` and bypass this method.
+    if (!segment_id) return;
     const existing = this.segments.get(segment_id);
 
     let merged = existing ? { ...existing } : null;
@@ -150,13 +162,31 @@ export class SegmentStore {
     const isNew = !existing;
     this.segments.set(segment_id, merged);
     if (isNew) this.order.push(segment_id);
-    for (const fn of this._listeners) fn(segment_id, merged, isNew);
+    for (const fn of this._listeners) {
+      // Each listener is isolated — one throw must NOT abort the rest of
+      // the fan-out. Without this, a buggy/wrong-context listener (e.g.
+      // the popout-mode `segment-count` updater that throws because
+      // `#segment-count` isn't rendered in the popout DOM) silently
+      // prevented every subsequent listener — including the
+      // CompactGridRenderer subscription — from ever running. Net effect:
+      // popout's transcript stayed permanently empty even though events
+      // WERE landing in the store.
+      try { fn(segment_id, merged, isNew); }
+      catch (e) {
+        try { console.error('SegmentStore listener threw:', e); } catch {}
+      }
+    }
   }
 
   clear() {
     this.segments.clear();
     this.order = [];
-    for (const fn of this._listeners) fn(null, null, false);
+    for (const fn of this._listeners) {
+      try { fn(null, null, false); }
+      catch (e) {
+        try { console.error('SegmentStore listener (clear) threw:', e); } catch {}
+      }
+    }
   }
 
   get count() {

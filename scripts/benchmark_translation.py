@@ -27,6 +27,7 @@ import statistics
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -103,7 +104,9 @@ class EndpointReport:
             "count": len(subset),
             "latency_mean_ms": statistics.mean(latencies),
             "latency_median_ms": statistics.median(latencies),
-            "latency_p95_ms": sorted(latencies)[int(len(latencies) * 0.95)] if len(latencies) >= 2 else latencies[-1],
+            "latency_p95_ms": sorted(latencies)[int(len(latencies) * 0.95)]
+            if len(latencies) >= 2
+            else latencies[-1],
             "latency_min_ms": min(latencies),
             "latency_max_ms": max(latencies),
             "throughput_seg_per_s": len(subset) / total_time_s if total_time_s > 0 else 0,
@@ -128,7 +131,7 @@ def load_segments(meeting_id: str, language: str, max_samples: int) -> list[Segm
         print(f"  WARNING: Journal not found: {journal_path}")
         return []
 
-    segments = []
+    segments: list[Segment] = []
     for line in journal_path.read_text().splitlines():
         if len(segments) >= max_samples:
             break
@@ -269,7 +272,7 @@ def run_endpoint(base_url: str, segments: list[Segment]) -> EndpointReport:
             print(
                 f"  [{i:3d}/{total}] {src}->{tgt} {result.latency_ms:7.0f}ms "
                 f"({result.input_chars:3d}c->{result.output_chars:3d}c) "
-                f"{status}  \"{preview}...\""
+                f'{status}  "{preview}..."'
             )
 
     return report
@@ -281,12 +284,14 @@ def run_endpoint(base_url: str, segments: list[Segment]) -> EndpointReport:
 def print_report(report: EndpointReport, label: str = "") -> None:
     """Print stats for a single endpoint."""
     header = f"{label}: {report.model_name}" if label else report.model_name
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  {header}")
     print(f"  URL: {report.url}")
-    print(f"  Total: {len(report.results)} segments, "
-          f"{len(report.successful)} OK, {len(report.errors)} errors")
-    print(f"{'='*70}")
+    print(
+        f"  Total: {len(report.results)} segments, "
+        f"{len(report.successful)} OK, {len(report.errors)} errors"
+    )
+    print(f"{'=' * 70}")
 
     for direction in ("en->ja", "ja->en"):
         stats = report.stats_for(direction)
@@ -306,9 +311,9 @@ def print_report(report: EndpointReport, label: str = "") -> None:
 
 def print_comparison(report_a: EndpointReport, report_b: EndpointReport) -> None:
     """Print a side-by-side comparison of two endpoints."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("  COMPARISON")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"  A: {report_a.model_name} ({report_a.url})")
     print(f"  B: {report_b.model_name} ({report_b.url})")
 
@@ -320,7 +325,7 @@ def print_comparison(report_a: EndpointReport, report_b: EndpointReport) -> None
 
         print(f"\n  {direction.upper()}:")
         print(f"    {'Metric':<25} {'A':>12} {'B':>12} {'Delta':>12}")
-        print(f"    {'-'*25} {'-'*12} {'-'*12} {'-'*12}")
+        print(f"    {'-' * 25} {'-' * 12} {'-' * 12} {'-' * 12}")
 
         comparisons = [
             ("Latency mean (ms)", "latency_mean_ms", True),
@@ -349,8 +354,12 @@ def print_comparison(report_a: EndpointReport, report_b: EndpointReport) -> None
     print("\n  SAMPLE TRANSLATIONS (first 3 per direction):")
     for direction in ("en->ja", "ja->en"):
         src, tgt = direction.split("->")
-        results_a = [r for r in report_a.successful if r.source_lang == src and r.target_lang == tgt]
-        results_b = [r for r in report_b.successful if r.source_lang == src and r.target_lang == tgt]
+        results_a = [
+            r for r in report_a.successful if r.source_lang == src and r.target_lang == tgt
+        ]
+        results_b = [
+            r for r in report_b.successful if r.source_lang == src and r.target_lang == tgt
+        ]
 
         print(f"\n    {direction.upper()}:")
         for i in range(min(3, len(results_a), len(results_b))):
@@ -364,12 +373,12 @@ def print_comparison(report_a: EndpointReport, report_b: EndpointReport) -> None
 def save_results(reports: list[EndpointReport], output_path: Path) -> None:
     """Save benchmark results as JSON."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    data = {
+    data: dict[str, Any] = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "endpoints": [],
     }
     for report in reports:
-        endpoint_data = {
+        endpoint_data: dict[str, Any] = {
             "url": report.url,
             "model_name": report.model_name,
             "stats": {},
@@ -379,21 +388,22 @@ def save_results(reports: list[EndpointReport], output_path: Path) -> None:
             stats = report.stats_for(direction)
             if stats:
                 endpoint_data["stats"][direction] = {
-                    k: round(v, 2) if isinstance(v, float) else v
-                    for k, v in stats.items()
+                    k: round(v, 2) if isinstance(v, float) else v for k, v in stats.items()
                 }
         for r in report.results:
-            endpoint_data["results"].append({
-                "segment_id": r.segment.segment_id,
-                "source_lang": r.source_lang,
-                "target_lang": r.target_lang,
-                "source_text": r.segment.text,
-                "translated_text": r.translated_text,
-                "latency_ms": round(r.latency_ms, 1),
-                "input_chars": r.input_chars,
-                "output_chars": r.output_chars,
-                "error": r.error,
-            })
+            endpoint_data["results"].append(
+                {
+                    "segment_id": r.segment.segment_id,
+                    "source_lang": r.source_lang,
+                    "target_lang": r.target_lang,
+                    "source_text": r.segment.text,
+                    "translated_text": r.translated_text,
+                    "latency_ms": round(r.latency_ms, 1),
+                    "input_chars": r.input_chars,
+                    "output_chars": r.output_chars,
+                    "error": r.error,
+                }
+            )
         data["endpoints"].append(endpoint_data)
 
     output_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")

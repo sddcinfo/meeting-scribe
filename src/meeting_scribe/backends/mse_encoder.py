@@ -12,8 +12,7 @@ produces 16 kHz) and emits:
 
 The constants ``WINNING_MUX_FLAGS`` and ``ACCUMULATION_THRESHOLD_MS`` were
 empirically determined by the Phase 0 Spike B probe on 2026-04-15 against
-PyAV 17.0.0 + bundled ffmpeg. See ``/home/bradlay/.claude/plans/peaceful-
-questing-pudding.md`` Phase 1 section for the full derivation.
+PyAV 17.0.0 + bundled ffmpeg.
 
 All cadence variability lives inside this class. Callers just call
 ``encode()`` and send whatever non-empty bytes come back. Empty returns

@@ -83,26 +83,50 @@ _ASR_NAME_TO_CODE: dict[str, str] = {
     "polish": "pl",
     "ukrainian": "uk",
     # ISO 639-1 and 639-2 codes (including bibliographic variants)
-    "en": "en", "eng": "en",
-    "zh": "zh", "zho": "zh", "cmn": "zh", "yue": "zh",
-    "ja": "ja", "jpn": "ja",
-    "ko": "ko", "kor": "ko",
-    "fr": "fr", "fra": "fr",
-    "de": "de", "deu": "de",
-    "es": "es", "spa": "es",
-    "it": "it", "ita": "it",
-    "pt": "pt", "por": "pt",
-    "ru": "ru", "rus": "ru",
-    "nl": "nl", "nld": "nl", "dut": "nl",
-    "ar": "ar", "ara": "ar",
-    "th": "th", "tha": "th",
-    "vi": "vi", "vie": "vi",
-    "id": "id", "ind": "id",
-    "ms": "ms", "msa": "ms", "may": "ms",
-    "hi": "hi", "hin": "hi",
-    "tr": "tr", "tur": "tr",
-    "pl": "pl", "pol": "pl",
-    "uk": "uk", "ukr": "uk",
+    "en": "en",
+    "eng": "en",
+    "zh": "zh",
+    "zho": "zh",
+    "cmn": "zh",
+    "yue": "zh",
+    "ja": "ja",
+    "jpn": "ja",
+    "ko": "ko",
+    "kor": "ko",
+    "fr": "fr",
+    "fra": "fr",
+    "de": "de",
+    "deu": "de",
+    "es": "es",
+    "spa": "es",
+    "it": "it",
+    "ita": "it",
+    "pt": "pt",
+    "por": "pt",
+    "ru": "ru",
+    "rus": "ru",
+    "nl": "nl",
+    "nld": "nl",
+    "dut": "nl",
+    "ar": "ar",
+    "ara": "ar",
+    "th": "th",
+    "tha": "th",
+    "vi": "vi",
+    "vie": "vi",
+    "id": "id",
+    "ind": "id",
+    "ms": "ms",
+    "msa": "ms",
+    "may": "ms",
+    "hi": "hi",
+    "hin": "hi",
+    "tr": "tr",
+    "tur": "tr",
+    "pl": "pl",
+    "pol": "pl",
+    "uk": "uk",
+    "ukr": "uk",
 }
 
 
@@ -317,9 +341,7 @@ def get_translation_prompt(
                 f"re-translate):\n\n{ctx_body}\n\n"
             )
     if exemplars:
-        body = "\n".join(
-            f"{source_name}: {src}\n{target_name}: {tgt}" for src, tgt in exemplars
-        )
+        body = "\n".join(f"{source_name}: {src}\n{target_name}: {tgt}" for src, tgt in exemplars)
         return (
             f"You are translating live bilingual meeting utterances.  "
             f"Here are two translated examples:\n\n{body}\n\n"

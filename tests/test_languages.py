@@ -531,9 +531,9 @@ class TestParseLanguagesLenient:
         assert result == list(DEFAULT_LANGUAGE_PAIR)
         # Loud-warning contract: the bad value and the fallback must be
         # named in the log so the operator can find the typo in prod.
-        assert any(
-            "not_a_pair" in rec.message for rec in caplog.records
-        ), "Lenient fallback must name the rejected value in the warning"
+        assert any("not_a_pair" in rec.message for rec in caplog.records), (
+            "Lenient fallback must name the rejected value in the warning"
+        )
 
     def test_duplicate_pair_falls_back(self, caplog):
         import logging

@@ -124,12 +124,18 @@ class SlideViewer {
   }
 
   async _handleUpload(file) {
+    // Prefer the styled alertDialog primitive (exposed on window by
+    // scribe-app.js). Fall back to window.alert only when slide-viewer
+    // is loaded before scribe-app, so we never silently swallow an
+    // upload rejection.
+    const notify = (title, msg) =>
+      (window.alertDialog ? window.alertDialog(title, msg) : Promise.resolve(window.alert(`${title}\n\n${msg}`)));
     if (!file.name.toLowerCase().endsWith('.pptx')) {
-      alert('Only .pptx files are accepted');
+      await notify('Unsupported file', 'Only .pptx files are accepted.');
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      alert('File too large (max 50 MB)');
+      await notify('File too large', 'Maximum upload size is 50 MB.');
       return;
     }
 

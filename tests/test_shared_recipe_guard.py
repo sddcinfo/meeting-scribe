@@ -22,6 +22,7 @@ Context (2026-04-14 OOM):
 
     These tests keep that fix from rotting.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -38,6 +39,7 @@ def test_translation_recipe_still_marked_shared():
     every downstream check based on that sentinel (docs, test
     assertions, future automation) stops working. Catch it here."""
     from meeting_scribe.recipes import load_recipe
+
     recipe = load_recipe("qwen3.5-35b-translation")
     assert recipe.get("mode") == "shared", (
         "qwen3.5-35b-translation.yaml must set `mode: shared` — "
@@ -50,6 +52,7 @@ def test_start_container_is_removed():
     """``infra/containers.start_container`` was deleted in the compose
     refactor. If it comes back, someone has reverted the refactor."""
     from meeting_scribe.infra import containers
+
     assert not hasattr(containers, "start_container"), (
         "start_container was removed 2026-04-14 as part of the compose "
         "refactor. Use meeting_scribe.infra.compose.compose_up instead."
@@ -92,26 +95,18 @@ def test_compose_has_no_translation_service():
     )
 
 
-def test_tts_recipe_model_key_disambiguates_from_legacy():
-    """The ``qwen3-tts-vllm.yaml`` recipe uses ``model_key: tts-vllm``
-    (not ``tts``) because docker-compose.gb10.yml already owns the
-    name ``scribe-tts`` via the legacy ``qwen3-tts`` service. Using
-    ``tts`` as the model_key would have created a naming collision
-    next time the refactor comes back to the recipe runtime path."""
-    from meeting_scribe.recipes import load_recipe
-    recipe = load_recipe("qwen3-tts-vllm")
-    assert recipe.get("model_key") == "tts-vllm", (
-        "qwen3-tts-vllm.yaml must use model_key='tts-vllm' to avoid "
-        "colliding with the legacy scribe-tts container"
-    )
-
-
 def test_compose_module_exposes_wrapper_api():
     """The new compose wrapper module provides the CLI's primitives.
     If any of them disappears, gb10_up/down/restart-container break."""
     from meeting_scribe.infra import compose
-    for attr in ("compose_up", "compose_down", "compose_restart",
-                 "compose_services", "COMPOSE_FILE"):
+
+    for attr in (
+        "compose_up",
+        "compose_down",
+        "compose_restart",
+        "compose_services",
+        "COMPOSE_FILE",
+    ):
         assert hasattr(compose, attr), f"compose module missing {attr}"
     assert compose.COMPOSE_FILE.name == "docker-compose.gb10.yml"
 

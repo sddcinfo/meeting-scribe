@@ -217,7 +217,9 @@ class SSHRunner:
     def docker_start(self, container_id: str) -> bool:
         """Start an existing (stopped) container."""
         result = self.run(
-            ["docker", "start", container_id], timeout=30, check=False,
+            ["docker", "start", container_id],
+            timeout=30,
+            check=False,
         )
         return result.returncode == 0
 

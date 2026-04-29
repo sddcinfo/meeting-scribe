@@ -1,8 +1,35 @@
-"""pyannote.audio speaker diarization server.
+"""pyannote.audio 4.x speaker diarization server (community-1 pipeline).
 
-Wraps pyannote's pretrained pipeline in a FastAPI server that matches
-the same HTTP API as the NeMo Sortformer container (/health, /v1/diarize).
-This allows meeting-scribe's SortformerBackend to work unchanged.
+FastAPI wrapper around the ``pyannote/speaker-diarization-community-1``
+pretrained pipeline.  community-1 promoted to production 2026-04-28
+after Track C of plans/stateful-marinating-whistle.md cleared every
+gate (100 % time-weighted overlap resolution on a 40-min 4-speaker
+meeting, +2.1 % wall-clock vs the prior 3.1 baseline).
+
+Response shape (``POST /v1/diarize``)::
+
+    {
+      "segments": [             # standard pyannote segmentation;
+        {                       # may have ≥ 2 speakers active in
+          "speaker_id": int,    # the same time window when there's
+          "start": float,       # cross-talk
+          "end": float,
+          "confidence": float,
+          "embedding": [float]? # 256-d WeSpeaker embedding when
+        }                       # the pipeline returns one
+      ],
+      "exclusive_segments": [   # community-1 single-speaker timeline:
+        {                       # every frame is assigned to at most
+          "speaker_id": int,    # ONE speaker.  This is the source of
+          "start": float,       # truth for STT-timestamp reconciliation;
+          "end": float,         # ``segments`` is kept for cross-talk
+          "confidence": float   # detection only.
+        }
+      ],
+      "num_speakers": int,
+      "audio_duration_s": float,
+      "processing_ms": int
+    }
 
 Runs on NVIDIA GB10 (aarch64, Blackwell) with SM_121 patches applied.
 """
@@ -19,7 +46,6 @@ import torch
 from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
-from pyannote.core import Annotation
 
 # Process-level lock — only ONE diarize call can hold the GPU at a
 # time. Sortformer's internal CUDA streams are not thread-safe and
@@ -39,6 +65,16 @@ pipeline = None
 SAMPLE_RATE = 16000
 MAX_SPEAKERS = int(os.environ.get("DIARIZE_MAX_SPEAKERS", "4"))
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+# Pretrained pipeline id — community-1 is production since 2026-04-28.
+# The env var override exists only as a roll-back lever (operations
+# safety knob) and as a debugging escape hatch; production deployments
+# do not set it.  Optional ``DIARIZE_PIPELINE_REVISION`` pins to a
+# specific HF commit SHA for reproducible bench runs.
+DIARIZE_PIPELINE_ID = os.environ.get(
+    "DIARIZE_PIPELINE_ID", "pyannote/speaker-diarization-community-1"
+)
+DIARIZE_PIPELINE_REVISION = os.environ.get("DIARIZE_PIPELINE_REVISION", "") or None
 
 
 def _apply_blackwell_patches():
@@ -110,11 +146,12 @@ async def startup():
     # Load pyannote speaker diarization pipeline
     from pyannote.audio import Pipeline
 
-    logger.info("Loading pyannote speaker-diarization-3.1...")
-    pipeline = Pipeline.from_pretrained(
-        "pyannote/speaker-diarization-3.1",
-        token=HF_TOKEN or None,
-    )
+    rev_label = f" @ revision={DIARIZE_PIPELINE_REVISION[:8]}" if DIARIZE_PIPELINE_REVISION else ""
+    logger.info("Loading %s%s ...", DIARIZE_PIPELINE_ID, rev_label)
+    load_kwargs: dict = {"token": HF_TOKEN or None}
+    if DIARIZE_PIPELINE_REVISION:
+        load_kwargs["revision"] = DIARIZE_PIPELINE_REVISION
+    pipeline = Pipeline.from_pretrained(DIARIZE_PIPELINE_ID, **load_kwargs)
     pipeline.to(torch.device(device))
     logger.info("Pipeline loaded on %s", device)
 
@@ -189,12 +226,14 @@ async def diarize(request: Request):
     # v3 was lenient here, v4 raises ValueError. Return empty result
     # early instead of hitting the pipeline.
     if len(audio) == 0:
-        return JSONResponse({
-            "segments": [],
-            "num_speakers": 0,
-            "audio_duration_s": 0.0,
-            "processing_ms": 0,
-        })
+        return JSONResponse(
+            {
+                "segments": [],
+                "num_speakers": 0,
+                "audio_duration_s": 0.0,
+                "processing_ms": 0,
+            }
+        )
 
     # Auto-disable min_speakers for short audio (live streaming chunks) —
     # pyannote needs ~15s+ to reliably detect 2 speakers. Below that it
@@ -202,7 +241,8 @@ async def diarize(request: Request):
     if audio_duration_s < 15.0 and min_speakers > 1:
         logger.debug(
             "Audio too short (%.1fs) for min_speakers=%d — disabling hint",
-            audio_duration_s, min_speakers,
+            audio_duration_s,
+            min_speakers,
         )
         min_speakers = 0
 
@@ -254,17 +294,19 @@ async def diarize(request: Request):
                 torch.cuda.empty_cache()
     elapsed_ms = (time.monotonic() - t0) * 1000
 
-    # pyannote 4.x returns DiarizeOutput; 3.x returns Annotation directly
-    speaker_embeddings = None
-    if isinstance(raw_output, Annotation):
-        annotation = raw_output
-    else:
-        annotation = raw_output.speaker_diarization
-        speaker_embeddings = raw_output.speaker_embeddings
+    # pyannote 4.x always returns DiarizeOutput.  We support 4.x only
+    # (community-1 is the production pipeline; 3.x has been removed).
+    annotation = raw_output.speaker_diarization
+    speaker_embeddings = raw_output.speaker_embeddings
+    exclusive_annotation = raw_output.exclusive_speaker_diarization
 
-    # Convert pyannote Annotation to our API format
+    # Convert pyannote DiarizeOutput to our API format.  The standard
+    # ``segments`` array lets the caller detect cross-talk (two speakers
+    # active in the same window).  The ``exclusive_segments`` array
+    # holds the single-speaker timeline used for STT-timestamp
+    # reconciliation in `speaker_attach.py`.
     segments = []
-    speaker_map = {}
+    speaker_map: dict[str, int] = {}
     labels = annotation.labels()
 
     # Build per-speaker embedding lookup from pipeline output
@@ -301,12 +343,37 @@ async def diarize(request: Request):
         len(speaker_map),
     )
 
-    return JSONResponse({
-        "segments": segments,
-        "num_speakers": len(speaker_map),
-        "audio_duration_s": len(audio) / sample_rate,
-        "processing_ms": round(elapsed_ms),
-    })
+    # Exclusive segmentation: single-speaker assignment per frame.
+    # Always emitted with community-1 (the production pipeline).  The
+    # `speaker_map` allocated above is shared so cluster ids line up
+    # 1:1 between `segments` and `exclusive_segments`.
+    exclusive_segments = []
+    for turn, _, speaker in exclusive_annotation.itertracks(yield_label=True):
+        sid = speaker_map.get(speaker)
+        if sid is None:
+            # Speaker only appears in exclusive output (degenerate case
+            # where the standard segmentation dropped a brief speaker;
+            # we allocate a fresh id rather than silently re-mapping).
+            sid = len(speaker_map)
+            speaker_map[speaker] = sid
+        exclusive_segments.append(
+            {
+                "speaker_id": sid,
+                "start": turn.start,
+                "end": turn.end,
+                "confidence": 1.0,
+            }
+        )
+
+    return JSONResponse(
+        {
+            "segments": segments,
+            "exclusive_segments": exclusive_segments,
+            "num_speakers": len(speaker_map),
+            "audio_duration_s": len(audio) / sample_rate,
+            "processing_ms": round(elapsed_ms),
+        }
+    )
 
 
 @app.post("/v1/embed")
@@ -346,9 +413,7 @@ async def embed(request: Request):
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-    if isinstance(raw_output, Annotation):
-        return JSONResponse({"error": "Pipeline too old for embeddings"}, status_code=501)
-
+    # 4.x always returns DiarizeOutput.  No 3.x compat path.
     if raw_output.speaker_embeddings is None or len(raw_output.speaker_embeddings) == 0:
         return JSONResponse({"error": "No speaker detected"}, status_code=422)
 
@@ -356,9 +421,11 @@ async def embed(request: Request):
     if np.any(np.isnan(emb)):
         return JSONResponse({"error": "Embedding contains NaN"}, status_code=422)
 
-    return JSONResponse({
-        "embedding": emb.tolist(),
-    })
+    return JSONResponse(
+        {
+            "embedding": emb.tolist(),
+        }
+    )
 
 
 if __name__ == "__main__":

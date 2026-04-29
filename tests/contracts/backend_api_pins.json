@@ -1,0 +1,30 @@
+{
+  "_comment": "Pinned backend API expectations. Update version_pin and expect_keys in lockstep when bumping a backend image. The script in scripts/check_backend_apis.py probes each endpoint on demand on the GB10 dev machine.",
+
+  "tts_health": {
+    "url": "http://localhost:8021/health",
+    "method": "GET",
+    "expect_status": 200,
+    "expect_keys": ["status"],
+    "version_pin": "faster-qwen3-tts:2026-04",
+    "timeout_s": 5
+  },
+
+  "asr_health": {
+    "url": "http://localhost:8022/health",
+    "method": "GET",
+    "expect_status": 200,
+    "expect_keys": ["status"],
+    "version_pin": "qwen3-omni-asr:2026-04",
+    "timeout_s": 5
+  },
+
+  "translate_health": {
+    "url": "http://localhost:8010/health",
+    "method": "GET",
+    "expect_status": 200,
+    "expect_keys": [],
+    "version_pin": "qwen3-coder-30b-fp8:2026-04",
+    "timeout_s": 5
+  }
+}

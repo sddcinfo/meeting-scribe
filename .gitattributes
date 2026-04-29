@@ -1,0 +1,8 @@
+# meetings/ holds runtime recordings of real meetings. Keep them out
+# of GitHub's language stats (`linguist-vendored`), out of diff renderers
+# (`-diff` so a diff doesn't surface real transcript bytes), and out
+# of merge auto-resolution. Test fixtures live under
+# tests/fixtures/journals/ and are derived via scripts/scrub_journal.py.
+meetings/** linguist-vendored
+meetings/** -diff
+meetings/** -merge

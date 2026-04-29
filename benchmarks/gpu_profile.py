@@ -9,6 +9,7 @@ Usage:
         --vllm-urls http://localhost:8003 http://localhost:8002 \
         --out benchmarks/results/baseline_2026-04-13/gpu_profile.json
 """
+
 from __future__ import annotations
 
 import argparse

@@ -218,3 +218,19 @@ def test_server():
     }
 
     stop_test_server()
+
+
+# ── Flaky-test quarantine ─────────────────────────────────────────────
+# Wires in tests/pytest_flaky_skip.py — entries in tests/.flaky.toml are
+# skipped (smoke lane) or xfailed (nightly lane) at collection time.
+from tests.pytest_flaky_skip import (
+    pytest_collection_modifyitems as _flaky_collection_modifyitems,
+)
+
+_orig_collection_modifyitems = globals().get("pytest_collection_modifyitems")
+
+
+def pytest_collection_modifyitems(config, items):  # noqa: ANN001
+    if _orig_collection_modifyitems is not None:
+        _orig_collection_modifyitems(config, items)
+    _flaky_collection_modifyitems(config, items)

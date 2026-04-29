@@ -53,7 +53,7 @@ async def ask_meeting_question(
     meeting_id = meeting_dir.name
 
     if meeting_id in _in_flight:
-        yield f'data: {json.dumps({"type": "error", "text": "A question is already being answered for this meeting. Please wait."})}\n\n'
+        yield f"data: {json.dumps({'type': 'error', 'text': 'A question is already being answered for this meeting. Please wait.'})}\n\n"
         return
 
     _in_flight.add(meeting_id)
@@ -61,12 +61,15 @@ async def ask_meeting_question(
         events, transcript = build_transcript_text(meeting_dir, max_transcript_chars)
 
         if not events:
-            yield f'data: {json.dumps({"type": "error", "text": "No transcript available for this meeting."})}\n\n'
+            yield f"data: {json.dumps({'type': 'error', 'text': 'No transcript available for this meeting.'})}\n\n"
             return
 
         logger.info(
             "Q&A start: meeting=%s, question=%r, transcript_events=%d, transcript_chars=%d",
-            meeting_id, question, len(events), len(transcript),
+            meeting_id,
+            question,
+            len(events),
+            len(transcript),
         )
 
         user_prompt = f"""Meeting transcript:
@@ -120,9 +123,11 @@ Question: {question}"""
                         if content:
                             chunk_count += 1
                             full_text.append(content)
-                            yield f'data: {json.dumps({"type": "chunk", "text": content})}\n\n'
+                            yield f"data: {json.dumps({'type': 'chunk', 'text': content})}\n\n"
                         if finish_reason:
-                            logger.info("Q&A finish_reason=%s at chunk %d", finish_reason, chunk_count)
+                            logger.info(
+                                "Q&A finish_reason=%s at chunk %d", finish_reason, chunk_count
+                            )
                     except (json.JSONDecodeError, KeyError, IndexError):
                         continue
 
@@ -136,10 +141,10 @@ Question: {question}"""
                 meeting_id,
             )
             logger.info("Q&A full answer for meeting=%s:\n%s", meeting_id, final_text)
-            yield f'data: {json.dumps({"type": "done", "full_text": final_text})}\n\n'
+            yield f"data: {json.dumps({'type': 'done', 'full_text': final_text})}\n\n"
 
     except Exception as e:
         logger.error("Q&A failed for meeting %s: %s", meeting_id, e)
-        yield f'data: {json.dumps({"type": "error", "text": f"Q&A failed: {e}"})}\n\n'
+        yield f"data: {json.dumps({'type': 'error', 'text': f'Q&A failed: {e}'})}\n\n"
     finally:
         _in_flight.discard(meeting_id)

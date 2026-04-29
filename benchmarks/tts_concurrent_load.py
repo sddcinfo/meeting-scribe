@@ -10,6 +10,7 @@ Usage:
     python benchmarks/tts_concurrent_load.py --url http://localhost:8002 \
         --profile cloned --concurrency 8 --out results/single_cloned.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,6 +25,9 @@ from pathlib import Path
 
 import httpx
 import numpy as np
+from benchmarks._bench_paths import assert_offline_path
+from benchmarks._consent_check import enforce_consent
+from benchmarks._tts_backends import Backend, add_backend_arg, build_body
 
 _STUDIO_VOICES = ["aiden", "vivian", "ono_anna", "sohee", "uncle_fu"]
 _SHORT = "Hello, this is a short utterance."
@@ -49,9 +53,7 @@ def _make_ref_audio_uri(seconds: float = 6.0, sample_rate: int = 24_000) -> str:
     return "data:audio/wav;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-async def _one_stream(
-    client: httpx.AsyncClient, url: str, body: dict, request_id: int
-) -> dict:
+async def _one_stream(client: httpx.AsyncClient, url: str, body: dict, request_id: int) -> dict:
     t0 = time.monotonic()
     ttfa = None
     bytes_total = 0
@@ -74,22 +76,23 @@ async def _one_stream(
     }
 
 
-async def run(url: str, profile: str, concurrency: int, total: int, _model: str) -> dict:
+async def run(
+    url: str, profile: str, concurrency: int, total: int, model: str, backend: Backend
+) -> dict:
     ref_uri = _make_ref_audio_uri() if profile == "cloned" else None
     bodies = []
     for i in range(total):
         voice = _STUDIO_VOICES[i % len(_STUDIO_VOICES)]
         text = _SHORT if (i % 2 == 0) else _LONG
-        body: dict = {
-            "model": _model,
-            "input": text,
-            "voice": voice,
-            "stream": True,
-            "response_format": "pcm",
-        }
-        if profile == "cloned":
-            body["ref_audio"] = ref_uri
-        bodies.append(body)
+        bodies.append(
+            build_body(
+                backend,
+                text=text,
+                voice=voice,
+                model=model,
+                ref_audio_uri=ref_uri if profile == "cloned" else None,
+            )
+        )
 
     sem = asyncio.Semaphore(concurrency)
 
@@ -98,15 +101,14 @@ async def run(url: str, profile: str, concurrency: int, total: int, _model: str)
             return await _one_stream(client, url, body, i)
 
     async with httpx.AsyncClient(timeout=60) as client:
-        results = await asyncio.gather(
-            *(bound(i, b, client) for i, b in enumerate(bodies))
-        )
+        results = await asyncio.gather(*(bound(i, b, client) for i, b in enumerate(bodies)))
 
     ttfas = [r["ttfa_ms"] for r in results if r["ttfa_ms"] is not None]
     totals = [r["total_ms"] for r in results if r["error"] is None]
     errors = [r for r in results if r["error"]]
     return {
         "url": url,
+        "backend": backend,
         "profile": profile,
         "concurrency": concurrency,
         "total_requests": total,
@@ -127,10 +129,22 @@ def main() -> None:
     p.add_argument("--concurrency", type=int, default=8)
     p.add_argument("--total", type=int, default=40)
     p.add_argument("--out", type=Path, required=True)
-    p.add_argument("--model", default="qwen3-tts", help="model field sent in /v1/audio/speech body")
+    p.add_argument("--model", default=None, help="model field sent in /v1/audio/speech body")
+    add_backend_arg(p)
+    p.add_argument(
+        "--allow-in-repo-out",
+        action="store_true",
+        help="Bypass the offline-path validator (test-only).",
+    )
     args = p.parse_args()
+    if not args.allow_in_repo_out:
+        assert_offline_path(args.out)
+    if args.profile == "cloned":
+        enforce_consent()
 
-    result = asyncio.run(run(args.url, args.profile, args.concurrency, args.total, args.model))
+    result = asyncio.run(
+        run(args.url, args.profile, args.concurrency, args.total, args.model, args.backend)
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2))
     print(json.dumps({k: v for k, v in result.items() if k != "per_request"}, indent=2))

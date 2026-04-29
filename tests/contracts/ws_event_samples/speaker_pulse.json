@@ -1,0 +1,10 @@
+{
+  "type": "speaker_pulse",
+  "active_speakers": [
+    {
+      "cluster_id": 1,
+      "confidence": 0.91
+    }
+  ],
+  "timestamp_ms": 1234
+}

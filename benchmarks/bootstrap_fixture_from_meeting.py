@@ -23,6 +23,7 @@ Usage:
         --kind asr \\
         --limit 40
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,9 +41,7 @@ except ImportError as exc:
 
 import numpy as np
 
-REPO_MANIFEST = (
-    Path(__file__).parent / "fixtures" / "meeting_consolidation" / "MANIFEST.yaml"
-)
+REPO_MANIFEST = Path(__file__).parent / "fixtures" / "meeting_consolidation" / "MANIFEST.yaml"
 
 
 def _sha256_bytes(b: bytes) -> str:
@@ -107,9 +106,7 @@ def bootstrap(
     finals = _extract_final_segments(journal_path)
 
     # Keep a mix of short + long clips.
-    finals_sorted = sorted(
-        finals, key=lambda e: e.get("end_ms", 0) - e.get("start_ms", 0)
-    )
+    finals_sorted = sorted(finals, key=lambda e: e.get("end_ms", 0) - e.get("start_ms", 0))
     shorts = [e for e in finals_sorted if (e["end_ms"] - e["start_ms"]) < 5000]
     longs = [e for e in finals_sorted if (e["end_ms"] - e["start_ms"]) >= 5000]
     picks: list[dict] = []
@@ -159,7 +156,7 @@ def bootstrap(
                 "sha256": _sha256_bytes(wav_bytes),
                 "description": (
                     f"meeting={meeting_dir.name} segment={e['segment_id']} "
-                    f"lang={e.get('language','?')}"
+                    f"lang={e.get('language', '?')}"
                 ),
             }
         )
@@ -178,7 +175,9 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--meeting-dir", type=Path, required=True)
     p.add_argument("--fixture-dir", type=Path, default=Path("/data/meeting-scribe-fixtures/"))
-    p.add_argument("--kind", choices=["asr", "translate", "tts_cloned_ref", "meeting_e2e"], default="asr")
+    p.add_argument(
+        "--kind", choices=["asr", "translate", "tts_cloned_ref", "meeting_e2e"], default="asr"
+    )
     p.add_argument("--limit", type=int, default=40)
     args = p.parse_args()
 

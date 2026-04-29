@@ -25,6 +25,7 @@ Checks (in order):
      what fraction of old unique names appear in detected, plus
      per-event identity accuracy for old named time ranges.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -120,11 +121,7 @@ def _check_alignment(m: Path, audio_ms: int) -> CheckResult:
     # would manifest as coverage failures AND a huge tail gap).
     MAX_TAIL_GAP_MS = 120_000
 
-    ok = (
-        abs(duration_drift) <= 500
-        and tail_gap >= -200
-        and tail_gap <= MAX_TAIL_GAP_MS
-    )
+    ok = abs(duration_drift) <= 500 and tail_gap >= -200 and tail_gap <= MAX_TAIL_GAP_MS
     return CheckResult(
         name="alignment",
         passed=ok,
@@ -172,7 +169,7 @@ def _check_journal_detected_agreement(m: Path) -> CheckResult:
     ds = _load_json(m / "detected_speakers.json")
     valid_seqs = {s.get("seq_index") for s in ds}
     best = _best_finals_by_id(m / "journal.jsonl")
-    clusters_seen = Counter()
+    clusters_seen: Counter[int] = Counter()
     for e in best.values():
         sp = e.get("speakers") or []
         if sp:
@@ -252,9 +249,7 @@ def _check_name_preservation(m: Path) -> CheckResult:
         name = c.get("speaker_name") or ""
         if not name:
             continue
-        old_named_ranges.append(
-            (seg.get("start_ms", 0), seg.get("end_ms", 0), name)
-        )
+        old_named_ranges.append((seg.get("start_ms", 0), seg.get("end_ms", 0), name))
         old_name_counts[name] += 1
 
     unique_old_names = set(old_name_counts.keys())
@@ -336,7 +331,9 @@ def validate_meeting(meeting_dir: Path) -> ValidationResult:
     """Run all checks. Does not raise — result carries pass/fail per check."""
     meeting_id = meeting_dir.name
     pcm = meeting_dir / "audio" / "recording.pcm"
-    audio_ms = int(os.path.getsize(pcm) / BYTES_PER_SAMPLE / SAMPLE_RATE * 1000) if pcm.exists() else 0
+    audio_ms = (
+        int(os.path.getsize(pcm) / BYTES_PER_SAMPLE / SAMPLE_RATE * 1000) if pcm.exists() else 0
+    )
 
     result = ValidationResult(meeting_id=meeting_id, audio_ms=audio_ms)
     checks = [
@@ -385,7 +382,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(result.to_dict(), indent=2))
     else:
-        print(f"\n=== {result.meeting_id}  audio={result.audio_ms/60000:.2f}min ===\n")
+        print(f"\n=== {result.meeting_id}  audio={result.audio_ms / 60000:.2f}min ===\n")
         for c in result.checks:
             mark = "PASS" if c.passed else "FAIL"
             print(f"  [{mark}] {c.name:<28} {c.detail}")

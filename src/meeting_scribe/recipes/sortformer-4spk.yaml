@@ -3,9 +3,9 @@
 # Runs in pyannote container with SM_121 compatibility patches.
 
 model_key: diarization
-model_id: pyannote/speaker-diarization-3.1
+model_id: pyannote/speaker-diarization-community-1
 short_name: pyannote-diarize
-description: "Neural speaker diarization for up to 4 speakers"
+description: "Neural speaker diarization for up to 4 speakers (community-1, exclusive-mode capable)"
 
 mode: solo
 tensor_parallel: 1

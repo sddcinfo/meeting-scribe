@@ -23,6 +23,23 @@ if (POPOUT_MODE) {
 
 // Dynamic language pair — set from /api/languages or meeting meta
 let currentLanguagePair = 'en,ja';
+
+// Server-configured default pair. Populated by wireUp() once /api/languages
+// responds. Mono-language meetings are NOT exposed via this default — they
+// live behind the landing page's "Quick start English" button. This variable
+// is read by showSetup() to reset the setup-screen dropdowns back to a
+// bilingual pair every time the user returns to setup, so a prior mono
+// meeting can't leak into the next one.
+let _defaultLanguagePairCache = ['en', 'ja'];
+function _defaultLanguagePair() {
+  // Guarantee two distinct codes. If the server ever returned a mono default
+  // (legacy config), we still promote it to bilingual here — the setup
+  // screen never shows mono.
+  const pair = _defaultLanguagePairCache.slice(0, 2);
+  if (pair.length < 2) pair.push(pair[0] === 'en' ? 'ja' : 'en');
+  if (pair[0] === pair[1]) pair[1] = pair[0] === 'en' ? 'ja' : 'en';
+  return pair;
+}
 let _languageNames = {};  // code → {name, native_name}
 
 // ─── Mic warm-up singleton ────────────────────────────────────────────────
@@ -400,26 +417,141 @@ function _resetSpeakerRegistry() {
 }
 
 // ─── Modal System ───────────────────────────────────────────
+//
+// Single-overlay stack model. At most one modal is visible at a time,
+// but nested calls (e.g. the Meeting Actions modal opening a confirm
+// dialog) are supported by hiding the outer card in place — its DOM
+// and event listeners stay alive — and appending a new sibling card
+// that becomes the active one. closeModal() pops the stack: it
+// removes the topmost card (or clears the root card at the bottom),
+// fires its _onClose hook, and re-activates the previous card.
+//
+// Interaction rules (mirrored in STYLING.md):
+//   - Escape closes ONLY the topmost card. Outer cards survive.
+//   - Backdrop click behaves the same as Escape.
+//   - _onClose fires on ANY close path (button, Escape, backdrop,
+//     explicit closeModal / closeAllModals). Dialog primitives use it
+//     to resolve their promise with a cancel value so awaiting code
+//     never hangs if the user dismisses a dialog by keyboard instead
+//     of clicking Cancel.
+//   - Dialog primitives (alertDialog / confirmDialog / promptDialog)
+//     clear _onClose before calling closeModal() on an explicit
+//     confirm, so they don't double-resolve.
 
 function showModal(html, cssClass = '') {
   const overlay = document.getElementById('modal-overlay');
-  const card = document.getElementById('modal-card');
-  card.className = `modal-card ${cssClass}`;
+  const rootCard = document.getElementById('modal-card');
+
+  // Hide any currently-active card so the new one takes over. Hidden
+  // cards stay in the DOM (and keep their listeners) until they pop.
+  const prevActive = overlay.querySelector('.modal-card-active');
+  if (prevActive) {
+    prevActive.classList.remove('modal-card-active');
+    prevActive.setAttribute('aria-hidden', 'true');
+    prevActive.style.display = 'none';
+  }
+
+  // First modal: reuse the static root card. Stacked modal: create a
+  // new sibling so the outer card's DOM + handlers survive untouched.
+  let card;
+  if (!prevActive) {
+    card = rootCard;
+  } else {
+    card = document.createElement('div');
+    overlay.appendChild(card);
+  }
+  card.className = `modal-card modal-card-active ${cssClass}`;
   card.innerHTML = html;
+  card.style.display = '';
+  card.removeAttribute('aria-hidden');
+  card._onClose = null; // set by dialog primitives for cancel cleanup
+
   overlay.style.display = '';
-  // Click backdrop to close
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
   document.addEventListener('keydown', _modalEscHandler);
   return card;
 }
 
 function closeModal() {
-  document.getElementById('modal-overlay').style.display = 'none';
-  document.removeEventListener('keydown', _modalEscHandler);
+  const overlay = document.getElementById('modal-overlay');
+  const rootCard = document.getElementById('modal-card');
+  const active = overlay.querySelector('.modal-card-active');
+  if (!active) {
+    // Nothing active — ensure overlay is down and bail.
+    overlay.style.display = 'none';
+    document.removeEventListener('keydown', _modalEscHandler);
+    overlay.onclick = null;
+    return;
+  }
+
+  // Fire the cleanup hook BEFORE we tear DOM down so handlers can
+  // inspect the card if they need to. Errors here must never block
+  // the close — a hanging stack would trap the user.
+  if (typeof active._onClose === 'function') {
+    try { active._onClose(); } catch (e) { console.error('modal _onClose threw', e); }
+  }
+  active._onClose = null;
+  active.classList.remove('modal-card-active');
+
+  if (active === rootCard) {
+    // Root card stays in the DOM (it's the static shell). Clear it.
+    active.innerHTML = '';
+    active.style.display = 'none';
+  } else {
+    // Stacked sibling: remove entirely.
+    active.remove();
+  }
+
+  // Pop: re-activate the most recently hidden card with real content,
+  // or close the overlay if the stack is empty.
+  const all = Array.from(overlay.querySelectorAll('.modal-card'));
+  const hidden = all.filter(c => c.style.display === 'none' && c.innerHTML.trim() !== '');
+  if (hidden.length > 0) {
+    const top = hidden[hidden.length - 1];
+    top.classList.add('modal-card-active');
+    top.style.display = '';
+    top.removeAttribute('aria-hidden');
+  } else {
+    overlay.style.display = 'none';
+    document.removeEventListener('keydown', _modalEscHandler);
+    overlay.onclick = null;
+  }
 }
 
-function _modalEscHandler(e) { if (e.key === 'Escape') closeModal(); }
+// Escape-key handler. Only closes the TOP modal (closeModal pops one).
+// Repeated Escape presses walk the stack down to empty.
+function _modalEscHandler(e) {
+  if (e.key !== 'Escape') return;
+  // If focus is inside an input/select/textarea, let the element handle
+  // Escape itself first. promptDialog's input attaches its own keydown
+  // on the input and will cancel there; we stop the document handler
+  // from firing a duplicate closeModal.
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+    return;
+  }
+  closeModal();
+}
 
+// Close every card in the stack. Used when an action mutates the
+// underlying data in a way that makes outer cards stale (for example
+// deleting a meeting while its tools modal is open).
+function closeAllModals() {
+  const overlay = document.getElementById('modal-overlay');
+  // Bounded loop: each iteration pops one card, overlay hides when empty.
+  // The cap protects against any future bug that fails to advance state.
+  for (let i = 0; i < 16; i++) {
+    if (overlay.style.display === 'none') break;
+    if (!overlay.querySelector('.modal-card-active')) break;
+    closeModal();
+  }
+}
+window.closeAllModals = closeAllModals;
+
+// Styled Yes/No confirm. Resolves true on confirm, false on cancel,
+// Escape, backdrop click, or any non-confirm close. Uses the card
+// _onClose hook so every dismissal path converges on a single cancel
+// value — the awaiting caller never hangs.
 async function confirmDialog(title, message, confirmText = 'Delete', danger = true) {
   return new Promise(resolve => {
     const card = showModal(`
@@ -430,11 +562,178 @@ async function confirmDialog(title, message, confirmText = 'Delete', danger = tr
         <button class="modal-btn ${danger ? 'danger' : ''}" id="modal-confirm">${confirmText}</button>
       </div>
     `, 'confirm');
-    card.querySelector('#modal-cancel').onclick = () => { closeModal(); resolve(false); };
-    card.querySelector('#modal-confirm').onclick = () => { closeModal(); resolve(true); };
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    card._onClose = () => finish(false);
+    card.querySelector('#modal-cancel').onclick = () => { closeModal(); };
+    card.querySelector('#modal-confirm').onclick = () => {
+      card._onClose = null;  // skip default cancel-resolution
+      closeModal();
+      finish(true);
+    };
     card.querySelector('#modal-confirm').focus();
   });
 }
+
+// Styled single-button notice. Replaces window.alert so every diagnostic
+// lives in the same visual language as the rest of the UI. Resolves when
+// the user acknowledges (button, Enter, Escape, backdrop click — all
+// treated as dismissals since there is nothing to cancel).
+//
+// Auto-promotes to a wider "pre" variant when the message looks like a
+// stack trace / error body (multi-line, contains JSON/traceback markers,
+// or exceeds a short-prose length). The pre variant wraps the message
+// in a mono, scrollable, selectable region and adds a Copy button so
+// the full string can be captured for bug reports.
+async function alertDialog(title, message, okText = 'OK') {
+  const msg = String(message ?? '');
+  const isLong = msg.length > 160 || msg.includes('\n');
+  const looksTraceback = /Traceback|^\s*at |\bError:|\bException:|HTTP \d{3}|<\?xml|^\s*\{/m.test(msg);
+  const pre = isLong || looksTraceback;
+  return new Promise(resolve => {
+    const body = pre
+      ? `<div class="modal-confirm-message pre">${esc(msg)}</div>`
+      : `<div class="modal-confirm-message">${esc(msg).replace(/\n/g, '<br>')}</div>`;
+    const copyBtn = pre
+      ? `<button type="button" class="modal-copy-btn" id="modal-copy" title="Copy message to clipboard">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+           <span>Copy</span>
+         </button>`
+      : '';
+    const cssClass = pre ? 'confirm wide' : 'confirm';
+    const card = showModal(`
+      <div class="modal-confirm-title">${esc(title)}</div>
+      ${body}
+      <div class="modal-confirm-actions">
+        ${copyBtn}
+        <button class="modal-btn primary" id="modal-ok">${esc(okText)}</button>
+      </div>
+    `, cssClass);
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    // _onClose ensures Enter-via-focused-OK, Escape, backdrop click,
+    // and explicit closeModal() all converge on resolve(). No
+    // document-level keydown listener is needed — the standard
+    // _modalEscHandler pops the stack and triggers this hook.
+    card._onClose = finish;
+    card.querySelector('#modal-ok').onclick = () => {
+      card._onClose = null;
+      closeModal();
+      finish();
+    };
+    card.querySelector('#modal-ok').focus();
+    const copy = card.querySelector('#modal-copy');
+    if (copy) {
+      copy.onclick = async (ev) => {
+        ev.stopPropagation();
+        const label = copy.querySelector('span');
+        const fallback = () => {
+          const ta = document.createElement('textarea');
+          ta.value = msg;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
+        };
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(msg);
+          } else {
+            fallback();
+          }
+          copy.classList.add('copied');
+          if (label) label.textContent = 'Copied';
+          setTimeout(() => { copy.classList.remove('copied'); if (label) label.textContent = 'Copy'; }, 1400);
+        } catch {
+          if (label) label.textContent = 'Copy failed';
+        }
+      };
+    }
+  });
+}
+
+// Styled text-input prompt. Resolves to the trimmed string on confirm,
+// or null on cancel / Escape / backdrop click (matching the window.prompt
+// contract so callers can do `if (raw === null) return` unchanged).
+// Options: placeholder, initialValue, confirmText, type ('text'|'number'),
+// min/max (for type=number), inputMode, help (extra hint text).
+async function promptDialog(title, message, options = {}) {
+  const {
+    placeholder = '',
+    initialValue = '',
+    confirmText = 'OK',
+    cancelText = 'Cancel',
+    type = 'text',
+    min,
+    max,
+    inputMode,
+    help = '',
+  } = options;
+  return new Promise(resolve => {
+    const extraAttrs = [
+      type ? `type="${esc(type)}"` : '',
+      placeholder ? `placeholder="${esc(placeholder)}"` : '',
+      min != null ? `min="${esc(String(min))}"` : '',
+      max != null ? `max="${esc(String(max))}"` : '',
+      inputMode ? `inputmode="${esc(inputMode)}"` : '',
+    ].filter(Boolean).join(' ');
+    const card = showModal(`
+      <div class="modal-confirm-title">${esc(title)}</div>
+      <div class="modal-confirm-message">${esc(message).replace(/\n/g, '<br>')}</div>
+      <input class="modal-input" id="modal-input" ${extraAttrs} value="${esc(initialValue)}" autocomplete="off" spellcheck="false">
+      ${help ? `<div class="modal-input-help">${esc(help)}</div>` : ''}
+      <div class="modal-confirm-actions">
+        <button class="modal-btn" id="modal-cancel">${esc(cancelText)}</button>
+        <button class="modal-btn primary" id="modal-confirm">${esc(confirmText)}</button>
+      </div>
+    `, 'confirm');
+    const input = card.querySelector('#modal-input');
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    // Default on any non-confirm close (Escape from outside the input,
+    // backdrop, explicit closeModal): resolve null, matching window.prompt.
+    card._onClose = () => finish(null);
+    const ok = () => {
+      card._onClose = null;
+      const v = input.value.trim();
+      closeModal();
+      finish(v);
+    };
+    const cancel = () => { closeModal(); /* _onClose resolves null */ };
+    card.querySelector('#modal-confirm').onclick = ok;
+    card.querySelector('#modal-cancel').onclick = cancel;
+    // Input-scoped Enter/Escape. Escape inside the input takes priority
+    // over the document-level _modalEscHandler (which ignores Escape
+    // while focus is inside an input), so this cleanly cancels only
+    // the prompt without walking farther up the stack.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); ok(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+    // Defer focus so the slide-up animation doesn't clobber the selection
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+  });
+}
+
+// Expose to window so slide-viewer.js (loaded dynamically on reader.html)
+// and inline onclick handlers can reach the same primitives without
+// duplicating implementation.
+window.alertDialog = alertDialog;
+window.confirmDialog = confirmDialog;
+window.promptDialog = promptDialog;
 
 function showSpeakerModal(speakerName, speakerColor, segments, meetingId) {
   const totalSegs = segments.length;
@@ -842,47 +1141,29 @@ class RoomSetup {
       this.addTableWithSeats(n);
     });
     document.getElementById('btn-clear-layout')?.addEventListener('click', () => this.clearLayout());
-    this.btnStart.addEventListener('click', () => {
+    this.btnStart.addEventListener('click', async () => {
       // Debounce: disable immediately so double-clicks can't fire two
-      // concurrent startMeeting() calls. Re-enabled on failure by the
-      // error paths in startRecording; stays disabled on success since
-      // the room-setup screen is hidden anyway.
+      // concurrent startMeeting() calls. Button state is restored by
+      // startMeeting's own try/finally regardless of success / failure
+      // (see RoomSetup.startMeeting — this is the bulletproof path for
+      // both sync and async errors from startRecording).
       if (this.btnStart.disabled) return;
       this.btnStart.disabled = true;
       this.btnStart.dataset.origText = this.btnStart.textContent;
       this.btnStart.textContent = 'Starting…';
       try {
-        this.startMeeting();
+        await this.startMeeting();
       } catch (e) {
-        this.btnStart.disabled = false;
-        this.btnStart.textContent = this.btnStart.dataset.origText || 'Start Meeting';
-        throw e;
+        // startMeeting's finally already restored btnStart; just
+        // surface the error for visibility (sentry-style) without
+        // re-touching the DOM.
+        console.error('startMeeting failed:', e);
       }
     });
 
-    // "Solo" shortcut: force the meeting into monolingual mode using the
-    // currently-selected LEFT language, regardless of what the right
-    // dropdown shows, then fall through to the normal start-meeting
-    // path. Flip the right dropdown to __none__ first so the visible
-    // state matches what we're about to send to the server (honest UI).
-    const btnSolo = document.getElementById('btn-start-solo');
-    if (btnSolo) {
-      btnSolo.addEventListener('click', () => {
-        if (btnSolo.disabled || this.btnStart.disabled) return;
-        const selA = document.getElementById('lang-a-select');
-        const selB = document.getElementById('lang-b-select');
-        if (selA && selB) {
-          // Flip the right dropdown to the None sentinel and dispatch a
-          // change event so the existing onChangeB handler recomputes
-          // currentLanguagePair + the .mono class on the selector.
-          selB.value = '__none__';
-          selB.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        // Defer to the primary button's click handler so debounce,
-        // error-recovery, and telemetry stay in one place.
-        this.btnStart.click();
-      });
-    }
+    // Single-language meetings are only accessible via the "Quick start
+    // English" button on the landing page — the setup screen is always
+    // bilingual. If users want mono they go back to the landing page.
 
     // Clicking a preset button jumps the seat-count input to the layout's
     // typical size (read from data-default-seats on the button) and then
@@ -1985,8 +2266,19 @@ class RoomSetup {
     this.canvas.appendChild(overlay);
   }
 
-  startMeeting() {
-    // Transition to meeting mode
+  async startMeeting() {
+    // Mark the fresh-start window BEFORE the async start POST. The
+    // reconciler's shared transport predicate reads
+    // _startInitiatedByThisTab (set via claimOwnership after the POST
+    // returns) but `body.starting` is the sibling signal that keeps
+    // navigation guards / reconcile's rehydration branch inert until
+    // body.recording is set.
+    document.body.classList.add('starting');
+
+    // Transition to meeting mode. #landing-mode is hidden unconditionally
+    // here (in addition to room-setup / view-mode) so a mid-start click
+    // on Home never leaves landing visible on top of a running meeting.
+    document.getElementById('landing-mode').style.display = 'none';
     document.getElementById('room-setup').style.display = 'none';
     document.getElementById('view-mode').style.display = 'none';
     document.getElementById('meeting-mode').style.display = '';
@@ -2012,7 +2304,31 @@ class RoomSetup {
     // Initialize transcript column renderers (global subscription handles delivery)
     window._gridRenderer = new CompactGridRenderer(document.getElementById('transcript-grid'));
 
-    startRecording(false);
+    try {
+      await startRecording(false);
+      // Success signal: startRecording adds body.recording on success
+      // and swallows its own errors via its catch block. Only claim
+      // ownership when we can observe that class — that's the one
+      // reliable indicator a real recorder pipeline is now up on this
+      // tab. (window.current_meeting_id may be stale from a previous
+      // start if the current attempt failed without clearing it.)
+      if (document.body.classList.contains('recording')
+       && window.current_meeting_id
+       && reconciler) {
+        reconciler.claimOwnership(window.current_meeting_id);
+      }
+    } finally {
+      // Bulletproof button restore: even if startRecording threw after
+      // advancing past the sync try/catch in the outer click handler,
+      // this block always clears .starting. If the start succeeded we
+      // are now in body.recording; if it failed, startRecording's own
+      // catch block has rolled the meeting-mode UI back to room-setup.
+      document.body.classList.remove('starting');
+      if (this.btnStart) {
+        this.btnStart.disabled = false;
+        this.btnStart.textContent = this.btnStart.dataset.origText || 'Start Meeting';
+      }
+    }
   }
 
   _renderTableStrip() {
@@ -2127,6 +2443,7 @@ const roomSetup = new RoomSetup();
 // Reactive store keyed by segment_id. Only highest revision shown.
 
 import { SegmentStore } from './segment-store.js';
+import { createReconciler } from './meeting-reconcile.js';
 
 // SPEAKER_COLORS defined in Room Setup section above
 
@@ -2614,8 +2931,14 @@ class CompactGridRenderer {
         if (seg.furiganaHtml) { textOnly.push(seg.furiganaHtml); anyRuby = true; }
         else textOnly.push(esc(seg.text));
       }
-      block.colA.innerHTML = textOnly.join(' ');
-      block.colB.innerHTML = '';
+      const newA = textOnly.join(' ');
+      // Only touch innerHTML when the rendered string actually changed.
+      // Late-arriving speaker/furigana/translation events re-call rebuild
+      // every few hundred ms, and writing innerHTML wipes any live text
+      // selection — so a user dragging to copy loses their selection mid-
+      // drag. This guard is load-bearing for Ctrl+C in live meetings.
+      if (block.colA.innerHTML !== newA) block.colA.innerHTML = newA;
+      if (block.colB.innerHTML !== '') block.colB.innerHTML = '';
       block.colA.classList.toggle('has-ruby', anyRuby);
       if (cssA) block.colA.classList.add(cssA);
       return;
@@ -2658,10 +2981,18 @@ class CompactGridRenderer {
       }
     }
 
-    block.colA.className = `compact-col compact-col-a ${cssA}${anyRubyA ? ' has-ruby' : ''}`;
-    block.colB.className = `compact-col compact-col-b ${cssB}${anyRubyB ? ' has-ruby' : ''}`;
-    block.colA.innerHTML = textA.join(' ');
-    block.colB.innerHTML = textB.join(' ');
+    const classA = `compact-col compact-col-a ${cssA}${anyRubyA ? ' has-ruby' : ''}`;
+    const classB = `compact-col compact-col-b ${cssB}${anyRubyB ? ' has-ruby' : ''}`;
+    if (block.colA.className !== classA) block.colA.className = classA;
+    if (block.colB.className !== classB) block.colB.className = classB;
+    // Only touch innerHTML when the rendered string actually changed.
+    // See the same guard in the monolingual branch above — this is what
+    // keeps live text selection from being nuked by late-arriving
+    // speaker/furigana/translation events on the same segment.
+    const newA = textA.join(' ');
+    const newB = textB.join(' ');
+    if (block.colA.innerHTML !== newA) block.colA.innerHTML = newA;
+    if (block.colB.innerHTML !== newB) block.colB.innerHTML = newB;
 
     // Refresh speaker label from the latest segment — late-arriving events
     // may carry updated speaker attribution (diarization, self-intro).
@@ -3142,11 +3473,60 @@ function formatTime(offsetMs) {
 // ─── Init ────────────────────────────────────────────────────
 
 const store = new SegmentStore();
+// Live-ingestion gate. Set to false by exitLiveMeetingView when the
+// user navigates away from the meeting view while recording. WS
+// events routed through ingestFromLiveWs are dropped while the flag
+// is off; historical replay (journal fetch) keeps going through
+// store.ingest directly, so rehydration is unaffected.
+store._liveEnabled = true;
+// Browser-test hook. Exposed only when `?test=1` is in the URL — keeps
+// the store off `window` in normal sessions but lets Playwright tests
+// observe `window.__test_store` and friends without monkey-patching
+// modules. Used by tests/browser/test_cross_window_sync.py.
+if (new URLSearchParams(location.search).get('test') === '1') {
+  window.__test_store = store;
+  window.__test_ingest_count = 0;
+  window.__test_msg_log = [];
+}
+function ingestFromLiveWs(event) {
+  if (window.__test_msg_log) {
+    window.__test_ingest_count++;
+    window.__test_msg_log.push({
+      seg: event?.segment_id || null,
+      type: event?.type || null,
+      text: (event?.text || '').slice(0, 30),
+    });
+  }
+  // Always dispatch a window event for non-store consumers (admin slide
+  // bar, etc.) — even if store ingestion is paused. Slide-related
+  // messages are control plane, not transcript data.
+  try {
+    window.dispatchEvent(new CustomEvent('scribe-ws-message', { detail: event }));
+  } catch {}
+  if (!store._liveEnabled) return;
+  store.ingest(event);
+}
+function setStoreLive(enabled) {
+  store._liveEnabled = !!enabled;
+}
+// Reconciler is wired up once all its primitive deps (startRecording,
+// showLanding, etc.) are declared below. Until then it is null; the
+// callsites inside checkStatus() guard on `if (reconciler) ...`.
+let reconciler = null;
 const audio = new AudioPipeline();
 const timer = new Timer(document.getElementById('timer'));
 
-// Single global subscription that delegates to active column renderers
-store.subscribe(() => { document.getElementById('segment-count').textContent = `${store.count} segments`; });
+// Single global subscription that delegates to active column renderers.
+// Guard against null — the `#segment-count` chip lives in the admin
+// meter UI; popout mode renders no such element. Without the guard
+// this listener used to throw on every store fan-out, which (before
+// SegmentStore's per-listener try/catch) aborted iteration and
+// silently prevented every subsequent subscriber — including the
+// CompactGridRenderer one — from ever running.
+store.subscribe(() => {
+  const el = document.getElementById('segment-count');
+  if (el) el.textContent = `${store.count} segments`;
+});
 
 // Subscribe to track detected speakers — any new REAL cluster_id seen in
 // an event registers in the speaker registry, which drives the
@@ -3481,75 +3861,17 @@ async function checkStatus() {
       document.getElementById('status-line').textContent = `${prefix}: ${waiting}`;
     }
 
-    if (data.meeting?.state === 'recording' && ready && !document.body.classList.contains('recording') && !document.body.classList.contains('meeting-active')) {
-      // Active meeting found — reconnect to meeting mode (only once)
-      const mid = data.meeting.id;
-      window.current_meeting_id = mid;
-      document.getElementById('status-line').textContent = `Reconnecting to ${mid}...`;
-      document.getElementById('landing-mode').style.display = 'none';
-      document.getElementById('room-setup').style.display = 'none';
-      document.getElementById('view-mode').style.display = 'none';
-      document.getElementById('meeting-mode').style.display = '';
-      document.getElementById('speaker-timeline').style.display = 'none';
-      document.getElementById('player-bar').style.display = 'none';
-      document.body.classList.add('meeting-active');
-
-      // Virtual table hidden by default (can be toggled via Table button)
-      document.body.classList.add('hide-table');
-      const _tableBtn = document.getElementById('btn-toggle-table');
-      if (_tableBtn) _tableBtn.classList.remove('active-toggle');
-
-      // Initialize column renderers (global subscription handles delivery)
-      window._gridRenderer = new CompactGridRenderer(document.getElementById('transcript-grid'));
-
-      // Load existing transcript from journal
-      try {
-        const meetResp = await fetch(`${API}/api/meetings/${mid}`);
-        const meetData = await meetResp.json();
-        if (meetData.meta?.created_at) _meetingStartWallMs = new Date(meetData.meta.created_at).getTime();
-        if (meetData.events) {
-          for (const event of meetData.events) {
-            store.ingest(event);
-          }
-        }
-      } catch {}
-
-      // Render table strip from saved layout
-      roomSetup._renderTableStrip();
-
-      // Try to resume recording (operator), or open view-only WS (viewer)
-      try {
-        await startRecording(true);
-      } catch {
-        // Mic not available or second browser — connect as view-only client
-        VIEW_ONLY = true;
-        document.body.classList.add('view-only');
-        const viewWsUrl = `${WS_PROTO}//${location.host}/api/ws/view`;
-        const viewWs = new WebSocket(viewWsUrl);
-        viewWs.onmessage = (evt) => {
-          try {
-            const msg = JSON.parse(evt.data);
-            if (msg.type === 'speaker_rename' && msg.cluster_id != null) {
-              renameSpeaker(msg.cluster_id, msg.display_name);
-              _refreshDetectedSpeakersStrip();
-              _refreshTranscriptSpeakerLabels();
-            } else {
-              store.ingest(msg);
-            }
-          } catch {}
-        };
-        viewWs.onopen = () => {
-          document.getElementById('status-line').textContent = `Viewing ${mid} (read-only)`;
-          document.getElementById('control-bar').style.display = 'none';
-          document.getElementById('room-setup').style.display = 'none';
-        };
-        const keepAlive = setInterval(() => {
-          if (viewWs.readyState === WebSocket.OPEN) viewWs.send('ping');
-          else clearInterval(keepAlive);
-        }, 30000);
-      }
-    } else {
-      document.getElementById('status-line').textContent = !ready ? 'Warming up...' : 'Ready';
+    // State transitions (rehydration, banner, title, ownership) are
+    // delegated to the reconciler; see static/js/meeting-reconcile.js.
+    // When backends aren't ready yet, keep the old status text so the
+    // user sees "Warming up..." instead of a silent idle state.
+    if (!(data.meeting?.state === 'recording') && !ready) {
+      document.getElementById('status-line').textContent = 'Warming up...';
+    } else if (!(data.meeting?.state === 'recording')) {
+      document.getElementById('status-line').textContent = 'Ready';
+    }
+    if (reconciler) {
+      await reconciler.reconcile(data);
     }
   } catch (err) { console.error('checkStatus failed:', err); document.getElementById('status-line').textContent = 'Server unreachable'; btnRecord.disabled = true; }
 }
@@ -3588,6 +3910,11 @@ if (POPOUT_MODE) {
       <button class="popout-btn popout-text-size" id="popout-text-smaller" title="Decrease text size">A-</button>
       <button class="popout-btn popout-text-size" id="popout-text-larger" title="Increase text size">A+</button>
       <button class="popout-btn" id="popout-pip-btn" title="Float above other windows (always on top)" style="display:none">Float</button>
+      <select class="popout-layout-picker" id="popout-layout-picker" title="Layout (Ctrl+Shift+L cycles)">
+        <option value="translate">Translate</option>
+        <option value="translator">Presentation</option>
+        <option value="triple">Triple stack</option>
+      </select>
       <button class="popout-btn" id="popout-qr-btn" title="Show WiFi QR code">QR</button>
       <div class="popout-qr" id="popout-qr" style="display:none"></div>
     </div>
@@ -3667,6 +3994,11 @@ if (POPOUT_MODE) {
         const statusData = await statusResp.json();
         mid = statusData.meeting?.id;
       }
+      // Tell the layout renderer whether a meeting is live so the
+      // transcript empty-state text reads "Listening for speech…"
+      // instead of "Start a meeting…" when audio just hasn't arrived
+      // yet (common: popout opened mid-meeting, or ASR is warming up).
+      try { window.PopoutLayoutRender?.setMeetingActive(!!mid); } catch {}
 
       if (mid) {
         try {
@@ -3724,6 +4056,9 @@ if (POPOUT_MODE) {
           if (!r.ok) return;
           const sd = await r.json();
           const liveMid = sd?.meeting?.id;
+          // Update the empty-state copy as meetings start/stop so the
+          // popout stops saying "Start a meeting" the moment one starts.
+          try { window.PopoutLayoutRender?.setMeetingActive(!!liveMid); } catch {}
           if (!liveMid) return;
           // If the live meeting changed (or we never had a meeting on init),
           // refresh language pair from its meta.
@@ -3841,6 +4176,172 @@ if (POPOUT_MODE) {
       // converge to the same live SSID within 10s.
       setInterval(() => refreshPopoutQR(0, 0), 10000);
 
+      // ── Terminal panel ───────────────────────────────────────
+      // Lazy-load the ~750KB xterm.js bundle only on first toggle so the
+      // popout's initial paint isn't paying for a feature nobody's using yet.
+      let _terminalPanel = null;
+      let _terminalPanelLoading = null;
+      async function _ensureTerminalPanel() {
+        if (_terminalPanel) return _terminalPanel;
+        if (_terminalPanelLoading) return _terminalPanelLoading;
+        _terminalPanelLoading = (async () => {
+          if (!window.TerminalPanel) {
+            await new Promise((resolve, reject) => {
+              const s = document.createElement('script');
+              s.src = '/static/js/terminal-panel.js?v=1';
+              s.async = false;
+              s.onload = resolve;
+              s.onerror = () => reject(new Error('terminal-panel.js failed to load'));
+              document.head.appendChild(s);
+            });
+          }
+          _terminalPanel = new window.TerminalPanel({
+            apiBase: API,
+            wsBase: API.replace(/^http/, 'ws'),
+          });
+          await _terminalPanel.mount();
+          window._terminalPanel = _terminalPanel;   // pin for console inspection
+          return _terminalPanel;
+        })();
+        try {
+          return await _terminalPanelLoading;
+        } finally {
+          _terminalPanelLoading = null;
+        }
+      }
+
+      // ── Popout layout wiring ──────────────────────────────────
+      // Replaces the previous Term-button-only flow. The layout picker is
+      // now the authoritative control: presets decide which of transcript
+      // / slides / terminal are visible. Each panel's cached root element
+      // gets re-parented (never rebuilt) as the user swaps presets.
+      async function _ensureTerminalPanelRoot() {
+        const p = await _ensureTerminalPanel();
+        // The panel builds its own `.terminal-panel` root inside mount();
+        // we just surface it to the registry. The panel's initial
+        // insertBefore in mount() also drops it into the DOM — the
+        // layout renderer will take over on first render.
+        if (p._root && !p._root.isConnected) {
+          // Panel was mounted but detached (e.g., mid-render). Nothing to do.
+        }
+        p.show();                         // ensures visible state is tracked
+        return p._root;
+      }
+
+      function _ensureTranscriptRoot() {
+        return document.getElementById('transcript-grid');
+      }
+
+      function _ensureSlideViewerRoot() {
+        _ensureSlideViewer();
+        return _slideViewerEl;
+      }
+
+      if (window.PopoutPanelRegistry && window.PopoutLayoutRender) {
+        const PPR = window.PopoutPanelRegistry;
+        PPR.register('transcript', {
+          ensure: _ensureTranscriptRoot,
+          notifyResize: () => { /* CompactGridRenderer reflows via its own ResizeObserver */ },
+        });
+        PPR.register('slides', {
+          ensure: _ensureSlideViewerRoot,
+          notifyResize: () => {
+            // Let any sizing listener (_autoSizeSlidePane) recompute.
+            try { window.dispatchEvent(new Event('resize')); } catch {}
+          },
+        });
+        PPR.register('terminal', {
+          ensure: _ensureTerminalPanelRoot,
+          notifyResize: () => {
+            if (window._terminalPanel && typeof window._terminalPanel._scheduleRefit === 'function') {
+              window._terminalPanel._scheduleRefit();
+            }
+          },
+        });
+
+        const main = document.querySelector('main');
+        const S = window.PopoutLayoutStorage;
+        const P = window.PopoutLayoutPresets;
+        let _layoutState = S.load();
+
+        // Sync the picker selectbox with the loaded/current preset.
+        const picker = document.getElementById('popout-layout-picker');
+        function _syncPicker() {
+          if (!picker) return;
+          // Ensure a 'custom' option exists when the tree is user-edited.
+          const hasCustom = [...picker.options].some(o => o.value === 'custom');
+          if (_layoutState.preset === 'custom' && !hasCustom) {
+            const opt = document.createElement('option');
+            opt.value = 'custom';
+            opt.textContent = 'Custom';
+            picker.appendChild(opt);
+          }
+          picker.value = _layoutState.preset;
+        }
+        _syncPicker();
+
+        async function _applyPreset(slug, { skipRender = false } = {}) {
+          if (!P.PRESET_ORDER.includes(slug)) return;
+          _layoutState = S.setPreset(_layoutState, slug);
+          _syncPicker();
+          if (!skipRender) {
+            try {
+              await window.PopoutLayoutRender.renderLayout(main, _layoutState);
+            } catch (err) {
+              console.warn('[popout-layout] render failed', err);
+            }
+          }
+        }
+
+        if (picker) {
+          picker.addEventListener('change', () => _applyPreset(picker.value));
+        }
+
+        // Keyboard: Ctrl+Shift+L cycles; Ctrl+Shift+1..6 jumps; Ctrl+Shift+T toggles terminal.
+        document.addEventListener('keydown', async (e) => {
+          if (!e.ctrlKey || !e.shiftKey) return;
+          if (e.key === 'L' || e.key === 'l') {
+            e.preventDefault();
+            const order = P.PRESET_ORDER;
+            const next = order[(order.indexOf(_layoutState.preset) + (e.altKey ? -1 : 1) + order.length) % order.length];
+            await _applyPreset(next);
+            return;
+          }
+          if (/^[1-6]$/.test(e.key)) {
+            e.preventDefault();
+            const slug = P.PRESET_ORDER[parseInt(e.key, 10) - 1];
+            if (slug) await _applyPreset(slug);
+            return;
+          }
+          if (e.key === 'T' || e.key === 't') {
+            e.preventDefault();
+            const hasTerm = P.hasTerminal(_layoutState.preset);
+            const next = hasTerm ? _layoutState.lastNoTermPreset : _layoutState.lastTermPreset;
+            await _applyPreset(next || (hasTerm ? 'translator' : 'triple'));
+          }
+        });
+
+        // Live availability: the app flips slide availability based on
+        // meeting/deck lifecycle. Seed with current state and update on
+        // every slide-state change our broadcast dispatcher already handles.
+        const availNow = {
+          transcript: true,
+          slides:     !!(window._slideState && window._slideState.deckId),
+          terminal:   true,
+        };
+        window.PopoutLayoutRender.install(main, _layoutState, availNow, {
+          // Edit-menu + drag-drop commit mutations → renderer calls this
+          // so the picker + local state closure stay in sync.
+          onStateChange: (next) => {
+            _layoutState = next;
+            _syncPicker();
+          },
+        });
+
+        // Re-export current state so we can update ratios on commit.
+        window._popoutLayoutState = () => _layoutState;
+      }
+
       // ── Slide upload handler ─────────────────────────────────
       const slidesInput = document.getElementById('popout-slides-input');
       const slidesBtn = document.getElementById('popout-slides-btn');
@@ -3860,13 +4361,27 @@ if (POPOUT_MODE) {
           <div class="sv-resize-handle" style="height:6px;cursor:ns-resize;background:linear-gradient(to bottom,#e8e6e1,#d0cec8);display:flex;align-items:center;justify-content:center;user-select:none" title="Drag to resize">
             <div style="width:40px;height:2px;background:#aaa;border-radius:1px"></div>
           </div>
-          <div class="sv-slides" style="display:flex;gap:2px;height:40vh;overflow:hidden">
-            <div class="sv-pane" id="sv-orig-pane" style="flex:1;align-items:stretch;justify-content:stretch;background:#fff;min-height:100px;overflow:hidden">
+          <div class="sv-slides" style="display:flex;gap:0;height:40vh;overflow:hidden">
+            <div class="sv-pane" id="sv-orig-pane" style="flex:var(--sv-pane-a-flex,1);min-width:80px;align-items:stretch;justify-content:stretch;background:#fff;min-height:100px;overflow:hidden">
               <div id="sv-orig-container" style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;overflow:hidden"></div>
             </div>
-            <div class="sv-pane" style="flex:1;display:flex;align-items:center;justify-content:center;background:#1a1a1e;min-height:100px;position:relative">
+            <!-- Draggable divider between original and translated panes.
+                 Drag horizontally to favour one side over the other (e.g.
+                 enlarge the English pane while shrinking the Japanese
+                 source). Ratio persists in localStorage as
+                 popout_slide_pane_ratio. Double-click resets to 50/50. -->
+            <div id="sv-pane-divider" class="sv-pane-divider"
+                 style="width:6px;cursor:ew-resize;background:linear-gradient(to right,#e8e6e1,#d0cec8 50%,#e8e6e1);flex:0 0 6px;display:flex;align-items:center;justify-content:center;user-select:none"
+                 title="Drag to resize · double-click to reset">
+              <div style="width:2px;height:32px;background:#9a9aa2;border-radius:1px"></div>
+            </div>
+            <div class="sv-pane" id="sv-trans-pane" style="flex:var(--sv-pane-b-flex,1);min-width:80px;display:flex;align-items:center;justify-content:center;background:#1a1a1e;min-height:100px;position:relative">
               <img class="sv-img" id="sv-trans" style="max-width:100%;max-height:100%;object-fit:contain" alt="Translated">
-              <div id="sv-trans-status" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9a9aa2;font-size:0.8rem;font-style:italic;background:#1a1a1e">Translating...</div>
+              <!-- Initially hidden — flipped on by _renderSlide when a
+                   translated slide load is in flight. With no deck the
+                   layout's empty-state placeholder ("No slide deck
+                   loaded") shows through cleanly instead. -->
+              <div id="sv-trans-status" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#9a9aa2;font-size:0.8rem;font-style:italic;background:#1a1a1e">Translating…</div>
             </div>
           </div>
           <div class="sv-nav" style="display:flex;align-items:center;justify-content:center;gap:1rem;padding:0.3rem;background:#fff;border-top:1px solid #e8e6e1">
@@ -3879,30 +4394,41 @@ if (POPOUT_MODE) {
             <span id="sv-progress" style="font-size:0.65rem;color:#9a9aa2;font-style:italic"></span>
           </div>
         `;
-        // Slides go BELOW the transcript (translation stays on top)
-        const main = document.querySelector('main') || document.querySelector('.transcript-grid') || document.body;
-        if (main.nextSibling) {
-          main.parentNode.insertBefore(_slideViewerEl, main.nextSibling);
-        } else {
-          main.parentNode.appendChild(_slideViewerEl);
+        // If the popout layout registry is loaded, it will own placement.
+        // Legacy fallback (main view, non-popout flows) keeps the old
+        // after-main insertion.
+        if (!window.PopoutPanelRegistry) {
+          const main = document.querySelector('main') || document.querySelector('.transcript-grid') || document.body;
+          if (main.nextSibling) {
+            main.parentNode.insertBefore(_slideViewerEl, main.nextSibling);
+          } else {
+            main.parentNode.appendChild(_slideViewerEl);
+          }
         }
 
-        document.getElementById('sv-prev').addEventListener('click', () => _slideNav(-1));
-        document.getElementById('sv-next').addEventListener('click', () => _slideNav(1));
+        // Query INSIDE _slideViewerEl, not the document — the popout
+        // panel registry caches this element detached and only mounts
+        // it later via _buildSlot. Document-scope lookups would return
+        // null and crash with "Cannot read properties of null
+        // (reading 'addEventListener')", which broke EVERY layout that
+        // includes a slides panel (translator, fullstack, triple,
+        // sidebyside) the moment the registry tried to ensure() it.
+        _slideViewerEl.querySelector('#sv-prev').addEventListener('click', () => _slideNav(-1));
+        _slideViewerEl.querySelector('#sv-next').addEventListener('click', () => _slideNav(1));
 
         // The right-pane image is created statically in the markup above
         // (sv-trans), so we attach the auto-size load listener here once.
         // The left-pane image is created lazily by _ensureOrigPng and gets
         // its listener attached at injection time. Whichever side loads
         // first triggers the resize.
-        const transStaticImg = document.getElementById('sv-trans');
+        const transStaticImg = _slideViewerEl.querySelector('#sv-trans');
         if (transStaticImg) transStaticImg.addEventListener('load', _autoSizeSlidePane);
 
         // Deck switcher — POST the chosen deck_id to switch the active
         // deck server-side. The server broadcasts slide_deck_changed
         // back to us (and any other connected viewer) so the popout
         // re-renders against the new deck.
-        const deckPicker = document.getElementById('sv-deck-picker');
+        const deckPicker = _slideViewerEl.querySelector('#sv-deck-picker');
         if (deckPicker) {
           deckPicker.addEventListener('change', async () => {
             const targetDeck = deckPicker.value;
@@ -3917,6 +4443,60 @@ if (POPOUT_MODE) {
               // Server will broadcast slide_deck_changed → _showSlides
               // picks it up. No further work needed here.
             } catch {}
+          });
+        }
+
+        // Pane divider — drag horizontally to favour one side over the
+        // other (e.g. give the English translation more room than the
+        // Japanese source). Persists to localStorage so the layout
+        // survives a page reload. Double-click resets to 50/50.
+        const paneDivider = _slideViewerEl.querySelector('#sv-pane-divider');
+        const slidesRow = _slideViewerEl.querySelector('.sv-slides');
+        if (paneDivider && slidesRow) {
+          // Restore saved ratio (a-flex / total)
+          const savedRatio = parseFloat(localStorage.getItem('popout_slide_pane_ratio'));
+          if (Number.isFinite(savedRatio) && savedRatio > 0.05 && savedRatio < 0.95) {
+            slidesRow.style.setProperty('--sv-pane-a-flex', String(savedRatio));
+            slidesRow.style.setProperty('--sv-pane-b-flex', String(1 - savedRatio));
+          }
+          let dragStartX = 0, dragStartTotal = 0, dragStartA = 0;
+          paneDivider.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            dragStartX = e.clientX;
+            const rect = slidesRow.getBoundingClientRect();
+            dragStartTotal = rect.width - paneDivider.offsetWidth;
+            const aPane = _slideViewerEl.querySelector('#sv-orig-pane');
+            dragStartA = aPane ? aPane.getBoundingClientRect().width : dragStartTotal / 2;
+            const onMove = (e2) => {
+              const delta = e2.clientX - dragStartX;
+              const newAWidth = Math.max(80, Math.min(dragStartTotal - 80, dragStartA + delta));
+              const ratio = Math.max(0.05, Math.min(0.95, newAWidth / dragStartTotal));
+              slidesRow.style.setProperty('--sv-pane-a-flex', String(ratio));
+              slidesRow.style.setProperty('--sv-pane-b-flex', String(1 - ratio));
+            };
+            const onUp = () => {
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+              // Persist final ratio
+              const aPane = _slideViewerEl.querySelector('#sv-orig-pane');
+              if (aPane) {
+                const total = slidesRow.getBoundingClientRect().width - paneDivider.offsetWidth;
+                if (total > 0) {
+                  const finalRatio = aPane.getBoundingClientRect().width / total;
+                  localStorage.setItem('popout_slide_pane_ratio', finalRatio.toFixed(3));
+                }
+              }
+              // Re-fit slides to new pane widths.
+              if (typeof _autoSizeSlidePane === 'function') _autoSizeSlidePane();
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          });
+          paneDivider.addEventListener('dblclick', () => {
+            slidesRow.style.removeProperty('--sv-pane-a-flex');
+            slidesRow.style.removeProperty('--sv-pane-b-flex');
+            localStorage.removeItem('popout_slide_pane_ratio');
+            if (typeof _autoSizeSlidePane === 'function') _autoSizeSlidePane();
           });
         }
 
@@ -4128,7 +4708,7 @@ if (POPOUT_MODE) {
         picker.value = _slideState.deckId || decks[0].deck_id;
       }
 
-      function _showSlides(total, deckId, opts) {
+      async function _showSlides(total, deckId, opts) {
         _ensureSlideViewer();
         // On a new upload, clear the container so the old deck's PNG
         // doesn't briefly flash before the new one's first paint.
@@ -4146,30 +4726,45 @@ if (POPOUT_MODE) {
           targetLang: (opts && opts.targetLang) || null,
         };
         _slideViewerEl.style.display = '';
-        _renderSlide();
         if (slidesBtn) slidesBtn.classList.add('active-toggle');
-        // Refresh deck list so the switcher shows the new deck (if any)
         _refreshDeckSwitcher();
+        // Notify the popout layout renderer so a preset that includes
+        // slides can swap from "transcript fills" to "transcript + slides"
+        // without a page reload. The renderer prunes unavailable panels
+        // on every availability change (see popout-layout-render.js).
+        try {
+          window.dispatchEvent(new CustomEvent('popout-availability:change', {
+            detail: { slides: true },
+          }));
+        } catch {}
 
-        // Backfill the deck's source/target language from the metadata
-        // endpoint if the caller didn't pass them. Pane-by-language
-        // alignment (left=langA, right=langB) needs source_lang to know
-        // which side gets /original vs /translated.
+        // Resolve deck source/target language BEFORE the first render.
+        // Pane-by-language alignment (left=langA, right=langB) depends
+        // on sourceLang to decide which side gets /original vs
+        // /translated. Previously we rendered immediately with a null
+        // source-lang fallback (left=original), then re-rendered on
+        // backfill — causing a visible flip when the deck language
+        // didn't match langA (e.g. English deck in a JA↔EN meeting:
+        // user saw the EN slide on the "translated" side first, then
+        // the JA slide "instantly" replaced it, while the EN slide
+        // appeared on the "original" side only after the re-render —
+        // perceived as "translated instant, original slow").
         if (!_slideState.sourceLang) {
           const smid = _slideState.meetingId || mid;
           if (smid) {
-            fetch(`${API}/api/meetings/${smid}/slides`).then((r) => r.ok ? r.json() : null).then((meta) => {
-              if (!meta || meta.deck_id !== deckId) return;
-              const src = (meta.source_lang || '').toLowerCase();
-              const tgt = (meta.target_lang || '').toLowerCase();
-              if (src && src !== _slideState.sourceLang) {
-                _slideState.sourceLang = src;
-                _slideState.targetLang = tgt;
-                _renderSlide(); // re-render so panes pick the right side
+            try {
+              const r = await fetch(`${API}/api/meetings/${smid}/slides`);
+              if (r.ok) {
+                const meta = await r.json();
+                if (meta && meta.deck_id === deckId) {
+                  _slideState.sourceLang = (meta.source_lang || '').toLowerCase() || null;
+                  _slideState.targetLang = (meta.target_lang || '').toLowerCase() || null;
+                }
               }
-            }).catch(() => {});
+            } catch {}
           }
         }
+        _renderSlide();
       }
 
       function _handleSlideWsEvent(data) {
@@ -4300,7 +4895,24 @@ if (POPOUT_MODE) {
             if (!uploadMid) { showModal(`<div class="modal-confirm-title">No active meeting</div><div class="modal-confirm-message">Start a meeting before uploading slides.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm'); return; }
             _ensureSlideViewer();
             _slideViewerEl.style.display = '';
-            if (progressEl) progressEl.textContent = 'Uploading...';
+            // Mount the slides panel into the layout NOW — presets that
+            // only include slides when available (translator, fullstack,
+            // triple, sidebyside, demo) otherwise won't render a slot
+            // until slide_deck_changed arrives via WS, so the user sees
+            // nothing during upload + processing.
+            try {
+              window.dispatchEvent(new CustomEvent('popout-availability:change', {
+                detail: { slides: true },
+              }));
+            } catch {}
+            // Scope the progress lookup to the viewer element — `sv-progress`
+            // lives inside _slideViewerEl and is only reachable via
+            // document.getElementById AFTER the layout renderer has
+            // inserted the viewer into the DOM. Query by scope so we
+            // can always update the progress text.
+            const getProgressEl = () => _slideViewerEl?.querySelector('#sv-progress') || progressEl;
+            const prog0 = getProgressEl();
+            if (prog0) prog0.textContent = 'Uploading...';
             const resp = await fetch(`${API}/api/meetings/${uploadMid}/slides/upload`, { method: 'POST', body: formData });
             if (!resp.ok) {
               const err = await resp.json().catch(() => ({}));
@@ -4309,10 +4921,21 @@ if (POPOUT_MODE) {
             const data = await resp.json();
             _slideState.deckId = data.deck_id;
             _slideState.meetingId = uploadMid;
-            if (progressEl) progressEl.textContent = 'Processing...';
+            const prog1 = getProgressEl();
+            if (prog1) prog1.textContent = 'Processing...';
+            // Resolve the real total_slides + deck source/target by
+            // polling /api/meetings/{mid}/slides (same logic used on
+            // popout boot). The earlier fix called _showSlides(0, ...)
+            // optimistically — but total=0 means the prev/next
+            // bounds-check (`newIdx >= _slideState.total`) refuses
+            // every navigation until slide_deck_changed arrives. Route
+            // through _restoreSlideState so we never land in state with
+            // a mounted deck we can't navigate.
+            try { _restoreSlideState(); } catch {}
           } catch (err) {
             showModal(`<div class="modal-confirm-title">Upload failed</div><div class="modal-confirm-message">${esc(err.message)}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
-            if (progressEl) progressEl.textContent = '';
+            const progErr = _slideViewerEl?.querySelector('#sv-progress') || progressEl;
+            if (progErr) progErr.textContent = '';
           }
           slidesInput.value = '';
         });
@@ -4407,28 +5030,401 @@ if (POPOUT_MODE) {
         });
       }
 
-      // Connect view WS for live updates (even for historical, in case meeting resumes)
-      if (!hashMatch) {
-        const viewWs = new WebSocket(`${WS_PROTO}//${location.host}/api/ws/view`);
-        viewWs.onmessage = (evt) => {
+      // Connect view WS for live updates. We subscribe when either:
+      //  - No hash (normal live-mode popout from the active meeting), OR
+      //  - The hash-pinned meeting IS the currently-recording one
+      //    (user opened the popout from a review-mode "Live" button on
+      //    the live meeting — same meeting, just a different entry
+      //    point). The previous "if (!hashMatch)" guard left that case
+      //    replay-only, so the popout appeared frozen after the initial
+      //    fetch. The WS broadcasts events for whichever meeting is
+      //    currently `current_meeting` server-side, so connecting when
+      //    mid matches that is always safe.
+      let _shouldConnectWs = !hashMatch;
+      if (hashMatch) {
+        try {
+          const s = await fetch(`${API}/api/status`);
+          if (s.ok) {
+            const sd = await s.json();
+            if (sd?.meeting?.id && sd.meeting.id === mid) _shouldConnectWs = true;
+          }
+        } catch {}
+      }
+      if (_shouldConnectWs) {
+        // Track which meeting the popout is currently rendering. When a
+        // new meeting starts (the live current_meeting becomes a
+        // different id than what we've been ingesting for), wipe the
+        // store + grid so we don't show prior meeting's transcript
+        // mixed with the new one. This is the popout-side counterpart
+        // of the AudioPipeline's dev_reset/cancel handling — popout
+        // doesn't have an audio WS so it must do the cleanup itself.
+        let _popoutCurrentMeetingId = mid || null;
+        function _resetPopoutMeetingState(nextMid) {
+          try { store.clear(); } catch {}
           try {
-            const msg = JSON.parse(evt.data);
-            if (msg.type === 'speaker_rename' && msg.cluster_id != null) {
-              renameSpeaker(msg.cluster_id, msg.display_name);
-              _refreshTranscriptSpeakerLabels();
-            } else if (msg.type && msg.type.startsWith('slide')) {
-              _handleSlideWsEvent(msg);
-            } else {
-              store.ingest(msg);
-            }
+            if (window._gridRenderer) window._gridRenderer._clear(true);
           } catch {}
-        };
-        const keepAlive = setInterval(() => {
-          if (viewWs.readyState === WebSocket.OPEN) viewWs.send('ping');
-          else clearInterval(keepAlive);
-        }, 30000);
+          _popoutCurrentMeetingId = nextMid || null;
+        }
+
+        // Connection-status pill in the popout header so the user can
+        // see when the WS drops/reconnects rather than silently going
+        // stale. Tinted dot next to the meeting title.
+        const _popoutDot = document.querySelector('.popout-dot');
+        function _setConnState(state) {
+          if (!_popoutDot) return;
+          _popoutDot.dataset.connState = state;  // open | connecting | down
+          _popoutDot.title = (
+            state === 'open' ? 'Live — connected to server' :
+            state === 'connecting' ? 'Reconnecting…' :
+            'Disconnected — retrying'
+          );
+        }
+
+        // Auto-reconnect with exponential backoff. Fires after every
+        // close/error event. Without this, a server restart left the
+        // popout silently stale forever — user had to manually refresh.
+        // Backoff caps at 30s; resets to 1s on each successful open.
+        let _viewWs = null;
+        let _viewKeepAlive = null;
+        let _viewReconnectDelay = 1000;
+        let _viewReconnectTimer = null;
+        let _viewClosed = false;  // user-intentional close (e.g. tab unload)
+
+        function _scheduleViewReconnect() {
+          if (_viewReconnectTimer || _viewClosed) return;
+          const delay = _viewReconnectDelay;
+          _viewReconnectDelay = Math.min(_viewReconnectDelay * 2, 30000);
+          _setConnState('connecting');
+          _viewReconnectTimer = setTimeout(() => {
+            _viewReconnectTimer = null;
+            _connectViewWs();
+          }, delay);
+        }
+
+        function _connectViewWs() {
+          if (_viewClosed) return;
+          if (_viewWs && (
+            _viewWs.readyState === WebSocket.OPEN ||
+            _viewWs.readyState === WebSocket.CONNECTING
+          )) return;
+
+          _setConnState('connecting');
+          let ws;
+          try {
+            ws = new WebSocket(`${WS_PROTO}//${location.host}/api/ws/view`);
+          } catch (e) {
+            console.warn('[popout] WS construct failed, will retry:', e);
+            _scheduleViewReconnect();
+            return;
+          }
+          _viewWs = ws;
+
+          ws.addEventListener('open', () => {
+            _viewReconnectDelay = 1000;
+            _setConnState('open');
+            // After a reconnect, replay missed segments from the
+            // current meeting (if any) so the user doesn't sit
+            // looking at a frozen transcript until the next utterance
+            // arrives. Best-effort — failure here is non-fatal.
+            (async () => {
+              try {
+                const sresp = await fetch(`${API}/api/status`);
+                const sd = await sresp.json();
+                const liveMid = sd?.meeting?.id;
+                if (!liveMid) return;
+                if (_popoutCurrentMeetingId && _popoutCurrentMeetingId !== liveMid) {
+                  _resetPopoutMeetingState(liveMid);
+                }
+                if (!_popoutCurrentMeetingId) _popoutCurrentMeetingId = liveMid;
+                const r = await fetch(`${API}/api/meetings/${liveMid}`);
+                if (!r.ok) return;
+                const md = await r.json();
+                if (md.events) {
+                  for (const ev of md.events) {
+                    try { store.ingest(ev); } catch {}
+                  }
+                }
+              } catch {}
+            })();
+          });
+
+          ws.addEventListener('close', () => {
+            if (_viewKeepAlive) { clearInterval(_viewKeepAlive); _viewKeepAlive = null; }
+            _setConnState('down');
+            _scheduleViewReconnect();
+          });
+
+          ws.addEventListener('error', () => {
+            // Browser will fire close after error — handler above takes
+            // care of reconnect scheduling.
+          });
+
+          ws.addEventListener('message', (evt) => {
+            try {
+              const msg = JSON.parse(evt.data);
+              // Meeting-lifecycle resets — clear stale transcript/state
+              // before any new events flow in.
+              if (
+                msg.type === 'meeting_stopped' ||
+                msg.type === 'meeting_cancelled' ||
+                msg.type === 'dev_reset'
+              ) {
+                _resetPopoutMeetingState(null);
+                return;
+              }
+              // Detect meeting_id rollover on any event that carries
+              // one (the server stamps most events with meeting_id).
+              const evMid = msg.meeting_id || msg.meetingId || null;
+              if (evMid && _popoutCurrentMeetingId && evMid !== _popoutCurrentMeetingId) {
+                _resetPopoutMeetingState(evMid);
+              } else if (evMid && !_popoutCurrentMeetingId) {
+                _popoutCurrentMeetingId = evMid;
+              }
+
+              // ── Per-type cascade ────────────────────────────────
+              // Every server-emitted control type MUST have a named branch
+              // here. The catch-all `default` at the bottom funnels into
+              // a counter + dev-mode warning so drift surfaces in the JS
+              // handler-coverage test (tests/js/ws-event-handler-coverage.test.mjs).
+              // Explicit no-ops are encoded as `/* noop */ break;` so the
+              // intent is visible to readers.
+              switch (msg.type) {
+                case 'speaker_rename':
+                  if (msg.cluster_id != null) {
+                    renameSpeaker(msg.cluster_id, msg.display_name);
+                    _refreshTranscriptSpeakerLabels();
+                  }
+                  break;
+                case 'speaker_remap':
+                  // Server collapsed cluster_ids when diarize centroids
+                  // merged. Update the speaker registry so retired ids
+                  // don't linger as ghost names in the popout transcript.
+                  if (msg.renames && typeof msg.renames === 'object') {
+                    for (const [retiredStr, survivor] of Object.entries(msg.renames)) {
+                      const retired = parseInt(retiredStr, 10);
+                      if (!Number.isFinite(retired)) continue;
+                      const survivorEntry = _speakerRegistry.clusters.get(survivor);
+                      const retiredEntry = _speakerRegistry.clusters.get(retired);
+                      if (retiredEntry && survivorEntry && retiredEntry.displayName && !survivorEntry.displayName) {
+                        survivorEntry.displayName = retiredEntry.displayName;
+                      }
+                      _speakerRegistry.clusters.delete(retired);
+                    }
+                    _refreshTranscriptSpeakerLabels();
+                  }
+                  break;
+                case 'speaker_pulse':
+                  /* noop in popout — no seat strip to pulse */
+                  break;
+                case 'seat_update':
+                case 'speaker_assignment':
+                case 'speaker_correction':
+                case 'room_layout_update':
+                case 'summary_regenerated':
+                case 'transcript_revision':
+                  /* noop in popout — these surface in the admin view */
+                  break;
+                case 'meeting_warning':
+                case 'meeting_warning_cleared':
+                case 'audio_drift':
+                case 'finalize_progress':
+                  // Intentionally not surfaced in popout UI today (admin
+                  // owns these pills); listed so the cascade is exhaustive
+                  // and the handler-coverage gate stays green.
+                  /* noop */
+                  break;
+                case 'slide_change':
+                case 'slide_deck_changed':
+                case 'slide_partial_ready':
+                case 'slide_job_progress':
+                  _handleSlideWsEvent(msg);
+                  break;
+                case undefined:
+                  // No `type` field → it's a TranscriptEvent (segment carrier).
+                  ingestFromLiveWs(msg);
+                  break;
+                default:
+                  // Unknown control type — surface in dev-mode counter
+                  // so the JS handler-coverage test detects drift, AND
+                  // log so a maintainer notices in the browser console.
+                  if (window.__test_msg_log) {
+                    window.__test_unhandled_count = (window.__test_unhandled_count || 0) + 1;
+                    window.__test_unhandled_types = window.__test_unhandled_types || new Set();
+                    window.__test_unhandled_types.add(msg.type);
+                  }
+                  console.warn('popout WS: unhandled event type', msg.type, msg);
+                  // DELIBERATELY do NOT call ingestFromLiveWs(msg) — that
+                  // was the bug class: control events being funnelled into
+                  // SegmentStore.ingest with segment_id=undefined.
+                  break;
+              }
+            } catch {}
+          });
+
+          _viewKeepAlive = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              try { ws.send('ping'); } catch {}
+            } else {
+              clearInterval(_viewKeepAlive);
+              _viewKeepAlive = null;
+            }
+          }, 30000);
+        }
+
+        // Close cleanly on tab unload so the server doesn't keep a
+        // dead client around for the silence-watchdog grace window.
+        window.addEventListener('beforeunload', () => {
+          _viewClosed = true;
+          if (_viewWs && _viewWs.readyState === WebSocket.OPEN) {
+            try { _viewWs.close(1000, 'page-unload'); } catch {}
+          }
+        });
+
+        _connectViewWs();
       }
     } catch (e) { console.error('Pop-out init error:', e); }
+  })();
+}
+
+// ─── Admin slide controls ─────────────────────────────────────────
+// Lets the operator advance/upload slides from the main admin view
+// without opening the popout. Server broadcasts `slide_change` so the
+// popout (and every other connected viewer) follows.
+//
+// Use case: operator views the original (English) on their own screen,
+// the popout on a guest display shows just the translated transcript +
+// translated slides — but the OPERATOR clicks Next to advance.
+if (!POPOUT_MODE) {
+  const _adminSlideBar = document.getElementById('admin-slide-bar');
+  const _adminSlideThumb = document.getElementById('admin-slide-thumb');
+  const _adminSlideLabel = document.getElementById('admin-slide-label');
+  const _adminSlidePrev = document.getElementById('admin-slide-prev');
+  const _adminSlideNext = document.getElementById('admin-slide-next');
+  const _adminSlideUploadBtn = document.getElementById('admin-slide-upload-btn');
+  const _adminSlideUploadInput = document.getElementById('admin-slide-upload-input');
+
+  const _adminSlideState = { meetingId: null, deckId: null, total: 0, current: 0 };
+
+  function _adminSlidesGetMeetingId() {
+    const cm = window._currentMeetingId;
+    if (cm) return cm;
+    const url = location.hash.match(/^#meeting\/(.+)/);
+    return url ? url[1] : null;
+  }
+
+  function _adminSlideRefresh() {
+    if (!_adminSlideThumb) return;
+    if (!_adminSlideState.deckId || !_adminSlideState.meetingId) {
+      _adminSlideThumb.removeAttribute('src');
+      _adminSlideLabel.textContent = '— / —';
+      if (_adminSlidePrev) _adminSlidePrev.disabled = true;
+      if (_adminSlideNext) _adminSlideNext.disabled = true;
+      return;
+    }
+    const bust = `?d=${_adminSlideState.deckId}`;
+    _adminSlideThumb.src =
+      `${API}/api/meetings/${_adminSlideState.meetingId}/slides/${_adminSlideState.current}/original${bust}`;
+    _adminSlideLabel.textContent =
+      `${_adminSlideState.current + 1} / ${_adminSlideState.total}`;
+    if (_adminSlidePrev) _adminSlidePrev.disabled = _adminSlideState.current <= 0;
+    if (_adminSlideNext) _adminSlideNext.disabled = _adminSlideState.current >= _adminSlideState.total - 1;
+  }
+
+  async function _adminSlideAdvance(delta) {
+    const newIdx = _adminSlideState.current + delta;
+    if (newIdx < 0 || newIdx >= _adminSlideState.total) return;
+    if (!_adminSlideState.meetingId) return;
+    try {
+      await fetch(`${API}/api/meetings/${_adminSlideState.meetingId}/slides/current`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: newIdx }),
+      });
+      // Optimistic update — the broadcast will confirm.
+      _adminSlideState.current = newIdx;
+      _adminSlideRefresh();
+    } catch (e) {
+      console.warn('admin slide advance failed:', e);
+    }
+  }
+
+  if (_adminSlidePrev) _adminSlidePrev.addEventListener('click', () => _adminSlideAdvance(-1));
+  if (_adminSlideNext) _adminSlideNext.addEventListener('click', () => _adminSlideAdvance(1));
+
+  if (_adminSlideUploadBtn && _adminSlideUploadInput) {
+    _adminSlideUploadBtn.addEventListener('click', () => _adminSlideUploadInput.click());
+    _adminSlideUploadInput.addEventListener('change', async (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const mid = _adminSlidesGetMeetingId();
+      if (!mid) {
+        alertDialog?.('No active meeting', 'Start a meeting first, then upload slides.');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const r = await fetch(`${API}/api/meetings/${mid}/slides/upload`, {
+          method: 'POST',
+          body: fd,
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${r.status}`);
+        }
+        // Server will broadcast slide_change events as the deck renders.
+      } catch (e) {
+        console.warn('admin slide upload failed:', e);
+        alertDialog?.('Upload failed', String(e.message || e));
+      } finally {
+        _adminSlideUploadInput.value = '';
+      }
+    });
+  }
+
+  // Watch the global WS event stream for slide events. We attach via
+  // window.addEventListener since scribe-app dispatches a custom event
+  // bus for these — fall back to polling /api/meetings/{id}/slides if
+  // the bus isn't there yet (defensive against load-order changes).
+  function _adminHandleSlideMsg(msg) {
+    if (!msg || typeof msg !== 'object') return;
+    if (msg.type === 'slide_deck_ready' || msg.type === 'slide_deck_changed') {
+      _adminSlideState.meetingId = msg.meeting_id || _adminSlideState.meetingId || _adminSlidesGetMeetingId();
+      _adminSlideState.deckId = msg.deck_id;
+      _adminSlideState.total = msg.total_slides || msg.total || 0;
+      _adminSlideState.current = msg.current_slide_index || 0;
+      if (_adminSlideBar) _adminSlideBar.style.display = '';
+      _adminSlideRefresh();
+    } else if (msg.type === 'slide_change') {
+      if (typeof msg.slide_index === 'number') {
+        _adminSlideState.current = msg.slide_index;
+        if (msg.deck_id) _adminSlideState.deckId = msg.deck_id;
+        _adminSlideRefresh();
+      }
+    }
+  }
+  window.addEventListener('scribe-ws-message', (e) => _adminHandleSlideMsg(e.detail));
+  // Also check current meeting on load — if a deck is already active,
+  // populate the bar immediately rather than waiting for a broadcast.
+  (async () => {
+    try {
+      const sresp = await fetch(`${API}/api/status`);
+      const sd = await sresp.json();
+      const mid = sd?.meeting?.id;
+      if (!mid) return;
+      window._currentMeetingId = mid;
+      const dresp = await fetch(`${API}/api/meetings/${mid}/slides`);
+      if (!dresp.ok) return;
+      const dd = await dresp.json();
+      if (!dd.deck_id) return;
+      _adminSlideState.meetingId = mid;
+      _adminSlideState.deckId = dd.deck_id;
+      _adminSlideState.total = dd.total_slides || 0;
+      _adminSlideState.current = dd.current_slide_index || 0;
+      if (_adminSlideBar) _adminSlideBar.style.display = '';
+      _adminSlideRefresh();
+    } catch {}
   })();
 }
 
@@ -4437,6 +5433,13 @@ let _devMode = false;
 
 btnRecord.addEventListener('click', async () => {
   if (document.body.classList.contains('recording')) {
+    const confirmed = await confirmDialog(
+      'Stop meeting?',
+      'Recording will end and the meeting will be finalized with a summary. You won’t be able to add more audio.',
+      'Stop Meeting',
+      true,
+    );
+    if (!confirmed) return;
     await stopRecording();
   } else {
     await startRecording(false);
@@ -4476,6 +5479,9 @@ if (btnCancelMeeting) {
       if (resp.ok) {
         document.body.classList.remove('recording');
         document.body.classList.remove('meeting-active');
+        document.body.classList.remove('starting');
+        reconciler?.releaseOwnership();
+        reconciler?.clearReconnectState();
         document.getElementById('control-bar').style.display = 'none';
         const statusEl = document.getElementById('status-line');
         if (statusEl) statusEl.textContent = 'Meeting cancelled';
@@ -4655,20 +5661,17 @@ async function startRecording(isResume) {
     window.current_meeting_id = data.meeting_id;
     _meetingStartWallMs = Date.now();
     timer.start();
-    await audio.start((event) => store.ingest(event));
+    await audio.start((event) => ingestFromLiveWs(event));
     updateMeter(); startAnalytics(); refreshWifiQR();
   } catch (err) {
     console.error('Start failed:', err);
     document.getElementById('status-line').textContent = `Error: ${err.message}`;
-    // Roll back to room-setup so the user can retry. The click handler
-    // disabled btnStart on click; we must re-enable it here or the user
-    // is stuck staring at a dead button.
-    const btnStart = document.getElementById('btn-start-meeting');
-    if (btnStart) {
-      btnStart.disabled = false;
-      btnStart.textContent = btnStart.dataset.origText || 'Start Meeting';
-    }
+    // Roll back to room-setup so the user can retry. RoomSetup.startMeeting
+    // owns btnStart restore via its own finally; we just clean the body
+    // classes and unhide room-setup here.
     document.body.classList.remove('meeting-active');
+    document.body.classList.remove('starting');
+    reconciler?.releaseOwnership();
     document.getElementById('meeting-mode').style.display = 'none';
     document.getElementById('control-bar').style.display = 'none';
     document.getElementById('room-setup').style.display = '';
@@ -4826,7 +5829,7 @@ async function stopRecording() {
             // "View Meeting" button inside the rendered summary.
           }
         } else {
-          store.ingest(msg);
+          ingestFromLiveWs(msg);
         }
       } catch {}
     };
@@ -4836,6 +5839,9 @@ async function stopRecording() {
     audio.ws?.close(); audio.ws = null; audio.running = false;
     stopAnalytics(); refreshWifiQR(); document.body.classList.remove('recording');
     document.body.classList.remove('meeting-active');
+    document.body.classList.remove('starting');
+    reconciler?.releaseOwnership();
+    reconciler?.clearReconnectState();
     // Reset speaker registry so the next meeting starts fresh
     _resetSpeakerRegistry();
     document.getElementById('control-bar').style.display = 'none';
@@ -5458,49 +6464,71 @@ function _openMeetingToolsModal(meeting, mgr) {
   card.querySelector('#tools-close-btn')?.addEventListener('click', closeModal);
 
   async function _runRediarize() {
-    const raw = window.prompt(
-      'Re-diarize this meeting?\n\n'
-      + 'Pin a speaker count when known (recommended for over-clustered '
-      + 'meetings). Leave blank to let the model decide.',
-      ''
+    const raw = await promptDialog(
+      'Re-diarize meeting',
+      'Pin a speaker count when known (recommended for over-clustered meetings). Leave blank to let the model decide.',
+      {
+        placeholder: 'Speaker count (1–12) or blank',
+        confirmText: 'Re-diarize',
+        type: 'number',
+        inputMode: 'numeric',
+        min: 1,
+        max: 12,
+        help: 'Runs diarization + speaker consolidation on the existing transcript. Keeps a snapshot.',
+      }
     );
     if (raw === null) return;
-    const trimmed = raw.trim();
-    const expected = trimmed === '' ? null : parseInt(trimmed, 10);
-    if (trimmed !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
-      showModal(`<div class="modal-confirm-title">Invalid count</div><div class="modal-confirm-message">Speaker count must be 1-12 or blank.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+    const expected = raw === '' ? null : parseInt(raw, 10);
+    if (raw !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
+      // Validation failed — alert stacks on top of tools modal so the
+      // user drops back here after dismissing and can pick something else.
+      await alertDialog('Invalid count', 'Speaker count must be a number between 1 and 12, or blank.');
       return;
     }
-    closeModal();
+    // Inputs validated. Dismiss the tools modal before the long-running
+    // fetch so the UI isn't frozen behind a dialog for 2–3 minutes; the
+    // completion / failure alert at the end is the only modal the user
+    // needs to see for this operation.
+    closeAllModals();
     try {
       const qs = expected != null ? `?expected_speakers=${expected}` : '';
       const resp = await fetch(`${API}/api/meetings/${m.meeting_id}/finalize${qs}`, { method: 'POST' });
       if (!resp.ok) throw new Error(await resp.text());
       const result = await resp.json();
       mgr?.refresh();
-      showModal(`<div class="modal-confirm-title">Re-diarize complete</div><div class="modal-confirm-message">${result?.diarization?.unique_speakers ?? '?'} speakers detected from ${result?.diarization?.segments ?? '?'} diarize segments.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog(
+        'Re-diarize complete',
+        `${result?.diarization?.unique_speakers ?? '?'} speakers detected from ${result?.diarization?.segments ?? '?'} diarize segments.`,
+      );
     } catch (err) {
-      showModal(`<div class="modal-confirm-title">Re-diarize failed</div><div class="modal-confirm-message">${esc(String(err.message || err))}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog('Re-diarize failed', String(err.message || err));
     }
   }
 
   async function _runReprocess() {
-    const raw = window.prompt(
-      'Full reprocess this meeting from raw audio?\n\n'
-      + 'Re-runs ASR + translation + diarization for higher-quality '
-      + 'transcript. Slow (~10-15 min for a 60-min meeting). Snapshots '
-      + 'the current journal automatically.\n\n'
-      + 'Optionally pin a speaker count (1-12), or leave blank.',
-      ''
+    const raw = await promptDialog(
+      'Full reprocess from raw audio',
+      'Re-runs ASR + translation + diarization for a higher-quality transcript. Slow: about 10–15 minutes for a 60-minute meeting. Snapshots the current journal automatically.',
+      {
+        placeholder: 'Speaker count (1–12) or blank',
+        confirmText: 'Reprocess',
+        type: 'number',
+        inputMode: 'numeric',
+        min: 1,
+        max: 12,
+        help: 'Pin a speaker count when known, or leave blank to let pyannote decide.',
+      }
     );
     if (raw === null) return;
-    const trimmed = raw.trim();
-    const expected = trimmed === '' ? null : parseInt(trimmed, 10);
-    if (trimmed !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
-      showModal(`<div class="modal-confirm-title">Invalid count</div><div class="modal-confirm-message">Speaker count must be 1-12 or blank.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+    const expected = raw === '' ? null : parseInt(raw, 10);
+    if (raw !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
+      await alertDialog('Invalid count', 'Speaker count must be a number between 1 and 12, or blank.');
       return;
     }
-    closeModal();
+    // Dismiss the tools modal before the long (10–15 min) fetch so
+    // the rest of the UI is usable while the server works. The final
+    // completion / failure alert is the user's only required feedback.
+    closeAllModals();
     try {
       const qs = expected != null ? `?expected_speakers=${expected}` : '';
       const resp = await fetch(`${API}/api/meetings/${m.meeting_id}/reprocess${qs}`, { method: 'POST' });
@@ -5510,25 +6538,31 @@ function _openMeetingToolsModal(meeting, mgr) {
       const segs = result?.segments ?? '?';
       const tr = result?.translated ?? '?';
       const sp = result?.speakers ?? '?';
-      showModal(`<div class="modal-confirm-title">Reprocess complete</div><div class="modal-confirm-message">${segs} segments, ${tr} translated, ${sp} speakers detected. The previous run is saved as a version — open Tools → Versions to compare.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog(
+        'Reprocess complete',
+        `${segs} segments, ${tr} translated, ${sp} speakers detected. The previous run is saved as a version; open Tools > Versions to compare.`,
+      );
     } catch (err) {
-      showModal(`<div class="modal-confirm-title">Reprocess failed</div><div class="modal-confirm-message">${esc(String(err.message || err))}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog('Reprocess failed', String(err.message || err));
     }
   }
 
   async function _showVersions() {
-    closeModal();
+    closeAllModals();
     let resp;
     try {
       resp = await fetch(`${API}/api/meetings/${m.meeting_id}/versions`);
     } catch (e) {
-      showModal(`<div class="modal-confirm-title">Versions unavailable</div><div class="modal-confirm-message">${esc(String(e))}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog('Versions unavailable', String(e));
       return;
     }
     const data = await resp.json().catch(() => ({}));
     const versions = (data && data.versions) || [];
     if (!versions.length) {
-      showModal(`<div class="modal-confirm-title">No versions yet</div><div class="modal-confirm-message">Run a reprocess first — each reprocess auto-snapshots the prior run so you can compare them here.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog(
+        'No versions yet',
+        'Run a reprocess first. Each reprocess auto-snapshots the prior run so you can compare them here.',
+      );
       return;
     }
     let diffHtml = '';
@@ -5589,14 +6623,23 @@ function _openMeetingToolsModal(meeting, mgr) {
   }
 
   async function _confirmDelete() {
-    if (!window.confirm(`Delete meeting ${m.meeting_id}?\n\nThis removes the transcript, audio, slides, summary, and all snapshots permanently.`)) return;
-    closeModal();
+    const go = await confirmDialog(
+      'Delete meeting?',
+      `<code style="font-family:var(--font-mono);font-size:0.82em">${esc(m.meeting_id || '')}</code><br><br>This permanently removes the transcript, audio, slides, summary, and all snapshots. The action cannot be undone.`,
+      'Delete',
+      true,
+    );
+    if (!go) return;
+    // Drop the whole stack — tools modal would show a stale meeting
+    // row between the fetch starting and mgr.refresh() removing it.
+    closeAllModals();
     try {
       const r = await fetch(`${API}/api/meetings/${m.meeting_id}`, { method: 'DELETE' });
       if (!r.ok) throw new Error(await r.text());
       mgr?.refresh();
     } catch (e) {
-      showModal(`<div class="modal-confirm-title">Delete failed</div><div class="modal-confirm-message">${esc(String(e.message || e))}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+      await alertDialog('Delete failed', String(e.message || e));
+      return;
     }
   }
 
@@ -5652,7 +6695,189 @@ function startAnalytics() {
 }
 function stopAnalytics() { clearInterval(analyticsInterval); }
 
-if (!POPOUT_MODE) checkStatus();
+// ─── Reconciler wiring + tiered /api/status polling ───────────
+
+// Inject or locate the sticky "Meeting in progress" / "Reconnecting"
+// banner. Styled by static/css/style.css (.meeting-banner and its
+// .return / .reconnecting / .visible modifiers).
+function _ensureBannerEl() {
+  let el = document.getElementById('meeting-banner');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'meeting-banner';
+  el.className = 'meeting-banner';
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.innerHTML = `
+    <span class="meeting-banner-dot" aria-hidden="true"></span>
+    <span class="meeting-banner-label"></span>
+    <button class="meeting-banner-btn" type="button"></button>
+  `;
+  document.body.appendChild(el);
+  return el;
+}
+
+function _showBanner(state) {
+  const el = _ensureBannerEl();
+  if (!state) {
+    el.classList.remove('visible', 'return', 'reconnecting');
+    el.querySelector('.meeting-banner-btn').onclick = null;
+    return;
+  }
+  el.classList.add('visible');
+  el.classList.toggle('return', state.mode === 'return');
+  el.classList.toggle('reconnecting', state.mode === 'reconnecting');
+  el.querySelector('.meeting-banner-label').textContent = state.label || '';
+  const btn = el.querySelector('.meeting-banner-btn');
+  if (state.button) {
+    btn.textContent = state.button;
+    btn.style.display = '';
+    btn.setAttribute('aria-hidden', 'false');
+    btn.onclick = state.onClick || null;
+  } else {
+    btn.style.display = 'none';
+    btn.setAttribute('aria-hidden', 'true');
+    btn.onclick = null;
+  }
+}
+
+function _getAudioWsState() {
+  const ws = audio && audio.ws;
+  if (!ws) return 'closed';
+  switch (ws.readyState) {
+    case WebSocket.OPEN: return 'open';
+    case WebSocket.CONNECTING: return 'connecting';
+    default: return 'closed';
+  }
+}
+
+// View-only WS lifecycle. Tracked so the reconciler can attach/detach
+// on take-over and upgrade paths without knowing the WS protocol.
+let _viewOnlyWs = null;
+let _viewOnlyKeepAlive = null;
+function _attachViewOnlyWs(meetingId) {
+  if (_viewOnlyWs && _viewOnlyWs.readyState !== WebSocket.CLOSED) return;
+  VIEW_ONLY = true;
+  document.body.classList.add('view-only');
+  const viewWs = new WebSocket(`${WS_PROTO}//${location.host}/api/ws/view`);
+  viewWs.onmessage = (evt) => {
+    try {
+      const msg = JSON.parse(evt.data);
+      if (msg.type === 'speaker_rename' && msg.cluster_id != null) {
+        renameSpeaker(msg.cluster_id, msg.display_name);
+        _refreshDetectedSpeakersStrip();
+        _refreshTranscriptSpeakerLabels();
+      } else {
+        ingestFromLiveWs(msg);
+      }
+    } catch {}
+  };
+  viewWs.onopen = () => {
+    document.getElementById('status-line').textContent = `Viewing ${meetingId} (read-only)`;
+  };
+  _viewOnlyWs = viewWs;
+  _viewOnlyKeepAlive = setInterval(() => {
+    if (viewWs.readyState === WebSocket.OPEN) viewWs.send('ping');
+    else { clearInterval(_viewOnlyKeepAlive); _viewOnlyKeepAlive = null; }
+  }, 30000);
+}
+function _detachViewOnlyWs() {
+  if (_viewOnlyWs) { _viewOnlyWs.close(); _viewOnlyWs = null; }
+  if (_viewOnlyKeepAlive) { clearInterval(_viewOnlyKeepAlive); _viewOnlyKeepAlive = null; }
+  VIEW_ONLY = false;
+  document.body.classList.remove('view-only');
+}
+
+async function _loadMeetingJournal(meetingId) {
+  const resp = await fetch(`${API}/api/meetings/${meetingId}`);
+  const data = await resp.json();
+  if (data.meta?.created_at) {
+    _meetingStartWallMs = new Date(data.meta.created_at).getTime();
+  }
+  if (data.events) {
+    // Direct store.ingest — bypasses the live-WS gate since this is
+    // authoritative journal replay, not a live event stream.
+    for (const ev of data.events) store.ingest(ev);
+  }
+  return data;
+}
+
+function _resetLiveStore() {
+  store.clear();
+  _resetSpeakerRegistry();
+  window._gridRenderer = new CompactGridRenderer(document.getElementById('transcript-grid'));
+}
+
+function _showMeetingMode() {
+  document.getElementById('landing-mode').style.display = 'none';
+  document.getElementById('room-setup').style.display = 'none';
+  document.getElementById('view-mode').style.display = 'none';
+  document.getElementById('meeting-mode').style.display = '';
+  document.getElementById('control-bar').style.display = '';
+  document.body.classList.add('hide-table');
+}
+
+reconciler = createReconciler({
+  doc: document,
+  storage: window.sessionStorage,
+  fetchFn: (...a) => fetch(...a),
+  getAudioWsState: _getAudioWsState,
+  startRecording: (resume) => startRecording(resume),
+  attachViewOnlyWs: _attachViewOnlyWs,
+  detachViewOnlyWs: _detachViewOnlyWs,
+  loadMeetingJournal: _loadMeetingJournal,
+  resetStore: _resetLiveStore,
+  setStoreLive,
+  renderTableStrip: () => roomSetup._renderTableStrip(),
+  showMeetingMode: _showMeetingMode,
+  showBanner: _showBanner,
+  setTitle: (t) => { document.title = t; },
+  onFinalizeCleanup: () => {
+    // The live meeting ended server-side. Clear client-side pipeline.
+    try { audio.ws?.close(); } catch {}
+    if (audio) { audio.ws = null; audio.running = false; }
+    _detachViewOnlyWs();
+    document.body.classList.remove('recording', 'meeting-active', 'starting');
+  },
+  apiBase: API,
+  popoutMode: POPOUT_MODE,
+});
+window._reconciler = reconciler;  // dev-console introspection
+
+// Tiered status polling — 2 s while recording/starting, 10 s idle.
+// Paused when the tab is hidden; immediate tick on visibilityresume.
+let _pollTimer = null;
+function _scheduleNextStatusTick() {
+  if (document.hidden || POPOUT_MODE) return;
+  const busy = document.body.classList.contains('recording')
+            || document.body.classList.contains('starting');
+  const delay = busy ? 2000 : 10000;
+  _pollTimer = setTimeout(_statusTick, delay);
+}
+async function _statusTick() {
+  try { await checkStatus(); } catch {}
+  _scheduleNextStatusTick();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
+  _statusTick();
+});
+
+if (!POPOUT_MODE) { checkStatus().then(_scheduleNextStatusTick); }
+
+// ─── beforeunload warning ────────────────────────────────────
+// Warn only while recording or mid-start. Server-side finalization
+// completes regardless of browser presence so no warning then.
+if (!POPOUT_MODE) {
+  window.addEventListener('beforeunload', (e) => {
+    if (document.body.classList.contains('recording')
+     || document.body.classList.contains('starting')) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+}
 
 // ─── Landing Page Navigation ─────────────────────────────────
 
@@ -5676,11 +6901,32 @@ function hideLanding() {
   document.getElementById('landing-mode').style.display = 'none';
 }
 
+// Leave the live meeting view while the meeting is still running on
+// the server. Suppresses live ingestion so landing / review / setup
+// can't be corrupted by incoming WS events, but does NOT touch the
+// AudioPipeline / audio.ws — the meeting keeps recording. The
+// reconciler's return banner will drive the user back when they want
+// to resume the live view; enterLiveMeetingMode re-enables
+// ingestion and re-fetches the journal so the rebuild is clean.
+function exitLiveMeetingView() {
+  setStoreLive(false);
+  document.body.classList.remove('meeting-active');
+  document.body.classList.add('off-meeting-view');
+  document.getElementById('meeting-mode').style.display = 'none';
+}
+
 // Home icon — always navigates to the landing page. Disabled during an
 // active recording so users don't accidentally drop the meeting UI.
 document.getElementById('btn-home')?.addEventListener('click', (e) => {
   e.preventDefault();
-  if (document.body.classList.contains('recording')) return;
+  // Navigation is always allowed — even while recording. The "Meeting
+  // in progress" banner is the return affordance; exitLiveMeetingView
+  // keeps the live pipeline alive while the user is off the meeting
+  // view, and detaches rendering so events don't corrupt other views.
+  if (document.body.classList.contains('recording')
+   || document.body.classList.contains('meeting-active')) {
+    exitLiveMeetingView();
+  }
   history.pushState(null, '', '#home');
   showLanding();
 });
@@ -5722,16 +6968,12 @@ document.getElementById('landing-quick-english-btn')?.addEventListener('click', 
   const origText = btn.textContent;
   btn.textContent = 'Starting…';
   try {
+    // Quick start bypasses the setup screen entirely. We set
+    // currentLanguagePair to a single code (mono) and POST it directly —
+    // the dropdowns don't need to reflect this because the user won't
+    // see the setup screen unless they explicitly navigate back, at
+    // which point showSetup() resets the pair to the bilingual default.
     currentLanguagePair = 'en';
-    // Keep the setup dropdowns in sync with the meeting we're about to
-    // start, so if the user stops this meeting and lands back on the
-    // setup screen they see the state that produced the meeting.
-    const selA = document.getElementById('lang-a-select');
-    const selB = document.getElementById('lang-b-select');
-    if (selA) selA.value = 'en';
-    if (selB) selB.value = '__none__';
-    const selector = document.getElementById('language-selector');
-    if (selector) selector.classList.add('mono');
     _updateColumnHeaders();
 
     hideLanding();
@@ -5792,7 +7034,14 @@ class MeetingsManager {
     });
 
     this.btnNew.addEventListener('click', () => {
-      if (document.body.classList.contains('recording')) { toggleMeetingsPanel(); return; }
+      // Free navigation: even while recording the user can reach the
+      // setup screen. The server's idempotent start fast-path handles
+      // any accidental re-start attempts; the return banner remains
+      // visible so the user can always get back to the live view.
+      if (document.body.classList.contains('recording')
+       || document.body.classList.contains('meeting-active')) {
+        exitLiveMeetingView();
+      }
       this.showSetup(); toggleMeetingsPanel();
     });
     this.refresh();
@@ -5874,6 +7123,12 @@ class MeetingsManager {
       //   raw audio (~10-15 min for 60-min audio). Use when you want
       //   higher-quality transcript text in addition to speaker fixes.
       const canReprocess = m.state === 'complete' && m.event_count > 0;
+      // Show the tools menu (⋯) for any non-live meeting with a journal,
+      // so a meeting whose reprocess was killed mid-flight can still be
+      // recovered (Retry reprocess, view versions, delete). Without this
+      // the user has no escape hatch when state gets stuck at
+      // 'reprocessing' or 'interrupted'.
+      const canShowTools = m.event_count > 0 && m.state !== 'recording';
       const rediarizeBtn = canReprocess
         ? '<button class="meeting-rediarize btn-ghost" title="Re-run diarization + speaker consolidation (fast, ~2-3 min for 60-min audio). Optional speaker count.">Re-diarize</button>'
         : '';
@@ -5909,7 +7164,7 @@ class MeetingsManager {
           ${slidesBtn}
           ${resumeBtn}
           ${finalizeBtn}
-          ${canReprocess ? toolsBtn : '<button class="meeting-delete" title="Delete meeting">&times;</button>'}
+          ${canShowTools ? toolsBtn : '<button class="meeting-delete" title="Delete meeting">&times;</button>'}
         </div>
       `;
       item.querySelector('.meeting-item-content').addEventListener('click', () => this.viewMeeting(m.meeting_id));
@@ -5979,17 +7234,23 @@ class MeetingsManager {
       // Re-diarize: fast path — just re-runs diarize + speaker consolidation
       item.querySelector('.meeting-rediarize')?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const raw = window.prompt(
-          'Re-diarize this meeting?\n\n'
-          + 'Pin a speaker count when known (recommended for over-clustered '
-          + 'meetings). Leave blank to let the model decide.',
-          ''
+        const raw = await promptDialog(
+          'Re-diarize meeting',
+          'Pin a speaker count when known (recommended for over-clustered meetings). Leave blank to let the model decide.',
+          {
+            placeholder: 'Speaker count (1–12) or blank',
+            confirmText: 'Re-diarize',
+            type: 'number',
+            inputMode: 'numeric',
+            min: 1,
+            max: 12,
+            help: 'Keeps the transcript text. Replaces speaker labels only.',
+          }
         );
         if (raw === null) return;
-        const trimmed = raw.trim();
-        const expected = trimmed === '' ? null : parseInt(trimmed, 10);
-        if (trimmed !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
-          showModal(`<div class="modal-confirm-title">Invalid count</div><div class="modal-confirm-message">Speaker count must be a number between 1 and 12, or blank.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+        const expected = raw === '' ? null : parseInt(raw, 10);
+        if (raw !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
+          await alertDialog('Invalid count', 'Speaker count must be a number between 1 and 12, or blank.');
           return;
         }
         const btn = e.currentTarget;
@@ -6001,9 +7262,12 @@ class MeetingsManager {
           if (!resp.ok) throw new Error(await resp.text());
           const result = await resp.json();
           this.refresh();
-          showModal(`<div class="modal-confirm-title">Re-diarize complete</div><div class="modal-confirm-message">${result?.diarization?.unique_speakers ?? '?'} speakers detected from ${result?.diarization?.segments ?? '?'} diarize segments.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+          await alertDialog(
+            'Re-diarize complete',
+            `${result?.diarization?.unique_speakers ?? '?'} speakers detected from ${result?.diarization?.segments ?? '?'} diarize segments.`,
+          );
         } catch (err) {
-          showModal(`<div class="modal-confirm-title">Re-diarize failed</div><div class="modal-confirm-message">${esc(String(err.message || err))}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+          await alertDialog('Re-diarize failed', String(err.message || err));
         } finally {
           btn.disabled = false;
           btn.textContent = 'Re-diarize';
@@ -6013,20 +7277,23 @@ class MeetingsManager {
       // Reprocess: slow path — re-runs ASR + translation + diarize
       item.querySelector('.meeting-reprocess')?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const raw = window.prompt(
-          'Full reprocess this meeting from raw audio?\n\n'
-          + 'Re-runs ASR + translation + diarization for higher-quality '
-          + 'transcript. Slow (~10-15 min for a 60-min meeting). The current '
-          + 'journal is backed up as journal.jsonl.bak.\n\n'
-          + 'Optionally pin a speaker count (1-12), or leave blank to let '
-          + 'the model decide.',
-          ''
+        const raw = await promptDialog(
+          'Full reprocess from raw audio',
+          'Re-runs ASR + translation + diarization for a higher-quality transcript. Slow: about 10–15 minutes for a 60-minute meeting. The current journal is backed up as journal.jsonl.bak.',
+          {
+            placeholder: 'Speaker count (1–12) or blank',
+            confirmText: 'Reprocess',
+            type: 'number',
+            inputMode: 'numeric',
+            min: 1,
+            max: 12,
+            help: 'Pin a speaker count when known, or leave blank to let pyannote decide.',
+          }
         );
         if (raw === null) return;
-        const trimmed = raw.trim();
-        const expected = trimmed === '' ? null : parseInt(trimmed, 10);
-        if (trimmed !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
-          showModal(`<div class="modal-confirm-title">Invalid count</div><div class="modal-confirm-message">Speaker count must be a number between 1 and 12, or blank.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+        const expected = raw === '' ? null : parseInt(raw, 10);
+        if (raw !== '' && (!Number.isFinite(expected) || expected < 1 || expected > 12)) {
+          await alertDialog('Invalid count', 'Speaker count must be a number between 1 and 12, or blank.');
           return;
         }
         const btn = e.currentTarget;
@@ -6043,9 +7310,9 @@ class MeetingsManager {
           const segs = result?.segments ?? '?';
           const tr = result?.translated ?? '?';
           const sp = result?.speakers ?? '?';
-          showModal(`<div class="modal-confirm-title">Reprocess complete</div><div class="modal-confirm-message">${segs} segments, ${tr} translated, ${sp} speakers detected.</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+          await alertDialog('Reprocess complete', `${segs} segments, ${tr} translated, ${sp} speakers detected.`);
         } catch (err) {
-          showModal(`<div class="modal-confirm-title">Reprocess failed</div><div class="modal-confirm-message">${esc(String(err.message || err))}</div><div class="modal-confirm-actions"><button class="modal-btn" onclick="closeModal()">OK</button></div>`, 'confirm');
+          await alertDialog('Reprocess failed', String(err.message || err));
         } finally {
           btn.disabled = false;
           btn.textContent = 'Reprocess';
@@ -6085,10 +7352,13 @@ class MeetingsManager {
   }
 
   async viewMeeting(meetingId) {
-    // Don't navigate away during active recording
-    if (document.body.classList.contains('recording')) {
-      toggleMeetingsPanel();
-      return;
+    // Navigation is allowed while a meeting is recording — the live
+    // pipeline stays alive, the reconciler's return banner lets the
+    // user come back. We detach live rendering so the review view
+    // can safely own the shared store.
+    if (document.body.classList.contains('recording')
+     || document.body.classList.contains('meeting-active')) {
+      exitLiveMeetingView();
     }
 
     // If this meeting is still being finalized, reopen the finalization modal
@@ -6577,21 +7847,29 @@ class MeetingsManager {
       startBtn.disabled = false;
       startBtn.textContent = startBtn.dataset.origText || 'Start Meeting';
     }
-    // Restore language pair from the two setup dropdowns. When lang-b
-    // is the "__none__" sentinel the meeting is monolingual — pass a
-    // single code, and toggle the .mono class on the selector so CSS
-    // hides the separator and the (disabled) B dropdown.
+    // The setup screen is always bilingual. If the user is returning from
+    // a mono meeting (started via the landing page's "Quick start English"
+    // button), reset both dropdowns back to the server's configured default
+    // pair — it's always possible to get back to a multi-language meeting
+    // from here. Single-language is accessible ONLY via the landing page
+    // quick-start, which bypasses this screen entirely.
     const selA = document.getElementById('lang-a-select');
     const selB = document.getElementById('lang-b-select');
     const selector = document.getElementById('language-selector');
-    if (selA && selB && selA.value) {
-      if (!selB.value || selB.value === '__none__') {
-        currentLanguagePair = selA.value;
-        if (selector) selector.classList.add('mono');
-      } else {
-        currentLanguagePair = `${selA.value},${selB.value}`;
-        if (selector) selector.classList.remove('mono');
-      }
+    if (selA && selB) {
+      const [defA, defB] = _defaultLanguagePair();
+      const langCodes = [...selB.options].map(o => o.value).filter(Boolean);
+      // Prefer server defaults; degrade to the first two distinct codes
+      // the dropdowns know about if those aren't present (e.g. a very
+      // restricted /api/languages response).
+      const pickA = langCodes.includes(defA) ? defA : (langCodes[0] || defA);
+      let pickB = langCodes.includes(defB) && defB !== pickA
+        ? defB
+        : (langCodes.find(v => v !== pickA) || defB);
+      selA.value = pickA;
+      selB.value = pickB;
+      currentLanguagePair = `${pickA},${pickB}`;
+      if (selector) selector.classList.remove('mono');
       _updateColumnHeaders();
     }
   }
@@ -6918,12 +8196,212 @@ setInterval(() => refreshWifiQR(0, 0), 10000);
       close();
     } else if (e.key === 'Enter' && !e.isComposing) {
       // Don't trigger on select (browser handles Enter to open dropdown).
-      if (e.target.tagName !== 'SELECT') {
+      // Also skip the terminal-access card so typing Enter in the secret
+      // input doesn't submit the whole settings form.
+      if (e.target.tagName !== 'SELECT' && !e.target.closest('.term-access-card, .term-font-row')) {
         e.preventDefault();
         save();
       }
     }
   });
+
+  // ── Terminal access ──────────────────────────────────────────
+  // Surfaces the admin secret so the user can authorize this browser (or
+  // any other) without jumping to /admin/bootstrap. Scope-gated server
+  // side: admin-LAN = allowed, guest hotspot = 403.
+  const termCard        = document.getElementById('term-access-card');
+  const termTitle       = document.getElementById('term-access-title');
+  const termMeta        = document.getElementById('term-access-meta');
+  const termSecretInput = document.getElementById('term-access-secret-input');
+  const termSecretPath  = document.getElementById('term-access-secret-path');
+  const termRevealBtn   = document.getElementById('btn-term-secret-reveal');
+  const termCopyBtn     = document.getElementById('btn-term-secret-copy');
+  const termAuthorizeBtn   = document.getElementById('btn-term-authorize');
+  const termDeauthorizeBtn = document.getElementById('btn-term-deauthorize');
+
+  let termAccess = null;   // { secret, secret_path, cookie_set, cookie_max_age_seconds }
+  let termAccessInflight = null;
+
+  const paintTermAccess = (data) => {
+    termAccess = data;
+    if (!termCard) return;
+    if (!data) {
+      termCard.dataset.state = 'unknown';
+      termTitle.textContent = 'Status unavailable';
+      termMeta.textContent = '';
+      return;
+    }
+    termCard.dataset.state = data.cookie_set ? 'authorized' : 'unauthorized';
+    termTitle.textContent = data.cookie_set
+      ? 'This browser is authorized'
+      : 'This browser is not authorized';
+    const days = Math.round((data.cookie_max_age_seconds || 0) / 86400);
+    termMeta.textContent = data.cookie_set
+      ? `cookie · ${days}d max`
+      : 'no cookie · paste secret or click authorize';
+    if (termSecretInput) termSecretInput.value = data.secret || '';
+    if (termSecretPath) {
+      termSecretPath.textContent = data.secret_path
+        ? `Stored at ${data.secret_path}`
+        : '';
+    }
+    if (termDeauthorizeBtn) termDeauthorizeBtn.hidden = !data.cookie_set;
+    if (termAuthorizeBtn) {
+      termAuthorizeBtn.textContent = data.cookie_set
+        ? 'Re-authorize'
+        : 'Authorize this browser';
+    }
+  };
+
+  const loadTermAccess = async () => {
+    if (termAccessInflight) return termAccessInflight;
+    termAccessInflight = (async () => {
+      try {
+        const resp = await fetch(`${API}/api/admin/terminal-access`, {
+          credentials: 'include',
+        });
+        if (resp.status === 403) {
+          paintTermAccess({ secret: '', secret_path: '', cookie_set: false });
+          termCard.dataset.state = 'denied';
+          termTitle.textContent = 'Guest scope — terminal disabled';
+          termMeta.textContent = 'admin LAN only';
+          return;
+        }
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        paintTermAccess(await resp.json());
+      } catch {
+        paintTermAccess(null);
+      } finally {
+        termAccessInflight = null;
+      }
+    })();
+    return termAccessInflight;
+  };
+
+  if (termRevealBtn && termSecretInput) {
+    termRevealBtn.addEventListener('click', () => {
+      const showing = termSecretInput.type === 'text';
+      termSecretInput.type = showing ? 'password' : 'text';
+      termRevealBtn.textContent = showing ? 'Show' : 'Hide';
+    });
+  }
+
+  if (termCopyBtn && termSecretInput) {
+    termCopyBtn.addEventListener('click', async () => {
+      const secret = termSecretInput.value;
+      if (!secret) return;
+      try { await navigator.clipboard.writeText(secret); }
+      catch {
+        termSecretInput.type = 'text';
+        termSecretInput.select();
+        document.execCommand && document.execCommand('copy');
+      }
+      const prev = termCopyBtn.textContent;
+      termCopyBtn.textContent = 'Copied';
+      termCopyBtn.classList.add('btn-icon-success');
+      setTimeout(() => {
+        termCopyBtn.textContent = prev;
+        termCopyBtn.classList.remove('btn-icon-success');
+      }, 1400);
+    });
+  }
+
+  if (termAuthorizeBtn) {
+    termAuthorizeBtn.addEventListener('click', async () => {
+      if (!termAccess || !termAccess.secret) {
+        await loadTermAccess();
+      }
+      if (!termAccess || !termAccess.secret) {
+        setStatus('Cannot read admin secret', 'error');
+        return;
+      }
+      termAuthorizeBtn.disabled = true;
+      try {
+        const resp = await fetch(`${API}/api/admin/authorize`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secret: termAccess.secret }),
+        });
+        if (!resp.ok) {
+          setStatus('Authorization failed', 'error');
+          return;
+        }
+        setStatus('Terminal cookie minted', 'ok');
+        setTimeout(() => { if (status.textContent === 'Terminal cookie minted') setStatus(''); }, 2500);
+        await loadTermAccess();
+        // Nudge any existing terminal panel to re-attach now that the
+        // cookie is set. _connect() is idempotent if a ws is already live.
+        try {
+          if (window._terminalPanel) window._terminalPanel._connect();
+        } catch {}
+      } finally {
+        termAuthorizeBtn.disabled = false;
+      }
+    });
+  }
+
+  if (termDeauthorizeBtn) {
+    termDeauthorizeBtn.addEventListener('click', async () => {
+      termDeauthorizeBtn.disabled = true;
+      try {
+        await fetch(`${API}/api/admin/deauthorize`, {
+          method: 'POST', credentials: 'include',
+        });
+        setStatus('Terminal cookie cleared', 'ok');
+        setTimeout(() => { if (status.textContent === 'Terminal cookie cleared') setStatus(''); }, 2500);
+        await loadTermAccess();
+      } finally {
+        termDeauthorizeBtn.disabled = false;
+      }
+    });
+  }
+
+  // Font-size slider — keyboard shortcuts Ctrl+/−/0 still work inside xterm.
+  const termFontSlider  = document.getElementById('setting-term-font-size');
+  const termFontValue   = document.getElementById('term-font-value');
+  const termFontDecBtn  = document.getElementById('btn-term-font-dec');
+  const termFontIncBtn  = document.getElementById('btn-term-font-inc');
+
+  const clampFont = (n) => Math.max(9, Math.min(26, Math.round(n)));
+  const applyTerminalFont = (px, { push = true } = {}) => {
+    const v = clampFont(px);
+    if (termFontSlider && String(termFontSlider.value) !== String(v)) {
+      termFontSlider.value = String(v);
+    }
+    if (termFontValue) termFontValue.textContent = `${v}px`;
+    if (push) {
+      try { localStorage.setItem('terminal_font_size', String(v)); } catch {}
+      if (window._terminalPanel && typeof window._terminalPanel.setFontSize === 'function') {
+        window._terminalPanel.setFontSize(v);
+      }
+    }
+  };
+  // Initial paint from localStorage.
+  applyTerminalFont(parseInt(localStorage.getItem('terminal_font_size') || '13', 10), { push: false });
+  if (termFontSlider) {
+    termFontSlider.addEventListener('input', () => applyTerminalFont(termFontSlider.value));
+  }
+  if (termFontDecBtn) termFontDecBtn.addEventListener('click', () => applyTerminalFont(clampFont((termFontSlider && +termFontSlider.value) || 13) - 1));
+  if (termFontIncBtn) termFontIncBtn.addEventListener('click', () => applyTerminalFont(clampFont((termFontSlider && +termFontSlider.value) || 13) + 1));
+  // React when the terminal panel itself changes font size (e.g. Ctrl+=).
+  window.addEventListener('terminal:font-size', (e) => {
+    if (e && e.detail && typeof e.detail.size === 'number') {
+      applyTerminalFont(e.detail.size, { push: false });
+    }
+  });
+
+  // Refresh terminal-access card whenever the settings panel is opened.
+  const origOpen = open;
+  // Monkey-patch the outer open() to also refresh term access.
+  // (Open is a local const — but it's closed over by the click handler so
+  // we just chain a call here via an observer on aria-hidden.)
+  const observer = new MutationObserver(() => {
+    if (panel.getAttribute('aria-hidden') === 'false') loadTermAccess();
+  });
+  observer.observe(panel, { attributes: true, attributeFilter: ['aria-hidden'] });
+  // Avoid unused-var lint on origOpen (we intentionally don't mutate the fn).
+  void origOpen;
 })();
 
 // ─── Fetch Languages ───────────────────────────────────────
@@ -6977,102 +8455,89 @@ const _LANG_FALLBACK = [
     return opt;
   };
 
-  const populate = (select, langs, selectedCode, includeNone = false) => {
+  const populate = (select, langs, selectedCode) => {
     select.innerHTML = '';
-    // The B-dropdown always has a "None (single language)" option at the
-    // top so the user can opt into a monolingual meeting without needing
-    // a dedicated toggle.
-    if (includeNone) {
-      const noneOpt = document.createElement('option');
-      noneOpt.value = '__none__';
-      noneOpt.textContent = 'None (single language)';
-      select.appendChild(noneOpt);
-    }
     for (const lang of langs) select.appendChild(buildOption(lang));
     if (selectedCode && [...select.options].some(o => o.value === selectedCode)) {
       select.value = selectedCode;
     }
   };
 
-  const applyMonoClass = () => {
-    const selector = document.getElementById('language-selector');
-    if (!selector || !selB) return;
-    selector.classList.toggle('mono', selB.value === '__none__');
-  };
-
-  // The left dropdown (selA) never has disabled options — the user picks
-  // the primary meeting language there, and any collision with selB is
-  // resolved in onChange by flipping selB to the "None" sentinel
-  // (monolingual). The right dropdown (selB) keeps the "no-self-translate"
-  // guard — picking the same language on both sides is never meaningful.
-  // The __none__ sentinel on selB is always selectable.
+  // The right dropdown disables whichever language is currently on the
+  // left, so the user can never pick the same language on both sides.
+  // There is no __none__ sentinel on the setup screen — mono lives on
+  // the landing page's quick-start path.
   const syncDisabled = () => {
     if (!selA || !selB) return;
     for (const opt of selA.options) opt.disabled = false;
     for (const opt of selB.options) {
-      opt.disabled = (opt.value !== '__none__' && opt.value === selA.value);
+      opt.disabled = (opt.value === selA.value);
     }
   };
 
+  // If A and B collide, swap B to the next available language (NOT mono).
+  const pickDifferent = (avoid, langs) => {
+    return langs.find(l => l.code !== avoid)?.code || avoid;
+  };
+
   let listenersAttached = false;
+  let _langsCache = [];
   const wireUp = (langs, defaultPair) => {
     if (!selA || !selB || langs.length < 2) return;
+    _langsCache = langs;
     for (const lang of langs) _languageNames[lang.code] = lang;
 
-    // defaultPair may be length 1 (monolingual default) or 2 (bilingual).
-    const [defaultA, defaultB] = defaultPair.length === 1
-      ? [defaultPair[0], '__none__']
-      : defaultPair;
-    // currentLanguagePair may be "en" (monolingual) or "ja,en" (bilingual).
+    // Promote the server default to bilingual for the setup screen. The
+    // setup screen is always bilingual; mono-only defaults (legacy config)
+    // still get paired here so the dropdowns are usable.
+    const [defaultA, defaultB] = defaultPair.length >= 2
+      ? defaultPair
+      : [defaultPair[0], pickDifferent(defaultPair[0], langs)];
+    _defaultLanguagePairCache = [defaultA, defaultB];
+
+    // currentLanguagePair may be "en" (monolingual — user is returning
+    // from a quick-start session) or "ja,en" (bilingual). Either way, the
+    // setup screen renders a bilingual pair.
     const curParts = (currentLanguagePair || `${defaultA},${defaultB}`).split(',');
-    const curA = curParts[0];
-    const curB = curParts.length === 1 ? '__none__' : curParts[1];
     const has = (code) => langs.some(l => l.code === code);
-    const pickA = has(curA) ? curA : defaultA;
+    const pickA = has(curParts[0]) ? curParts[0] : defaultA;
     let pickB;
-    if (curB === '__none__') {
-      pickB = '__none__';
+    if (curParts.length >= 2 && has(curParts[1]) && curParts[1] !== pickA) {
+      pickB = curParts[1];
+    } else if (has(defaultB) && defaultB !== pickA) {
+      pickB = defaultB;
     } else {
-      pickB = has(curB) ? curB : defaultB;
-      if (pickB === pickA) {
-        pickB = langs.find(l => l.code !== pickA)?.code || defaultB;
-      }
+      pickB = pickDifferent(pickA, langs);
     }
 
     populate(selA, langs, pickA);
-    populate(selB, langs, pickB, /* includeNone */ true);
-    // Seed currentLanguagePair. Monolingual when B is the None sentinel.
-    currentLanguagePair =
-      selB.value === '__none__' ? selA.value : `${selA.value},${selB.value}`;
+    populate(selB, langs, pickB);
+    currentLanguagePair = `${selA.value},${selB.value}`;
     syncDisabled();
-    applyMonoClass();
+    // Setup screen is always bilingual — make sure the mono CSS never
+    // sticks around from a previous session.
+    const selector = document.getElementById('language-selector');
+    if (selector) selector.classList.remove('mono');
 
     if (listenersAttached) return;
     listenersAttached = true;
     const onChangeA = () => {
-      // Left dropdown = primary language. Collision with right side
-      // flips the right to "None (single language)" — the user asked
-      // for this language, not a conflict, so we drop the pair.
-      if (selA.value === selB.value && selA.value !== '__none__') {
-        selB.value = '__none__';
+      // Collision with B → swap B to a different language (NOT mono).
+      if (selA.value === selB.value) {
+        selB.value = pickDifferent(selA.value, _langsCache);
       }
-      currentLanguagePair =
-        selB.value === '__none__' ? selA.value : `${selA.value},${selB.value}`;
+      currentLanguagePair = `${selA.value},${selB.value}`;
       syncDisabled();
-      applyMonoClass();
       _updateColumnHeaders();
     };
     const onChangeB = () => {
-      // Right dropdown. Collision with left (can only happen if the
-      // disable logic is bypassed) falls back to __none__ so we
-      // degrade gracefully into monolingual rather than an invalid pair.
-      if (selB.value === selA.value && selB.value !== '__none__') {
-        selB.value = '__none__';
+      // Collision with A (shouldn't happen due to disabled options) →
+      // swap B to a different language.
+      if (selB.value === selA.value) {
+        selB.value = pickDifferent(selA.value, _langsCache);
       }
-      currentLanguagePair =
-        selB.value === '__none__' ? selA.value : `${selA.value},${selB.value}`;
+      currentLanguagePair = `${selA.value},${selB.value}`;
       syncDisabled();
-      applyMonoClass();
       _updateColumnHeaders();
     };
     selA.addEventListener('change', onChangeA);
@@ -7116,21 +8581,28 @@ document.addEventListener('keydown', (e) => {
 // ─── URL-based Meeting Navigation ───────────────────────────
 
 // Hash-based routing: #home, #setup, #meeting/{id}
+// Navigation is always honored — the live pipeline keeps streaming
+// to the server regardless of which panel is visible, and the
+// "Meeting in progress" banner drives the user back when needed.
 function handleHashRoute() {
   const hash = location.hash || '#home';
 
   if (hash === '#home' || hash === '#' || hash === '') {
-    if (!document.body.classList.contains('recording')) {
-      showLanding();
+    if (document.body.classList.contains('recording')
+     || document.body.classList.contains('meeting-active')) {
+      exitLiveMeetingView();
     }
+    showLanding();
     return;
   }
 
   if (hash === '#setup') {
-    if (!document.body.classList.contains('recording')) {
-      hideLanding();
-      meetingsMgr?.showSetup();
+    if (document.body.classList.contains('recording')
+     || document.body.classList.contains('meeting-active')) {
+      exitLiveMeetingView();
     }
+    hideLanding();
+    meetingsMgr?.showSetup();
     return;
   }
 
@@ -7567,8 +9039,16 @@ async function _populateClusterChips(meetingId) {
         });
       }
 
-      chip.addEventListener('dblclick', () => {
-        const newName = prompt('Rename voice:', name);
+      chip.addEventListener('dblclick', async () => {
+        const newName = await promptDialog(
+          'Rename voice',
+          'Set a display name for this voice cluster. Used wherever the cluster appears (transcript, timeline, speaker lanes).',
+          {
+            initialValue: name,
+            placeholder: 'Voice name',
+            confirmText: 'Rename',
+          },
+        );
         if (!newName || newName === name) return;
         _assignCluster(meetingId, Number(clusterId), null, newName);
       });

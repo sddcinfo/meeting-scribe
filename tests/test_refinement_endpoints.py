@@ -21,6 +21,9 @@ import time
 
 import pytest
 
+from meeting_scribe.routes import admin as admin_routes
+from meeting_scribe.runtime import state as runtime_state
+
 
 class _StubWorker:
     """Minimal stand-in for a running RefinementWorker."""
@@ -33,11 +36,11 @@ class _StubWorker:
 
 
 def _fresh_registry():
-    from meeting_scribe import server
+    from meeting_scribe.server_support import refinement_drains as registry
 
-    server._refinement_drains.clear()
-    server._drain_seq = 0
-    return server
+    registry._refinement_drains.clear()
+    registry._drain_seq = 0
+    return registry
 
 
 class _FakeCompletedWorker:
@@ -50,22 +53,22 @@ class _FakeCompletedWorker:
         pass
 
 
-async def _kickoff_completed_drain(server, meeting_id: str) -> int:
+async def _kickoff_completed_drain(registry, meeting_id: str) -> int:
     """Helper: register and immediately complete one drain entry."""
     worker = _FakeCompletedWorker()
     worker._meeting_id = meeting_id
-    server._drain_seq += 1
-    drain_id = server._drain_seq
-    entry = server._DrainEntry(
+    registry._drain_seq += 1
+    drain_id = registry._drain_seq
+    entry = registry._DrainEntry(
         drain_id=drain_id,
         meeting_id=meeting_id,
-        task=asyncio.create_task(server._drain_refinement(worker, meeting_id, drain_id)),
+        task=asyncio.create_task(registry._drain_refinement(worker, meeting_id, drain_id)),
         state="draining",
         started_at=time.time(),
         translate_calls=worker.translate_call_count,
         asr_calls=worker.asr_call_count,
     )
-    server._refinement_drains.append(entry)
+    registry._refinement_drains.append(entry)
     await entry.task
     return drain_id
 
@@ -73,9 +76,9 @@ async def _kickoff_completed_drain(server, meeting_id: str) -> int:
 class TestRefinementStatsEndpoint:
     @pytest.mark.asyncio
     async def test_drain_id_returns_exact_entry(self):
-        server = _fresh_registry()
-        drain_id = await _kickoff_completed_drain(server, "mtg-exact")
-        response = await server.get_admin_refinement_stats(drain_id=drain_id)
+        registry = _fresh_registry()
+        drain_id = await _kickoff_completed_drain(registry, "mtg-exact")
+        response = await admin_routes.get_admin_refinement_stats(drain_id=drain_id)
         # FastAPI JSONResponse stringifies body to bytes on send but we can
         # inspect it directly via the .body attribute (bytes).
         import json
@@ -87,19 +90,19 @@ class TestRefinementStatsEndpoint:
 
     @pytest.mark.asyncio
     async def test_drain_id_missing_returns_404(self):
-        server = _fresh_registry()
-        response = await server.get_admin_refinement_stats(drain_id=999_999)
+        registry = _fresh_registry()
+        response = await admin_routes.get_admin_refinement_stats(drain_id=999_999)
         assert response.status_code == 404
 
     @pytest.mark.asyncio
     async def test_meeting_id_returns_most_recent_plus_others(self):
-        server = _fresh_registry()
-        first = await _kickoff_completed_drain(server, "mtg-repeat")
-        second = await _kickoff_completed_drain(server, "mtg-repeat")
+        registry = _fresh_registry()
+        first = await _kickoff_completed_drain(registry, "mtg-repeat")
+        second = await _kickoff_completed_drain(registry, "mtg-repeat")
 
         import json
 
-        response = await server.get_admin_refinement_stats(meeting_id="mtg-repeat")
+        response = await admin_routes.get_admin_refinement_stats(meeting_id="mtg-repeat")
         body = json.loads(response.body.decode())
         assert body["drain"]["drain_id"] == second
         assert body["other_drain_ids"] == [first]
@@ -107,14 +110,14 @@ class TestRefinementStatsEndpoint:
 
     @pytest.mark.asyncio
     async def test_meeting_id_surfaces_live_worker_when_running(self):
-        server = _fresh_registry()
+        registry = _fresh_registry()
         stub = _StubWorker(meeting_id="mtg-live")
         # Pretend this worker is the current refinement_worker.
-        server.refinement_worker = stub
+        runtime_state.refinement_worker = stub
         try:
             import json
 
-            response = await server.get_admin_refinement_stats(meeting_id="mtg-live")
+            response = await admin_routes.get_admin_refinement_stats(meeting_id="mtg-live")
             body = json.loads(response.body.decode())
             assert body["drain"] is None
             assert body["live"] is not None
@@ -122,39 +125,39 @@ class TestRefinementStatsEndpoint:
             assert body["live"]["asr_calls"] == 7
             assert body["live"]["meeting_id"] == "mtg-live"
         finally:
-            server.refinement_worker = None
+            runtime_state.refinement_worker = None
 
     @pytest.mark.asyncio
     async def test_no_drain_no_worker_returns_404(self):
-        server = _fresh_registry()
-        response = await server.get_admin_refinement_stats(meeting_id="mtg-ghost")
+        registry = _fresh_registry()
+        response = await admin_routes.get_admin_refinement_stats(meeting_id="mtg-ghost")
         assert response.status_code == 404
 
     @pytest.mark.asyncio
     async def test_no_params_returns_400(self):
-        server = _fresh_registry()
-        response = await server.get_admin_refinement_stats()
+        registry = _fresh_registry()
+        response = await admin_routes.get_admin_refinement_stats()
         assert response.status_code == 400
 
 
 class TestPolishedStatusEndpoint:
     @staticmethod
-    def _install_fake_storage(server, root):
+    def _install_fake_storage(_registry, root):
         class _FakeStorage:
             def _meeting_dir(self, meeting_id):
                 return root / meeting_id
 
-        server.storage = _FakeStorage()
+        runtime_state.storage = _FakeStorage()
 
     @pytest.mark.asyncio
     async def test_drain_entry_is_returned(self, tmp_path):
-        server = _fresh_registry()
-        self._install_fake_storage(server, tmp_path)
-        drain_id = await _kickoff_completed_drain(server, "mtg-poll")
+        registry = _fresh_registry()
+        self._install_fake_storage(registry, tmp_path)
+        drain_id = await _kickoff_completed_drain(registry, "mtg-poll")
 
         import json
 
-        response = await server.get_polished_status(meeting_id="mtg-poll")
+        response = await admin_routes.get_polished_status(meeting_id="mtg-poll")
         body = json.loads(response.body.decode())
         assert body["drain_id"] == drain_id
         assert body["state"] == "complete"
@@ -162,17 +165,17 @@ class TestPolishedStatusEndpoint:
 
     @pytest.mark.asyncio
     async def test_reads_from_disk_when_no_registry_entry(self, tmp_path):
-        server = _fresh_registry()
+        registry = _fresh_registry()
         fake_meetings = tmp_path / "meetings"
         (fake_meetings / "mtg-disk").mkdir(parents=True)
         polished = fake_meetings / "mtg-disk" / "polished.json"
         polished.write_text("{}")
 
-        self._install_fake_storage(server, fake_meetings)
+        self._install_fake_storage(registry, fake_meetings)
 
         import json
 
-        response = await server.get_polished_status(meeting_id="mtg-disk")
+        response = await admin_routes.get_polished_status(meeting_id="mtg-disk")
         body = json.loads(response.body.decode())
         assert body["state"] == "complete"
         assert body["drain_id"] is None
@@ -181,8 +184,8 @@ class TestPolishedStatusEndpoint:
 
     @pytest.mark.asyncio
     async def test_absent_meeting_returns_404(self, tmp_path):
-        server = _fresh_registry()
-        self._install_fake_storage(server, tmp_path / "meetings")
+        registry = _fresh_registry()
+        self._install_fake_storage(registry, tmp_path / "meetings")
 
-        response = await server.get_polished_status(meeting_id="mtg-missing")
+        response = await admin_routes.get_polished_status(meeting_id="mtg-missing")
         assert response.status_code == 404

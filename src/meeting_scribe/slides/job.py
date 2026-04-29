@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from meeting_scribe.slides.worker import run_partial_translated_render, run_reinsert
+from meeting_scribe.util.atomic_io import atomic_write_json
 
 logger = logging.getLogger(__name__)
 
@@ -102,9 +103,7 @@ def _emit_deck_stats(*, meeting_id: str, deck_id: str, stats: _DeckStats) -> Non
             "parse_failures": stats.parse_failures,
             "id_coverage_failures": stats.id_coverage_failures,
             "used_json_schema": stats.used_json_schema,
-            "wall_seconds": (
-                (stats.finished_at or time.time()) - stats.started_at
-            ),
+            "wall_seconds": ((stats.finished_at or time.time()) - stats.started_at),
         }
         with stats_path.open("a") as f:
             f.write(json.dumps(record) + "\n")
@@ -321,7 +320,8 @@ class SlideJobRunner:
                 cached_id = existing["deck_id"]
                 logger.info(
                     "Reusing cached deck %s for meeting %s (content hash match)",
-                    cached_id, meeting_id,
+                    cached_id,
+                    meeting_id,
                 )
                 await self._activate_existing_deck(meeting_id, cached_id, existing)
                 return cached_id
@@ -342,7 +342,11 @@ class SlideJobRunner:
         self._cancelled = False
         self._current_task = asyncio.create_task(
             self._run_pipeline(
-                meeting_id, deck_id, pptx_bytes, source_lang, target_lang,
+                meeting_id,
+                deck_id,
+                pptx_bytes,
+                source_lang,
+                target_lang,
                 skip_language_detection=skip_language_detection,
                 content_hash=content_hash,
                 upload_filename=upload_filename,
@@ -477,7 +481,7 @@ class SlideJobRunner:
                             # server restart) still skips the translation
                             # stages. Read back at _run_pipeline reentry.
                             m["monolingual"] = True
-                        _atomic_write_json(meta_path, m)
+                        atomic_write_json(meta_path, m)
                 except Exception:
                     logger.debug("Failed to stamp deck metadata", exc_info=True)
 
@@ -524,9 +528,7 @@ class SlideJobRunner:
                 if self._cancelled:
                     return
                 work = deck_dir / "_express_first"
-                ok = await asyncio.to_thread(
-                    render_first_slide_fast, source_path, thumb_dest, work
-                )
+                ok = await asyncio.to_thread(render_first_slide_fast, source_path, thumb_dest, work)
                 if ok and not self._cancelled:
                     await self._broadcast_fn(
                         {
@@ -623,7 +625,7 @@ class SlideJobRunner:
                 meta["stages"]["reinserting"] = {"status": "skipped"}
                 meta["stages"]["rendering_translated"] = {"status": "skipped"}
                 meta["stage"] = "complete"
-                _atomic_write_json(meta_path, meta)
+                atomic_write_json(meta_path, meta)
                 await self._broadcast_fn(
                     {
                         "type": "slide_job_progress",
@@ -632,9 +634,7 @@ class SlideJobRunner:
                         "progress": None,
                     }
                 )
-                _emit_deck_stats(
-                    meeting_id=meeting_id, deck_id=deck_id, stats=stats
-                )
+                _emit_deck_stats(meeting_id=meeting_id, deck_id=deck_id, stats=stats)
                 return
 
             # ── Stage 4: Translate via TranslationQueue ──────────
@@ -723,8 +723,11 @@ class SlideJobRunner:
                 if slide_source != source_lang or slide_target != target_lang:
                     logger.info(
                         "Slide direction: %s→%s (deck=%s, meeting=%s→%s)",
-                        slide_source, slide_target, detected_lang,
-                        source_lang, target_lang,
+                        slide_source,
+                        slide_target,
+                        detected_lang,
+                        source_lang,
+                        target_lang,
                     )
 
             # Update meta to translating stage
@@ -739,7 +742,7 @@ class SlideJobRunner:
                 "status": "in_progress",
                 "progress": "0/" + str(total_slides),
             }
-            _atomic_write_json(meta_path, meta)
+            atomic_write_json(meta_path, meta)
 
             await self._broadcast_fn(
                 {
@@ -820,7 +823,7 @@ class SlideJobRunner:
                 if meta_path.exists():
                     m = json.loads(meta_path.read_text())
                     m["stages"]["translating"]["progress"] = f"{completed}/{total_slides}"
-                    _atomic_write_json(meta_path, m)
+                    atomic_write_json(meta_path, m)
 
                 return result
 
@@ -842,15 +845,10 @@ class SlideJobRunner:
                         return
                     # Snapshot translations for the targeted slides
                     targets = set(fresh)
-                    tr_for_batch = [
-                        t for t in express_translations if t.get("_slide") in targets
-                    ]
+                    tr_for_batch = [t for t in express_translations if t.get("_slide") in targets]
                     if not tr_for_batch:
                         return
-                    clean = [
-                        {"id": t["id"], "translated": t["translated"]}
-                        for t in tr_for_batch
-                    ]
+                    clean = [{"id": t["id"], "translated": t["translated"]} for t in tr_for_batch]
                     try:
                         rendered = await run_partial_translated_render(
                             pptx_bytes,
@@ -859,9 +857,7 @@ class SlideJobRunner:
                             deck_dir / "translated",
                         )
                     except Exception:
-                        logger.exception(
-                            "Express batch render failed for slides %s", sorted(fresh)
-                        )
+                        logger.exception("Express batch render failed for slides %s", sorted(fresh))
                         return
                     for idx in rendered:
                         express_rendered.add(idx)
@@ -934,7 +930,7 @@ class SlideJobRunner:
                 "status": "done",
                 "progress": f"{total_slides}/{total_slides}",
             }
-            _atomic_write_json(meta_path, meta)
+            atomic_write_json(meta_path, meta)
 
             if not all_translations:
                 logger.info("No translations produced — skipping reinsert")
@@ -942,7 +938,7 @@ class SlideJobRunner:
                 meta["completed_at"] = datetime.now(UTC).isoformat()
                 meta["stages"]["reinserting"] = {"status": "skipped"}
                 meta["stages"]["rendering_translated"] = {"status": "skipped"}
-                _atomic_write_json(meta_path, meta)
+                atomic_write_json(meta_path, meta)
                 # Don't strand the bulk-render task on the early return.
                 try:
                     await render_task
@@ -982,7 +978,7 @@ class SlideJobRunner:
                     "status": "done",
                     "progress": f"{len(express_rendered)}/{total_slides}",
                 }
-                _atomic_write_json(meta_path, meta)
+                atomic_write_json(meta_path, meta)
                 await self._broadcast_fn(
                     {
                         "type": "slide_job_progress",
@@ -993,13 +989,16 @@ class SlideJobRunner:
                 )
                 logger.info(
                     "Slide job %s completed via express batches (%d/%d slides)",
-                    deck_id, len(express_rendered), total_slides,
+                    deck_id,
+                    len(express_rendered),
+                    total_slides,
                 )
                 return
 
             logger.warning(
                 "Express batches missed %d slide(s) %s — running bulk reinsert as fallback",
-                len(missing), missing,
+                len(missing),
+                missing,
             )
             await self._broadcast_fn(
                 {
@@ -1068,7 +1067,7 @@ class SlideJobRunner:
                 try:
                     meta = json.loads(meta_path.read_text())
                     meta["error"] = "Pipeline failed (see server logs)"
-                    _atomic_write_json(meta_path, meta)
+                    atomic_write_json(meta_path, meta)
                 except Exception:
                     pass
 
@@ -1133,8 +1132,7 @@ class SlideJobRunner:
             if stats is not None:
                 stats.parse_failures += len(runs)
             logger.warning(
-                "Slide translation empty response: %d runs requested, 0 returned "
-                "(%s→%s)",
+                "Slide translation empty response: %d runs requested, 0 returned (%s→%s)",
                 len(runs),
                 source_lang,
                 target_lang,
@@ -1370,11 +1368,13 @@ class SlideJobRunner:
             except Exception:
                 continue
             meta["deck_id"] = child.name  # dirname is the source of truth
-            meta["is_active"] = (child.name == active)
+            meta["is_active"] = child.name == active
             out.append(meta)
+
         # Newest first by completed_at if present, else mtime
         def _sort_key(m: dict) -> str:
             return m.get("completed_at") or m.get("started_at") or ""
+
         out.sort(key=_sort_key, reverse=True)
         return out
 
@@ -1397,16 +1397,3 @@ class SlideJobRunner:
         meta["deck_id"] = deck_id
         await self._activate_existing_deck(meeting_id, deck_id, meta)
         return meta
-
-
-def _atomic_write_json(path: Path, data: dict) -> None:
-    """Atomic JSON write via tmp + rename.
-
-    The tmp filename carries a uuid suffix so concurrent writers to the
-    same target path can't race — without it, thread A's rename
-    completes first and thread B's rename then fails with
-    FileNotFoundError.
-    """
-    tmp = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))
-    tmp.rename(path)

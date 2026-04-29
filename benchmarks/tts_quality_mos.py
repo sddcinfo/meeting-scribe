@@ -4,6 +4,7 @@ Automated component: per-sample RMS, pitch-jitter proxy, TTFA, total_ms.
 The MOS score itself is filled in by two human reviewers into
 benchmarks/results/<run>/tts_mos_form.csv (same row as the per-sample id).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,18 +16,22 @@ from pathlib import Path
 
 import httpx
 import numpy as np
+from benchmarks._bench_paths import assert_offline_path
+from benchmarks._consent_check import enforce_consent
 from benchmarks._fixture import add_fixture_arg, load_samples
+from benchmarks._tts_backends import Backend, add_backend_arg, build_body
 
 
-async def _synth(client: httpx.AsyncClient, url: str, sample_id: str, text: str, voice: str, out_dir: Path) -> dict:
-    body = {
-        "model": "qwen3-tts",
-        "input": text,
-        "voice": voice,
-        "stream": True,
-        "response_format": "pcm",
-        "priority": -10,
-    }
+async def _synth(
+    client: httpx.AsyncClient,
+    url: str,
+    sample_id: str,
+    text: str,
+    voice: str,
+    out_dir: Path,
+    backend: Backend,
+) -> dict:
+    body = build_body(backend, text=text, voice=voice)
     t0 = time.monotonic()
     ttfa = None
     pcm = bytearray()
@@ -37,12 +42,16 @@ async def _synth(client: httpx.AsyncClient, url: str, sample_id: str, text: str,
                 ttfa = (time.monotonic() - t0) * 1000.0
             pcm.extend(chunk)
     total_ms = (time.monotonic() - t0) * 1000.0
-    samples = np.frombuffer(bytes(pcm[: len(pcm) - (len(pcm) % 2)]), dtype=np.int16).astype(np.float32) / 32768.0
+    samples = (
+        np.frombuffer(bytes(pcm[: len(pcm) - (len(pcm) % 2)]), dtype=np.int16).astype(np.float32)
+        / 32768.0
+    )
 
     out_wav = out_dir / f"{sample_id}.wav"
     out_wav.parent.mkdir(parents=True, exist_ok=True)
     # Save float -> int16 WAV 24 kHz
     import wave
+
     with wave.open(str(out_wav), "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
@@ -61,7 +70,7 @@ async def _synth(client: httpx.AsyncClient, url: str, sample_id: str, text: str,
     }
 
 
-async def run(url: str, fixture_dir: Path, out: Path) -> None:
+async def run(url: str, fixture_dir: Path, out: Path, backend: Backend) -> None:
     samples = load_samples(fixture_dir, kind="tts_studio")
     if not samples:
         raise SystemExit(
@@ -76,12 +85,13 @@ async def run(url: str, fixture_dir: Path, out: Path) -> None:
         for s in samples:
             meta = json.loads(s.path.with_suffix(".json").read_text())
             results.append(
-                await _synth(c, url, s.id, meta["text"], meta["voice"], out_dir)
+                await _synth(c, url, s.id, meta["text"], meta["voice"], out_dir, backend)
             )
 
     ttfas = [r["ttfa_ms"] for r in results if r["ttfa_ms"] is not None]
     summary = {
         "url": url,
+        "backend": backend,
         "samples": len(results),
         "p50_ttfa_ms": statistics.median(ttfas) if ttfas else None,
         "p95_ttfa_ms": statistics.quantiles(ttfas, n=20)[18] if len(ttfas) >= 20 else None,
@@ -95,9 +105,7 @@ async def run(url: str, fixture_dir: Path, out: Path) -> None:
         mos_csv.write_text("id,voice,reviewer,mos_1_to_5,comments\n")
         for r in results:
             for rev in ("reviewer_a", "reviewer_b"):
-                mos_csv.write_text(
-                    mos_csv.read_text() + f"{r['id']},{r['voice']},{rev},,\n"
-                )
+                mos_csv.write_text(mos_csv.read_text() + f"{r['id']},{r['voice']},{rev},,\n")
     print(json.dumps({k: v for k, v in summary.items() if k != "per_sample"}, indent=2))
 
 
@@ -106,8 +114,17 @@ def main() -> None:
     p.add_argument("--url", required=True)
     add_fixture_arg(p)
     p.add_argument("--out", type=Path, required=True)
+    add_backend_arg(p)
+    p.add_argument(
+        "--allow-in-repo-out",
+        action="store_true",
+        help="Bypass the offline-path validator (test-only).",
+    )
     args = p.parse_args()
-    asyncio.run(run(args.url, args.fixture_dir, args.out))
+    if not args.allow_in_repo_out:
+        assert_offline_path(args.out)
+    enforce_consent()
+    asyncio.run(run(args.url, args.fixture_dir, args.out, args.backend))
 
 
 if __name__ == "__main__":

@@ -36,8 +36,16 @@ logger = logging.getLogger(__name__)
 # Order matters: strip the longest matching suffix first so "さま" doesn't
 # leave a trailing "ま" after "さ" was removed.
 _JA_HONORIFICS = (
-    "様", "殿", "氏", "君",
-    "さま", "ちゃん", "くん", "さん", "せんせい", "先生",
+    "様",
+    "殿",
+    "氏",
+    "君",
+    "さま",
+    "ちゃん",
+    "くん",
+    "さん",
+    "せんせい",
+    "先生",
 )
 _KO_HONORIFICS = (" 님", "님", " 씨", "씨", "선생님")
 
@@ -68,6 +76,7 @@ def _kakasi():
         return _kks_instance
     try:
         import pykakasi  # type: ignore[import-not-found]
+
         _kks_instance = pykakasi.kakasi()
         return _kks_instance
     except Exception as e:  # pragma: no cover — install-failure path
@@ -106,18 +115,78 @@ def _romanize_japanese(name: str) -> str:
 # That's sufficient for personal names, which is all this module needs to do.
 
 _HANGUL_INITIALS = [
-    "g", "kk", "n", "d", "tt", "r", "m", "b", "pp",
-    "s", "ss", "", "j", "jj", "ch", "k", "t", "p", "h",
+    "g",
+    "kk",
+    "n",
+    "d",
+    "tt",
+    "r",
+    "m",
+    "b",
+    "pp",
+    "s",
+    "ss",
+    "",
+    "j",
+    "jj",
+    "ch",
+    "k",
+    "t",
+    "p",
+    "h",
 ]
 _HANGUL_MEDIALS = [
-    "a", "ae", "ya", "yae", "eo", "e", "yeo", "ye",
-    "o", "wa", "wae", "oe", "yo", "u", "wo", "we", "wi", "yu",
-    "eu", "ui", "i",
+    "a",
+    "ae",
+    "ya",
+    "yae",
+    "eo",
+    "e",
+    "yeo",
+    "ye",
+    "o",
+    "wa",
+    "wae",
+    "oe",
+    "yo",
+    "u",
+    "wo",
+    "we",
+    "wi",
+    "yu",
+    "eu",
+    "ui",
+    "i",
 ]
 _HANGUL_FINALS = [
-    "", "k", "k", "k", "n", "n", "n", "t", "l", "k",
-    "m", "l", "l", "l", "l", "l", "m", "p", "p", "t",
-    "t", "ng", "t", "t", "k", "t", "p", "h",
+    "",
+    "k",
+    "k",
+    "k",
+    "n",
+    "n",
+    "n",
+    "t",
+    "l",
+    "k",
+    "m",
+    "l",
+    "l",
+    "l",
+    "l",
+    "l",
+    "m",
+    "p",
+    "p",
+    "t",
+    "t",
+    "ng",
+    "t",
+    "t",
+    "k",
+    "t",
+    "p",
+    "h",
 ]
 _HANGUL_BASE = 0xAC00
 _HANGUL_END = 0xD7A3
@@ -134,11 +203,7 @@ def _romanize_korean(name: str) -> str:
             initial = offset // (21 * 28)
             medial = (offset // 28) % 21
             final = offset % 28
-            out.append(
-                _HANGUL_INITIALS[initial]
-                + _HANGUL_MEDIALS[medial]
-                + _HANGUL_FINALS[final]
-            )
+            out.append(_HANGUL_INITIALS[initial] + _HANGUL_MEDIALS[medial] + _HANGUL_FINALS[final])
         else:
             out.append(ch)
     syllables = out
@@ -154,13 +219,39 @@ def _romanize_korean(name: str) -> str:
 # context rules required for the BGN/PCGN scheme on the closed set we care
 # about). Keys are NFC-normalized lowercase Cyrillic letters.
 _CYRILLIC_TO_LATIN = {
-    "а": "a",  "б": "b",  "в": "v",  "г": "g",  "д": "d",
-    "е": "e",  "ё": "yo", "ж": "zh", "з": "z",  "и": "i",
-    "й": "y",  "к": "k",  "л": "l",  "м": "m",  "н": "n",
-    "о": "o",  "п": "p",  "р": "r",  "с": "s",  "т": "t",
-    "у": "u",  "ф": "f",  "х": "kh", "ц": "ts", "ч": "ch",
-    "ш": "sh", "щ": "shch", "ъ": "",  "ы": "y",  "ь": "",
-    "э": "e",  "ю": "yu", "я": "ya",
+    "а": "a",
+    "б": "b",
+    "в": "v",
+    "г": "g",
+    "д": "d",
+    "е": "e",
+    "ё": "yo",
+    "ж": "zh",
+    "з": "z",
+    "и": "i",
+    "й": "y",
+    "к": "k",
+    "л": "l",
+    "м": "m",
+    "н": "n",
+    "о": "o",
+    "п": "p",
+    "р": "r",
+    "с": "s",
+    "т": "t",
+    "у": "u",
+    "ф": "f",
+    "х": "kh",
+    "ц": "ts",
+    "ч": "ch",
+    "ш": "sh",
+    "щ": "shch",
+    "ъ": "",
+    "ы": "y",
+    "ь": "",
+    "э": "e",
+    "ю": "yu",
+    "я": "ya",
 }
 
 

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# meeting-scribe pre-commit hook.
+#
+# Enable once per clone (not committed to .git/hooks automatically):
+#   git config core.hooksPath .githooks
+#
+# Gates any commit on the STYLING.md rule set, the how-it-works
+# accuracy validator, and the sensitive-data scanner. Exits non-zero
+# on any violation so the commit is blocked until the offending diff
+# is corrected.
+#
+# To bypass in an emergency, use `git commit --no-verify` — but the
+# validators will still run in CI.
+
+set -u
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+fail=0
+
+# Blocking validators: a failure here rejects the commit. These cover
+# the STYLING.md rule set and the how-it-works accuracy invariants.
+run_blocking() {
+  local name="$1"
+  shift
+  if ! "$@"; then
+    fail=1
+    echo
+    echo "pre-commit: [$name] FAILED (blocking)"
+  fi
+}
+
+# Advisory validators: output is shown, but a failure does not reject
+# the commit. Used for scanners that currently have known false
+# positives the maintainers haven't cleaned up yet.
+run_advisory() {
+  local name="$1"
+  shift
+  if ! "$@"; then
+    echo
+    echo "pre-commit: [$name] reported findings (advisory, not blocking)."
+  fi
+}
+
+run_blocking "ui-style"     python3 scripts/check_ui_style.py
+run_blocking "how-it-works" python3 scripts/validate_how_it_works.py
+
+if [ -f scripts/check_secrets.py ]; then
+  run_advisory "check-secrets" python3 scripts/check_secrets.py
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo
+  echo "pre-commit: blocking validators failed."
+  echo "See STYLING.md for the UI rule set; fix the issues or pass --no-verify"
+  echo "in an emergency (CI will still gate the merge)."
+  exit 1
+fi

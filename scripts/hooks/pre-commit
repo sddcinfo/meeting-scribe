@@ -19,6 +19,28 @@ fi
 # 2. Secret scan
 python3 scripts/check_secrets.py || exit 1
 
+# 2b. Marker-orphan check — every @pytest.mark.X in tests/ must be in the
+# policy table (scripts/hooks/check_marker_orphans.py KNOWN_MARKERS).
+python3 scripts/hooks/check_marker_orphans.py || exit 1
+echo "  ✓ marker-orphan"
+
+# 2c. Refuse to commit anything under meetings/ — those are runtime
+# artifacts containing real meeting transcripts. Test fixtures must
+# come from scripts/scrub_journal.py and live under
+# tests/fixtures/journals/. The leak check inside the scrubber
+# guards against verbatim text leaking into the committable fixture.
+if git diff --cached --name-only | grep -qE '^meetings/'; then
+    echo "✗ meetings/ contains real meeting content and must NEVER be committed."
+    echo "  Use scripts/scrub_journal.py to derive a sanitized fixture under"
+    echo "  tests/fixtures/journals/ instead."
+    exit 1
+fi
+echo "  ✓ meetings/ write-guard"
+
+# 2d. Scrubbed-fixture shape check (no real-content fingerprint;
+# CI-safe). The content-aware leak check is in the scrubber itself.
+python3 scripts/hooks/check_scrubbed_fixtures.py || exit 1
+
 # 3. JS syntax check (no duplicate top-level consts)
 python3 -c "
 from pathlib import Path

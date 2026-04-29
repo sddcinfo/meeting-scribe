@@ -58,7 +58,9 @@ def test_export_loader_single_target_legacy(tmp_path: Path) -> None:
     ev = events[0]
     assert ev["text"] == "orig"  # last-seen ASR text (the translation entry)
     assert ev["translation"]["text"] == "こんにちは"
-    assert ev["translations"] == {"ja": {"status": "done", "text": "こんにちは", "target_language": "ja"}}
+    assert ev["translations"] == {
+        "ja": {"status": "done", "text": "こんにちは", "target_language": "ja"}
+    }
 
 
 def test_export_loader_multi_target_fanout(tmp_path: Path) -> None:
@@ -139,12 +141,8 @@ def test_read_journal_raw_dedup_by_segment_and_target(tmp_path: Path) -> None:
     # dropped because translation entries already carry the source text.
     assert len(lines) == 2
     parsed = [json.loads(line) for line in lines]
-    targets = {
-        (p.get("translation") or {}).get("target_language", "") for p in parsed
-    }
+    targets = {(p.get("translation") or {}).get("target_language", "") for p in parsed}
     assert targets == {"ja", "fr"}
     # Within the ja bucket, the later "こんにちは" wins over the wip version.
-    ja_line = next(
-        p for p in parsed if (p.get("translation") or {}).get("target_language") == "ja"
-    )
+    ja_line = next(p for p in parsed if (p.get("translation") or {}).get("target_language") == "ja")
     assert ja_line["translation"]["text"] == "こんにちは"

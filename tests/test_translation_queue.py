@@ -204,9 +204,7 @@ class TestTranslationQueueMonolingual:
         await asyncio.sleep(0.1)
         await q.stop()
 
-        assert translator_calls == 0, (
-            "Monolingual queue must never invoke the translator backend"
-        )
+        assert translator_calls == 0, "Monolingual queue must never invoke the translator backend"
 
     @pytest.mark.asyncio
     async def test_set_languages_flips_to_monolingual(self):

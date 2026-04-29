@@ -435,10 +435,15 @@ class TestFragmentGating:
 
     def test_looks_like_fragment_heuristic(self):
         assert TranslationQueue._looks_like_fragment("はい") is True  # short
-        assert TranslationQueue._looks_like_fragment("その辺をクリアしないと、非常に") is True  # particle
-        assert TranslationQueue._looks_like_fragment(
-            "これは十分に長く、助詞で終わらない完結した発言です。"
-        ) is False  # long + period tail
+        assert (
+            TranslationQueue._looks_like_fragment("その辺をクリアしないと、非常に") is True
+        )  # particle
+        assert (
+            TranslationQueue._looks_like_fragment(
+                "これは十分に長く、助詞で終わらない完結した発言です。"
+            )
+            is False
+        )  # long + period tail
         assert TranslationQueue._looks_like_fragment("") is True  # empty counts as fragment
 
 
@@ -469,9 +474,9 @@ class TestRefinementPoolRead:
                     }
                 ]
 
-            from meeting_scribe import server as server_mod
+            from meeting_scribe.runtime import state as runtime_state
 
-            monkeypatch.setattr(server_mod, "refinement_worker", _StubWorker())
+            monkeypatch.setattr(runtime_state, "refinement_worker", _StubWorker())
 
             await q.submit(_make_event("A-0", "ほげ"))
             await q.flush_merge_gate()
@@ -479,9 +484,7 @@ class TestRefinementPoolRead:
 
             # Backend saw the refinement pool's entry as prior_context,
             # NOT the queue's own (still-empty) history.
-            assert backend.calls[0]["prior_context"] == [
-                ("refined source", "refined target")
-            ]
+            assert backend.calls[0]["prior_context"] == [("refined source", "refined target")]
         finally:
             await q.stop()
 
@@ -508,9 +511,9 @@ class TestRefinementPoolRead:
                     }
                 ]
 
-            from meeting_scribe import server as server_mod
+            from meeting_scribe.runtime import state as runtime_state
 
-            monkeypatch.setattr(server_mod, "refinement_worker", _OtherMeetingWorker())
+            monkeypatch.setattr(runtime_state, "refinement_worker", _OtherMeetingWorker())
 
             await q.submit(_make_event("A-0", "ほげ"))
             await q.flush_merge_gate()

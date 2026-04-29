@@ -7,6 +7,7 @@ What's left tests real behaviour: model/language routing, drift math,
 refinement math, TTS recipe wiring, and integration smoke against the
 test server.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -27,8 +28,12 @@ class TestMultiLanguageDeHardcoding:
         from meeting_scribe.models import TranscriptEvent, TranslationStatus
 
         e = TranscriptEvent(
-            segment_id="s1", text="你好", language="zh", is_final=True,
-            start_ms=0, end_ms=1000,
+            segment_id="s1",
+            text="你好",
+            language="zh",
+            is_final=True,
+            start_ms=0,
+            end_ms=1000,
         )
         t = e.with_translation(TranslationStatus.DONE, text="Hello", target_language="en")
         assert t.translation.target_language == "en"
@@ -37,8 +42,12 @@ class TestMultiLanguageDeHardcoding:
         from meeting_scribe.models import TranscriptEvent, TranslationStatus
 
         e = TranscriptEvent(
-            segment_id="s1", text="Bonjour", language="fr", is_final=True,
-            start_ms=0, end_ms=1000,
+            segment_id="s1",
+            text="Bonjour",
+            language="fr",
+            is_final=True,
+            start_ms=0,
+            end_ms=1000,
         )
         t = e.with_translation(TranslationStatus.DONE, text="Hello", target_language="en")
         assert t.translation.target_language == "en"
@@ -106,18 +115,6 @@ class TestCaptivePortalOffline:
         assert "cdn" not in lower
         assert "googleapis" not in lower
         assert "cloudflare.com" not in lower
-
-
-class TestTTSRecipe:
-    """Recipe loader wires TTS to the CustomVoice model + correct port."""
-
-    def test_recipe_points_to_custom_voice(self):
-        from meeting_scribe.recipes import load_recipe
-
-        r = load_recipe("tts-vllm")
-        assert r["model_id"] == "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
-        assert r["container_type"] == "vllm"
-        assert r["port"] == 8022
 
 
 # ═══════════════════════════════════════════════════════════════

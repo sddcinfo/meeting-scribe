@@ -1,0 +1,7 @@
+{
+  "type": "room_layout_update",
+  "layout": {
+    "kind": "table",
+    "seats": []
+  }
+}

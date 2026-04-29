@@ -35,7 +35,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from meeting_scribe import server
+from meeting_scribe import server, wifi
+from meeting_scribe.hotspot import ap_control as _ap_control
+from meeting_scribe.runtime import state as runtime_state
+from meeting_scribe.server_support import regdomain, settings_store
 
 
 def _mk_completed(
@@ -65,18 +68,20 @@ def hotspot_state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     settings or environment.
     """
     path = tmp_path / "meeting-hotspot.json"
-    monkeypatch.setattr(server, "HOTSPOT_STATE_FILE", path)
+    monkeypatch.setattr(wifi, "HOTSPOT_STATE_FILE", path)
 
-    # Ensure server.config has a .port attribute for _write_hotspot_state_sync.
+    # Ensure state.config has a .port attribute for _write_hotspot_state_sync.
     fake_config = MagicMock()
     fake_config.port = 8080
-    monkeypatch.setattr(server, "config", fake_config, raising=False)
+    monkeypatch.setattr(runtime_state, "config", fake_config)
 
     # Force production mode so rotation/regdomain logic runs.
-    monkeypatch.setattr(server, "_is_dev_mode", lambda: False)
+    # _is_dev_mode lives in settings_store, but ap_control imports it
+    # at top level so we need to patch the imported reference.
+    monkeypatch.setattr(_ap_control, "_is_dev_mode", lambda: False)
 
     # Reset the per-meeting rotation tracker so tests are independent.
-    server._reset_rotation_state_for_tests()
+    _ap_control._reset_rotation_state_for_tests()
 
     return path
 
@@ -90,46 +95,51 @@ def _load_state(path: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.usefixtures("isolated_settings_override")
 class TestRegdomainHelpers:
     """Runtime regulatory-domain enforcement (JP).
 
     These tests mock ``subprocess.run`` at the server module level so no
-    real ``iw`` command is invoked.
+    real ``iw`` command is invoked. The ``isolated_settings_override``
+    fixture is applied class-wide so the user's real
+    ``~/.config/meeting-scribe/settings.json`` doesn't bleed in (the
+    file's ``wifi_regdomain`` would otherwise become the resolved
+    target and crash these tests when it isn't ``"JP"``).
     """
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_current_regdomain_parses_jp(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(
             stdout="global\ncountry JP: DFS-JP\n\t(2402 - 2482 @ 40), (N/A, 20)\n",
         )
-        assert server._current_regdomain() == "JP"
+        assert regdomain._current_regdomain() == "JP"
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_current_regdomain_parses_00(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(
             stdout="global\ncountry 00: DFS-UNSET\n\t(2402 - 2472 @ 40)\n",
         )
-        assert server._current_regdomain() == "00"
+        assert regdomain._current_regdomain() == "00"
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_current_regdomain_nmcli_error(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(returncode=1)
-        assert server._current_regdomain() is None
+        assert regdomain._current_regdomain() is None
 
-    @patch("meeting_scribe.server._current_regdomain")
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_jp_noop_when_already_jp(
         self,
         mock_run: MagicMock,
         mock_current: MagicMock,
     ) -> None:
         mock_current.return_value = "JP"
-        assert server._ensure_regdomain() is True
+        assert regdomain._ensure_regdomain() is True
         # No subprocess.run — already JP.
         mock_run.assert_not_called()
 
-    @patch("meeting_scribe.server._current_regdomain")
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_jp_sets_then_verifies(
         self,
         mock_run: MagicMock,
@@ -140,7 +150,7 @@ class TestRegdomainHelpers:
         mock_current.side_effect = ["00", "JP"]
         mock_run.return_value = _mk_completed(returncode=0)
 
-        assert server._ensure_regdomain() is True
+        assert regdomain._ensure_regdomain() is True
         # Verify we actually called `iw reg set JP`
         call_args = mock_run.call_args[0][0]
         assert "iw" in call_args
@@ -148,8 +158,8 @@ class TestRegdomainHelpers:
         assert "set" in call_args
         assert "JP" in call_args
 
-    @patch("meeting_scribe.server._current_regdomain")
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_jp_fails_when_set_doesnt_stick(
         self,
         mock_run: MagicMock,
@@ -167,12 +177,12 @@ class TestRegdomainHelpers:
         mock_current.side_effect = ["00", "00"]
         mock_run.return_value = _mk_completed(returncode=0)
 
-        assert server._ensure_regdomain() is False
+        assert regdomain._ensure_regdomain() is False
         error_lines = [r.message for r in caplog.records if r.levelno >= logging.ERROR]
         assert any("regdomain set to JP failed" in m for m in error_lines)
 
-    @patch("meeting_scribe.server._current_regdomain")
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_jp_fails_when_iw_not_found(
         self,
         mock_run: MagicMock,
@@ -180,7 +190,7 @@ class TestRegdomainHelpers:
     ) -> None:
         mock_current.return_value = "00"
         mock_run.side_effect = FileNotFoundError("iw: no such file")
-        assert server._ensure_regdomain() is False
+        assert regdomain._ensure_regdomain() is False
 
 
 class TestStartWifiApRegdomain:
@@ -188,12 +198,12 @@ class TestStartWifiApRegdomain:
     and refuse to rotate if it fails.
     """
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
-    @patch("meeting_scribe.server._ensure_regdomain")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._ensure_regdomain")
     def test_regdomain_called_before_rotation(
         self,
         mock_regdomain: MagicMock,
@@ -211,17 +221,17 @@ class TestStartWifiApRegdomain:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["rr", "regdpass"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m-regd-1"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m-regd-1"))
 
         mock_regdomain.assert_called_once()
         # And the nmcli rotation happened after
         assert mock_nmcli.called
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
-    @patch("meeting_scribe.server._ensure_regdomain")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._ensure_regdomain")
     def test_rotation_aborts_when_regdomain_not_jp(
         self,
         mock_regdomain: MagicMock,
@@ -238,7 +248,7 @@ class TestStartWifiApRegdomain:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["rr", "regdpass"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m-regd-2"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m-regd-2"))
 
         mock_regdomain.assert_called_once()
         # NO nmcli calls — we bailed early.
@@ -248,24 +258,24 @@ class TestStartWifiApRegdomain:
 class TestParseNmcliFields:
     def test_basic_colon_separated(self) -> None:
         out = "802-11-wireless.ssid:Dell Demo 7EC2\n802-11-wireless-security.psk:4EEF0ACA\n"
-        fields = server._parse_nmcli_fields(out)
+        fields = wifi._parse_nmcli_fields(out)
         assert fields["802-11-wireless.ssid"] == "Dell Demo 7EC2"
         assert fields["802-11-wireless-security.psk"] == "4EEF0ACA"
 
     def test_value_contains_colon(self) -> None:
         # SSIDs can contain arbitrary characters including colons.
         out = "802-11-wireless.ssid:Coffee: Shop WiFi\n"
-        fields = server._parse_nmcli_fields(out)
+        fields = wifi._parse_nmcli_fields(out)
         assert fields["802-11-wireless.ssid"] == "Coffee: Shop WiFi"
 
     def test_empty_lines_ignored(self) -> None:
         out = "a:1\n\nb:2\n"
-        fields = server._parse_nmcli_fields(out)
+        fields = wifi._parse_nmcli_fields(out)
         assert fields == {"a": "1", "b": "2"}
 
     def test_line_without_colon_ignored(self) -> None:
         out = "garbage line\na:1\n"
-        fields = server._parse_nmcli_fields(out)
+        fields = wifi._parse_nmcli_fields(out)
         assert fields == {"a": "1"}
 
 
@@ -275,25 +285,25 @@ class TestParseNmcliFields:
 
 
 class TestReadLiveAPCredentials:
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.wifi.subprocess.run")
     def test_happy_path(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(
             stdout=("802-11-wireless.ssid:Dell Demo 7EC2\n802-11-wireless-security.psk:4EEF0ACA\n"),
         )
-        result = server._nmcli_read_live_ap_credentials()
+        result = wifi._nmcli_read_live_ap_credentials()
         assert result == ("Dell Demo 7EC2", "4EEF0ACA")
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.wifi.subprocess.run")
     def test_nmcli_error_returns_none(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(returncode=1, stderr="no such connection")
-        assert server._nmcli_read_live_ap_credentials() is None
+        assert wifi._nmcli_read_live_ap_credentials() is None
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.wifi.subprocess.run")
     def test_empty_ssid_returns_none(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(
             stdout="802-11-wireless.ssid:\n802-11-wireless-security.psk:\n",
         )
-        assert server._nmcli_read_live_ap_credentials() is None
+        assert wifi._nmcli_read_live_ap_credentials() is None
 
 
 # ---------------------------------------------------------------------------
@@ -302,22 +312,22 @@ class TestReadLiveAPCredentials:
 
 
 class TestAPIsActive:
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.wifi.subprocess.run")
     def test_active_when_name_in_list(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(
             stdout="DellDemo-AP:wlP9s9\nWired connection 3:enP7s7\n",
         )
-        assert server._nmcli_ap_is_active() is True
+        assert wifi._nmcli_ap_is_active() is True
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.wifi.subprocess.run")
     def test_inactive_when_name_absent(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(stdout="Wired connection 3:enP7s7\n")
-        assert server._nmcli_ap_is_active() is False
+        assert wifi._nmcli_ap_is_active() is False
 
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.wifi.subprocess.run")
     def test_nmcli_error_returns_false(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(returncode=1, stderr="broken")
-        assert server._nmcli_ap_is_active() is False
+        assert wifi._nmcli_ap_is_active() is False
 
 
 # ---------------------------------------------------------------------------
@@ -326,8 +336,8 @@ class TestAPIsActive:
 
 
 class TestWriteHotspotStateSync:
-    @patch("meeting_scribe.server._nmcli_ap_is_active", return_value=True)
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active", return_value=True)
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
     def test_writes_when_ap_active(
         self,
         mock_read: MagicMock,
@@ -335,7 +345,7 @@ class TestWriteHotspotStateSync:
         hotspot_state_file: Path,
     ) -> None:
         mock_read.return_value = ("Dell Demo 7EC2", "4EEF0ACA")
-        ok = server._write_hotspot_state_sync()
+        ok = wifi._write_hotspot_state_sync()
         assert ok is True
         state = _load_state(hotspot_state_file)
         assert state["ssid"] == "Dell Demo 7EC2"
@@ -343,8 +353,8 @@ class TestWriteHotspotStateSync:
         assert state["ap_ip"] == "10.42.0.1"
         assert "port" in state
 
-    @patch("meeting_scribe.server._nmcli_ap_is_active", return_value=False)
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active", return_value=False)
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
     def test_no_ap_leaves_file_alone(
         self,
         mock_read: MagicMock,
@@ -358,13 +368,13 @@ class TestWriteHotspotStateSync:
         """
         hotspot_state_file.write_text('{"ssid": "previous", "password": "abc"}\n')
         mock_read.return_value = None
-        ok = server._write_hotspot_state_sync()
+        ok = wifi._write_hotspot_state_sync()
         assert ok is False
         # The file content is unchanged.
         assert _load_state(hotspot_state_file) == {"ssid": "previous", "password": "abc"}
 
-    @patch("meeting_scribe.server._nmcli_ap_is_active", return_value=True)
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active", return_value=True)
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
     def test_atomic_write_via_rename(
         self,
         mock_read: MagicMock,
@@ -373,7 +383,7 @@ class TestWriteHotspotStateSync:
     ) -> None:
         """Write via tmp file + rename — the target must not appear half-written."""
         mock_read.return_value = ("Dell Demo 7EC2", "4EEF0ACA")
-        server._write_hotspot_state_sync()
+        wifi._write_hotspot_state_sync()
         # After the call, no .tmp sibling should be left behind.
         siblings = list(hotspot_state_file.parent.iterdir())
         assert len(siblings) == 1
@@ -386,11 +396,11 @@ class TestWriteHotspotStateSync:
 
 
 class TestStartWifiAp:
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_happy_path_syncs_state(
         self,
         mock_nmcli: MagicMock,
@@ -411,7 +421,7 @@ class TestStartWifiAp:
         with patch("secrets.token_hex") as mock_token:
             # 2-char session id (for ssid), then 4-char password
             mock_token.side_effect = ["aa", "deadbeef"]
-            asyncio.run(server._start_wifi_ap())
+            asyncio.run(_ap_control._start_wifi_ap())
 
         state = _load_state(hotspot_state_file)
         assert state["ssid"] == "Dell Demo AAAA"
@@ -420,11 +430,11 @@ class TestStartWifiAp:
         mock_portal.assert_called_once()
         mock_firewall.assert_called_once()
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_supplicant_timeout_recovered_by_auto_retry(
         self,
         mock_nmcli: MagicMock,
@@ -470,7 +480,7 @@ class TestStartWifiAp:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["bb", "cafebabe"]
-            asyncio.run(server._start_wifi_ap())
+            asyncio.run(_ap_control._start_wifi_ap())
 
         # State file was synced DESPITE con up returning non-zero.
         state = _load_state(hotspot_state_file)
@@ -479,11 +489,11 @@ class TestStartWifiAp:
         mock_portal.assert_called_once()
         mock_firewall.assert_called_once()
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_ap_never_comes_up_leaves_state_alone(
         self,
         mock_nmcli: MagicMock,
@@ -509,7 +519,9 @@ class TestStartWifiAp:
         mock_is_active.return_value = False  # Never comes up
 
         # Short-circuit the polling loop by capping the deadline window.
-        monkeypatch.setattr(server, "_AP_ACTIVATION_WAIT_SECONDS", 0)
+        from meeting_scribe.hotspot import ap_control as _ap_control
+
+        monkeypatch.setattr(_ap_control, "_AP_ACTIVATION_WAIT_SECONDS", 0)
 
         async def _no_sleep(_seconds: float) -> None:
             return None
@@ -518,7 +530,7 @@ class TestStartWifiAp:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["cc", "feedface"]
-            asyncio.run(server._start_wifi_ap())
+            asyncio.run(_ap_control._start_wifi_ap())
 
         # Previous state file preserved verbatim.
         state = _load_state(hotspot_state_file)
@@ -530,11 +542,11 @@ class TestStartWifiAp:
         # Reconciliation reader was not called either (we early-returned).
         mock_read_creds.assert_not_called()
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_rotation_mismatch_warns_but_still_syncs(
         self,
         mock_nmcli: MagicMock,
@@ -561,7 +573,7 @@ class TestStartWifiAp:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["dd", "deadbee0"]
-            asyncio.run(server._start_wifi_ap())
+            asyncio.run(_ap_control._start_wifi_ap())
 
         # State file reflects the LIVE credentials, not the rotation target.
         state = _load_state(hotspot_state_file)
@@ -585,11 +597,11 @@ class TestRotationDedup:
     rotated credentials freshly.
     """
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_same_meeting_id_twice_rotates_once(
         self,
         mock_nmcli: MagicMock,
@@ -610,7 +622,7 @@ class TestRotationDedup:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["aa", "deadbeef"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m1"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m1"))
 
         first_call_count = mock_nmcli.call_count
         first_state = _load_state(hotspot_state_file)
@@ -621,7 +633,7 @@ class TestRotationDedup:
         with patch("secrets.token_hex") as mock_token:
             # If this were to run, it would generate new creds — prove it isn't.
             mock_token.side_effect = ["bb", "cafebabe"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m1"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m1"))
 
         # The rotation helpers should NOT have been invoked again.
         # Specifically, no additional `con modify` / `con down` / `con up` calls.
@@ -643,11 +655,11 @@ class TestRotationDedup:
         assert second_state["ssid"] == "Dell Demo AAAA"
         assert second_state["password"] == "DEADBEEF"
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_different_meeting_ids_rotate_twice(
         self,
         mock_nmcli: MagicMock,
@@ -665,20 +677,20 @@ class TestRotationDedup:
         mock_read_creds.return_value = ("Dell Demo AAAA", "AAAAAAAA")
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["aa", "aaaaaaaa"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m1"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m1"))
         assert _load_state(hotspot_state_file)["ssid"] == "Dell Demo AAAA"
 
         mock_read_creds.return_value = ("Dell Demo BBBB", "BBBBBBBB")
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["bb", "bbbbbbbb"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m2"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m2"))
         assert _load_state(hotspot_state_file)["ssid"] == "Dell Demo BBBB"
 
-    @patch("meeting_scribe.server._apply_hotspot_firewall")
-    @patch("meeting_scribe.server._start_captive_portal")
-    @patch("meeting_scribe.server._nmcli_ap_is_active")
-    @patch("meeting_scribe.server._nmcli_read_live_ap_credentials")
-    @patch("meeting_scribe.server._run_nmcli_sync")
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
     def test_failed_rotation_does_not_set_tracker(
         self,
         mock_nmcli: MagicMock,
@@ -693,9 +705,11 @@ class TestRotationDedup:
         meeting_id tracker must NOT be set — so a retry can still rotate.
         """
         del hotspot_state_file  # fixture used for XDG setup only
+        from meeting_scribe.hotspot import ap_control as _ap_control
+
         mock_nmcli.return_value = _mk_completed(returncode=1, stderr="supplicant-timeout")
         mock_is_active.return_value = False  # AP never active
-        monkeypatch.setattr(server, "_AP_ACTIVATION_WAIT_SECONDS", 0)
+        monkeypatch.setattr(_ap_control, "_AP_ACTIVATION_WAIT_SECONDS", 0)
 
         async def _no_sleep(_s: float) -> None:
             return None
@@ -704,10 +718,10 @@ class TestRotationDedup:
 
         with patch("secrets.token_hex") as mock_token:
             mock_token.side_effect = ["aa", "aaaaaaaa"]
-            asyncio.run(server._start_wifi_ap(meeting_id="m1"))
+            asyncio.run(_ap_control._start_wifi_ap(meeting_id="m1"))
 
         # Tracker should still be None — retry path stays open.
-        assert server._LAST_ROTATED_MEETING_ID is None
+        assert _ap_control._LAST_ROTATED_MEETING_ID is None
 
 
 # ---------------------------------------------------------------------------
@@ -730,14 +744,14 @@ class TestWifiEndpointReconciliation:
         )
 
         with (
-            patch("meeting_scribe.server._nmcli_read_live_ap_credentials") as mock_read,
-            patch("meeting_scribe.server._nmcli_ap_is_active", return_value=True),
+            patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials") as mock_read,
+            patch("meeting_scribe.wifi._nmcli_ap_is_active", return_value=True),
         ):
             mock_read.return_value = ("Dell Demo FRESH", "FRESHPASS")
             # The endpoint's reconciliation path is a sync subprocess call
             # scheduled via run_in_executor. We call the sync helper directly
             # here to assert it writes through to the file.
-            ok = server._write_hotspot_state_sync()
+            ok = wifi._write_hotspot_state_sync()
             assert ok is True
 
         state = _load_state(hotspot_state_file)
@@ -753,18 +767,25 @@ class TestWifiEndpointReconciliation:
 @pytest.fixture
 def isolated_settings_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect SETTINGS_OVERRIDE_FILE to a per-test path + strip any
-    wifi_regdomain from ``server.config`` so the priority chain is testable
+    wifi_regdomain from ``state.config`` so the priority chain is testable
     without surprises.
     """
     override = tmp_path / "settings.json"
-    monkeypatch.setattr(server, "SETTINGS_OVERRIDE_FILE", override)
+    # SETTINGS_OVERRIDE_FILE moved into server_support; mirror through the
+    # legacy server.X attribute so tests that read either path still work.
+    monkeypatch.setattr(settings_store, "SETTINGS_OVERRIDE_FILE", override)
+    monkeypatch.setattr(server, "SETTINGS_OVERRIDE_FILE", override, raising=False)
+    # The cache layer keys on file mtime — invalidate so a per-test
+    # override doesn't return a previous test's cached dict.
+    monkeypatch.setattr(settings_store, "_settings_cache", None)
+    monkeypatch.setattr(settings_store, "_settings_cache_mtime", 0.0)
 
     fake_config = MagicMock()
     fake_config.port = 8080
     # Explicitly drop wifi_regdomain so the override and default paths are
     # reachable. Tests that want a config value can set it on this object.
     fake_config.wifi_regdomain = None
-    monkeypatch.setattr(server, "config", fake_config, raising=False)
+    monkeypatch.setattr(runtime_state, "config", fake_config)
 
     return override
 
@@ -773,35 +794,35 @@ class TestEffectiveRegdomain:
     """_effective_regdomain() priority: config > override > default."""
 
     def test_default_when_no_override(self, isolated_settings_override: Path) -> None:
-        assert server._effective_regdomain() == "JP"
+        assert settings_store._effective_regdomain() == "JP"
 
     def test_override_file_wins_over_default(self, isolated_settings_override: Path) -> None:
-        server._save_settings_override({"wifi_regdomain": "US"})
-        assert server._effective_regdomain() == "US"
+        settings_store._save_settings_override({"wifi_regdomain": "US"})
+        assert settings_store._effective_regdomain() == "US"
 
     def test_config_wins_over_override_file(self, isolated_settings_override: Path) -> None:
-        server._save_settings_override({"wifi_regdomain": "US"})
-        server.config.wifi_regdomain = "DE"
-        assert server._effective_regdomain() == "DE"
+        settings_store._save_settings_override({"wifi_regdomain": "US"})
+        runtime_state.config.wifi_regdomain = "DE"
+        assert settings_store._effective_regdomain() == "DE"
 
     def test_lowercase_normalized(self, isolated_settings_override: Path) -> None:
-        server._save_settings_override({"wifi_regdomain": "fr"})
-        assert server._effective_regdomain() == "FR"
+        settings_store._save_settings_override({"wifi_regdomain": "fr"})
+        assert settings_store._effective_regdomain() == "FR"
 
     def test_empty_string_falls_through(self, isolated_settings_override: Path) -> None:
-        server.config.wifi_regdomain = "   "
-        server._save_settings_override({"wifi_regdomain": "CA"})
-        assert server._effective_regdomain() == "CA"
+        runtime_state.config.wifi_regdomain = "   "
+        settings_store._save_settings_override({"wifi_regdomain": "CA"})
+        assert settings_store._effective_regdomain() == "CA"
 
     def test_save_override_persists_to_disk(self, isolated_settings_override: Path) -> None:
-        server._save_settings_override({"wifi_regdomain": "US"})
+        settings_store._save_settings_override({"wifi_regdomain": "US"})
         assert isolated_settings_override.exists()
         data = json.loads(isolated_settings_override.read_text())
         assert data["wifi_regdomain"] == "US"
 
     def test_save_override_merges_keys(self, isolated_settings_override: Path) -> None:
-        server._save_settings_override({"wifi_regdomain": "US"})
-        server._save_settings_override({"other_key": "keep"})
+        settings_store._save_settings_override({"wifi_regdomain": "US"})
+        settings_store._save_settings_override({"other_key": "keep"})
         data = json.loads(isolated_settings_override.read_text())
         assert data["wifi_regdomain"] == "US"
         assert data["other_key"] == "keep"
@@ -809,46 +830,52 @@ class TestEffectiveRegdomain:
 
 class TestRegdomainModprobePath:
     def test_path_uses_lowercase_country(self) -> None:
-        assert server._regdomain_modprobe_path("JP") == Path("/etc/modprobe.d/cfg80211-jp.conf")
-        assert server._regdomain_modprobe_path("us") == Path("/etc/modprobe.d/cfg80211-us.conf")
+        assert settings_store._regdomain_modprobe_path("JP") == Path(
+            "/etc/modprobe.d/cfg80211-jp.conf"
+        )
+        assert settings_store._regdomain_modprobe_path("us") == Path(
+            "/etc/modprobe.d/cfg80211-us.conf"
+        )
 
     def test_empty_falls_back_to_default(self) -> None:
-        assert server._regdomain_modprobe_path("") == Path("/etc/modprobe.d/cfg80211-jp.conf")
+        assert settings_store._regdomain_modprobe_path("") == Path(
+            "/etc/modprobe.d/cfg80211-jp.conf"
+        )
 
 
 class TestEnsureRegdomainReadsEffective:
     """_ensure_regdomain() must honor _effective_regdomain() — NOT a hard-coded code."""
 
-    @patch("meeting_scribe.server._current_regdomain")
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_regdomain_uses_config_country(
         self,
         mock_run: MagicMock,
         mock_current: MagicMock,
         isolated_settings_override: Path,
     ) -> None:
-        server.config.wifi_regdomain = "DE"
+        runtime_state.config.wifi_regdomain = "DE"
         mock_current.side_effect = ["00", "DE"]
         mock_run.return_value = _mk_completed(returncode=0)
 
-        assert server._ensure_regdomain() is True
+        assert regdomain._ensure_regdomain() is True
         call_args = mock_run.call_args[0][0]
         assert "DE" in call_args
         assert "JP" not in call_args
 
-    @patch("meeting_scribe.server._current_regdomain")
-    @patch("meeting_scribe.server.subprocess.run")
+    @patch("meeting_scribe.server_support.regdomain._current_regdomain")
+    @patch("meeting_scribe.server_support.regdomain.subprocess.run")
     def test_ensure_regdomain_uses_override_file(
         self,
         mock_run: MagicMock,
         mock_current: MagicMock,
         isolated_settings_override: Path,
     ) -> None:
-        server._save_settings_override({"wifi_regdomain": "FR"})
+        settings_store._save_settings_override({"wifi_regdomain": "FR"})
         mock_current.side_effect = ["00", "FR"]
         mock_run.return_value = _mk_completed(returncode=0)
 
-        assert server._ensure_regdomain() is True
+        assert regdomain._ensure_regdomain() is True
         call_args = mock_run.call_args[0][0]
         assert "FR" in call_args
 
@@ -859,9 +886,9 @@ class TestAdminSettingsEndpoint:
     def test_get_returns_effective_regdomain(self, isolated_settings_override: Path) -> None:
         from fastapi.testclient import TestClient
 
-        server._save_settings_override({"wifi_regdomain": "US"})
+        settings_store._save_settings_override({"wifi_regdomain": "US"})
 
-        with patch("meeting_scribe.server._current_regdomain", return_value="US"):
+        with patch("meeting_scribe.routes.admin._current_regdomain", return_value="US"):
             client = TestClient(server.app, base_url="https://testserver")
             resp = client.get("/api/admin/settings")
 
@@ -893,12 +920,12 @@ class TestAdminSettingsEndpoint:
         from fastapi.testclient import TestClient
 
         with (
-            patch("meeting_scribe.server._ensure_regdomain", return_value=True) as mock_apply,
+            patch("meeting_scribe.routes.admin._ensure_regdomain", return_value=True) as mock_apply,
             patch(
-                "meeting_scribe.server._ensure_regdomain_persistent",
+                "meeting_scribe.routes.admin._ensure_regdomain_persistent",
                 return_value=True,
             ) as mock_persist,
-            patch("meeting_scribe.server._current_regdomain", return_value="DE"),
+            patch("meeting_scribe.routes.admin._current_regdomain", return_value="DE"),
         ):
             client = TestClient(server.app, base_url="https://testserver")
             resp = client.put("/api/admin/settings", json={"wifi_regdomain": "de"})
@@ -927,7 +954,7 @@ class TestAdminSettingsEndpoint:
         UI can populate dropdowns without a second round-trip."""
         from fastapi.testclient import TestClient
 
-        with patch("meeting_scribe.server._current_regdomain", return_value="JP"):
+        with patch("meeting_scribe.routes.admin._current_regdomain", return_value="JP"):
             client = TestClient(server.app, base_url="https://testserver")
             resp = client.get("/api/admin/settings")
 
@@ -955,7 +982,7 @@ class TestAdminSettingsEndpoint:
     def test_put_accepts_valid_timezone(self, isolated_settings_override: Path) -> None:
         from fastapi.testclient import TestClient
 
-        with patch("meeting_scribe.server._current_regdomain", return_value="JP"):
+        with patch("meeting_scribe.routes.admin._current_regdomain", return_value="JP"):
             client = TestClient(server.app, base_url="https://testserver")
             resp = client.put("/api/admin/settings", json={"timezone": "Asia/Tokyo"})
 
@@ -975,9 +1002,9 @@ class TestAdminSettingsEndpoint:
         from fastapi.testclient import TestClient
 
         # First set a non-empty timezone.
-        server._save_settings_override({"timezone": "Asia/Tokyo"})
+        settings_store._save_settings_override({"timezone": "Asia/Tokyo"})
 
-        with patch("meeting_scribe.server._current_regdomain", return_value="JP"):
+        with patch("meeting_scribe.routes.admin._current_regdomain", return_value="JP"):
             client = TestClient(server.app, base_url="https://testserver")
             resp = client.put("/api/admin/settings", json={"timezone": ""})
 
@@ -990,12 +1017,12 @@ class TestAdminSettingsEndpoint:
         from fastapi.testclient import TestClient
 
         with (
-            patch("meeting_scribe.server._ensure_regdomain", return_value=True),
+            patch("meeting_scribe.routes.admin._ensure_regdomain", return_value=True),
             patch(
-                "meeting_scribe.server._ensure_regdomain_persistent",
+                "meeting_scribe.routes.admin._ensure_regdomain_persistent",
                 return_value=True,
             ),
-            patch("meeting_scribe.server._current_regdomain", return_value="DE"),
+            patch("meeting_scribe.routes.admin._current_regdomain", return_value="DE"),
         ):
             client = TestClient(server.app, base_url="https://testserver")
             resp = client.put(

@@ -371,7 +371,9 @@ class TestLanguageDetection:
 def _libreoffice_available() -> bool:
     import shutil
 
-    return bool(shutil.which("libreoffice") and shutil.which("pdftoppm") and shutil.which("pdfinfo"))
+    return bool(
+        shutil.which("libreoffice") and shutil.which("pdftoppm") and shutil.which("pdfinfo")
+    )
 
 
 @pytest.mark.skipif(
@@ -400,9 +402,7 @@ class TestProgressiveRender:
         prs.save(str(path))
         return path
 
-    def test_renders_all_slides_with_progress_callback(
-        self, four_slide_pptx, tmp_path
-    ):
+    def test_renders_all_slides_with_progress_callback(self, four_slide_pptx, tmp_path):
         out = tmp_path / "original"
         events: list[tuple[int, int]] = []
 
@@ -421,9 +421,7 @@ class TestProgressiveRender:
             assert (out / f"slide_{i:03d}.png").exists()
         assert (out / "original.pdf").exists()
 
-    def test_render_partial_translated_only_emits_targeted_slides(
-        self, four_slide_pptx, tmp_path
-    ):
+    def test_render_partial_translated_only_emits_targeted_slides(self, four_slide_pptx, tmp_path):
         # Translate text on slides 0 and 1 only; render only those slides
         slides = extract_text_from_pptx(four_slide_pptx)
         translations = []
@@ -433,9 +431,7 @@ class TestProgressiveRender:
 
         out = tmp_path / "translated"
         work = tmp_path / "work"
-        rendered = render_partial_translated(
-            four_slide_pptx, translations, [0, 1], out, work
-        )
+        rendered = render_partial_translated(four_slide_pptx, translations, [0, 1], out, work)
 
         assert sorted(rendered) == [0, 1]
         assert (out / "slide_001.png").exists()
@@ -444,9 +440,7 @@ class TestProgressiveRender:
         assert not (out / "slide_003.png").exists()
         assert not (out / "slide_004.png").exists()
 
-    def test_render_first_slide_fast_produces_only_one_png(
-        self, four_slide_pptx, tmp_path
-    ):
+    def test_render_first_slide_fast_produces_only_one_png(self, four_slide_pptx, tmp_path):
         out = tmp_path / "slide_001.png"
         work = tmp_path / "work"
         ok = render_first_slide_fast(four_slide_pptx, out, work)
@@ -910,12 +904,8 @@ class TestPartialTranslatedWorkDirIsolation:
 
         async def _run_two() -> None:
             await asyncio.gather(
-                worker_mod.run_partial_translated_render(
-                    b"fake-pptx-bytes-1", [], [0], translated
-                ),
-                worker_mod.run_partial_translated_render(
-                    b"fake-pptx-bytes-2", [], [1], translated
-                ),
+                worker_mod.run_partial_translated_render(b"fake-pptx-bytes-1", [], [0], translated),
+                worker_mod.run_partial_translated_render(b"fake-pptx-bytes-2", [], [1], translated),
             )
 
         asyncio.run(_run_two())
@@ -930,7 +920,7 @@ class TestPartialTranslatedWorkDirIsolation:
         # Both must carry the `_express_` prefix + uuid-hex suffix.
         for wd in seen_work_dirs:
             assert wd.name.startswith("_express_"), wd
-            suffix = wd.name[len("_express_"):]
+            suffix = wd.name[len("_express_") :]
             assert len(suffix) == 32, f"expected uuid4 hex (32 chars), got {suffix!r}"
 
 
@@ -945,7 +935,7 @@ class TestAtomicWriteJsonRace:
     def test_concurrent_writes_to_same_path_succeed(self, tmp_path):
         import threading
 
-        from meeting_scribe.slides.worker import _atomic_write_json
+        from meeting_scribe.util.atomic_io import atomic_write_json
 
         target = tmp_path / "meta.json"
         errors: list[Exception] = []
@@ -953,7 +943,7 @@ class TestAtomicWriteJsonRace:
         def _writer(i: int) -> None:
             try:
                 for _ in range(5):
-                    _atomic_write_json(target, {"worker": i})
+                    atomic_write_json(target, {"worker": i})
             except Exception as exc:
                 errors.append(exc)
 
@@ -963,11 +953,10 @@ class TestAtomicWriteJsonRace:
         for t in threads:
             t.join()
 
-        assert not errors, f"concurrent _atomic_write_json raised: {errors}"
+        assert not errors, f"concurrent atomic_write_json raised: {errors}"
         # Target file must have the final shape — content from one of the
         # writers — not be missing or partial.
         import json as _json
 
         data = _json.loads(target.read_text())
         assert "worker" in data
-

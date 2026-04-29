@@ -1,0 +1,3877 @@
+{
+  "segment_count": 258,
+  "order": [
+    "6b07675c-22ea-5324-12e1-1031943fd2f6",
+    "39393d26-23e9-94d0-d501-a27d9267bc0c",
+    "1ce615b6-800e-58ec-d357-174af96adddf",
+    "0bf4f250-2073-a841-9bd8-ea3c5c5fd1e5",
+    "92bf7181-7ca0-efab-6900-f1c1b25a9f41",
+    "0aa99b6f-b703-4c6f-5019-49ff887cb1ac",
+    "d56154df-adfe-c5fd-1680-dfae331ba289",
+    "20c66962-94ab-93b4-31fd-cbd0c08cff9c",
+    "3528118f-9074-c3a9-d0d6-c02390df5a19",
+    "509a744e-c600-c9d8-ccbb-1dba74d6886a",
+    "fc2e484c-a308-edd1-db4d-c590ff9ab4a2",
+    "6f8b2760-33a5-a8d1-842a-b8cab240b3f5",
+    "43d8b253-63f8-8099-481f-299f203e0c65",
+    "2018596d-0d78-0a00-4a13-db403750a555",
+    "96de4aa4-dfc0-03ac-b514-b6aa55b34427",
+    "523e0850-4aae-9f09-450a-9c36908e793b",
+    "1e848024-b377-2315-8d92-661faf223083",
+    "db9d2634-a844-73c8-dce3-99a8f431f909",
+    "862e1bc1-a09a-e05e-c393-9b65b63eacbb",
+    "6cd69643-4648-dcb0-48a0-303c5ecf642f",
+    "f11238a4-b1f1-a0bf-3245-c94ee43837a6",
+    "f94fb7e0-9088-4cd5-3780-157e80f3a173",
+    "a676fd9a-2f1e-1482-59c3-c90135435bae",
+    "c9c0a40e-4fe7-beb4-1ee2-8eb6564e47b8",
+    "3e9a0289-7e31-fe1f-1814-b240782acbf0",
+    "78f0def4-ae2f-3799-f7e7-0684d22e2dfe",
+    "fb8dc4e8-56d0-9c92-73f7-0707bca7e8ee",
+    "238b597b-658b-c1c9-1a57-e0716247ba7e",
+    "436d87e1-eb8b-c5f3-8478-e31ecb8d35e6",
+    "78abab14-5816-c0c7-2ee6-765e07918119",
+    "529b3938-1592-0abf-e3bf-b9d4337df5c7",
+    "5bb368e0-ca59-3952-63e3-417f1d06a914",
+    "736d1455-c038-4d46-b82c-044ace53110f",
+    "c6e05f7f-09a1-c6c9-5d75-01f9fa34a2ba",
+    "d0f04415-000f-5a2c-acfa-2e97328f03ad",
+    "1909879b-18af-10c5-997b-3a72e988ffbd",
+    "542470f1-afd0-2226-c4ec-723c1693ed3c",
+    "5091863f-949f-b466-8e8c-f21212b0c88f",
+    "7ef13116-1934-3474-2612-1f9b15310272",
+    "3988dad9-8318-3121-2fb5-954aeb7c73d9",
+    "7385be00-3983-81dd-b3d8-2ca4c98468c5",
+    "83a9a0b0-5681-cd9f-0543-293a8221f9fd",
+    "d02e5176-e0f4-4aab-e07f-2f16cdf40f20",
+    "cdc7ad72-f18b-faa7-1158-73b574d6cdd9",
+    "fa5fe1a8-f520-4818-e793-0cc0e02ea7a7",
+    "81860a1b-d6d5-fdf2-fd56-6cad2bbdcdc4",
+    "5e87d496-9b17-e907-4eeb-a1d8f768fbc9",
+    "47f88a40-06bd-b522-39f7-4d5d83217f0a",
+    "fbbe0eb3-5108-d391-3ed8-3fb3ad27f235",
+    "bb7f12c4-52b7-6093-0654-f531271b546b",
+    "c87058f9-e7a1-0fe0-574d-c1206c84d34b",
+    "9763cbac-dec0-097c-892e-84ea6f5cda1e",
+    "f9870077-94c9-ce15-208d-fa0fc6508d9e",
+    "067c45f7-bfcd-f396-8bc7-a4a76f49ddb5",
+    "f11c41f8-8aa1-2564-be52-b7178b76f44e",
+    "2cb44b9e-d689-6376-3845-f1eeb6ce29f1",
+    "07b63a49-ca87-5e4d-2061-ce3cff3c1508",
+    "d1fcee36-0ba8-d95d-d8fb-696ba2558332",
+    "019a54ae-7fa5-ee80-2871-1ab7082b37a4",
+    "6a14ca4e-e2e5-f6bb-e006-8df421999059",
+    "99f1668c-4cc8-4c33-5a7f-296a1727a643",
+    "2a02dd99-a059-8213-d23e-86031a780a01",
+    "3b051683-5ab6-8545-c205-fafc5da8bd7f",
+    "c77aba6a-0e2e-4279-59c6-23a6f79cfa98",
+    "5b5f19d6-1f84-6b26-9eab-63ef815dda43",
+    "dd6519f2-3c53-9db8-e1b7-d838c18959bd",
+    "cc461306-03e0-2303-bdd9-b08214de60b3",
+    "e2f69f0f-c53e-7d2a-08d7-edfb0a754682",
+    "2817cca3-fab2-2307-66e7-83ac441b3371",
+    "63678ded-4a5c-9178-4d20-1da907bdee05",
+    "1d598939-5e86-d76b-fb9a-be52da57bd97",
+    "b477d76d-4be1-6e00-a1b8-f178e6992bfd",
+    "0a36dadc-efa6-8794-cc19-395a9156b997",
+    "c2a4e881-f92a-8b4e-db2a-5bb5733c5357",
+    "dc09f2b0-626c-4efb-3e8a-7b8b1957369a",
+    "5b50b4a5-718e-88c3-b9f5-53e955338a6e",
+    "acdbc4f3-809d-9324-8820-576b015182e4",
+    "2b53c03a-d8e0-2fda-10e2-4f103c8027a1",
+    "830f5fdf-b589-63b5-a616-effa5f1792ea",
+    "708d6488-6da6-e019-226f-10650635b82c",
+    "98d19fdc-695f-8729-1e03-8ea6fe47ea84",
+    "a52dca5c-6791-022a-64f3-898b80b6868d",
+    "1711b3bf-bd1e-6a83-a79d-46a20eaa7ddf",
+    "9537b60f-13d6-5933-31c9-6a9eabe6c08e",
+    "d83f7121-ba72-7985-77ea-8ad8f7200ba7",
+    "e464156d-58b2-dc0c-4455-1af64cd31513",
+    "7cc7110f-3375-d078-1b09-c263028567f5",
+    "d83ed2da-3e8b-31f1-2f1a-5d7294c57652",
+    "b27946dc-4a58-9ff6-0d73-21ed6fea80d3",
+    "194b9c75-cb94-92b3-b622-d55bb72022aa",
+    "148e0662-b47d-caa3-823e-8009a0ebfedd",
+    "b74a4aab-6d07-d418-3b49-8caa2d948caf",
+    "3bddccfa-6413-398c-e8a7-eb552b8979e9",
+    "d73dcb08-cd8c-ccec-9072-a9ddb672c354",
+    "80a0400d-9b6f-2401-f0cc-e2d941967d4e",
+    "bb517a17-f1da-51e9-2fc8-14e962e2dc04",
+    "51a89fdd-74b4-0975-6dcf-9bbe6ec1d9e6",
+    "2a7bb0b2-7f38-c72f-14e6-7ceb939d3d0e",
+    "105b19ee-0f69-ddf5-1b0e-fa4ac324d328",
+    "2f17328e-4725-c30d-ed6d-779e58ca3087",
+    "79186b98-5a86-048d-06d7-2ed355491c7a",
+    "c9c9be43-0f3a-22b5-acdf-4b9673a4e9e1",
+    "9cd40df2-a215-8a9d-730d-193e15153eb1",
+    "a2310f27-ae3e-1bca-7e39-226eb493b5c3",
+    "c94198cf-70bd-17b8-e007-14d98fc65513",
+    "216e0bef-de60-b1fe-263d-bd9b3de09f0d",
+    "00e02caa-a9e8-6a59-b89a-d20035ce08a0",
+    "51644561-0f1b-1ede-1496-5562d98bbde1",
+    "3da59d26-862c-af6e-971f-49c24a722dd2",
+    "2b790c27-2e24-9362-2cc4-65c744dd1106",
+    "bdb55218-f1e9-54dd-e5e8-cdb7bd72b2a2",
+    "01390dc1-e8af-a888-4e83-a30cfd92ddfd",
+    "b380a66a-6673-5e62-7afa-1938e74f9bf5",
+    "2edd27f4-8590-9a37-d81a-c0659273fd9a",
+    "8c485b5f-3b36-c744-32b8-29306bd84dc5",
+    "03b12b39-524b-eafa-627b-8f401931c405",
+    "068b925b-d5b5-26e2-2f94-06a7df7eb36f",
+    "7caabc70-4ce8-bc45-5ed2-26b2d8b957b6",
+    "586a1d1d-f578-f386-2645-e06a326d8126",
+    "7827084e-5f4b-1fd6-e0a8-2a9ea21e3a30",
+    "4800b6ac-be29-76c3-40b0-182baced31a6",
+    "d1072033-d45a-d612-8a3d-62a575a410cc",
+    "7b0745d1-4c9d-c52e-a04d-88f0d55fada4",
+    "5a617d97-a213-dbdc-545e-5b063f04b47d",
+    "f7a12794-65ac-c264-9302-44128df81d61",
+    "3e20f5a6-dd05-1717-b2ff-1ee739787d01",
+    "18594e80-302b-8687-c945-e29c4e14684a",
+    "9e946b02-e970-2461-7c48-1ca0b3474476",
+    "1a34f9a9-4f67-5a90-533c-07f43141aab9",
+    "bcb85198-301e-e078-dbc2-df8e2774c3c9",
+    "13dc4a88-4b9c-de48-3946-1b7311c7a6a9",
+    "b4de4831-95fa-b997-ebd3-3a6bd1518b47",
+    "3e1c86ae-4eab-01df-1634-f030dfb49fee",
+    "bd61e022-f6df-0a23-ec08-7b1c7cafb61c",
+    "d1ce2449-7f7d-3ba3-55f7-7c4629fdceba",
+    "c44b0b90-28b8-4b12-d0a7-946cbf7ee9b1",
+    "2ad1e060-0f80-4143-85e4-b5a13ad56d7b",
+    "cd999b66-b4fc-8f8a-8964-af2ee132ef10",
+    "fb733f62-ab3f-9443-71db-5c5d2c330ebc",
+    "d744128e-0bf6-3b00-0b6f-e52bc1bc596e",
+    "becfb136-b63b-c321-57b7-e80bf31c9d92",
+    "4d7a6269-3bd0-0d69-daf0-a16c83cf558a",
+    "dd336d4f-5285-7031-efa9-125cc1571a9f",
+    "7dc49c4d-5586-0693-c6c5-8a17a339aa0e",
+    "399cdfa4-6cd3-586e-dcc9-a86839524bf8",
+    "6bfd8bbc-3d35-65ee-dd0d-329e1fb5efc5",
+    "03fa5978-5591-c4e2-319c-da3055374d97",
+    "3dc726ae-e09d-7534-f6cc-a20073809bce",
+    "8c5a5145-cd1d-6fac-44f3-c88294410b35",
+    "be46db77-eaf6-fad5-ac92-5099596bcd42",
+    "72581e88-2fc4-57e2-0123-ed7705b8fa21",
+    "44f59027-24ae-b3e3-47dd-3f622352015b",
+    "f3387979-3262-beee-d642-9636fa8701a8",
+    "aabf5f99-9a74-5458-b18d-94b905d29f17",
+    "c61d312f-ed99-37b8-cc20-fe2b638c0488",
+    "faea6e59-e78b-c796-0dfc-c8e98a115342",
+    "6821d934-8b6a-7ddd-735c-d00c577cd10b",
+    "1c38625b-f157-1eaa-990d-decb7eccb389",
+    "90aefd00-0773-f79f-829c-d6ed8e50063c",
+    "a405c6c6-7b06-2903-ed15-d325d2a5a586",
+    "e57996a2-faed-b40f-536e-b7a851cb4f4a",
+    "52178fd3-e637-82fb-d636-fb26056ff221",
+    "2aef5571-3734-23c4-60b0-f252d2af5677",
+    "8c352d90-8901-dc0f-67a2-ea075a511119",
+    "d8581cee-104f-26c6-20ab-1681615b099e",
+    "dc963a75-ccd5-a9c9-ea1e-6dc685ec3066",
+    "548aa7b5-cbd5-85bc-9c9c-8ac27aedec5e",
+    "c4924cf4-e968-af46-9dc0-085436b0b772",
+    "a071e9ba-b1d8-e98d-02f3-00da3631d289",
+    "0da59e4b-0986-5026-aa3f-2aa12e141e2f",
+    "dce24ad1-e57f-f2e1-57bf-dc2d3a28d2cd",
+    "84c0f648-8c05-3714-a44d-525ac4ed22ad",
+    "daab3217-2396-ba16-2736-3ce17c7cbe95",
+    "6801cbbd-fbe4-752e-dbd1-14060dc3e859",
+    "41c5e166-ff43-8b34-67f1-e2d250835e85",
+    "990ef980-5400-960b-e609-d408c0310158",
+    "10d36780-c837-e149-ac5d-f72daf2a9ab6",
+    "b0040c6b-d03b-3292-0c83-c3fd8f0fdfdf",
+    "843f7ae4-f64d-6c2e-985c-7f5cd89e69f5",
+    "08d6c574-d93d-4758-eef3-3951661dee1e",
+    "602275b8-768a-384d-014f-06d5ce51bd10",
+    "40ca7d67-5a70-8e7f-b40e-5f6228bcc99a",
+    "4f6f00a1-0260-11fb-3a62-0ebb7f7eb3f9",
+    "aa6d279a-7829-b15c-c76a-7e3908f4daf7",
+    "19f2f200-4797-08b4-84f1-f6c306fd6577",
+    "53ec6237-9f38-c9e8-6bfd-e5b268bad72b",
+    "859d7170-449d-7033-ce72-c439c9c0de4e",
+    "f4be1e77-ce5e-45a1-95c8-4a145b7825c1",
+    "99daf275-6f82-37dd-f1f3-bf4ce03f544b",
+    "8990b657-ab46-f178-90c1-985b799f0d84",
+    "57ca0444-285b-7e6a-cb73-0ae011bcda45",
+    "e756fced-5f95-af34-10ba-4e9cf599656b",
+    "8dd6bced-d902-ce3e-0c25-9e5de93ce1f9",
+    "67dcc6a8-a36b-cd8e-40bc-b563a5830dce",
+    "eda7f0d2-c6e2-6d71-6df6-6791ca674612",
+    "7b6e321c-a322-9f1b-2a69-ae49b0939335",
+    "2428da39-73dd-ebf5-ebe0-def9256f6360",
+    "362bd76c-a0ce-d34f-0014-5059a237d4e9",
+    "b5325b89-bde6-1197-551e-3fad8ecbf2b1",
+    "0455def5-3d47-b512-a738-5a75f01fbb98",
+    "dae8790e-574d-5e90-8749-b96242438412",
+    "0dea7562-1f93-2c61-88c7-8420407900e1",
+    "e35e8f02-f026-9757-6a0a-8e42e495fcb4",
+    "5870ef13-ef70-d0b9-7384-4f8adcb0191e",
+    "1ae62c91-42b7-ba8d-ff59-45687ad235c9",
+    "de4018b7-ea06-3e3b-5208-a7dd92ff8a66",
+    "22c25c10-d281-aba6-d97f-f9581a4353b1",
+    "8d2ee3a6-da8a-c66d-34ac-c301d4f2b1bb",
+    "8dccbb13-87c2-40b0-83f6-60fdf7e714df",
+    "adbc20ae-3316-2a06-30b7-d78e30b18573",
+    "d8a8ce5d-d727-9d65-027e-a1461dc789d4",
+    "c124e1de-213f-033d-7e0e-554c6b2569a8",
+    "bef9f758-d42e-08a6-5127-7348ad1d146c",
+    "826fc926-f60b-90df-ef04-bde0cf5326a9",
+    "909ef147-f86b-2db3-4aef-3fdeb7bca3f0",
+    "89ffb667-5858-89ba-e2f8-1add56021598",
+    "ed96574d-9fc9-b924-3e21-e799b9535d2f",
+    "3a012439-fdb9-5aee-f263-b3d7f7fc8b95",
+    "f3f4522e-f99f-f9b4-f306-f33d3fb3eeb6",
+    "888c1355-013c-c80f-6f4f-66c2a04deb09",
+    "3fb57c06-b1f2-a634-260e-de68d856f810",
+    "570677e9-bf7a-da31-82ee-cd0122c941ca",
+    "687ebf47-2394-4d03-53cb-862afb8d5186",
+    "eafa22b8-fa59-6342-83ff-16600809bdc5",
+    "d37121c8-c5b9-3843-122b-35580e04c7d5",
+    "651ca3ce-6cf1-a731-4fb7-3109a65ce37e",
+    "54ed348c-560b-bf0e-fa63-57e862877cf9",
+    "7bec8c7b-239b-9c9b-efa8-a875b08d894f",
+    "9a3589d3-8a7c-38c4-ac9e-256e843a9be0",
+    "8385d4a5-c000-a3f1-4998-8a05e77f7009",
+    "ec273465-cdbd-5357-90e4-6823c73f9bd6",
+    "8e2de5df-586d-126f-f47d-fd03b6c72670",
+    "2336ba1e-4984-7cb7-f3dd-31731667a46b",
+    "896b4e1b-eccb-1614-9bb9-9c120ca06943",
+    "2d22fa1b-d8f6-b931-b9ee-a8c2c9763b05",
+    "5055b838-3016-1b16-5f40-0533b869fb15",
+    "99f591b1-ee31-3e76-6881-3d9a6f89f73a",
+    "9f426baa-afa1-03af-72a2-2e85f72584c2",
+    "f506c62a-900d-16aa-95ef-4c945368b00c",
+    "b8cc931b-9b5d-c939-303a-d41864b3ac2f",
+    "6633e12e-a230-259d-f878-44010dcc3c8e",
+    "041a21bf-4a86-8128-5cfd-1ff8cf2d77d6",
+    "896e5886-85e4-e769-8686-ed4bfef6cb1f",
+    "36db079c-c434-3b48-4bcd-1d4971bf4b85",
+    "afb12015-a30c-7ef6-0e63-2fa05e246fd3",
+    "d04260ed-4a46-9c63-15dc-656d1d00d292",
+    "84d47a73-3cc3-fc1b-df9f-95fc91708af0",
+    "0e0b16b3-b572-a063-f39a-82ee6dae8e9c",
+    "c115d991-d1ee-4fb4-1eb8-1bdb8f046e54",
+    "1db884f8-43b9-723a-03f5-55fc09bd0266",
+    "de12ec3a-fad3-f3a2-be18-2cc49c1dd680",
+    "538fc65c-7826-c0a4-866f-028a65831acd",
+    "b8ae7232-f636-744e-3fc0-b15fe8c50da7",
+    "25839ef6-68f1-c841-4c46-434c71b2c86d",
+    "cd908efe-431c-d1c5-b56e-adee6a233835",
+    "ff428226-d20e-0b10-509f-7060799619c3",
+    "59953535-f920-e54f-2804-9fee24b5f0a0",
+    "7d6d5382-d227-f9ec-66e7-d93b50770eda"
+  ],
+  "by_segment": {
+    "6b07675c-22ea-5324-12e1-1031943fd2f6": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "39393d26-23e9-94d0-d501-a27d9267bc0c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1ce615b6-800e-58ec-d357-174af96adddf": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0bf4f250-2073-a841-9bd8-ea3c5c5fd1e5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "92bf7181-7ca0-efab-6900-f1c1b25a9f41": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0aa99b6f-b703-4c6f-5019-49ff887cb1ac": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d56154df-adfe-c5fd-1680-dfae331ba289": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "20c66962-94ab-93b4-31fd-cbd0c08cff9c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3528118f-9074-c3a9-d0d6-c02390df5a19": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "509a744e-c600-c9d8-ccbb-1dba74d6886a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "fc2e484c-a308-edd1-db4d-c590ff9ab4a2": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "6f8b2760-33a5-a8d1-842a-b8cab240b3f5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "43d8b253-63f8-8099-481f-299f203e0c65": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2018596d-0d78-0a00-4a13-db403750a555": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "96de4aa4-dfc0-03ac-b514-b6aa55b34427": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "523e0850-4aae-9f09-450a-9c36908e793b": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "1e848024-b377-2315-8d92-661faf223083": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "db9d2634-a844-73c8-dce3-99a8f431f909": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "862e1bc1-a09a-e05e-c393-9b65b63eacbb": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "6cd69643-4648-dcb0-48a0-303c5ecf642f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f11238a4-b1f1-a0bf-3245-c94ee43837a6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f94fb7e0-9088-4cd5-3780-157e80f3a173": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "a676fd9a-2f1e-1482-59c3-c90135435bae": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "c9c0a40e-4fe7-beb4-1ee2-8eb6564e47b8": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3e9a0289-7e31-fe1f-1814-b240782acbf0": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "78f0def4-ae2f-3799-f7e7-0684d22e2dfe": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "fb8dc4e8-56d0-9c92-73f7-0707bca7e8ee": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "238b597b-658b-c1c9-1a57-e0716247ba7e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "436d87e1-eb8b-c5f3-8478-e31ecb8d35e6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "78abab14-5816-c0c7-2ee6-765e07918119": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "529b3938-1592-0abf-e3bf-b9d4337df5c7": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5bb368e0-ca59-3952-63e3-417f1d06a914": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "736d1455-c038-4d46-b82c-044ace53110f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c6e05f7f-09a1-c6c9-5d75-01f9fa34a2ba": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d0f04415-000f-5a2c-acfa-2e97328f03ad": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1909879b-18af-10c5-997b-3a72e988ffbd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "542470f1-afd0-2226-c4ec-723c1693ed3c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5091863f-949f-b466-8e8c-f21212b0c88f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7ef13116-1934-3474-2612-1f9b15310272": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3988dad9-8318-3121-2fb5-954aeb7c73d9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7385be00-3983-81dd-b3d8-2ca4c98468c5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "83a9a0b0-5681-cd9f-0543-293a8221f9fd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d02e5176-e0f4-4aab-e07f-2f16cdf40f20": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "cdc7ad72-f18b-faa7-1158-73b574d6cdd9": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "fa5fe1a8-f520-4818-e793-0cc0e02ea7a7": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "81860a1b-d6d5-fdf2-fd56-6cad2bbdcdc4": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5e87d496-9b17-e907-4eeb-a1d8f768fbc9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "47f88a40-06bd-b522-39f7-4d5d83217f0a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "fbbe0eb3-5108-d391-3ed8-3fb3ad27f235": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "bb7f12c4-52b7-6093-0654-f531271b546b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c87058f9-e7a1-0fe0-574d-c1206c84d34b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "9763cbac-dec0-097c-892e-84ea6f5cda1e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f9870077-94c9-ce15-208d-fa0fc6508d9e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "067c45f7-bfcd-f396-8bc7-a4a76f49ddb5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f11c41f8-8aa1-2564-be52-b7178b76f44e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2cb44b9e-d689-6376-3845-f1eeb6ce29f1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "07b63a49-ca87-5e4d-2061-ce3cff3c1508": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d1fcee36-0ba8-d95d-d8fb-696ba2558332": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "019a54ae-7fa5-ee80-2871-1ab7082b37a4": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "6a14ca4e-e2e5-f6bb-e006-8df421999059": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "99f1668c-4cc8-4c33-5a7f-296a1727a643": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2a02dd99-a059-8213-d23e-86031a780a01": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3b051683-5ab6-8545-c205-fafc5da8bd7f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c77aba6a-0e2e-4279-59c6-23a6f79cfa98": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5b5f19d6-1f84-6b26-9eab-63ef815dda43": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "dd6519f2-3c53-9db8-e1b7-d838c18959bd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "cc461306-03e0-2303-bdd9-b08214de60b3": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "e2f69f0f-c53e-7d2a-08d7-edfb0a754682": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2817cca3-fab2-2307-66e7-83ac441b3371": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "63678ded-4a5c-9178-4d20-1da907bdee05": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1d598939-5e86-d76b-fb9a-be52da57bd97": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b477d76d-4be1-6e00-a1b8-f178e6992bfd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0a36dadc-efa6-8794-cc19-395a9156b997": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c2a4e881-f92a-8b4e-db2a-5bb5733c5357": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "dc09f2b0-626c-4efb-3e8a-7b8b1957369a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5b50b4a5-718e-88c3-b9f5-53e955338a6e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "acdbc4f3-809d-9324-8820-576b015182e4": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2b53c03a-d8e0-2fda-10e2-4f103c8027a1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "830f5fdf-b589-63b5-a616-effa5f1792ea": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "708d6488-6da6-e019-226f-10650635b82c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "98d19fdc-695f-8729-1e03-8ea6fe47ea84": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "a52dca5c-6791-022a-64f3-898b80b6868d": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1711b3bf-bd1e-6a83-a79d-46a20eaa7ddf": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "9537b60f-13d6-5933-31c9-6a9eabe6c08e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d83f7121-ba72-7985-77ea-8ad8f7200ba7": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "e464156d-58b2-dc0c-4455-1af64cd31513": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7cc7110f-3375-d078-1b09-c263028567f5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d83ed2da-3e8b-31f1-2f1a-5d7294c57652": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b27946dc-4a58-9ff6-0d73-21ed6fea80d3": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "194b9c75-cb94-92b3-b622-d55bb72022aa": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "148e0662-b47d-caa3-823e-8009a0ebfedd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b74a4aab-6d07-d418-3b49-8caa2d948caf": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3bddccfa-6413-398c-e8a7-eb552b8979e9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d73dcb08-cd8c-ccec-9072-a9ddb672c354": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "80a0400d-9b6f-2401-f0cc-e2d941967d4e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "bb517a17-f1da-51e9-2fc8-14e962e2dc04": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "51a89fdd-74b4-0975-6dcf-9bbe6ec1d9e6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2a7bb0b2-7f38-c72f-14e6-7ceb939d3d0e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "105b19ee-0f69-ddf5-1b0e-fa4ac324d328": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2f17328e-4725-c30d-ed6d-779e58ca3087": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "79186b98-5a86-048d-06d7-2ed355491c7a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c9c9be43-0f3a-22b5-acdf-4b9673a4e9e1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "9cd40df2-a215-8a9d-730d-193e15153eb1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "a2310f27-ae3e-1bca-7e39-226eb493b5c3": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c94198cf-70bd-17b8-e007-14d98fc65513": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "216e0bef-de60-b1fe-263d-bd9b3de09f0d": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "00e02caa-a9e8-6a59-b89a-d20035ce08a0": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "51644561-0f1b-1ede-1496-5562d98bbde1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3da59d26-862c-af6e-971f-49c24a722dd2": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2b790c27-2e24-9362-2cc4-65c744dd1106": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "bdb55218-f1e9-54dd-e5e8-cdb7bd72b2a2": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "01390dc1-e8af-a888-4e83-a30cfd92ddfd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b380a66a-6673-5e62-7afa-1938e74f9bf5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2edd27f4-8590-9a37-d81a-c0659273fd9a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8c485b5f-3b36-c744-32b8-29306bd84dc5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "03b12b39-524b-eafa-627b-8f401931c405": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "068b925b-d5b5-26e2-2f94-06a7df7eb36f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7caabc70-4ce8-bc45-5ed2-26b2d8b957b6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "586a1d1d-f578-f386-2645-e06a326d8126": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7827084e-5f4b-1fd6-e0a8-2a9ea21e3a30": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "4800b6ac-be29-76c3-40b0-182baced31a6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d1072033-d45a-d612-8a3d-62a575a410cc": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7b0745d1-4c9d-c52e-a04d-88f0d55fada4": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5a617d97-a213-dbdc-545e-5b063f04b47d": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f7a12794-65ac-c264-9302-44128df81d61": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3e20f5a6-dd05-1717-b2ff-1ee739787d01": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "18594e80-302b-8687-c945-e29c4e14684a": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "9e946b02-e970-2461-7c48-1ca0b3474476": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1a34f9a9-4f67-5a90-533c-07f43141aab9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "bcb85198-301e-e078-dbc2-df8e2774c3c9": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "13dc4a88-4b9c-de48-3946-1b7311c7a6a9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b4de4831-95fa-b997-ebd3-3a6bd1518b47": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3e1c86ae-4eab-01df-1634-f030dfb49fee": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "bd61e022-f6df-0a23-ec08-7b1c7cafb61c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d1ce2449-7f7d-3ba3-55f7-7c4629fdceba": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c44b0b90-28b8-4b12-d0a7-946cbf7ee9b1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2ad1e060-0f80-4143-85e4-b5a13ad56d7b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "cd999b66-b4fc-8f8a-8964-af2ee132ef10": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "fb733f62-ab3f-9443-71db-5c5d2c330ebc": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d744128e-0bf6-3b00-0b6f-e52bc1bc596e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "becfb136-b63b-c321-57b7-e80bf31c9d92": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "4d7a6269-3bd0-0d69-daf0-a16c83cf558a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "dd336d4f-5285-7031-efa9-125cc1571a9f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7dc49c4d-5586-0693-c6c5-8a17a339aa0e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 4,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "399cdfa4-6cd3-586e-dcc9-a86839524bf8": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "6bfd8bbc-3d35-65ee-dd0d-329e1fb5efc5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "03fa5978-5591-c4e2-319c-da3055374d97": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3dc726ae-e09d-7534-f6cc-a20073809bce": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8c5a5145-cd1d-6fac-44f3-c88294410b35": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "be46db77-eaf6-fad5-ac92-5099596bcd42": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "72581e88-2fc4-57e2-0123-ed7705b8fa21": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "44f59027-24ae-b3e3-47dd-3f622352015b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f3387979-3262-beee-d642-9636fa8701a8": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "aabf5f99-9a74-5458-b18d-94b905d29f17": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c61d312f-ed99-37b8-cc20-fe2b638c0488": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "faea6e59-e78b-c796-0dfc-c8e98a115342": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "6821d934-8b6a-7ddd-735c-d00c577cd10b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1c38625b-f157-1eaa-990d-decb7eccb389": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "90aefd00-0773-f79f-829c-d6ed8e50063c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "a405c6c6-7b06-2903-ed15-d325d2a5a586": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "e57996a2-faed-b40f-536e-b7a851cb4f4a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "52178fd3-e637-82fb-d636-fb26056ff221": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2aef5571-3734-23c4-60b0-f252d2af5677": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8c352d90-8901-dc0f-67a2-ea075a511119": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d8581cee-104f-26c6-20ab-1681615b099e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "dc963a75-ccd5-a9c9-ea1e-6dc685ec3066": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "548aa7b5-cbd5-85bc-9c9c-8ac27aedec5e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c4924cf4-e968-af46-9dc0-085436b0b772": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "a071e9ba-b1d8-e98d-02f3-00da3631d289": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0da59e4b-0986-5026-aa3f-2aa12e141e2f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "dce24ad1-e57f-f2e1-57bf-dc2d3a28d2cd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "84c0f648-8c05-3714-a44d-525ac4ed22ad": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "daab3217-2396-ba16-2736-3ce17c7cbe95": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "6801cbbd-fbe4-752e-dbd1-14060dc3e859": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "41c5e166-ff43-8b34-67f1-e2d250835e85": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "990ef980-5400-960b-e609-d408c0310158": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 6,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "10d36780-c837-e149-ac5d-f72daf2a9ab6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b0040c6b-d03b-3292-0c83-c3fd8f0fdfdf": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "843f7ae4-f64d-6c2e-985c-7f5cd89e69f5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "08d6c574-d93d-4758-eef3-3951661dee1e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "602275b8-768a-384d-014f-06d5ce51bd10": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "40ca7d67-5a70-8e7f-b40e-5f6228bcc99a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "4f6f00a1-0260-11fb-3a62-0ebb7f7eb3f9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "aa6d279a-7829-b15c-c76a-7e3908f4daf7": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "19f2f200-4797-08b4-84f1-f6c306fd6577": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "53ec6237-9f38-c9e8-6bfd-e5b268bad72b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "859d7170-449d-7033-ce72-c439c9c0de4e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f4be1e77-ce5e-45a1-95c8-4a145b7825c1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "99daf275-6f82-37dd-f1f3-bf4ce03f544b": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8990b657-ab46-f178-90c1-985b799f0d84": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "57ca0444-285b-7e6a-cb73-0ae011bcda45": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "e756fced-5f95-af34-10ba-4e9cf599656b": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8dd6bced-d902-ce3e-0c25-9e5de93ce1f9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "67dcc6a8-a36b-cd8e-40bc-b563a5830dce": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "eda7f0d2-c6e2-6d71-6df6-6791ca674612": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7b6e321c-a322-9f1b-2a69-ae49b0939335": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2428da39-73dd-ebf5-ebe0-def9256f6360": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "362bd76c-a0ce-d34f-0014-5059a237d4e9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b5325b89-bde6-1197-551e-3fad8ecbf2b1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0455def5-3d47-b512-a738-5a75f01fbb98": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "dae8790e-574d-5e90-8749-b96242438412": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0dea7562-1f93-2c61-88c7-8420407900e1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "e35e8f02-f026-9757-6a0a-8e42e495fcb4": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5870ef13-ef70-d0b9-7384-4f8adcb0191e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1ae62c91-42b7-ba8d-ff59-45687ad235c9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "de4018b7-ea06-3e3b-5208-a7dd92ff8a66": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "22c25c10-d281-aba6-d97f-f9581a4353b1": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8d2ee3a6-da8a-c66d-34ac-c301d4f2b1bb": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8dccbb13-87c2-40b0-83f6-60fdf7e714df": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "adbc20ae-3316-2a06-30b7-d78e30b18573": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d8a8ce5d-d727-9d65-027e-a1461dc789d4": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c124e1de-213f-033d-7e0e-554c6b2569a8": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "bef9f758-d42e-08a6-5127-7348ad1d146c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "826fc926-f60b-90df-ef04-bde0cf5326a9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "909ef147-f86b-2db3-4aef-3fdeb7bca3f0": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "89ffb667-5858-89ba-e2f8-1add56021598": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "ed96574d-9fc9-b924-3e21-e799b9535d2f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3a012439-fdb9-5aee-f263-b3d7f7fc8b95": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f3f4522e-f99f-f9b4-f306-f33d3fb3eeb6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "888c1355-013c-c80f-6f4f-66c2a04deb09": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "3fb57c06-b1f2-a634-260e-de68d856f810": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "570677e9-bf7a-da31-82ee-cd0122c941ca": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "687ebf47-2394-4d03-53cb-862afb8d5186": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "eafa22b8-fa59-6342-83ff-16600809bdc5": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d37121c8-c5b9-3843-122b-35580e04c7d5": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "651ca3ce-6cf1-a731-4fb7-3109a65ce37e": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "54ed348c-560b-bf0e-fa63-57e862877cf9": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7bec8c7b-239b-9c9b-efa8-a875b08d894f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "9a3589d3-8a7c-38c4-ac9e-256e843a9be0": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8385d4a5-c000-a3f1-4998-8a05e77f7009": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "ec273465-cdbd-5357-90e4-6823c73f9bd6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "8e2de5df-586d-126f-f47d-fd03b6c72670": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "2336ba1e-4984-7cb7-f3dd-31731667a46b": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "896b4e1b-eccb-1614-9bb9-9c120ca06943": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "2d22fa1b-d8f6-b931-b9ee-a8c2c9763b05": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "5055b838-3016-1b16-5f40-0533b869fb15": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "99f591b1-ee31-3e76-6881-3d9a6f89f73a": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "9f426baa-afa1-03af-72a2-2e85f72584c2": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 5,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "f506c62a-900d-16aa-95ef-4c945368b00c": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 0
+    },
+    "b8cc931b-9b5d-c939-303a-d41864b3ac2f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "6633e12e-a230-259d-f878-44010dcc3c8e": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "041a21bf-4a86-8128-5cfd-1ff8cf2d77d6": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "896e5886-85e4-e769-8686-ed4bfef6cb1f": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "36db079c-c434-3b48-4bcd-1d4971bf4b85": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "afb12015-a30c-7ef6-0e63-2fa05e246fd3": {
+      "language": "zh",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "d04260ed-4a46-9c63-15dc-656d1d00d292": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "84d47a73-3cc3-fc1b-df9f-95fc91708af0": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "0e0b16b3-b572-a063-f39a-82ee6dae8e9c": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "c115d991-d1ee-4fb4-1eb8-1bdb8f046e54": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "1db884f8-43b9-723a-03f5-55fc09bd0266": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "de12ec3a-fad3-f3a2-be18-2cc49c1dd680": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "538fc65c-7826-c0a4-866f-028a65831acd": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "b8ae7232-f636-744e-3fc0-b15fe8c50da7": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "25839ef6-68f1-c841-4c46-434c71b2c86d": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "cd908efe-431c-d1c5-b56e-adee6a233835": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "ff428226-d20e-0b10-509f-7060799619c3": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 3,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "59953535-f920-e54f-2804-9fee24b5f0a0": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "7d6d5382-d227-f9ec-66e7-d93b50770eda": {
+      "language": "ja",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "en",
+      "speakers": [
+        {
+          "cluster_id": 7,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    }
+  }
+}

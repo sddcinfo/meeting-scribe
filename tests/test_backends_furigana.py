@@ -1,4 +1,5 @@
 """Unit tests for FuriganaBackend (pykakasi wrapper + LRU cache)."""
+
 from __future__ import annotations
 
 import pytest
@@ -133,6 +134,7 @@ class TestErrorPath:
     async def test_render_returns_none_when_pykakasi_raises(self, backend, monkeypatch):
         def boom(_text):
             raise RuntimeError("pykakasi exploded")
+
         monkeypatch.setattr(backend._kks, "convert", boom)
         # _render swallows and increments errors
         assert backend._render("会議") is None

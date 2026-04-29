@@ -11,6 +11,7 @@ script must NEVER land in a column for a different script:
    This test file mirrors the client expectations as a regression spec;
    the actual JS logic is kept in sync by hand.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -19,41 +20,53 @@ from meeting_scribe.backends.asr_filters import _detect_language_from_text
 
 
 class TestDetectJapanese:
-    @pytest.mark.parametrize("text", [
-        "こんにちは",                          # hiragana only
-        "コンピュータ",                         # katakana only
-        "今日は会議です",                        # mixed kanji + kana
-        "えっと、ちょっと聞きたいんですが",          # filler + kanji
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "こんにちは",  # hiragana only
+            "コンピュータ",  # katakana only
+            "今日は会議です",  # mixed kanji + kana
+            "えっと、ちょっと聞きたいんですが",  # filler + kanji
+        ],
+    )
     def test_japanese_routed_to_ja(self, text):
         assert _detect_language_from_text(text) == "ja"
 
 
 class TestDetectChinese:
-    @pytest.mark.parametrize("text", [
-        "你好世界",
-        "我们明天开会",
-        "请问您的意见是什么",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "你好世界",
+            "我们明天开会",
+            "请问您的意见是什么",
+        ],
+    )
     def test_han_without_kana_routed_to_zh(self, text):
         assert _detect_language_from_text(text) == "zh"
 
 
 class TestDetectKorean:
-    @pytest.mark.parametrize("text", [
-        "안녕하세요",
-        "오늘 회의가 있습니다",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "안녕하세요",
+            "오늘 회의가 있습니다",
+        ],
+    )
     def test_hangul_routed_to_ko(self, text):
         assert _detect_language_from_text(text) == "ko"
 
 
 class TestDetectLatin:
-    @pytest.mark.parametrize("text", [
-        "Hello world, this is a meeting.",
-        "The quick brown fox jumps over the lazy dog.",
-        "OK, let's move on to the next topic.",
-    ])
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Hello world, this is a meeting.",
+            "The quick brown fox jumps over the lazy dog.",
+            "OK, let's move on to the next topic.",
+        ],
+    )
     def test_latin_routed_to_en(self, text):
         assert _detect_language_from_text(text) == "en"
 
@@ -99,18 +112,22 @@ class TestTranslationTargetRouting:
 
     def test_ja_source_in_ja_en_pair(self):
         from meeting_scribe.languages import get_translation_target
+
         assert get_translation_target("ja", ("ja", "en")) == "en"
 
     def test_en_source_in_ja_en_pair(self):
         from meeting_scribe.languages import get_translation_target
+
         assert get_translation_target("en", ("ja", "en")) == "ja"
 
     def test_zh_source_in_zh_en_pair(self):
         from meeting_scribe.languages import get_translation_target
+
         assert get_translation_target("zh", ("zh", "en")) == "en"
 
     def test_ko_source_in_ko_en_pair(self):
         from meeting_scribe.languages import get_translation_target
+
         assert get_translation_target("ko", ("ko", "en")) == "en"
 
 
@@ -162,6 +179,7 @@ class TestClientSideRoutingSpec:
         """Python port of _routeLangByScript from scribe-app.js.
         Kept here as the source of truth for the shared invariant."""
         import re
+
         has_ja_kana = bool(re.search(r"[\u3040-\u309F\u30A0-\u30FF]", text))
         has_cjk = bool(re.search(r"[\u3400-\u9FFF\uF900-\uFAFF]", text))
         has_hangul = bool(re.search(r"[\uAC00-\uD7AF\u1100-\u11FF]", text))

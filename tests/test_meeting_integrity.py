@@ -390,7 +390,19 @@ def _check_structure(meeting_id: str, meeting_dir: Path) -> list[Finding]:
     meta = _safe_load_json(meeting_dir / "meta.json") or {}
     state = meta.get("state", "unknown")
 
-    allowed_states = {"created", "recording", "interrupted", "finalizing", "complete"}
+    allowed_states = {
+        "created",
+        "recording",
+        "interrupted",
+        "finalizing",
+        "complete",
+        # Transient state written by reprocess_meeting() step 0 and cleared
+        # at step 7. Seen on disk only if reprocess was killed mid-flight;
+        # MeetingStorage.recover_interrupted() flips it back to COMPLETE on
+        # next startup, so any instance we observe here is pre-recovery or
+        # from a currently-running reprocess.
+        "reprocessing",
+    }
     if state not in allowed_states:
         findings.append(
             Finding(

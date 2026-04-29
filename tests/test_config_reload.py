@@ -11,6 +11,7 @@ values to consumers before the cutover runbook trusts it.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -19,7 +20,7 @@ from meeting_scribe import runtime_config as rc
 
 
 @pytest.fixture
-def isolated_rc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> rc._RuntimeConfig:
+def isolated_rc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[rc._RuntimeConfig]:
     """Install a fresh runtime-config singleton backed by a tmp file.
 
     Keeps tests from clobbering the real ~/.local/share/meeting-scribe
@@ -63,15 +64,11 @@ class TestPersistence:
         on_disk = json.loads(isolated_rc.path.read_text())
         assert on_disk == {"translate_url": "http://localhost:8012"}
 
-    def test_reload_picks_up_external_write(
-        self, isolated_rc: rc._RuntimeConfig
-    ) -> None:
+    def test_reload_picks_up_external_write(self, isolated_rc: rc._RuntimeConfig) -> None:
         # Simulate `meeting-scribe config set` writing the file
         # out-of-process — the server only sees it after SIGHUP.
         isolated_rc.path.parent.mkdir(parents=True, exist_ok=True)
-        isolated_rc.path.write_text(
-            json.dumps({"translate_url": "http://localhost:8012"})
-        )
+        isolated_rc.path.write_text(json.dumps({"translate_url": "http://localhost:8012"}))
 
         # Before reload: in-memory dict is empty.
         assert isolated_rc.get("translate_url") is None
@@ -80,9 +77,7 @@ class TestPersistence:
         isolated_rc.reload_from_disk()
         assert isolated_rc.get("translate_url") == "http://localhost:8012"
 
-    def test_reload_drops_stale_out_of_allowlist_key(
-        self, isolated_rc: rc._RuntimeConfig
-    ) -> None:
+    def test_reload_drops_stale_out_of_allowlist_key(self, isolated_rc: rc._RuntimeConfig) -> None:
         # A file written by an older server version with a key that's
         # since been removed must NOT silently re-appear.
         isolated_rc.path.parent.mkdir(parents=True, exist_ok=True)
@@ -118,40 +113,26 @@ class TestConsumersReadFresh:
     new URL.  We simulate the whole sequence in-process.
     """
 
-    def test_get_default_returns_fallback_when_unset(
-        self, isolated_rc: rc._RuntimeConfig
-    ) -> None:
+    def test_get_default_returns_fallback_when_unset(self, isolated_rc: rc._RuntimeConfig) -> None:
         # Pattern used by translate_vllm.py + _slide_translate_fn:
         #   rc.get("translate_url", static_default)
-        assert (
-            rc.get("translate_url", "http://localhost:8010")
-            == "http://localhost:8010"
-        )
+        assert rc.get("translate_url", "http://localhost:8010") == "http://localhost:8010"
 
-    def test_get_returns_runtime_value_after_set(
-        self, isolated_rc: rc._RuntimeConfig
-    ) -> None:
+    def test_get_returns_runtime_value_after_set(self, isolated_rc: rc._RuntimeConfig) -> None:
         rc.get("translate_url", "http://localhost:8010")  # no-op, just for symmetry
         isolated_rc.set("translate_url", "http://localhost:8012")
         # Same call, different answer — this is what "hot-reload" means
         # from a consumer's perspective.
-        assert (
-            rc.get("translate_url", "http://localhost:8010")
-            == "http://localhost:8012"
-        )
+        assert rc.get("translate_url", "http://localhost:8010") == "http://localhost:8012"
 
-    def test_unset_falls_back_to_static_default(
-        self, isolated_rc: rc._RuntimeConfig
-    ) -> None:
+    def test_unset_falls_back_to_static_default(self, isolated_rc: rc._RuntimeConfig) -> None:
         isolated_rc.set("translate_url", "http://localhost:8012")
         assert rc.get("translate_url", "http://fallback") == "http://localhost:8012"
 
         isolated_rc.unset("translate_url")
         assert rc.get("translate_url", "http://fallback") == "http://fallback"
 
-    def test_sighup_equivalent_reload_propagates(
-        self, isolated_rc: rc._RuntimeConfig
-    ) -> None:
+    def test_sighup_equivalent_reload_propagates(self, isolated_rc: rc._RuntimeConfig) -> None:
         # Simulate the full cross-process flow:
         #   1. CLI writes file out-of-process.
         #   2. Server receives SIGHUP → calls reload_from_disk().
@@ -163,9 +144,7 @@ class TestConsumersReadFresh:
         assert rc.get("slide_translate_url", "http://localhost:8010") == "http://localhost:8010"
 
         isolated_rc.path.parent.mkdir(parents=True, exist_ok=True)
-        isolated_rc.path.write_text(
-            json.dumps({"slide_translate_url": "http://localhost:8012"})
-        )
+        isolated_rc.path.write_text(json.dumps({"slide_translate_url": "http://localhost:8012"}))
 
         rc.reload_from_disk()  # what the SIGHUP handler does
 
@@ -180,9 +159,7 @@ class TestSlideStatsPathResolution:
 
         assert _resolve_stats_path() == _DEFAULT_STATS_DIR / "slide-translation-stats.jsonl"
 
-    def test_override_redirects(
-        self, isolated_rc: rc._RuntimeConfig, tmp_path: Path
-    ) -> None:
+    def test_override_redirects(self, isolated_rc: rc._RuntimeConfig, tmp_path: Path) -> None:
         from meeting_scribe.slides.job import _resolve_stats_path
 
         shadow_dir = tmp_path / "qwen36-shadow" / "slide_stats"

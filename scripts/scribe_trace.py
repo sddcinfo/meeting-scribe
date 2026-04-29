@@ -42,6 +42,7 @@ import sys
 import urllib.request
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 # ── Configuration ──────────────────────────────────────────────────────────
 ADMIN_HOST_CANDIDATES = (
@@ -58,18 +59,36 @@ def _supports_color() -> bool:
 
 
 _COLOR = _supports_color()
+
+
 def _c(code: str, s: str) -> str:
     if not _COLOR:
         return s
     return f"\033[{code}m{s}\033[0m"
 
 
-def green(s: str) -> str: return _c("32", s)
-def yellow(s: str) -> str: return _c("33", s)
-def red(s: str) -> str: return _c("31", s)
-def cyan(s: str) -> str: return _c("36", s)
-def dim(s: str) -> str: return _c("2", s)
-def bold(s: str) -> str: return _c("1", s)
+def green(s: str) -> str:
+    return _c("32", s)
+
+
+def yellow(s: str) -> str:
+    return _c("33", s)
+
+
+def red(s: str) -> str:
+    return _c("31", s)
+
+
+def cyan(s: str) -> str:
+    return _c("36", s)
+
+
+def dim(s: str) -> str:
+    return _c("2", s)
+
+
+def bold(s: str) -> str:
+    return _c("1", s)
 
 
 # ── Journal parsing ────────────────────────────────────────────────────────
@@ -144,7 +163,7 @@ def fetch_journal(since: str = "90 seconds ago") -> list[str]:
 def parse_journal(lines: list[str]) -> tuple[dict[str, SegmentRecord], dict, dict]:
     segments: dict[str, SegmentRecord] = {}
     error_counts: dict[tuple[str, str], dict] = {}  # (kind, fingerprint) → {count, first, last}
-    stats = {
+    stats: dict[str, Any] = {
         "translate_latencies_ms": [],
         "furigana_calls": 0,
         "furigana_no_kanji": 0,
@@ -156,9 +175,7 @@ def parse_journal(lines: list[str]) -> tuple[dict[str, SegmentRecord], dict, dic
 
     def _bump_error(kind: str, fingerprint: str, ts: float | None, sample: str):
         key = (kind, fingerprint)
-        rec = error_counts.setdefault(
-            key, {"count": 0, "first": ts, "last": ts, "sample": sample}
-        )
+        rec = error_counts.setdefault(key, {"count": 0, "first": ts, "last": ts, "sample": sample})
         rec["count"] += 1
         if ts is not None:
             if rec["first"] is None or ts < rec["first"]:
@@ -300,9 +317,11 @@ def fetch_api_status() -> dict | None:
 def fetch_systemd_main_pid() -> tuple[int | None, str]:
     try:
         r = subprocess.run(
-            ["systemctl", "--user", "show", SYSTEMD_UNIT,
-             "-p", "MainPID", "-p", "ActiveState"],
-            capture_output=True, text=True, timeout=2, check=False,
+            ["systemctl", "--user", "show", SYSTEMD_UNIT, "-p", "MainPID", "-p", "ActiveState"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
         )
     except (FileNotFoundError, subprocess.SubprocessError):
         return None, "unknown"
@@ -325,7 +344,10 @@ def fmt_pid_uptime(pid: int | None) -> str:
     try:
         r = subprocess.run(
             ["ps", "-p", str(pid), "-o", "etime,user", "--no-headers"],
-            capture_output=True, text=True, timeout=2, check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
         )
     except (FileNotFoundError, subprocess.SubprocessError):
         return f"pid {pid}"
@@ -355,8 +377,8 @@ def fmt_age(ts: float | None, now: float) -> str:
     if age < 60:
         return f"{age:4.1f}s"
     if age < 3600:
-        return f"{age/60:4.1f}m"
-    return f"{age/3600:4.1f}h"
+        return f"{age / 60:4.1f}m"
+    return f"{age / 3600:4.1f}h"
 
 
 def fmt_segment_row(rec: SegmentRecord, t0: float | None) -> str:
@@ -438,9 +460,11 @@ def render_snapshot(args, segments, error_counts, stats, api_status, pid, state)
         print(line)
 
         translate_chip = green if fail == 0 else red
-        line = (f"  translate:{translate_chip(f' {comp}/{sub}')} done"
-                + (red(f' · {fail} failed') if fail else "")
-                + (f" · avg {avg_ms:.0f}ms" if avg_ms else ""))
+        line = (
+            f"  translate:{translate_chip(f' {comp}/{sub}')} done"
+            + (red(f" · {fail} failed") if fail else "")
+            + (f" · avg {avg_ms:.0f}ms" if avg_ms else "")
+        )
         print(line)
 
         tts = m.get("tts") or {}
@@ -453,26 +477,30 @@ def render_snapshot(args, segments, error_counts, stats, api_status, pid, state)
         tts_busy = tts.get("workers_busy", 0)
         tts_total = tts.get("workers_total", 0)
         # Smoking gun: submitted but nothing delivered
-        tts_chip = green if tts_health == "healthy" else (
-            yellow if tts_health == "degraded" else red
+        tts_chip = (
+            green if tts_health == "healthy" else (yellow if tts_health == "degraded" else red)
         )
         delivery_warn = ""
         if tts_sub > 0 and tts_deliv == 0:
             delivery_warn = red(f"  ⚠ {tts_sub} submitted, 0 delivered")
         elif tts_sub > 5 and tts_deliv / max(tts_sub, 1) < 0.5:
             delivery_warn = yellow(f"  ⚠ low delivery rate {tts_deliv}/{tts_sub}")
-        print(f"  tts:      {tts_chip(tts_health)} · {tts_deliv}/{tts_sub} delivered · "
-              f"queue {tts_q}/{tts_qmax} · workers {tts_busy}/{tts_total}"
-              + (f" · {tts_drops} drops" if tts_drops else "")
-              + delivery_warn)
+        print(
+            f"  tts:      {tts_chip(tts_health)} · {tts_deliv}/{tts_sub} delivered · "
+            f"queue {tts_q}/{tts_qmax} · workers {tts_busy}/{tts_total}"
+            + (f" · {tts_drops} drops" if tts_drops else "")
+            + delivery_warn
+        )
 
         ll = m.get("loop_lag_ms") or {}
         if ll.get("sample_count"):
             p95 = ll.get("p95") or 0
             chip = red if p95 > 2000 else (yellow if p95 > 500 else green)
-            print(f"  loop-lag: p50 {ll.get('p50', 0):.0f}ms · "
-                  f"{chip(f'p95 {p95:.0f}ms')} · p99 {ll.get('p99', 0):.0f}ms"
-                  f" ({ll.get('sample_count')} samples)")
+            print(
+                f"  loop-lag: p50 {ll.get('p50', 0):.0f}ms · "
+                f"{chip(f'p95 {p95:.0f}ms')} · p99 {ll.get('p99', 0):.0f}ms"
+                f" ({ll.get('sample_count')} samples)"
+            )
 
     if api_status and api_status.get("gpu"):
         g = api_status["gpu"]
@@ -490,11 +518,11 @@ def render_snapshot(args, segments, error_counts, stats, api_status, pid, state)
     else:
         ordered = sorted(
             segments.values(),
-            key=lambda r: (r.first_seen or 0),
+            key=lambda r: r.first_seen or 0,
         )
         t0 = ordered[0].first_seen if ordered else None
         print(dim("    +time   lang  trans     furigana  spk   text"))
-        for rec in ordered[-args.tail:] if args.tail else ordered:
+        for rec in ordered[-args.tail :] if args.tail else ordered:
             print(fmt_segment_row(rec, t0))
 
     # Latency stats
@@ -505,7 +533,9 @@ def render_snapshot(args, segments, error_counts, stats, api_status, pid, state)
         p95 = int(percentile(lat, 95) or 0)
         skip = sum(1 for s in segments.values() if s.translate_skip)
         chip = green if med < 500 else (yellow if med < 1000 else red)
-        print(f"  translate: {chip(f'median {med}ms')} · p95 {p95}ms · {len(lat)} done · {skip} skipped")
+        print(
+            f"  translate: {chip(f'median {med}ms')} · p95 {p95}ms · {len(lat)} done · {skip} skipped"
+        )
     else:
         print(dim("  translate: (no completions in window)"))
 
@@ -555,18 +585,36 @@ def render_segment_trace(sid: str, segments, lines):
         print(red(f"  no segment matching {sid} in journal window"))
         return
     print(f"  text:        {rec.text}")
-    print(f"  lang:        ASR={rec.asr_lang or '??'} → final={rec.final_lang or '??'}"
-          + (yellow("  (REMAPPED)") if rec.remapped else ""))
-    print("  translate:   "
-          + (red("SKIPPED") if rec.translate_skip
-             else (f"{rec.translate_ms}ms" if rec.translate_ms is not None else dim("(none)"))))
-    print("  furigana:    "
-          + (dim("(not run)") if rec.furigana_chars is None
-             else (dim("no kanji") if rec.furigana_chars == 0
-                   else green(f"{rec.furigana_chars} chars"))))
-    print("  speaker:     "
-          + (f"cluster {rec.speaker_cluster} (catch-up @ {rec.speaker_age:.1f}s)"
-             if rec.speaker_cluster is not None else dim("(none)")))
+    print(
+        f"  lang:        ASR={rec.asr_lang or '??'} → final={rec.final_lang or '??'}"
+        + (yellow("  (REMAPPED)") if rec.remapped else "")
+    )
+    print(
+        "  translate:   "
+        + (
+            red("SKIPPED")
+            if rec.translate_skip
+            else (f"{rec.translate_ms}ms" if rec.translate_ms is not None else dim("(none)"))
+        )
+    )
+    print(
+        "  furigana:    "
+        + (
+            dim("(not run)")
+            if rec.furigana_chars is None
+            else (
+                dim("no kanji") if rec.furigana_chars == 0 else green(f"{rec.furigana_chars} chars")
+            )
+        )
+    )
+    print(
+        "  speaker:     "
+        + (
+            f"cluster {rec.speaker_cluster} (catch-up @ {rec.speaker_age:.1f}s)"
+            if rec.speaker_cluster is not None
+            else dim("(none)")
+        )
+    )
     print()
     print(dim("  raw journal lines:"))
     for line in lines:
@@ -586,7 +634,9 @@ def main() -> int:
     ap.add_argument("--meeting", help="Filter to one meeting_id")
     ap.add_argument("--tail", type=int, default=0, help="Show only last N finals")
     ap.add_argument("--errors", action="store_true", help="Errors only (no transcript table)")
-    ap.add_argument("--since", default="90 seconds ago", help="Journal lookback (default: 90 seconds ago)")
+    ap.add_argument(
+        "--since", default="90 seconds ago", help="Journal lookback (default: 90 seconds ago)"
+    )
     ap.add_argument(
         "--listeners",
         action="store_true",
@@ -662,10 +712,18 @@ def render_listener_diag() -> None:
         played = li.get("played", 0)
         last_err = li.get("last_err", "") or ""
 
-        ws_chip = green(ws_state) if ws_state == "OPEN" else (yellow(ws_state) if ws_state in ("CONNECTING",) else red(ws_state))
+        ws_chip = (
+            green(ws_state)
+            if ws_state == "OPEN"
+            else (yellow(ws_state) if ws_state in ("CONNECTING",) else red(ws_state))
+        )
         ctx_chip = green(ctx_state) if ctx_state == "running" else red(ctx_state)
         primed_chip = green("primed") if primed else red("not-primed")
-        age_chip = dim(f"{age}s ago") if age < 5 else (yellow(f"{age}s ago") if age < 30 else red(f"{age}s STALE"))
+        age_chip = (
+            dim(f"{age}s ago")
+            if age < 5
+            else (yellow(f"{age}s ago") if age < 30 else red(f"{age}s STALE"))
+        )
 
         print(f"  client {cid}…  {bold(page)}  {ua}  {dim(peer)}  {age_chip}")
         print(f"    ws:        {ws_chip}")
@@ -674,15 +732,35 @@ def render_listener_diag() -> None:
         print(f"               decoded={decoded}  decode_err={decode_err}  played={played}")
         # Diagnose-by-pattern: tell the operator what each combo means.
         if blobs_in == 0:
-            print(red("    DIAG:      no bytes have arrived — server is not delivering to this client"))
+            print(
+                red(
+                    "    DIAG:      no bytes have arrived — server is not delivering to this client"
+                )
+            )
         elif decoded == 0 and blobs_in > 0:
-            print(red("    DIAG:      bytes arrive but decode never succeeds — bad WAV header / format mismatch"))
+            print(
+                red(
+                    "    DIAG:      bytes arrive but decode never succeeds — bad WAV header / format mismatch"
+                )
+            )
         elif decoded > 0 and played == 0:
-            print(red("    DIAG:      decoded buffers but onended never fires — audio is muted at the device"))
+            print(
+                red(
+                    "    DIAG:      decoded buffers but onended never fires — audio is muted at the device"
+                )
+            )
         elif played > 0 and ctx_state != "running":
-            print(yellow("    DIAG:      played count is climbing but context is suspended — check device output"))
+            print(
+                yellow(
+                    "    DIAG:      played count is climbing but context is suspended — check device output"
+                )
+            )
         elif played > 0 and played < decoded - 2:
-            print(yellow(f"    DIAG:      decoded {decoded} but only played {played} — playback can't keep up"))
+            print(
+                yellow(
+                    f"    DIAG:      decoded {decoded} but only played {played} — playback can't keep up"
+                )
+            )
         else:
             print(green("    DIAG:      pipeline is healthy"))
         if last_err:

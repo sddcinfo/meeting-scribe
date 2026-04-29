@@ -1172,13 +1172,24 @@ body[data-lang="ja"] .stage-body > .bi {
 }
 
 .resource-note .bi {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0 var(--space-md);
 }
 
 body[data-lang="en"] .resource-note .bi,
 body[data-lang="ja"] .resource-note .bi {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.resource-note .bi > .lang-en,
+.resource-note .bi > .lang-ja {
+  min-width: 0;
+}
+
+.resource-note code:not([class]) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* ═══════════ FOOTER ═══════════ */

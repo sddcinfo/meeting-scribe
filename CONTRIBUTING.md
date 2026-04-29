@@ -84,3 +84,38 @@ Keep commit messages to 1-2 lines. Focus on the "why" not the "what".
 ## Architecture
 
 See [README.md](README.md) for the full architecture overview and model stack.
+
+## Bug-class taxonomy & PR hygiene
+
+Every fix(*) commit requires a `Bug-class:` git trailer naming one of:
+
+| Slug                  | What it covers |
+|-----------------------|----------------|
+| `cross-window-sync`   | Admin ↔ popout ↔ guest state divergence |
+| `ws-lifecycle`        | WebSocket connect/disconnect/reconnect/replay |
+| `event-dedup`         | Translation merge, segment dedup, listener fan-out |
+| `async-render`        | Empty-state timing, scroll behavior, overlay state machines |
+| `platform-quirk`      | iOS/Android/WebKit/captive-portal OS-level behavior |
+| `data-shape`          | Wire-format / event-type drift, contract violations |
+| `backend-lifecycle`   | vLLM container lifecycle, model swap, API drift |
+
+Add the trailer with:
+
+```
+git commit --amend --trailer "Bug-class: <slug>"
+```
+
+The pre-push hook (`scripts/hooks/classify_push.py`) uses local Opus 4.7
+to classify your diff and aborts the push if a fix doesn't have a
+regression test. To bypass with audit trail, write a one-line reason
+to `.git-waivers/<sha>.txt` and `git push --no-verify`.
+
+The dashboard:
+
+```
+scripts/bug_class_report.py            # last 30 days
+```
+
+Manual-test runbook (real iPhone, real GB10, etc.) lives at
+`tests/manual/README.md`. Bump verification stamps with
+`scripts/manual_test_status.py --bump <slug>`.

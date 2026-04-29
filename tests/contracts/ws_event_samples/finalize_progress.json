@@ -1,0 +1,7 @@
+{
+  "type": "finalize_progress",
+  "step": 3,
+  "total_steps": 5,
+  "label": "Generating summary...",
+  "eta_seconds": 12
+}

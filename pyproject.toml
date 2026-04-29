@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "meeting-scribe"
-version = "1.3.0"
+version = "1.5.0"
 description = "Real-time multilingual meeting transcription, translation, speaker diarization, and near-real-time interpretation audio for hotspot guests"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 authors = [{ name = "Brad Lay" }]
 license = { text = "MIT" }
 dependencies = [
@@ -63,6 +63,11 @@ slide-lang = [
 bench = [
     "sacrebleu>=2.4.0",
     "unbabel-comet>=2.2.0",
+    # Used by the 2026-Q2 ASR/TTS challenger bench
+    # (plans/stateful-marinating-whistle.md) to pull public-domain
+    # JA/EN test corpora (Fleurs, CommonVoice mirrors, LibriSpeech).
+    "datasets>=2.20.0",
+    "jiwer>=3.0.0",
 ]
 
 [project.scripts]
@@ -72,7 +77,7 @@ meeting-scribe = "meeting_scribe.cli:main"
 packages = ["src/meeting_scribe"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py314"
 line-length = 100
 src = ["src"]
 
@@ -118,6 +123,63 @@ allowed-confusables = [
 [tool.ruff.lint.isort]
 known-first-party = ["meeting_scribe"]
 
+[tool.mypy]
+# Each docker image under containers/ ships a standalone server.py.
+# Those files are built into their own images, not imported by the
+# meeting_scribe package, so mypy's "duplicate module" collision
+# (same module name at different paths) is a false alarm — exclude
+# them from the top-level crawl. Explicit `sddc typecheck containers/
+# <name>` still works if needed since mypy resolves the single
+# matching path.
+exclude = [
+    "^containers/",
+    "^repos/",
+    "^\\.venv/",
+    "^benchmarks/__pycache__/",
+]
+# benchmarks/ lacks an __init__.py so mypy resolves _fixture.py both
+# as the bare module "_fixture" and as "benchmarks._fixture" under
+# the parent package. explicit_package_bases + namespace_packages
+# tells mypy to treat the repo root as the single package base,
+# giving every file exactly one canonical module name.
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+# Third-party deps without type stubs. Ignoring their imports keeps
+# the scanner focused on first-party type hygiene.
+module = [
+    "yaml",
+    "yaml.*",
+    "speechbrain.*",
+    "comet",
+    "comet.*",
+    "lingua",
+    "lingua.*",
+    "faster_whisper",
+    "faster_whisper.*",
+    "soundfile",
+    "soundfile.*",
+    "torchaudio",
+    "torchaudio.*",
+    "scipy.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Benchmark harnesses and validation scripts import each other as
+# sibling modules. They're run under `PYTHONPATH=. python3` from the
+# repo root, so each one's de-facto canonical name is the bare file
+# name (no package prefix). Ignore these as a set rather than
+# polluting the benchmark scripts with __init__.py plumbing that
+# the docs explicitly avoid.
+module = [
+    "validate_meeting",
+    "translation_benchmark",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
@@ -130,4 +192,5 @@ markers = [
     "gb10: requires GB10 hardware with vLLM backends",
     "slow: long-running tests (>30s)",
     "browser: Playwright browser tests (run: playwright install chromium)",
+    "manual: human-only checks tracked in tests/manual/README.md (never auto-run)",
 ]

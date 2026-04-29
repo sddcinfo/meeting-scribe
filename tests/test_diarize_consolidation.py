@@ -8,6 +8,7 @@ seen on the 2026-04-13 meetings. The fix makes two moves:
 2. Periodic ``_consolidate_centroids`` pass merges any centroid pair
    with cosine ≥ 0.85.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -76,6 +77,7 @@ def test_annealing_relaxes_after_window():
 
     # Simulate time passing past the window.
     import time as _time
+
     be._session_start_ts = _time.monotonic() - 20.0
 
     b = _unit(rng.standard_normal(128).astype(np.float32))

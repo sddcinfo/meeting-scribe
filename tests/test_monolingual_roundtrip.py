@@ -50,21 +50,15 @@ class TestMeetingMetaJSONRoundTrip:
 
     def test_reload_rejects_duplicate_pair(self):
         with pytest.raises(ValidationError):
-            MeetingMeta.model_validate_json(
-                '{"meeting_id": "x", "language_pair": ["en", "en"]}'
-            )
+            MeetingMeta.model_validate_json('{"meeting_id": "x", "language_pair": ["en", "en"]}')
 
     def test_reload_rejects_empty(self):
         with pytest.raises(ValidationError):
-            MeetingMeta.model_validate_json(
-                '{"meeting_id": "x", "language_pair": []}'
-            )
+            MeetingMeta.model_validate_json('{"meeting_id": "x", "language_pair": []}')
 
     def test_reload_rejects_unknown_code(self):
         with pytest.raises(ValidationError):
-            MeetingMeta.model_validate_json(
-                '{"meeting_id": "x", "language_pair": ["xx"]}'
-            )
+            MeetingMeta.model_validate_json('{"meeting_id": "x", "language_pair": ["xx"]}')
 
 
 class TestJournalMonolingualShape:

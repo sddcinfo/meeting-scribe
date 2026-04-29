@@ -1,4 +1,4 @@
-#!/home/bradlay/sddcinfo/repos/meeting-scribe/.venv/bin/python
+#!/usr/bin/env python3
 """Generate the silent-MP3 loop used by the guest audio session keeper.
 
 Writes ``static/silent-loop.mp3`` — a 0.5 second silent MP3 at 48 kHz
@@ -12,6 +12,7 @@ Run once. The resulting MP3 is committed to the repo as a static
 asset served at ``/static/silent-loop.mp3``. No need to regenerate
 unless you're changing the keeper's duration or sample rate.
 """
+
 from __future__ import annotations
 
 import io

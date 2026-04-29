@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from meeting_scribe.server import (
+from meeting_scribe.runtime.net import (
     _detect_management_ip,
     _detect_management_ip_via_nm,
     _wait_for_management_ip,
@@ -17,6 +17,7 @@ from meeting_scribe.server import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _route_success(ip: str = "192.168.8.153") -> subprocess.CompletedProcess:
     return subprocess.CompletedProcess(
@@ -53,12 +54,15 @@ def _nm_device_ip(ip: str, prefix: int = 24) -> subprocess.CompletedProcess:
 # Detection cascade tests
 # ---------------------------------------------------------------------------
 
+
 class TestDetectManagementIp:
     """Tests for the _detect_management_ip() three-tier cascade."""
 
     def test_normal_route_success(self):
         """Tier 2: ip route get succeeds on first attempt."""
-        with patch("meeting_scribe.server.subprocess.run", return_value=_route_success("10.0.0.5")):
+        with patch(
+            "meeting_scribe.runtime.net.subprocess.run", return_value=_route_success("10.0.0.5")
+        ):
             assert _detect_management_ip() == "10.0.0.5"
 
     def test_route_fails_nm_single_ethernet(self, monkeypatch):
@@ -72,15 +76,13 @@ class TestDetectManagementIp:
             if cmd[0] == "nmcli":
                 if "connection" in cmd:
                     return _nm_connections(
-                        "802-3-ethernet:enP7s7\n"
-                        "bridge:br-af71855f7b53\n"
-                        "loopback:lo\n"
+                        "802-3-ethernet:enP7s7\nbridge:br-af71855f7b53\nloopback:lo\n"
                     )
                 if "device" in cmd:
                     return _nm_device_ip("192.168.1.100")
             raise ValueError(f"unexpected command: {cmd}")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             assert _detect_management_ip() == "192.168.1.100"
 
     def test_route_fails_nm_no_ethernet(self, monkeypatch):
@@ -95,7 +97,7 @@ class TestDetectManagementIp:
                 return _nm_connections("bridge:docker0\nloopback:lo\n")
             raise ValueError(f"unexpected command: {cmd}")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             assert _detect_management_ip() == "127.0.0.1"
 
     def test_route_fails_nm_multiple_ethernet(self, monkeypatch):
@@ -107,13 +109,10 @@ class TestDetectManagementIp:
             if cmd[0] == "ip":
                 raise _route_failure()
             if cmd[0] == "nmcli":
-                return _nm_connections(
-                    "802-3-ethernet:enP7s7\n"
-                    "802-3-ethernet:enP8s8\n"
-                )
+                return _nm_connections("802-3-ethernet:enP7s7\n802-3-ethernet:enP8s8\n")
             raise ValueError(f"unexpected command: {cmd}")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             assert _detect_management_ip() == "127.0.0.1"
 
     def test_route_fails_nm_not_available(self, monkeypatch):
@@ -128,7 +127,7 @@ class TestDetectManagementIp:
                 raise FileNotFoundError("nmcli not found")
             raise ValueError(f"unexpected command: {cmd}")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             assert _detect_management_ip() == "127.0.0.1"
 
     def test_ip_command_not_found(self, monkeypatch):
@@ -137,7 +136,7 @@ class TestDetectManagementIp:
         monkeypatch.delenv("SCRIBE_MANAGEMENT_IP", raising=False)
 
         with patch(
-            "meeting_scribe.server.subprocess.run",
+            "meeting_scribe.runtime.net.subprocess.run",
             side_effect=FileNotFoundError("not found"),
         ):
             assert _detect_management_ip() == "127.0.0.1"
@@ -161,7 +160,7 @@ class TestDetectManagementIp:
             # NM also fails.
             raise FileNotFoundError("not found")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             result = _detect_management_ip()
 
         assert result == "127.0.0.1"
@@ -171,6 +170,7 @@ class TestDetectManagementIp:
 # ---------------------------------------------------------------------------
 # NM helper tests
 # ---------------------------------------------------------------------------
+
 
 class TestDetectManagementIpViaNm:
     """Tests for _detect_management_ip_via_nm() in isolation."""
@@ -183,12 +183,12 @@ class TestDetectManagementIpViaNm:
                 return _nm_device_ip("10.0.0.42")
             raise ValueError(f"unexpected: {cmd}")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             assert _detect_management_ip_via_nm() == "10.0.0.42"
 
     def test_no_ethernet(self):
         with patch(
-            "meeting_scribe.server.subprocess.run",
+            "meeting_scribe.runtime.net.subprocess.run",
             return_value=_nm_connections("bridge:docker0\nloopback:lo\n"),
         ):
             assert _detect_management_ip_via_nm() is None
@@ -199,17 +199,20 @@ class TestDetectManagementIpViaNm:
                 return _nm_connections("802-3-ethernet:eth0\n")
             if "device" in cmd:
                 return subprocess.CompletedProcess(
-                    args=cmd, returncode=0, stdout="",
+                    args=cmd,
+                    returncode=0,
+                    stdout="",
                 )
             raise ValueError(f"unexpected: {cmd}")
 
-        with patch("meeting_scribe.server.subprocess.run", side_effect=fake_run):
+        with patch("meeting_scribe.runtime.net.subprocess.run", side_effect=fake_run):
             assert _detect_management_ip_via_nm() is None
 
 
 # ---------------------------------------------------------------------------
 # Recovery task tests
 # ---------------------------------------------------------------------------
+
 
 def _mock_admin_server() -> MagicMock:
     """Create a mock admin_server with the attributes _wait_for_management_ip needs."""
@@ -261,8 +264,8 @@ class TestWaitForManagementIp:
             return mock_async_server
 
         with (
-            patch("meeting_scribe.server._detect_management_ip", side_effect=fake_detect),
-            patch("meeting_scribe.server._make_tcp_socket", return_value=mock_tcp_sock),
+            patch("meeting_scribe.runtime.net._detect_management_ip", side_effect=fake_detect),
+            patch("meeting_scribe.runtime.net._make_tcp_socket", return_value=mock_tcp_sock),
             patch.object(real_loop, "create_server", side_effect=fake_create_server),
         ):
             await _wait_for_management_ip(admin_server, port=8080, poll_interval=0)
@@ -279,7 +282,7 @@ class TestWaitForManagementIp:
         admin_server = _mock_admin_server()
 
         with patch(
-            "meeting_scribe.server._detect_management_ip",
+            "meeting_scribe.runtime.net._detect_management_ip",
             return_value="127.0.0.1",
         ):
             task = asyncio.create_task(
@@ -312,8 +315,8 @@ class TestWaitForManagementIp:
             return MagicMock()
 
         with (
-            patch("meeting_scribe.server._detect_management_ip", side_effect=fake_detect),
-            patch("meeting_scribe.server._make_tcp_socket", return_value=MagicMock()),
+            patch("meeting_scribe.runtime.net._detect_management_ip", side_effect=fake_detect),
+            patch("meeting_scribe.runtime.net._make_tcp_socket", return_value=MagicMock()),
             patch.object(real_loop, "create_server", side_effect=fake_create_server),
         ):
             await _wait_for_management_ip(admin_server, port=8080, poll_interval=0)
@@ -350,8 +353,8 @@ class TestWaitForManagementIp:
             return MagicMock()
 
         with (
-            patch("meeting_scribe.server._detect_management_ip", side_effect=fake_detect),
-            patch("meeting_scribe.server._make_tcp_socket", side_effect=fake_make_socket),
+            patch("meeting_scribe.runtime.net._detect_management_ip", side_effect=fake_detect),
+            patch("meeting_scribe.runtime.net._make_tcp_socket", side_effect=fake_make_socket),
             patch.object(real_loop, "create_server", side_effect=fake_create_server),
         ):
             await _wait_for_management_ip(admin_server, port=8080, poll_interval=0)

@@ -1,0 +1,7 @@
+{
+  "type": "speaker_remap",
+  "renames": {
+    "5": 3
+  },
+  "meeting_id": "test-meeting-0"
+}

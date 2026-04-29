@@ -14,14 +14,14 @@ PRESERVE the directory and let the user re-reprocess later.
 These tests exercise both auto-delete call sites (storage.py and
 server.py) to make sure the safety guard stays in place forever.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
 
-def _make_empty_meeting(tmp_path: Path, *, mid: str, state: str,
-                       audio_bytes: bytes | None) -> Path:
+def _make_empty_meeting(tmp_path: Path, *, mid: str, state: str, audio_bytes: bytes | None) -> Path:
     meetings = tmp_path / "meetings"
     md = meetings / mid
     md.mkdir(parents=True)
@@ -94,9 +94,7 @@ class TestStorageStartupCleanup:
         store = MeetingStorage(cfg)
         store.recover_interrupted()
 
-        assert not md.exists(), (
-            "Empty meeting with no audio should still be cleaned up"
-        )
+        assert not md.exists(), "Empty meeting with no audio should still be cleaned up"
 
     def test_empty_complete_with_zero_byte_pcm_is_deleted(self, tmp_path):
         """Edge case: empty file is not real audio. Treat it as no
@@ -110,9 +108,7 @@ class TestStorageStartupCleanup:
         store = MeetingStorage(cfg)
         store.recover_interrupted()
 
-        assert not md.exists(), (
-            "Zero-byte PCM is not real audio; clean up is fine"
-        )
+        assert not md.exists(), "Zero-byte PCM is not real audio; clean up is fine"
 
 
 class TestServerStopPathCleanup:
@@ -121,9 +117,14 @@ class TestServerStopPathCleanup:
     FastAPI fixture here."""
 
     def test_stop_handler_checks_audio_before_delete(self):
+        # The /api/meeting/stop handler now lives in
+        # routes/meeting_lifecycle.py; the source check follows it.
         src = (
             Path(__file__).parent.parent
-            / "src" / "meeting_scribe" / "server.py"
+            / "src"
+            / "meeting_scribe"
+            / "routes"
+            / "meeting_lifecycle.py"
         ).read_text()
         # The fix adds a `_has_audio` check before `_empty_shutil.rmtree`.
         assert "_has_audio" in src

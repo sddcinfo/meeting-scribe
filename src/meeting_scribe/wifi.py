@@ -35,6 +35,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+# Regdomain + settings helpers are imported here for use by the AP
+# bring-up path, AND re-exported as ``wifi.X`` for back-compat with
+# test_wifi.py's source-grep assertions (e.g. ``wifi._regdomain_modprobe_path``).
+from meeting_scribe.server_support.regdomain import (
+    _current_regdomain,
+    _ensure_regdomain,
+    _ensure_regdomain_persistent,
+)
+from meeting_scribe.server_support.settings_store import (  # noqa: F401
+    _DEFAULT_REGDOMAIN,
+    SETTINGS_OVERRIDE_FILE,
+    _effective_regdomain,
+    _load_settings_override,
+    _regdomain_modprobe_path,
+    _save_settings_override,
+)
+from meeting_scribe.util.atomic_io import atomic_write_json
+
 logger = logging.getLogger(__name__)
 
 # ── Constants ───────────────────────────────────────────────────────────
@@ -47,7 +65,7 @@ HOTSPOT_SUBNET_CIDR = os.environ.get("SCRIBE_HOTSPOT_SUBNET_CIDR", "10.42.0.0/24
 HOTSPOT_IPTABLES_COMMENT = "meeting-scribe-hotspot"
 WIFI_IFACE = "wlP9s9"  # MT7925 on GB10
 
-DEFAULT_BAND = "a"       # 5 GHz
+DEFAULT_BAND = "a"  # 5 GHz
 DEFAULT_CHANNEL = 36
 MEETING_PORT = 8080
 SSID_PREFIX = "Dell Demo"
@@ -74,12 +92,6 @@ _NMCLI_CON_DOWN_TIMEOUT = 15
 _NMCLI_CON_MODIFY_TIMEOUT = 5
 _NMCLI_CON_SHOW_TIMEOUT = 5
 
-# Regdomain
-_DEFAULT_REGDOMAIN = "JP"
-
-# Settings override (admin UI persisted config)
-SETTINGS_OVERRIDE_FILE = Path.home() / ".config" / "meeting-scribe" / "settings.json"
-
 # ── Dataclasses ─────────────────────────────────────────────────────────
 
 
@@ -87,7 +99,7 @@ SETTINGS_OVERRIDE_FILE = Path.home() / ".config" / "meeting-scribe" / "settings.
 class WifiConfig:
     """Immutable WiFi AP configuration."""
 
-    mode: str           # "off", "meeting", or "admin"
+    mode: str  # "off", "meeting", or "admin"
     ssid: str
     password: str
     band: str = DEFAULT_BAND
@@ -109,76 +121,27 @@ class RollbackSnapshot:
 _wifi_lock = asyncio.Lock()
 
 # ── Settings I/O ────────────────────────────────────────────────────────
-
-_settings_cache: dict | None = None
-_settings_cache_mtime: float = 0.0
-
-
-def _load_settings() -> dict:
-    """Read persisted admin-UI settings overrides. Best-effort.
-
-    Cached by file mtime — safe for hot-path callers (~3 s poll).
-    Invalidated on write via ``_save_settings_override``.
-    """
-    global _settings_cache, _settings_cache_mtime
-
-    if not SETTINGS_OVERRIDE_FILE.exists():
-        _settings_cache = {}
-        return {}
-    try:
-        mtime = SETTINGS_OVERRIDE_FILE.stat().st_mtime
-        if _settings_cache is not None and mtime == _settings_cache_mtime:
-            return _settings_cache
-        data = json.loads(SETTINGS_OVERRIDE_FILE.read_text())
-        result = data if isinstance(data, dict) else {}
-        _settings_cache = result
-        _settings_cache_mtime = mtime
-        return result
-    except (OSError, json.JSONDecodeError):
-        return _settings_cache or {}
-
-
-def _save_settings_override(updates: dict) -> None:
-    """Merge *updates* into the persisted settings override file."""
-    global _settings_cache, _settings_cache_mtime
-
-    SETTINGS_OVERRIDE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    current = _load_settings()
-    current.update(updates)
-    tmp = SETTINGS_OVERRIDE_FILE.with_suffix(
-        SETTINGS_OVERRIDE_FILE.suffix + f".tmp.{os.getpid()}"
-    )
-    tmp.write_text(json.dumps(current, indent=2) + "\n")
-    tmp.replace(SETTINGS_OVERRIDE_FILE)
-    _settings_cache = current
-    _settings_cache_mtime = SETTINGS_OVERRIDE_FILE.stat().st_mtime
+#
+# Settings load/save lives in ``meeting_scribe.server_support.settings_store``;
+# rollback uses ``atomic_write_json`` directly so the cache invariants of
+# ``_save_settings_override`` aren't violated when restoring an arbitrary
+# snapshot.
 
 
 def _restore_settings(snapshot: dict) -> None:
     """Overwrite the persisted settings file with *snapshot* contents."""
-    global _settings_cache, _settings_cache_mtime
-
-    SETTINGS_OVERRIDE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    tmp = SETTINGS_OVERRIDE_FILE.with_suffix(
-        SETTINGS_OVERRIDE_FILE.suffix + f".tmp.{os.getpid()}"
-    )
-    tmp.write_text(json.dumps(snapshot, indent=2) + "\n")
-    tmp.replace(SETTINGS_OVERRIDE_FILE)
-    _settings_cache = snapshot
-    _settings_cache_mtime = SETTINGS_OVERRIDE_FILE.stat().st_mtime
+    atomic_write_json(SETTINGS_OVERRIDE_FILE, snapshot)
 
 
 def _deep_copy_settings() -> dict:
     """Return an independent deep copy of the current settings."""
-    return copy.deepcopy(_load_settings())
+    return copy.deepcopy(_load_settings_override())
 
 
 # ── nmcli helpers ───────────────────────────────────────────────────────
 
 
-def _run_nmcli_sync(
-    args: list[str], timeout: int
-) -> subprocess.CompletedProcess[str]:
+def _run_nmcli_sync(args: list[str], timeout: int) -> subprocess.CompletedProcess[str]:
     """Run ``sudo nmcli <args>`` synchronously. Errors are returned, not raised."""
     return subprocess.run(
         ["sudo", "nmcli", *args],
@@ -254,9 +217,7 @@ def _nmcli_connection_exists() -> bool:
     )
     if proc.returncode != 0:
         return False
-    return any(
-        line.strip() == AP_CON_NAME for line in proc.stdout.splitlines()
-    )
+    return any(line.strip() == AP_CON_NAME for line in proc.stdout.splitlines())
 
 
 def _wait_for_ap_active(
@@ -276,14 +237,6 @@ def _wait_for_ap_active(
 
 
 # ── State file I/O ──────────────────────────────────────────────────────
-
-
-def _atomic_write_json(path: Path, data: dict) -> None:
-    """Write *data* to *path* atomically (tmp file + rename)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
-    tmp.write_text(json.dumps(data, indent=2) + "\n")
-    tmp.replace(path)
 
 
 def _write_hotspot_state_sync(mode: str = "meeting") -> bool:
@@ -309,7 +262,7 @@ def _write_hotspot_state_sync(mode: str = "meeting") -> bool:
             "port": 80,
             "mode": mode,
         }
-        _atomic_write_json(HOTSPOT_STATE_FILE, state)
+        atomic_write_json(HOTSPOT_STATE_FILE, state)
         return True
     except Exception as exc:
         logger.debug("hotspot state sync failed: %s", exc)
@@ -332,148 +285,10 @@ def _load_hotspot_state() -> dict | None:
 
 
 # ── Regdomain helpers ───────────────────────────────────────────────────
-
-
-def _effective_regdomain() -> str:
-    """Return the regulatory domain to enforce.
-
-    Priority:
-      1. ``wifi_regdomain`` from the persisted settings override file.
-      2. ``_DEFAULT_REGDOMAIN`` fallback.
-
-    The returned code is upper-cased to match what ``iw`` expects.
-    """
-    override = _load_settings().get("wifi_regdomain")
-    if isinstance(override, str) and override.strip():
-        return override.strip().upper()
-    return _DEFAULT_REGDOMAIN
-
-
-def _regdomain_modprobe_path(country: str) -> Path:
-    """Canonical modprobe conf path for a given 2-letter country code."""
-    safe = country.strip().upper() or _DEFAULT_REGDOMAIN
-    return Path("/etc/modprobe.d") / f"cfg80211-{safe.lower()}.conf"
-
-
-def _current_regdomain() -> str | None:
-    """Return the current 2-letter country code from ``iw reg get``."""
-    try:
-        result = subprocess.run(
-            ["iw", "reg", "get"],
-            capture_output=True,
-            text=True,
-            timeout=3,
-            check=False,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-        return None
-    if result.returncode != 0:
-        return None
-    for line in result.stdout.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("country "):
-            token = stripped.split(":", 1)[0].removeprefix("country ").strip()
-            return token or None
-    return None
-
-
-def _ensure_regdomain() -> bool:
-    """Set the regdomain to ``_effective_regdomain()`` and VERIFY.
-
-    Returns True on success, False otherwise. Never raises.
-    """
-    target = _effective_regdomain()
-    current = _current_regdomain()
-    if current == target:
-        return True
-
-    try:
-        subprocess.run(
-            ["sudo", "iw", "reg", "set", target],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
-        logger.error(
-            "failed to invoke 'iw reg set %s': %s (current=%r)",
-            target,
-            exc,
-            current,
-        )
-        return False
-
-    time.sleep(0.2)
-    after = _current_regdomain()
-    if after == target:
-        if current != after:
-            logger.info("regdomain set to %s (was %r)", target, current)
-        return True
-
-    logger.error(
-        "regdomain set to %s failed: iw reg get still reports %r — "
-        "5 GHz AP transmit power will be capped; clients cannot connect",
-        target,
-        after,
-    )
-    return False
-
-
-def _ensure_regdomain_persistent() -> bool:
-    """Install ``/etc/modprobe.d/cfg80211-<code>.conf`` so cfg80211 boots
-    in the configured country. Idempotent. Returns True on success.
-    """
-    target = _effective_regdomain()
-    path = _regdomain_modprobe_path(target)
-    body = f"options cfg80211 ieee80211_regdom={target}\n"
-
-    # Remove stale entries for other countries.
-    try:
-        for existing in Path("/etc/modprobe.d").glob("cfg80211-*.conf"):
-            if existing == path:
-                continue
-            try:
-                subprocess.run(
-                    ["sudo", "rm", "-f", str(existing)],
-                    capture_output=True,
-                    text=True,
-                    timeout=3,
-                    check=False,
-                )
-            except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-                pass
-    except OSError:
-        pass
-
-    try:
-        if path.exists() and path.read_text() == body:
-            return True
-    except OSError:
-        pass
-
-    try:
-        result = subprocess.run(
-            ["sudo", "tee", str(path)],
-            input=body,
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
-        logger.warning("could not write %s: %s", path, exc)
-        return False
-
-    if result.returncode != 0:
-        logger.warning(
-            "sudo tee %s failed (rc=%d): %s",
-            path,
-            result.returncode,
-            result.stderr.strip(),
-        )
-        return False
-    return True
+#
+# All regdomain logic lives in ``server_support.regdomain`` (apply +
+# verify) and ``server_support.settings_store`` (read precedence + paths).
+# Imported at the top of this module for use by the AP lifecycle.
 
 
 # ── WPA supplicant security status ──────────────────────────────────────
@@ -650,21 +465,21 @@ def _captive_portal_active() -> bool:
 # ── Firewall ────────────────────────────────────────────────────────────
 
 
-def _apply_meeting_firewall() -> None:
-    """Apply meeting-mode firewall: allow port 80, reject 8080/443, default-deny.
+def _apply_meeting_firewall(admin_port: int = MEETING_PORT) -> None:
+    """Apply meeting-mode firewall: allow port 80, reject ``admin_port``/443, default-deny.
 
-    Guests can reach the HTTP portal on port 80. Admin HTTPS (8080) and
-    plain HTTPS (443) are rejected with TCP RST for instant failure.
-    DNS, DHCP, and ICMP are allowed. Everything else is rejected with
-    ICMP port-unreachable. All forwarding is blocked (no internet).
-    NAT redirects all port 80 traffic to the local listener.
+    Guests can reach the HTTP portal on port 80. Admin HTTPS (``admin_port``,
+    default 8080) and plain HTTPS (443) are rejected with TCP RST for
+    instant failure. DNS, DHCP, and ICMP are allowed. Everything else is
+    rejected with ICMP port-unreachable. All forwarding is blocked (no
+    internet). NAT redirects all port 80 traffic to the local listener.
     """
     _remove_firewall()
 
     rules = [
         f"-I INPUT 1 -s {HOTSPOT_SUBNET_CIDR} -p tcp --dport 80 -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j ACCEPT",
         f"-I INPUT 2 -s {HOTSPOT_SUBNET_CIDR} -p tcp --dport 443 -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j REJECT --reject-with tcp-reset",
-        f"-I INPUT 3 -s {HOTSPOT_SUBNET_CIDR} -p tcp --dport {MEETING_PORT} -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j REJECT --reject-with tcp-reset",
+        f"-I INPUT 3 -s {HOTSPOT_SUBNET_CIDR} -p tcp --dport {admin_port} -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j REJECT --reject-with tcp-reset",
         f"-I INPUT 4 -s {HOTSPOT_SUBNET_CIDR} -p udp --dport 53 -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j ACCEPT",
         f"-I INPUT 5 -s {HOTSPOT_SUBNET_CIDR} -p udp --dport 67 -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j ACCEPT",
         f"-I INPUT 6 -s {HOTSPOT_SUBNET_CIDR} -p icmp -m comment --comment {HOTSPOT_IPTABLES_COMMENT} -j ACCEPT",
@@ -685,7 +500,7 @@ def _apply_meeting_firewall() -> None:
             logger.warning("iptables rule failed: %s — %s", rule, exc)
     logger.info(
         "Meeting firewall applied (allow: 80/DNS/DHCP; reject: 443/%d)",
-        MEETING_PORT,
+        admin_port,
     )
 
 
@@ -903,8 +718,7 @@ async def _bring_up_ap(cfg: WifiConfig) -> None:
         )
         if proc.returncode != 0:
             raise RuntimeError(
-                f"nmcli con add failed (rc={proc.returncode}): "
-                f"{proc.stderr.strip()[:200]}"
+                f"nmcli con add failed (rc={proc.returncode}): {proc.stderr.strip()[:200]}"
             )
         logger.info("NM profile created: ssid=%s", cfg.ssid)
 
@@ -912,17 +726,13 @@ async def _bring_up_ap(cfg: WifiConfig) -> None:
     if await loop.run_in_executor(None, _nmcli_ap_is_active):
         await loop.run_in_executor(
             None,
-            lambda: _run_nmcli_sync(
-                ["con", "down", AP_CON_NAME], timeout=_NMCLI_CON_DOWN_TIMEOUT
-            ),
+            lambda: _run_nmcli_sync(["con", "down", AP_CON_NAME], timeout=_NMCLI_CON_DOWN_TIMEOUT),
         )
         await asyncio.sleep(1)
 
     up_proc = await loop.run_in_executor(
         None,
-        lambda: _run_nmcli_sync(
-            ["con", "up", AP_CON_NAME], timeout=_NMCLI_CON_UP_TIMEOUT
-        ),
+        lambda: _run_nmcli_sync(["con", "up", AP_CON_NAME], timeout=_NMCLI_CON_UP_TIMEOUT),
     )
     if up_proc.returncode != 0:
         logger.warning(
@@ -941,9 +751,7 @@ async def _bring_up_ap(cfg: WifiConfig) -> None:
         await asyncio.sleep(_AP_ACTIVATION_POLL_INTERVAL)
 
     if not active:
-        raise RuntimeError(
-            f"AP did not become active within {_AP_ACTIVATION_WAIT_SECONDS}s"
-        )
+        raise RuntimeError(f"AP did not become active within {_AP_ACTIVATION_WAIT_SECONDS}s")
     logger.info("AP active (WPA3-SAE, PMF required)")
 
     # Step 5: apply firewall
@@ -953,9 +761,7 @@ async def _bring_up_ap(cfg: WifiConfig) -> None:
         await loop.run_in_executor(None, _apply_admin_firewall)
 
     # Step 6: write state file
-    await loop.run_in_executor(
-        None, lambda: _write_hotspot_state_sync(mode=cfg.mode)
-    )
+    await loop.run_in_executor(None, lambda: _write_hotspot_state_sync(mode=cfg.mode))
     logger.info("hotspot state written: mode=%s ssid=%s", cfg.mode, cfg.ssid)
 
 
@@ -980,9 +786,7 @@ async def _teardown_ap() -> None:
     if await loop.run_in_executor(None, _nmcli_ap_is_active):
         await loop.run_in_executor(
             None,
-            lambda: _run_nmcli_sync(
-                ["con", "down", AP_CON_NAME], timeout=_NMCLI_CON_DOWN_TIMEOUT
-            ),
+            lambda: _run_nmcli_sync(["con", "down", AP_CON_NAME], timeout=_NMCLI_CON_DOWN_TIMEOUT),
         )
     if await loop.run_in_executor(None, _nmcli_connection_exists):
         await loop.run_in_executor(
@@ -1063,7 +867,7 @@ def build_config(
     regdomain = _effective_regdomain()
 
     if mode == "admin":
-        settings = _load_settings()
+        settings = _load_settings_override()
         if not ssid:
             ssid = settings.get("admin_ssid", "") or DEFAULT_ADMIN_SSID
         if not password or len(password) < 8:
@@ -1071,9 +875,7 @@ def build_config(
             if not password or len(password) < 8:
                 password = secrets.token_hex(8).upper()
                 # Persist so the admin password survives restarts
-                _save_settings_override(
-                    {"admin_ssid": ssid, "admin_password": password}
-                )
+                _save_settings_override({"admin_ssid": ssid, "admin_password": password})
     elif mode == "meeting":
         session_id = secrets.token_hex(2).upper()
         if not ssid:
@@ -1144,9 +946,7 @@ async def wifi_switch(new_cfg: WifiConfig) -> None:
                     await _bring_up_ap(rollback.config)
                     return
                 except Exception as rollback_exc:
-                    logger.error(
-                        "wifi_switch rollback also failed: %s", rollback_exc
-                    )
+                    logger.error("wifi_switch rollback also failed: %s", rollback_exc)
             _save_settings_override({"wifi_mode": "off"})
 
 
@@ -1159,7 +959,7 @@ async def wifi_status() -> dict:
     loop = asyncio.get_event_loop()
 
     # Desired mode from settings
-    settings = _load_settings()
+    settings = _load_settings_override()
     desired_mode = settings.get("wifi_mode", "off")
 
     # Live AP state
@@ -1237,7 +1037,7 @@ async def wifi_status() -> dict:
 def wifi_status_sync() -> dict:
     """Synchronous version of wifi_status for non-async callers."""
     # Desired mode from settings
-    settings = _load_settings()
+    settings = _load_settings_override()
     desired_mode = settings.get("wifi_mode", "off")
 
     ap_active = _nmcli_ap_is_active()

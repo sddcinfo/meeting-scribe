@@ -28,8 +28,10 @@ import pytest
 
 pytest.importorskip("av")
 
-from meeting_scribe import server
+from meeting_scribe.audio.output_pipeline import _deliver_audio_to_listener
 from meeting_scribe.backends.mse_encoder import ACCUMULATION_THRESHOLD_MS
+from meeting_scribe.server_support.sessions import ClientSession
+from meeting_scribe.ws import audio_output
 
 SAMPLE_RATE_TTS = 24000
 SAMPLE_RATE_PASSTHROUGH = 16000
@@ -73,15 +75,15 @@ def _run(coro):
         loop.close()
 
 
-def _make_pref(audio_format: str | None = None) -> server.ClientSession:
+def _make_pref(audio_format: str | None = None) -> ClientSession:
     """Build a ClientSession in the shape the fan-out helper expects."""
-    return server.ClientSession(
+    return ClientSession(
         preferred_language="en",
         send_audio=True,
         interpretation_mode="translation",
         voice_mode="studio",
         audio_format=audio_format,
-        grace_deadline=time.monotonic() + server._AUDIO_FORMAT_GRACE_S,
+        grace_deadline=time.monotonic() + audio_output._AUDIO_FORMAT_GRACE_S,
     )
 
 
@@ -98,9 +100,7 @@ def test_mse_first_delivery_emits_init_frame_prefix_0x49():
         # One large delivery of 500 ms — comfortably above the
         # accumulation threshold so a fragment is produced.
         pcm = _sine_pcm(0.500)
-        await server._deliver_audio_to_listener(
-            ws, pref, pcm, SAMPLE_RATE_TTS, None
-        )
+        await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
 
     _run(_drive())
     pref.mse_encoder.close()  # clean up the encoder
@@ -109,8 +109,7 @@ def test_mse_first_delivery_emits_init_frame_prefix_0x49():
         f"expected init + fragment, got {len(ws.binary_frames)} frame(s)"
     )
     assert ws.binary_frames[0][:1] == b"\x49", (
-        f"first frame should be init (0x49 'I'), got "
-        f"{ws.binary_frames[0][:1].hex()}"
+        f"first frame should be init (0x49 'I'), got {ws.binary_frames[0][:1].hex()}"
     )
     # Init payload must contain ftyp + moov.
     init_payload = ws.binary_frames[0][1:]
@@ -122,13 +121,10 @@ def test_mse_first_delivery_emits_init_frame_prefix_0x49():
 
     # Second frame should be a media fragment.
     assert ws.binary_frames[1][:1] == b"\x46", (
-        f"second frame should be fragment (0x46 'F'), got "
-        f"{ws.binary_frames[1][:1].hex()}"
+        f"second frame should be fragment (0x46 'F'), got {ws.binary_frames[1][:1].hex()}"
     )
     frag_payload = ws.binary_frames[1][1:]
-    assert b"moof" in frag_payload and b"mdat" in frag_payload, (
-        "fragment frame missing moof/mdat"
-    )
+    assert b"moof" in frag_payload and b"mdat" in frag_payload, "fragment frame missing moof/mdat"
 
 
 def test_mse_below_threshold_returns_empty_fragment_after_init():
@@ -140,9 +136,7 @@ def test_mse_below_threshold_returns_empty_fragment_after_init():
     async def _drive():
         # Single 10 ms chunk — well below the 60 ms threshold.
         pcm = _sine_pcm(0.010)
-        await server._deliver_audio_to_listener(
-            ws, pref, pcm, SAMPLE_RATE_TTS, None
-        )
+        await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
 
     _run(_drive())
     pref.mse_encoder.close()
@@ -168,9 +162,7 @@ def test_mse_drives_until_fragment_appears():
         # 30 × 20 ms chunks = 600 ms total, well above threshold
         for _ in range(30):
             pcm = _sine_pcm(0.020)
-            await server._deliver_audio_to_listener(
-                ws, pref, pcm, SAMPLE_RATE_TTS, None
-            )
+            await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
 
     _run(_drive())
     pref.mse_encoder.close()
@@ -197,18 +189,14 @@ def test_wav_pcm_listener_receives_unprefixed_riff():
 
     async def _drive():
         pcm = _sine_pcm(0.100)
-        await server._deliver_audio_to_listener(
-            ws, pref, pcm, SAMPLE_RATE_TTS, None
-        )
+        await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
 
     _run(_drive())
 
     assert len(ws.binary_frames) == 1
     frame = ws.binary_frames[0]
     # Must start with "RIFF" — NOT with a 0x49 or 0x46 prefix.
-    assert frame[:4] == b"RIFF", (
-        f"expected unprefixed RIFF, got {frame[:8].hex()}"
-    )
+    assert frame[:4] == b"RIFF", f"expected unprefixed RIFF, got {frame[:8].hex()}"
     assert b"WAVE" in frame[:12]
     assert b"fmt " in frame[:24]
     assert b"data" in frame[:64]
@@ -221,9 +209,7 @@ def test_wav_pcm_passthrough_uses_16khz():
 
     async def _drive():
         pcm = _sine_pcm(0.100, rate=SAMPLE_RATE_PASSTHROUGH)
-        await server._deliver_audio_to_listener(
-            ws, pref, pcm, SAMPLE_RATE_PASSTHROUGH, None
-        )
+        await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_PASSTHROUGH, None)
 
     _run(_drive())
 
@@ -231,9 +217,7 @@ def test_wav_pcm_passthrough_uses_16khz():
     frame = ws.binary_frames[0]
     # Sample rate is at byte offset 24 (little-endian uint32).
     rate = int.from_bytes(frame[24:28], "little")
-    assert rate == SAMPLE_RATE_PASSTHROUGH, (
-        f"expected 16000 Hz in WAV header, got {rate}"
-    )
+    assert rate == SAMPLE_RATE_PASSTHROUGH, f"expected 16000 Hz in WAV header, got {rate}"
 
 
 def test_wav_cache_reuses_same_bytes_across_listeners():
@@ -247,8 +231,8 @@ def test_wav_cache_reuses_same_bytes_across_listeners():
 
     async def _drive():
         pcm = _sine_pcm(0.100)
-        await server._deliver_audio_to_listener(ws_a, pref_a, pcm, SAMPLE_RATE_TTS, cache)
-        await server._deliver_audio_to_listener(ws_b, pref_b, pcm, SAMPLE_RATE_TTS, cache)
+        await _deliver_audio_to_listener(ws_a, pref_a, pcm, SAMPLE_RATE_TTS, cache)
+        await _deliver_audio_to_listener(ws_b, pref_b, pcm, SAMPLE_RATE_TTS, cache)
 
     _run(_drive())
     assert ws_a.binary_frames[0] == ws_b.binary_frames[0], (
@@ -268,14 +252,14 @@ def test_grace_window_buffers_audio_then_flush_delivers_wav():
     async def _drive():
         pcm_a = _sine_pcm(0.100)
         pcm_b = _sine_pcm(0.100)
-        await server._deliver_audio_to_listener(ws, pref, pcm_a, SAMPLE_RATE_TTS, None)
-        await server._deliver_audio_to_listener(ws, pref, pcm_b, SAMPLE_RATE_TTS, None)
+        await _deliver_audio_to_listener(ws, pref, pcm_a, SAMPLE_RATE_TTS, None)
+        await _deliver_audio_to_listener(ws, pref, pcm_b, SAMPLE_RATE_TTS, None)
         # Nothing on the wire yet — both buffered.
         assert len(ws.binary_frames) == 0
         assert len(pref.pending_audio) == 2
         # Now resolve the format and flush.
         pref.audio_format = "wav-pcm"
-        await server._flush_pending_audio(ws, pref)
+        await audio_output._flush_pending_audio(ws, pref)
 
     _run(_drive())
 
@@ -295,12 +279,10 @@ def test_grace_window_expired_defaults_to_wav_pcm():
 
     async def _drive():
         pcm = _sine_pcm(0.100)
-        await server._deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
+        await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
 
     _run(_drive())
-    assert pref.audio_format == "wav-pcm", (
-        f"expected wav-pcm default, got {pref.audio_format!r}"
-    )
+    assert pref.audio_format == "wav-pcm", f"expected wav-pcm default, got {pref.audio_format!r}"
     assert len(ws.binary_frames) == 1
     assert ws.binary_frames[0][:4] == b"RIFF"
 
@@ -314,15 +296,12 @@ def test_pending_buffer_capped_at_one_second():
         # Feed 3 × 500 ms deliveries = 1.5 s attempted, should cap at 1 s.
         for _ in range(3):
             pcm = _sine_pcm(0.500)
-            await server._deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
+            await _deliver_audio_to_listener(ws, pref, pcm, SAMPLE_RATE_TTS, None)
 
     _run(_drive())
 
     assert len(ws.binary_frames) == 0  # nothing delivered yet
-    buffered_seconds = sum(
-        len(a) / sr for a, sr in pref.pending_audio
-    )
-    assert buffered_seconds <= server._AUDIO_FORMAT_PENDING_CAP_S + 1e-3, (
-        f"buffered {buffered_seconds:.3f}s exceeds cap "
-        f"{server._AUDIO_FORMAT_PENDING_CAP_S}s"
+    buffered_seconds = sum(len(a) / sr for a, sr in pref.pending_audio)
+    assert buffered_seconds <= audio_output._AUDIO_FORMAT_PENDING_CAP_S + 1e-3, (
+        f"buffered {buffered_seconds:.3f}s exceeds cap {audio_output._AUDIO_FORMAT_PENDING_CAP_S}s"
     )

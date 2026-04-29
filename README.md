@@ -13,7 +13,7 @@ All models run locally on a single GB10 node (aarch64 Linux, 128 GB unified memo
 | ASR | Qwen3-ASR-1.7B | vLLM | 8003 |
 | Translation | Qwen3.6-35B-A3B-FP8 | vLLM | 8010 |
 | TTS (interpretation audio) | Qwen3-TTS-12Hz-0.6B-Base | faster-qwen3-tts | 8002 |
-| Diarization | pyannote.audio 3.x | Custom container | 8001 |
+| Diarization | pyannote.audio 4.0 (`speaker-diarization-community-1`) | Custom container | 8001 |
 | Name extraction | Qwen3.6-35B-A3B-FP8 (reuses translation vLLM) | vLLM | 8010 |
 | Refinement worker — *off by default* | Qwen3.6-35B-A3B-FP8 (reuses translation vLLM) | vLLM | 8010 |
 
@@ -21,7 +21,7 @@ The 35B FP8 translation model is the heaviest component (≈35 GB VRAM when load
 
 ## Features
 
-- **Multi-language ASR** — Qwen3-ASR with 52-language support + auto-detection
+- **Multi-language ASR** — Qwen3-ASR with 52-language support + auto-detection. Per-language quality verified on 19 of the 20 (see [`benchmarks/results/asr-language-matrix.md`](benchmarks/results/asr-language-matrix.md) — most languages clear ≤5% p50 normalized error on Fleurs). Malay (`ms`) is best-effort: Fleurs has no Malay split, so we score Indonesian (`id`) as a proxy.
 - **Configurable language pairs** — Any pair from **20 supported languages**. 10 of those are TTS-capable (English, Chinese, Japanese, Korean, French, German, Spanish, Italian, Portuguese, Russian) and unlock the interpretation-audio feature end-to-end. The other 10 (Dutch, Arabic, Thai, Vietnamese, Indonesian, Malay, Hindi, Turkish, Polish, Ukrainian) work for ASR + translate only — no synthesized interpretation audio. Default pair is `en,ja`; set `SCRIBE_LANGUAGE_PAIR` to change.
 - **Interpretation audio** — For TTS-capable language pairs only. Near-real-time translated audio track, per-client language preference, streamed to hotspot guests over a dedicated WebSocket.
 - **Speaker diarization** — pyannote-based speaker identification (real speakers, not just "speaker 1 / speaker 2")
@@ -48,7 +48,7 @@ cd meeting-scribe && ./bootstrap.sh
 ```
 
 `bootstrap.sh` gates on platform, installs OS packages (ffmpeg, libportaudio,
-etc.), pins Python via mise (or uses system python3.11+), creates a `.venv`,
+etc.), pins Python via mise (or uses system python3.14+), creates a `.venv`,
 editable-installs meeting-scribe, then hands off to `meeting-scribe setup`
 for HF token / TLS certs / container stack / systemd registration.
 
@@ -138,28 +138,46 @@ docker compose -f docker-compose.gb10.yml ps
 ```bash
 meeting-scribe start [--port 8080] [--debug] [--foreground]
 meeting-scribe stop
-meeting-scribe restart            # with smoke-test
+meeting-scribe restart                  # with smoke-test
 meeting-scribe status
 meeting-scribe logs [-f]
-meeting-scribe gb10 up            # Start model backend containers
-meeting-scribe gb10 down          # Stop model backend containers
+meeting-scribe gb10 up                  # Start model backend containers
+meeting-scribe gb10 down                # Stop model backend containers
+meeting-scribe gb10 status              # Health check all backends
+meeting-scribe gb10 pull-models         # Download required HF models
 meeting-scribe wifi up --mode {admin,meeting}   # Bring up WiFi hotspot
 meeting-scribe wifi down
-meeting-scribe precommit          # Scan the working tree for sensitive data before commit
+meeting-scribe wifi status              # Live nmcli/wpa_cli state
+meeting-scribe validate [--quick|--full|--e2e]  # End-to-end backend health + quality probes
+meeting-scribe versions list -m <id>    # List reprocess snapshots for a meeting
+meeting-scribe versions diff -m <id>    # Diff a snapshot against the current state
+meeting-scribe precommit                # Scan the working tree for sensitive data before commit
 ```
 
 ## Per-Meeting Artifacts
 
 ```
 meetings/{id}/
-  meta.json              # Meeting state + metadata
-  room.json              # Table + seat layout
-  speakers.json          # Enrolled speaker embeddings
-  journal.jsonl          # Append-only transcript events
-  polished.json          # Refinement worker output
-  detected_speakers.json # Auto-detected speakers
-  timeline.json          # Segment manifest for podcast player
-  audio/recording.pcm    # Time-aligned s16le 16kHz mono
+  meta.json                      # Meeting state + metadata
+  room.json                      # Table + seat layout
+  speakers.json                  # Enrolled speaker embeddings
+  journal.jsonl                  # Append-only transcript events
+  detected_speakers.json         # Auto-detected speakers
+  timeline.json                  # Segment manifest for podcast player
+  summary.json                   # Eager-computed AI summary (refreshed on finalize)
+  speaker_lanes.json             # Per-speaker timeline lanes (+ _exclusive variant)
+  polished.json                  # Refinement worker output (when SCRIBE_ENABLE_REFINEMENT=1)
+  audio/
+    recording.pcm                # Time-aligned s16le 16kHz mono
+  slides/                        # Present only if a deck was uploaded
+    {deck_id}/                   # Source PPTX, rendered thumbnails, translated text
+  versions/                      # Reprocess snapshots (one subdir per run)
+    {ts}__{label}/
+      manifest.json              # Snapshot inputs + git hash
+      journal.jsonl              # Snapshot of pre-reprocess artifacts
+      summary.json
+      timeline.json
+      detected_speakers.json
 ```
 
 ## WiFi Hotspot

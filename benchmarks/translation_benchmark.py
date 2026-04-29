@@ -66,28 +66,55 @@ import httpx
 # Test corpus: parallel EN↔JA sentences for quality evaluation
 TEST_CORPUS = [
     # Simple greetings
-    {"ja": "今日の会議の議題について確認しましょう。", "en": "Let's confirm the agenda for today's meeting."},
-    {"ja": "この提案について何かご質問はありますか？", "en": "Do you have any questions about this proposal?"},
+    {
+        "ja": "今日の会議の議題について確認しましょう。",
+        "en": "Let's confirm the agenda for today's meeting.",
+    },
+    {
+        "ja": "この提案について何かご質問はありますか？",
+        "en": "Do you have any questions about this proposal?",
+    },
     {"ja": "次のステップを決めましょう。", "en": "Let's decide on the next steps."},
     # Business terminology
     {"ja": "四半期の売上目標を達成しました。", "en": "We achieved our quarterly sales target."},
-    {"ja": "新しいプロジェクトの予算を承認する必要があります。", "en": "We need to approve the budget for the new project."},
-    {"ja": "来週のデモに向けて準備を進めています。", "en": "We are preparing for next week's demo."},
+    {
+        "ja": "新しいプロジェクトの予算を承認する必要があります。",
+        "en": "We need to approve the budget for the new project.",
+    },
+    {
+        "ja": "来週のデモに向けて準備を進めています。",
+        "en": "We are preparing for next week's demo.",
+    },
     # Technical content
     {"ja": "APIのレスポンスタイムが改善されました。", "en": "The API response time has improved."},
-    {"ja": "データベースのマイグレーションは明日実行します。", "en": "We will run the database migration tomorrow."},
-    {"ja": "本番環境にデプロイする前にテストを完了してください。", "en": "Please complete testing before deploying to production."},
+    {
+        "ja": "データベースのマイグレーションは明日実行します。",
+        "en": "We will run the database migration tomorrow.",
+    },
+    {
+        "ja": "本番環境にデプロイする前にテストを完了してください。",
+        "en": "Please complete testing before deploying to production.",
+    },
     # Conversational
-    {"ja": "すみません、もう一度言っていただけますか？", "en": "Excuse me, could you say that again?"},
+    {
+        "ja": "すみません、もう一度言っていただけますか？",
+        "en": "Excuse me, could you say that again?",
+    },
     {"ja": "その点については同意します。", "en": "I agree with that point."},
     {"ja": "詳しく説明していただけますか？", "en": "Could you explain in more detail?"},
     # Complex sentences
-    {"ja": "この問題を解決するためには、チーム全体で協力する必要があると考えています。",
-     "en": "I believe we need the whole team to cooperate to solve this problem."},
-    {"ja": "スケジュールの遅延を最小限に抑えるため、優先順位を再検討しましょう。",
-     "en": "Let's re-examine priorities to minimize schedule delays."},
-    {"ja": "お客様からのフィードバックに基づいて、UIを改善する計画です。",
-     "en": "We plan to improve the UI based on customer feedback."},
+    {
+        "ja": "この問題を解決するためには、チーム全体で協力する必要があると考えています。",
+        "en": "I believe we need the whole team to cooperate to solve this problem.",
+    },
+    {
+        "ja": "スケジュールの遅延を最小限に抑えるため、優先順位を再検討しましょう。",
+        "en": "Let's re-examine priorities to minimize schedule delays.",
+    },
+    {
+        "ja": "お客様からのフィードバックに基づいて、UIを改善する計画です。",
+        "en": "We plan to improve the UI based on customer feedback.",
+    },
 ]
 
 
@@ -160,15 +187,19 @@ async def benchmark_model(
             latencies.append(latency_ms)
 
             similarity = _char_similarity(reference, translated)
-            results.append({
-                "source": source_text,
-                "reference": reference,
-                "translated": translated,
-                "latency_ms": round(latency_ms, 1),
-                "char_similarity": round(similarity, 3),
-            })
+            results.append(
+                {
+                    "source": source_text,
+                    "reference": reference,
+                    "translated": translated,
+                    "latency_ms": round(latency_ms, 1),
+                    "char_similarity": round(similarity, 3),
+                }
+            )
 
-            print(f"  [{latency_ms:.0f}ms] sim={similarity:.2f} {source_text[:30]}... → {translated[:30]}...")
+            print(
+                f"  [{latency_ms:.0f}ms] sim={similarity:.2f} {source_text[:30]}... → {translated[:30]}..."
+            )
 
     # Aggregate stats
     stats = {
@@ -204,7 +235,13 @@ def compare_results(file_a: str, file_b: str) -> None:
     print(f"\n{'Metric':<25} {'Model A':>15} {'Model B':>15} {'Delta':>10}")
     print("-" * 70)
 
-    for key in ("latency_p50_ms", "latency_p90_ms", "latency_mean_ms", "avg_char_similarity", "throughput_sps"):
+    for key in (
+        "latency_p50_ms",
+        "latency_p90_ms",
+        "latency_mean_ms",
+        "avg_char_similarity",
+        "throughput_sps",
+    ):
         va = a.get(key, 0)
         vb = b.get(key, 0)
         delta = vb - va
@@ -216,6 +253,7 @@ def compare_results(file_a: str, file_b: str) -> None:
 
 
 # ── Shared corpus + translate primitives ────────────────────────────
+
 
 def _load_corpus(corpus_path: str | None, direction: str) -> list[dict]:
     """Return the corpus as a list of ``{source_lang, target_lang,
@@ -298,6 +336,7 @@ async def _detect_model_id(client: httpx.AsyncClient, url: str) -> str:
 
 # ── --no-score: dump raw runs for later offline scoring ─────────────
 
+
 async def dump_runs(
     url: str,
     corpus: list[dict],
@@ -345,6 +384,7 @@ async def dump_runs(
 
 # ── --back-translate: reverse pass for unreferenced pairs ───────────
 
+
 async def back_translate_runs(
     runs_in: str,
     via_url: str,
@@ -389,6 +429,7 @@ async def back_translate_runs(
 
 # ── --score-only: offline scoring from saved JSONL dumps ────────────
 
+
 def _load_runs(path: str) -> list[dict]:
     return [
         json.loads(line)
@@ -423,7 +464,11 @@ def _sacrebleu_corpus(hyp: list[str], ref: list[str], target_lang: str) -> float
     elif target_lang == "ko":
         tokenize = "char"
     try:
-        bleu = sacrebleu.corpus_bleu(hyp, [ref], tokenize=tokenize) if tokenize else sacrebleu.corpus_bleu(hyp, [ref])
+        bleu = (
+            sacrebleu.corpus_bleu(hyp, [ref], tokenize=tokenize)
+            if tokenize
+            else sacrebleu.corpus_bleu(hyp, [ref])
+        )
         return round(bleu.score, 2)
     except Exception as exc:
         print(f"sacreBLEU failed for target_lang={target_lang}: {exc}")
@@ -446,10 +491,7 @@ def _comet_score(
     try:
         ckpt = download_model("Unbabel/wmt22-comet-da")
         model = load_from_checkpoint(ckpt)
-        data = [
-            {"src": s, "mt": h, "ref": r}
-            for s, h, r in zip(sources, hyps, refs, strict=False)
-        ]
+        data = [{"src": s, "mt": h, "ref": r} for s, h, r in zip(sources, hyps, refs, strict=False)]
         # gpus=0 keeps the score from blocking the GPU the live backend holds.
         out = model.predict(data, batch_size=8, gpus=0)
         return round(float(out["system_score"]), 4)
@@ -558,9 +600,7 @@ def score_runs(
     langs = sorted(set(scored_a["bleu_by_target"]) | set(scored_b["bleu_by_target"]))
     if langs:
         lines.append("## sacreBLEU (referenced pairs)")
-        lines.append(
-            "| target | " + label_a + " BLEU | " + label_b + " BLEU | delta |"
-        )
+        lines.append("| target | " + label_a + " BLEU | " + label_b + " BLEU | delta |")
         lines.append("|---|---:|---:|---:|")
         for lang in langs:
             lines.append(
@@ -573,9 +613,7 @@ def score_runs(
     langs_c = sorted(set(scored_a["comet_by_target"]) | set(scored_b["comet_by_target"]))
     if langs_c:
         lines.append("## COMET (wmt22-comet-da, referenced pairs)")
-        lines.append(
-            "| target | " + label_a + " COMET | " + label_b + " COMET | delta |"
-        )
+        lines.append("| target | " + label_a + " COMET | " + label_b + " COMET | delta |")
         lines.append("|---|---:|---:|---:|")
         for lang in langs_c:
             lines.append(
@@ -597,9 +635,7 @@ def score_runs(
             "preserved meaning better."
         )
         lines.append("")
-        lines.append(
-            "| source | " + label_a + " BLEU | " + label_b + " BLEU | delta |"
-        )
+        lines.append("| source | " + label_a + " BLEU | " + label_b + " BLEU | delta |")
         lines.append("|---|---:|---:|---:|")
         for lang in bt_langs:
             lines.append(
@@ -609,9 +645,18 @@ def score_runs(
             )
         lines.append("")
 
-    if not any(s for s in (scored_a["bleu_by_target"], scored_b["bleu_by_target"],
-                            scored_a["comet_by_target"], scored_b["comet_by_target"])):
-        lines.append("> NOTE: sacreBLEU/COMET are unavailable — install `sacrebleu` + `unbabel-comet`")
+    if not any(
+        s
+        for s in (
+            scored_a["bleu_by_target"],
+            scored_b["bleu_by_target"],
+            scored_a["comet_by_target"],
+            scored_b["comet_by_target"],
+        )
+    ):
+        lines.append(
+            "> NOTE: sacreBLEU/COMET are unavailable — install `sacrebleu` + `unbabel-comet`"
+        )
         lines.append("> via ``pip install -e '.[bench]'`` to enable them.")
         lines.append("")
 
@@ -627,10 +672,14 @@ async def main():
         epilog=__doc__,
     )
     parser.add_argument("--url", default="http://localhost:8010", help="vLLM endpoint URL")
-    parser.add_argument("--model-name", default="default", help="Label for this model run (legacy --run mode)")
+    parser.add_argument(
+        "--model-name", default="default", help="Label for this model run (legacy --run mode)"
+    )
     parser.add_argument("--direction", default="ja_to_en", choices=["ja_to_en", "en_to_ja"])
     parser.add_argument("--corpus", help="External JSONL corpus path (overrides --direction)")
-    parser.add_argument("--compare", nargs=2, metavar="FILE", help="Compare two legacy result files")
+    parser.add_argument(
+        "--compare", nargs=2, metavar="FILE", help="Compare two legacy result files"
+    )
 
     # Phase 3 split-mode A/B:
     parser.add_argument(
@@ -693,7 +742,7 @@ async def main():
 
     stats = await benchmark_model(args.url, args.model_name, args.direction)
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"Model:        {stats['model_name']}")
     print(f"Latency p50:  {stats['latency_p50_ms']}ms")
     print(f"Latency p90:  {stats['latency_p90_ms']}ms")

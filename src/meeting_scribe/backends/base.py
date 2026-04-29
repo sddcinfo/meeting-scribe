@@ -91,6 +91,17 @@ class ASRBackend(ABC):
         """Flush any buffered audio and emit final events."""
         yield  # type: ignore[misc]  # pragma: no cover
 
+    def set_languages(self, languages: list[str] | tuple[str, ...]) -> None:
+        """Update the ASR prompt to target these languages for the next
+        meeting. Default is a no-op so backends that don't support
+        runtime language switching (e.g. a hypothetical monolingual
+        model) inherit a safe default. Concrete language-aware
+        backends (``VllmASRBackend``) override to invalidate their
+        system-prompt cache. Declared on the ABC so server.py can
+        call it without narrowing to a specific subclass.
+        """
+        return None
+
 
 class DiarizeBackend(ABC):
     """Abstract speaker diarization backend.

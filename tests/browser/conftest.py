@@ -26,6 +26,41 @@ from meeting_scribe.backends.mse_encoder import SAMPLE_RATE_OUT, Fmp4AacEncoder
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 
 
+# ── Tmux socket isolation ────────────────────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _isolate_tmux_socket(monkeypatch) -> Generator[str, None, None]:
+    """Pin every browser test to a per-run tmux socket.
+
+    Without this, tests that spawn real tmux (autosre suite, anything
+    that leaves SCRIBE_TERM_SHELL unset) attach to the user's live
+    ``-L scribe`` socket. Commands typed in a test would then echo into
+    the user's real terminal window — exactly what the user reported.
+    """
+    import os as _os
+    import shutil as _shutil
+    import subprocess as _subp
+
+    sock = f"scribe-test-{_os.getpid()}"
+    monkeypatch.setenv("SCRIBE_TMUX_SOCKET", sock)
+    yield sock
+    # Best-effort teardown via a plain subprocess — avoids spinning up a
+    # second event loop from inside a fixture that pytest-asyncio already
+    # manages. The socket is disposable by design, so "no server" is a
+    # success state.
+    if _shutil.which("tmux"):
+        try:
+            _subp.run(
+                ["tmux", "-L", sock, "kill-server"],
+                capture_output=True,
+                timeout=3,
+                check=False,
+            )
+        except Exception:
+            pass
+
+
 # ── Chromium launch configuration ────────────────────────────────────
 
 
@@ -44,9 +79,7 @@ def browser_type_launch_args(browser_type_launch_args):
 # ── Test audio generation ────────────────────────────────────────────
 
 
-def generate_test_fmp4(
-    duration_s: float = 2.0, freq: float = 440.0
-) -> tuple[bytes, list[bytes]]:
+def generate_test_fmp4(duration_s: float = 2.0, freq: float = 440.0) -> tuple[bytes, list[bytes]]:
     """Generate (init_bytes, [fragment_bytes, ...]) using Fmp4AacEncoder.
 
     Feeds a sine wave in 50ms chunks to match realistic TTS delivery cadence.
@@ -101,9 +134,7 @@ def _build_synthetic_app(
                 msg = json.loads(text)
                 if msg.get("type") == "set_format":
                     fmt = msg.get("format", "")
-                    await websocket.send_text(
-                        json.dumps({"type": "format_ack", "format": fmt})
-                    )
+                    await websocket.send_text(json.dumps({"type": "format_ack", "format": fmt}))
                     break
             except Exception:
                 pass
@@ -175,9 +206,7 @@ class _ServerThread(threading.Thread):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:
-                urllib.request.urlopen(
-                    f"http://127.0.0.1:{self.port}/", timeout=1
-                )
+                urllib.request.urlopen(f"http://127.0.0.1:{self.port}/", timeout=1)
                 return
             except Exception:
                 time.sleep(0.1)

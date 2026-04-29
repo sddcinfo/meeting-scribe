@@ -1,0 +1,5 @@
+{
+  "type": "dev_reset",
+  "meeting_id": "test-meeting-0",
+  "message": "Meeting state reset — ready for next iteration"
+}

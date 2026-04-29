@@ -266,7 +266,9 @@ def _git(repo: Path, *args: str) -> str:
         check=False,
     )
     if result.returncode != 0:
-        raise click.ClickException(f"git {' '.join(args)} failed in {repo}: {result.stderr.strip()}")
+        raise click.ClickException(
+            f"git {' '.join(args)} failed in {repo}: {result.stderr.strip()}"
+        )
     return result.stdout
 
 

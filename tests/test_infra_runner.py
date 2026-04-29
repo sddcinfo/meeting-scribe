@@ -121,7 +121,7 @@ class TestEnsurePort80Bind:
     """_ensure_port80_bind — the one helper that makes deploys automatic."""
 
     def test_already_granted_fast_path(self, monkeypatch):
-        from meeting_scribe import cli as cli_module
+        from meeting_scribe.cli import _common as cli_module
 
         fake_py = Path("/fake/python")
 
@@ -147,7 +147,7 @@ class TestEnsurePort80Bind:
         assert str(fake_py) in detail
 
     def test_sudo_grant_succeeds(self, monkeypatch):
-        from meeting_scribe import cli as cli_module
+        from meeting_scribe.cli import _common as cli_module
 
         fake_py = Path("/fake/python")
         monkeypatch.setattr(cli_module, "_venv_python", lambda: fake_py)
@@ -173,7 +173,7 @@ class TestEnsurePort80Bind:
         assert "cap_net_bind_service=+ep" in [a for c in calls for a in c]
 
     def test_sudo_grant_fails_returns_instructions(self, monkeypatch):
-        from meeting_scribe import cli as cli_module
+        from meeting_scribe.cli import _common as cli_module
 
         fake_py = Path("/fake/python")
         monkeypatch.setattr(cli_module, "_venv_python", lambda: fake_py)

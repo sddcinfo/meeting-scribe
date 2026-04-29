@@ -27,7 +27,14 @@
 #   docker compose -f docker-compose.gb10.yml up -d  # Containers only
 
 services:
-  # Speaker Diarization — pyannote.audio (aarch64/Blackwell compatible)
+  # Speaker Diarization — pyannote.audio 4.0.4 / speaker-diarization-community-1
+  # (production since 2026-04-28).  community-1 emits a single-speaker
+  # exclusive timeline alongside the standard segmentation; the
+  # exclusive output drives primary-speaker assignment in
+  # speaker_attach.py while the standard output carries embeddings for
+  # cross-chunk merging and detects cross-talk.  See
+  # plans/stateful-marinating-whistle.md (Track C) for the bench result
+  # that promoted community-1 to production.
   pyannote-diarize:
     image: pyannote-diarize:latest
     build:
@@ -49,6 +56,13 @@ services:
     environment:
       - DIARIZE_PORT=8001
       - DIARIZE_MAX_SPEAKERS=4
+      # Pinned to community-1 explicitly.  The container's server.py
+      # defaults to community-1 too — this restates the choice for
+      # operators reading the compose file.  Override at run time only
+      # to roll back to a previous pipeline (no production reason to do
+      # so today; see MODEL_SELECTION.md decision log).
+      - DIARIZE_PIPELINE_ID=${DIARIZE_PIPELINE_ID:-pyannote/speaker-diarization-community-1}
+      - DIARIZE_PIPELINE_REVISION=${DIARIZE_PIPELINE_REVISION:-}
       - HF_TOKEN=${HF_TOKEN:-}
       - HF_HUB_OFFLINE=1
       - TRANSFORMERS_OFFLINE=1
@@ -157,132 +171,11 @@ services:
       retries: 6
       start_period: 180s
 
-  # vllm-omni TTS (migration target — Phase 2 of the TTS rewrite).
-  # Single continuous-batching instance replaces qwen3-tts + qwen3-tts-2.
-  # Starts on port 8022 while the legacy 8002/8012 replicas remain up so
-  # the two stacks can run side-by-side through the Phase 1b load test and
-  # user acceptance window. Flip `SCRIBE_TTS_VLLM_URL=http://localhost:8022`
-  # in the scribe-main env to route synthesis to the new instance.
-  #
-  # Enable:  docker compose --profile vllm-omni up -d vllm-tts
-  vllm-tts:
-    profiles: ["vllm-omni"]
-    image: scribe-tts-vllm:latest
-    build:
-      context: containers/tts-vllm
-    container_name: scribe-tts-vllm
-    network_mode: host
-    # Phase 1a hardening (supply-chain + sandbox): read_only is disabled
-    # during the parallel-run period because numba/librosa JIT needs a
-    # writable site-packages path. Re-enable before acceptance cutover
-    # by baking `NUMBA_CACHE_DIR=/tmp/numba` + `HF_HOME=/tmp/hf` into the
-    # image and adding both to the tmpfs list.
-    tmpfs:
-      # torchinductor + triton write .so files to /tmp/torchinductor_* and
-      # mmap them back — default docker tmpfs is noexec, which blocks that.
-      - /tmp:exec,size=4g
-      - /root/.cache/vllm:exec,size=4g
-    cap_drop: ["ALL"]
-    security_opt:
-      - "no-new-privileges:true"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    shm_size: 16g
-    ulimits:
-      memlock: -1
-    # Model is baked into the image at a pinned HF revision; no hub access
-    # at runtime (HF_HUB_OFFLINE=1). We mount nothing from the host.
-    entrypoint: ["vllm"]
-    command:
-      - serve
-      - /models/qwen3-tts-1.7b
-      - --stage-configs-path
-      - /opt/stage_configs/qwen3_tts.yaml
-      - --omni
-      - --port
-      - "8022"
-      - --trust-remote-code
-      - --enforce-eager
-    volumes:
-      # Override the stage config baked into the image so per-stage
-      # gpu_memory_utilization=0.1 fits alongside the 35B translator +
-      # legacy TTS replicas. Remove this mount once the production
-      # Dockerfile rebuilds with the patched config in src/meeting_scribe/.
-      - ./src/meeting_scribe/stage_configs/qwen3_tts.yaml:/opt/stage_configs/qwen3_tts.yaml:ro
-    environment:
-      - TTS_PORT=8022
-      - HF_HUB_OFFLINE=1
-      - TRANSFORMERS_OFFLINE=1
-      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
-    # Long start_period: vllm-omni 2-stage load + torch.compile + warmup
-    # measured at ~4 min cold on GB10 aarch64; first-run kernel cache
-    # pushes it higher. labels.autoheal="false" keeps autoheal hands off.
-    labels:
-      autoheal: "false"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8022/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 600s
-
-  # Unified Omni (ASR + TTS + translate in one vllm-omni instance).
-  # Consolidation spike per plan `vLLM Consolidation + Omni Spike`.
-  # Parallel-run only — dedicated scribe-asr / scribe-tts(-vllm) /
-  # translate-on-35B stay alive until per-modality Phase C gates pass
-  # AND user acceptance stamps in containers/omni/ACCEPTANCE.md.
-  #
-  # Enable: docker compose --profile omni-spike up -d omni-unified
-  omni-unified:
-    profiles: ["omni-spike"]
-    image: scribe-omni:spike
-    build:
-      context: containers/omni
-      args:
-        HF_MODEL_REVISION: "26291f793822fb6be9555850f06dfe95f2d7e695"
-    container_name: scribe-omni-unified
-    network_mode: host
-    read_only: true
-    tmpfs:
-      # torchinductor + triton write .so files to /tmp/torchinductor_* and
-      # mmap them back — default docker tmpfs is noexec, which blocks that.
-      - /tmp:exec,size=4g
-      - /root/.cache/vllm:exec,size=4g
-    cap_drop: ["ALL"]
-    security_opt:
-      - "no-new-privileges:true"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    shm_size: 16g
-    ulimits:
-      memlock: -1
-    environment:
-      - OMNI_PORT=8032
-      - HF_HUB_OFFLINE=1
-      - TRANSFORMERS_OFFLINE=1
-      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8032/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 300s
-
   # ASR — Qwen3-ASR-1.7B via vLLM
   vllm-asr:
-    image: ${SCRIBE_VLLM_IMAGE:-ghcr.io/bjk110/vllm-spark:turboquant}
+    image: ${SCRIBE_VLLM_IMAGE:-scribe-vllm-asr:latest}
+    build:
+      context: containers/vllm-asr
     container_name: scribe-asr
     entrypoint: []
     command:
@@ -329,6 +222,98 @@ services:
   # no iframe, no second toolbar, no "Download failed" overlay. The
   # PNG path covers the same fidelity needs without the chrome OnlyOffice
   # imposed. Backend container can be removed entirely.
+
+  # ---------------------------------------------------------------------
+  # 2026-Q2 model-challenger bench sidecars (plans/stateful-marinating-whistle.md)
+  # All gated behind `profiles: [bench]` (or [bench-scratch] for the
+  # community-1 SM_121 smoke check) so they never auto-start with the
+  # production stack.  Bring up explicitly with:
+  #   docker compose --profile bench up -d <service>
+  # Production services on 8001/8002/8003/8012 stay untouched.
+  # ---------------------------------------------------------------------
+
+  # Track A — Cohere Transcribe (Apache 2.0, 2026-03-26).
+  cohere-transcribe:
+    profiles: ["bench"]
+    image: cohere-transcribe:bench
+    build:
+      context: containers/cohere-transcribe
+      args:
+        COHERE_REVISION: ${COHERE_REVISION:-}
+    container_name: scribe-bench-cohere-transcribe
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 8g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - ASR_PORT=8013
+      - COHERE_MODEL_ID=${COHERE_MODEL_ID:-CohereLabs/cohere-transcribe-03-2026}
+      - COHERE_REVISION=${COHERE_REVISION:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
+    restart: "no"  # Bench-only; do not auto-restart.
+    labels:
+      - "autoheal=false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8013/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # Track B — Fun-CosyVoice3.5 (Apache 2.0, Tongyi 2026-03-02).
+  # Port 8024.
+  funcosyvoice:
+    profiles: ["bench"]
+    image: funcosyvoice:bench
+    build:
+      context: containers/funcosyvoice
+      args:
+        COSY_REVISION: ${COSY_REVISION:-}
+    container_name: scribe-bench-funcosyvoice
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 8g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - TTS_PORT=8024
+      - COSY_MODEL_ID=${COSY_MODEL_ID:-FunAudioLLM/CosyVoice3.5}
+      - COSY_REVISION=${COSY_REVISION:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
+    restart: "no"
+    labels:
+      - "autoheal=false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--max-time", "25", "http://localhost:8024/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 240s
+
+  # (Track C bench sidecars removed 2026-04-28 — production
+  # pyannote-diarize on 8001 IS community-1 now, so the parallel bench
+  # sidecars are redundant.  Keep the cohere-transcribe / funcosyvoice
+  # bench sidecars above for the open ASR / TTS challenger work that
+  # has not yet promoted.)
 
   # Auto-heal: restarts any container Docker marks unhealthy.
   # Combined with CUDA health checks in diarize/TTS, a GPU-broken

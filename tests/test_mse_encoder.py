@@ -38,12 +38,12 @@ def _walk_iso_bmff(data: bytes) -> list[tuple[int, bytes]]:
     out: list[tuple[int, bytes]] = []
     pos = 0
     while pos + 8 <= len(data):
-        size = int.from_bytes(data[pos:pos + 4], "big")
-        btype = data[pos + 4:pos + 8]
+        size = int.from_bytes(data[pos : pos + 4], "big")
+        btype = data[pos + 4 : pos + 8]
         if size == 1:
             if pos + 16 > len(data):
                 break
-            size = int.from_bytes(data[pos + 8:pos + 16], "big")
+            size = int.from_bytes(data[pos + 8 : pos + 16], "big")
         elif size == 0:
             size = len(data) - pos
         if size < 8 or pos + size > len(data):
@@ -83,9 +83,7 @@ def test_under_threshold_returns_empty() -> None:
             "test assumes threshold > 10 ms; revisit if Spike B changes"
         )
         result = enc.encode(pcm, SAMPLE_RATE_OUT)
-        assert result == b"", (
-            f"expected empty below threshold, got {len(result)} bytes"
-        )
+        assert result == b"", f"expected empty below threshold, got {len(result)} bytes"
     finally:
         enc.close()
 
@@ -108,7 +106,12 @@ def _decode_stream(init: bytes, fragments: list[bytes]) -> tuple[float, float]:
     blob = init + b"".join(fragments)
     if not blob:
         return 0.0, 0.0
-    decode_in = av.open(io.BytesIO(blob))
+    decode_in = av.open(io.BytesIO(blob), mode="r")
+    # av.open() returns InputContainer | OutputContainer in the stubs;
+    # mode="r" narrows it to InputContainer at runtime, but mypy
+    # cannot see that. assert_type is the one-time paper-cost of
+    # keeping the stubs honest.
+    assert isinstance(decode_in, av.container.InputContainer)
     total_samples = 0
     peak = 0.0
     try:
@@ -152,8 +155,7 @@ def test_no_audio_lost_48k_many_small_chunks() -> None:
     # The encoder may lose a tiny amount of audio at the very tail due to
     # AAC frame-alignment; allow ±10% tolerance on duration.
     assert 0.9 <= duration_s <= 1.1, (
-        f"expected ~1.0 s decoded, got {duration_s:.3f} s "
-        f"from {len(fragments)} fragment(s)"
+        f"expected ~1.0 s decoded, got {duration_s:.3f} s from {len(fragments)} fragment(s)"
     )
     assert peak >= 0.3, f"peak amplitude {peak:.3f} < 0.3 (expected ~0.8 sine)"
 
@@ -200,9 +202,7 @@ def test_flush_returns_residual_below_threshold() -> None:
 
     # 30 ms input can round to slightly less after AAC frame alignment; at
     # minimum we should see at least one AAC frame (~20 ms) of output.
-    assert duration_s >= 0.015, (
-        f"flush returned too little audio: {duration_s:.3f} s"
-    )
+    assert duration_s >= 0.015, f"flush returned too little audio: {duration_s:.3f} s"
 
 
 def test_close_is_idempotent() -> None:
@@ -242,9 +242,7 @@ def test_boundary_exact_threshold_emits() -> None:
         pcm = _sine(ACCUMULATION_THRESHOLD_MS / 1000.0, rate=SAMPLE_RATE_OUT)
         assert len(pcm) == n, f"expected {n} samples, got {len(pcm)}"
         result = enc.encode(pcm, SAMPLE_RATE_OUT)
-        assert len(result) > 0, (
-            f"exactly {ACCUMULATION_THRESHOLD_MS}ms should emit a fragment"
-        )
+        assert len(result) > 0, f"exactly {ACCUMULATION_THRESHOLD_MS}ms should emit a fragment"
         assert b"moof" in result
     finally:
         enc.close()
@@ -258,8 +256,7 @@ def test_boundary_one_below_threshold_empty() -> None:
         pcm = np.zeros(n, dtype=np.float32)
         result = enc.encode(pcm, SAMPLE_RATE_OUT)
         assert result == b"", (
-            f"expected empty for {n} samples (1 below threshold), "
-            f"got {len(result)} bytes"
+            f"expected empty for {n} samples (1 below threshold), got {len(result)} bytes"
         )
     finally:
         enc.close()
@@ -285,9 +282,7 @@ def test_mixed_sample_rates_interleaved() -> None:
     finally:
         enc.close()
 
-    assert 0.8 <= duration_s <= 1.2, (
-        f"expected ~1.0s from mixed rates, got {duration_s:.3f}s"
-    )
+    assert 0.8 <= duration_s <= 1.2, f"expected ~1.0s from mixed rates, got {duration_s:.3f}s"
     assert peak >= 0.3
 
 
@@ -323,9 +318,7 @@ def test_flush_between_encodes_no_data_loss() -> None:
         enc.close()
 
     # 90ms input → at least 60ms decoded (AAC frame alignment may trim tail)
-    assert 0.05 <= duration_s <= 0.15, (
-        f"expected ~0.09s from 90ms input, got {duration_s:.3f}s"
-    )
+    assert 0.05 <= duration_s <= 0.15, f"expected ~0.09s from 90ms input, got {duration_s:.3f}s"
     assert peak >= 0.3
 
 
@@ -346,9 +339,7 @@ def test_large_single_chunk_10s() -> None:
     finally:
         enc.close()
 
-    assert 9.5 <= duration_s <= 10.5, (
-        f"expected ~10.0s decoded, got {duration_s:.3f}s"
-    )
+    assert 9.5 <= duration_s <= 10.5, f"expected ~10.0s decoded, got {duration_s:.3f}s"
     assert peak >= 0.3
 
 

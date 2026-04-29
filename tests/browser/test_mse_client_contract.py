@@ -111,9 +111,7 @@ def test_audio_currentTime_advances(page, synthetic_mse_server):
             }""",
             timeout=15000,
         )
-        ct = page.evaluate(
-            "() => document.getElementById('guest-audio-el')?.currentTime || 0"
-        )
+        ct = page.evaluate("() => document.getElementById('guest-audio-el')?.currentTime || 0")
         assert ct > 0, f"expected currentTime > 0, got {ct}"
     except Exception:
         # Verify at least blobs arrived (autoplay may still be blocked)
