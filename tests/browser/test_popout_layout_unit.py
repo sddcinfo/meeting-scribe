@@ -1,15 +1,17 @@
 """Unit tests for the popout layout tree / presets / storage.
 
-These modules are pure-JS and live at `window.PopoutLayout*` once loaded.
-We exercise them from an in-browser page context so the same runtime
-asserts the same behavior that ships to users — no Node shim required.
+These modules are pure-JS and live at ``window.PopoutLayout*`` once
+loaded. We exercise them from an in-browser page context so the same
+runtime asserts the same behavior that ships to users — no Node shim
+required.
 
-NOTE: many assertions key off the old 6-preset registry
-(developer/fullstack/sidebyside/demo) that was simplified to 3
-presets in popout-layout-presets.js (translate/translator/triple).
-The tree-utility tests (split/merge/find/clamp) still pass — kept
-those individually and marked the preset-coupled ones skip until
-the rewrite. See test_popout_layout.py for the same triage.
+The current registry has three presets (see
+``static/js/popout-layout-presets.js``):
+
+  * ``translate``  — single ``transcript`` leaf, no terminal.
+  * ``translator`` — ``transcript`` over ``slides`` (Presentation), no terminal.
+  * ``triple``     — ``transcript`` over (``slides`` over ``terminal``); the
+                     only preset that includes a terminal pane.
 """
 
 from __future__ import annotations
@@ -24,15 +26,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse
 
-pytestmark = [
-    pytest.mark.browser,
-    pytest.mark.skip(
-        reason="Stale preset list (developer/fullstack/sidebyside/demo) "
-        "was simplified to 3 presets. Needs preset-coupled tests to be "
-        "rewritten or refocused; tree-utility helpers will be salvaged "
-        "in the rewrite PR."
-    ),
-]
+pytestmark = pytest.mark.browser
 
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
@@ -85,15 +79,16 @@ def _load(page, url: str) -> None:
     )
 
 
-def test_clampratio(page, unit_server):
+# ── Preset registry ───────────────────────────────────────────────
+
+
+def test_preset_registry_lists_three_presets_in_order(page, unit_server):
     _load(page, unit_server["base_url"])
-    assert page.evaluate("() => window.PopoutLayout.clampRatio(0.5)") == 0.5
-    assert page.evaluate("() => window.PopoutLayout.clampRatio(0)") == 0.15
-    assert page.evaluate("() => window.PopoutLayout.clampRatio(1.5)") == 0.85
-    assert page.evaluate("() => window.PopoutLayout.clampRatio(NaN)") == 0.5
+    order = page.evaluate("() => window.PopoutLayoutPresets.PRESET_ORDER")
+    assert order == ["translate", "translator", "triple"]
 
 
-def test_collect_panels(page, unit_server):
+def test_preset_panel_membership(page, unit_server):
     _load(page, unit_server["base_url"])
     panels = page.evaluate(
         """() => {
@@ -105,17 +100,40 @@ def test_collect_panels(page, unit_server):
             return out;
         }"""
     )
-    assert panels["translator"] == ["slides", "transcript"]
-    assert panels["developer"] == ["terminal", "transcript"]
-    assert panels["fullstack"] == ["slides", "terminal", "transcript"]
-    assert panels["triple"] == ["slides", "terminal", "transcript"]
-    assert panels["sidebyside"] == ["slides", "terminal", "transcript"]
-    assert panels["demo"] == ["slides", "terminal"]
+    assert panels == {
+        "translate": ["transcript"],
+        "translator": ["slides", "transcript"],
+        "triple": ["slides", "terminal", "transcript"],
+    }
+
+
+def test_only_triple_carries_terminal(page, unit_server):
+    """``hasTerminal`` is the predicate the keyboard shortcut + storage
+    use to decide last-term vs last-no-term memory. Triple is the only
+    current preset with a terminal pane.
+    """
+    _load(page, unit_server["base_url"])
+    flags = page.evaluate(
+        """() => {
+            const P = window.PopoutLayoutPresets;
+            return {
+                translate: P.hasTerminal('translate'),
+                translator: P.hasTerminal('translator'),
+                triple: P.hasTerminal('triple'),
+            };
+        }"""
+    )
+    assert flags == {"translate": False, "translator": False, "triple": True}
+
+
+def test_unknown_slug_falls_back_to_translator(page, unit_server):
+    _load(page, unit_server["base_url"])
+    slug = page.evaluate("() => window.PopoutLayoutPresets.get('not-a-preset').slug")
+    assert slug == "translator"
 
 
 def test_split_ids_unique_and_namespaced(page, unit_server):
     _load(page, unit_server["base_url"])
-    # Every preset validator must return [] (no errors).
     errs_by_slug = page.evaluate(
         """() => {
             const { PRESETS } = window.PopoutLayoutPresets;
@@ -129,7 +147,6 @@ def test_split_ids_unique_and_namespaced(page, unit_server):
     for slug, errs in errs_by_slug.items():
         assert errs == [], f"preset {slug} validator errors: {errs}"
 
-    # And ids do not collide across presets (critical for per-preset ratio persistence).
     all_ids = page.evaluate(
         """() => {
             const { PRESETS } = window.PopoutLayoutPresets;
@@ -143,22 +160,35 @@ def test_split_ids_unique_and_namespaced(page, unit_server):
     assert len(all_ids) == len(set(all_ids)), f"split ids collide: {all_ids}"
 
 
+# ── Tree utilities ────────────────────────────────────────────────
+
+
+def test_clampratio(page, unit_server):
+    _load(page, unit_server["base_url"])
+    assert page.evaluate("() => window.PopoutLayout.clampRatio(0.5)") == 0.5
+    assert page.evaluate("() => window.PopoutLayout.clampRatio(0)") == 0.15
+    assert page.evaluate("() => window.PopoutLayout.clampRatio(1.5)") == 0.85
+    assert page.evaluate("() => window.PopoutLayout.clampRatio(NaN)") == 0.5
+
+
 def test_set_get_ratio_is_non_destructive(page, unit_server):
+    """Editing ``triple:bottom`` must leave ``triple:main`` untouched."""
     _load(page, unit_server["base_url"])
     result = page.evaluate(
         """() => {
             const L = window.PopoutLayout;
-            const t = window.PopoutLayoutPresets.PRESETS.fullstack.tree;
-            const t2 = L.setRatio(t, 'fullstack:bottom', 0.3);
+            const t = window.PopoutLayoutPresets.PRESETS.triple.tree;
+            const t2 = L.setRatio(t, 'triple:bottom', 0.3);
             return {
-                originalBottom: L.getRatio(t,  'fullstack:bottom'),
-                updatedBottom:  L.getRatio(t2, 'fullstack:bottom'),
-                originalMain:   L.getRatio(t,  'fullstack:main'),
-                updatedMain:    L.getRatio(t2, 'fullstack:main'),
+                originalBottom: L.getRatio(t,  'triple:bottom'),
+                updatedBottom:  L.getRatio(t2, 'triple:bottom'),
+                originalMain:   L.getRatio(t,  'triple:main'),
+                updatedMain:    L.getRatio(t2, 'triple:main'),
             };
         }"""
     )
-    assert result["originalBottom"] == 0.65
+    # Triple ships with main=0.45, bottom=0.55.
+    assert result["originalBottom"] == 0.55
     assert result["updatedBottom"] == 0.3
     assert result["originalMain"] == result["updatedMain"]
 
@@ -169,8 +199,8 @@ def test_set_ratio_clamps(page, unit_server):
         page.evaluate(
             """() => {
             const L = window.PopoutLayout;
-            const t = window.PopoutLayoutPresets.PRESETS.fullstack.tree;
-            return L.getRatio(L.setRatio(t, 'fullstack:bottom', 0.99), 'fullstack:bottom');
+            const t = window.PopoutLayoutPresets.PRESETS.triple.tree;
+            return L.getRatio(L.setRatio(t, 'triple:bottom', 0.99), 'triple:bottom');
         }"""
         )
         == 0.85
@@ -179,8 +209,8 @@ def test_set_ratio_clamps(page, unit_server):
         page.evaluate(
             """() => {
             const L = window.PopoutLayout;
-            const t = window.PopoutLayoutPresets.PRESETS.fullstack.tree;
-            return L.getRatio(L.setRatio(t, 'fullstack:bottom', -0.1), 'fullstack:bottom');
+            const t = window.PopoutLayoutPresets.PRESETS.triple.tree;
+            return L.getRatio(L.setRatio(t, 'triple:bottom', -0.1), 'triple:bottom');
         }"""
         )
         == 0.15
@@ -188,13 +218,15 @@ def test_set_ratio_clamps(page, unit_server):
 
 
 def test_resolve_renderable_tree_prunes(page, unit_server):
+    """``resolveRenderableTree`` collapses unavailable panels and
+    promotes siblings up the tree."""
     _load(page, unit_server["base_url"])
-    # fullstack with no terminal → transcript + slides, no empty rectangle.
+    # Triple with no terminal → transcript + slides.
     kept = page.evaluate(
         """() => {
             const L = window.PopoutLayout;
             const resolved = L.resolveRenderableTree(
-                window.PopoutLayoutPresets.PRESETS.fullstack.tree,
+                window.PopoutLayoutPresets.PRESETS.triple.tree,
                 { transcript: true, slides: true, terminal: false },
             );
             return L.collectPanels(resolved).sort();
@@ -202,12 +234,12 @@ def test_resolve_renderable_tree_prunes(page, unit_server):
     )
     assert kept == ["slides", "transcript"]
 
-    # fullstack with no slides → transcript + terminal (terminal promoted from inner split).
+    # Triple with no slides → transcript + terminal.
     kept = page.evaluate(
         """() => {
             const L = window.PopoutLayout;
             const resolved = L.resolveRenderableTree(
-                window.PopoutLayoutPresets.PRESETS.fullstack.tree,
+                window.PopoutLayoutPresets.PRESETS.triple.tree,
                 { transcript: true, slides: false, terminal: true },
             );
             return L.collectPanels(resolved).sort();
@@ -215,12 +247,12 @@ def test_resolve_renderable_tree_prunes(page, unit_server):
     )
     assert kept == ["terminal", "transcript"]
 
-    # no deck + no terminal → single-leaf transcript.
+    # No deck + no terminal → single-leaf transcript.
     shape = page.evaluate(
         """() => {
             const L = window.PopoutLayout;
             const resolved = L.resolveRenderableTree(
-                window.PopoutLayoutPresets.PRESETS.fullstack.tree,
+                window.PopoutLayoutPresets.PRESETS.triple.tree,
                 { transcript: true, slides: false, terminal: false },
             );
             return { kind: resolved.kind, panel: resolved.panel };
@@ -229,34 +261,23 @@ def test_resolve_renderable_tree_prunes(page, unit_server):
     assert shape == {"kind": "leaf", "panel": "transcript"}
 
 
-def test_resolve_demo_with_no_deck_collapses_to_terminal(page, unit_server):
+def test_resolve_translator_with_no_deck_collapses_to_transcript(page, unit_server):
     _load(page, unit_server["base_url"])
     result = page.evaluate(
         """() => {
             const L = window.PopoutLayout;
             const resolved = L.resolveRenderableTree(
-                window.PopoutLayoutPresets.PRESETS.demo.tree,
-                { transcript: true, slides: false, terminal: true },
+                window.PopoutLayoutPresets.PRESETS.translator.tree,
+                { transcript: true, slides: false, terminal: false },
             );
             return { kind: resolved.kind, panel: resolved.panel };
         }"""
     )
-    # Demo without slides loses half — terminal leaf is promoted.
-    assert result == {"kind": "leaf", "panel": "terminal"}
+    # Translator without slides loses half — transcript leaf is promoted.
+    assert result == {"kind": "leaf", "panel": "transcript"}
 
 
-def test_storage_load_migrates_from_terminal_visible(page, unit_server):
-    _load(page, unit_server["base_url"])
-    result = page.evaluate(
-        """() => {
-            localStorage.clear();
-            localStorage.setItem('terminal_visible', '1');
-            const st = window.PopoutLayoutStorage.load();
-            return { preset: st.preset, lastTermPreset: st.lastTermPreset, lastNoTermPreset: st.lastNoTermPreset };
-        }"""
-    )
-    assert result["preset"] == "fullstack"
-    assert result["lastTermPreset"] == "fullstack"
+# ── Storage ───────────────────────────────────────────────────────
 
 
 def test_storage_default_on_blank_state(page, unit_server):
@@ -272,6 +293,60 @@ def test_storage_default_on_blank_state(page, unit_server):
     assert result["version"] == 2
 
 
+def test_storage_load_migrates_terminal_visible_to_triple(page, unit_server):
+    """Legacy: ``terminal_visible=1`` was the old per-key boolean. The
+    6→3 collapse remapped the only terminal-bearing preset to ``triple``.
+    """
+    _load(page, unit_server["base_url"])
+    result = page.evaluate(
+        """() => {
+            localStorage.clear();
+            localStorage.setItem('terminal_visible', '1');
+            const st = window.PopoutLayoutStorage.load();
+            return {
+                preset: st.preset,
+                lastTermPreset: st.lastTermPreset,
+                lastNoTermPreset: st.lastNoTermPreset,
+            };
+        }"""
+    )
+    assert result["preset"] == "triple"
+    assert result["lastTermPreset"] == "triple"
+
+
+def test_storage_migrates_removed_slug(page, unit_server):
+    """A stale localStorage from before the 6→3 collapse must be
+    rewritten on load — ``developer/fullstack/sidebyside/demo`` were
+    removed and have an explicit replacement map.
+    """
+    _load(page, unit_server["base_url"])
+    result = page.evaluate(
+        """() => {
+            localStorage.clear();
+            // Seed a stale v2 record with a removed preset.
+            localStorage.setItem('popout_layout_v2', JSON.stringify({
+                version: 2,
+                preset: 'fullstack',
+                lastTermPreset: 'sidebyside',
+                lastNoTermPreset: 'developer',
+                ratiosByPreset: {},
+            }));
+            const st = window.PopoutLayoutStorage.load();
+            return {
+                preset: st.preset,
+                lastTermPreset: st.lastTermPreset,
+                lastNoTermPreset: st.lastNoTermPreset,
+            };
+        }"""
+    )
+    # Mapping per popout-layout-storage.js#_migrateRemovedSlug.
+    assert result == {
+        "preset": "triple",            # fullstack → triple
+        "lastTermPreset": "triple",    # sidebyside → triple
+        "lastNoTermPreset": "translate",  # developer → translate
+    }
+
+
 def test_storage_setRatio_is_namespaced_per_preset(page, unit_server):
     _load(page, unit_server["base_url"])
     result = page.evaluate(
@@ -279,8 +354,8 @@ def test_storage_setRatio_is_namespaced_per_preset(page, unit_server):
             localStorage.clear();
             const S = window.PopoutLayoutStorage;
             let st = S.load();
-            st = S.setPreset(st, 'fullstack');
-            st = S.setRatio(st, 'fullstack:bottom', 0.3);
+            st = S.setPreset(st, 'triple');
+            st = S.setRatio(st, 'triple:bottom', 0.3);
             st = S.setPreset(st, 'translator');
             st = S.setRatio(st, 'translator:main', 0.7);
             const raw = JSON.parse(localStorage.getItem('popout_layout_v2'));
@@ -288,7 +363,7 @@ def test_storage_setRatio_is_namespaced_per_preset(page, unit_server):
         }"""
     )
     assert result == {
-        "fullstack": {"fullstack:bottom": 0.3},
+        "triple": {"triple:bottom": 0.3},
         "translator": {"translator:main": 0.7},
     }
 
@@ -301,27 +376,31 @@ def test_storage_resolvedTree_applies_overrides(page, unit_server):
             const S = window.PopoutLayoutStorage;
             const L = window.PopoutLayout;
             let st = S.load();
-            st = S.setPreset(st, 'fullstack');
-            st = S.setRatio(st, 'fullstack:bottom', 0.25);
+            st = S.setPreset(st, 'triple');
+            st = S.setRatio(st, 'triple:bottom', 0.25);
             const tree = S.resolvedTree(st);
             return {
-                bottomRatio: L.getRatio(tree, 'fullstack:bottom'),
-                mainRatio:   L.getRatio(tree, 'fullstack:main'),
+                bottomRatio: L.getRatio(tree, 'triple:bottom'),
+                mainRatio:   L.getRatio(tree, 'triple:main'),
             };
         }"""
     )
-    assert result == {"bottomRatio": 0.25, "mainRatio": 0.5}
+    # Override applies to bottom; main keeps its preset default of 0.45.
+    assert result == {"bottomRatio": 0.25, "mainRatio": 0.45}
 
 
 def test_term_toggle_memory_persists(page, unit_server):
+    """``setPreset`` records the last-with-terminal and last-without
+    presets so the Ctrl+Shift+T toggle has a target to swap to.
+    """
     _load(page, unit_server["base_url"])
     result = page.evaluate(
         """() => {
             localStorage.clear();
             const S = window.PopoutLayoutStorage;
             let st = S.load();
-            st = S.setPreset(st, 'sidebyside');
-            st = S.setPreset(st, 'developer');
+            st = S.setPreset(st, 'translate');
+            st = S.setPreset(st, 'triple');
             st = S.setPreset(st, 'translator');
             return {
                 lastTerm: st.lastTermPreset,
@@ -329,8 +408,8 @@ def test_term_toggle_memory_persists(page, unit_server):
             };
         }"""
     )
-    # sidebyside + developer both had terminal; last-term should be developer.
-    assert result == {"lastTerm": "developer", "lastNoTerm": "translator"}
+    # triple is the terminal-bearing preset; translator was last without.
+    assert result == {"lastTerm": "triple", "lastNoTerm": "translator"}
 
 
 def test_validate_rejects_duplicate_split_id(page, unit_server):
@@ -371,7 +450,6 @@ def test_split_at_wraps_leaf(page, unit_server):
         """() => {
             const L = window.PopoutLayout;
             const tree = L.leaf('transcript');
-            // Split the lone leaf at path [] right-side.
             const out = L.splitAt(tree, [], 'terminal', 'h', 'b', 'custom');
             return {
                 kind: out.kind,
@@ -390,7 +468,6 @@ def test_split_at_deep_target(page, unit_server):
         """() => {
             const L = window.PopoutLayout;
             const tree = L.split('v', 0.5, L.leaf('transcript'), L.leaf('terminal'), 'custom:main');
-            // Split terminal (at path ['b']) downward with slides.
             const out = L.splitAt(tree, ['b'], 'slides', 'v', 'b', 'custom');
             return {
                 rootDir: out.dir,
@@ -481,7 +558,6 @@ def test_storage_setCustomTree_transitions(page, unit_server):
             const S = window.PopoutLayoutStorage;
             const L = window.PopoutLayout;
             let st = S.load();
-            // Simulate user dragging slides next to transcript via splitAt.
             const tree = L.split('v', 0.5, L.leaf('transcript'), L.leaf('terminal'), 'custom:1');
             st = S.setCustomTree(st, tree);
             return {
@@ -489,7 +565,7 @@ def test_storage_setCustomTree_transitions(page, unit_server):
                 storedPreset: JSON.parse(localStorage.getItem('popout_layout_v2')).preset,
                 hasCustomTree: !!st.customTree,
                 resolvedPanels: L.collectPanels(S.resolvedTree(st)).sort(),
-                lastTermPreset: st.lastTermPreset,   // 'custom' since tree has terminal
+                lastTermPreset: st.lastTermPreset,
             };
         }"""
     )
