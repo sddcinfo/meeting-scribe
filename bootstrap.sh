@@ -169,11 +169,21 @@ echo "[bootstrap] pre-pulling HF model weights ('meeting-scribe gb10 pull-models
 meeting-scribe gb10 pull-models || \
     echo "[bootstrap] pull-models reported issues — see above. The containers will crash-loop without weights."
 
-# ── 8. Bring up the in-tree model backends ───────────────────────
-# ``meeting-scribe gb10 up`` builds + starts the pyannote-diarize, scribe-asr
-# and scribe-tts containers. First run pulls the ~24 GB vllm-openai base
-# image and builds the local ASR layer. Idempotent on rerun. Translate
-# is NOT started here — it lives in auto-sre (sister-cloned in step 5).
+# ── 8. Build local container images ──────────────────────────────
+# ``meeting-scribe gb10 up`` only builds when the tagged image is missing.
+# A stale tagged image from an earlier setup (e.g., a different model
+# default that's since been changed) will be silently reused, then crash
+# at runtime. Build explicitly so a customer install is never running
+# code older than this checkout.
+echo
+echo "[bootstrap] (re)building local container images"
+docker compose -f docker-compose.gb10.yml build pyannote-diarize qwen3-tts vllm-asr || \
+    echo "[bootstrap] compose build reported issues — see above"
+
+# ── 9. Bring up the in-tree model backends ───────────────────────
+# ``meeting-scribe gb10 up`` starts pyannote-diarize, scribe-asr, scribe-tts
+# (×2). Idempotent on rerun. Translate is NOT started here — it lives in
+# auto-sre (sister-cloned in step 5).
 echo
 echo "[bootstrap] starting model backends ('meeting-scribe gb10 up')"
 meeting-scribe gb10 up || \
