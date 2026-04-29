@@ -54,6 +54,11 @@ dev = [
     "pytest==9.0.3",
     "pytest-asyncio==1.3.0",
     "pytest-playwright>=0.6.2",
+    # Parallel pytest — `-n auto` cuts the smoke job from ~3:30 to ~1:30
+    # on the 4-core GitHub runner. Tests that depend on the test_server
+    # fixture stay correct because the fixture is session-scoped and
+    # xdist gives each worker its own session.
+    "pytest-xdist>=3.6.0",
     "websockets==16.0",
     "ruff==0.15.10",
 ]
