@@ -17,10 +17,22 @@ git config core.hooksPath scripts/hooks/
 | Tier | Packages | Required? |
 |------|----------|-----------|
 | **Core** | fastapi, uvicorn, numpy, pydantic, click, httpx, soundfile | Always |
-| **ML** | torch, torchaudio, sentencepiece | Full pipeline |
-| **Dev** | pytest, pytest-asyncio, websockets, ruff | Development |
+| **ML** | torch, torchaudio, av | Full pipeline |
+| **Dev** | pytest, pytest-asyncio, pytest-cov, websockets, ruff | Development |
 
 Model inference is handled by external vLLM and diarization containers managed via `docker-compose.gb10.yml`. The application connects to these over HTTP.
+
+### Security upkeep
+
+We run a three-layer defense against vulnerable dependencies:
+
+1. **`security` CI lane** (`.github/workflows/tests.yml`) — runs on every push + PR. Uses `pip-audit` (PyPI advisories via OSV) and `npm audit` against the overlay. Fails the build on any **HIGH+** severity finding so vulnerabilities can't merge to `dev`. Moderate-and-below are visible in the log but do not block.
+2. **Dependabot** (`.github/dependabot.yml`) — opens grouped weekly PRs against `dev` for security and patch-level updates across pip, npm, and github-actions ecosystems. ML deps with numerical-behavior risk (`torch`, `torchaudio`, `numpy`, `av`) are excluded; bumps for those are reviewed manually via the freshness issue below.
+3. **Weekly freshness issue** (`.github/workflows/dependency-freshness.yml`) — opens a single tracking issue when any pin is ≥30 days behind latest stable, so manual-review deps don't quietly stagnate.
+
+When a Dependabot PR lands: the security lane already gated it on the actual CVE database, so the merge bar is "tests pass + targeted manual smoke if it touches a hot path (translation_queue, slides/job, runtime/lifespan)." Routine version bumps (patch-level non-security) auto-group and can be batch-merged.
+
+When the security lane fails on a PR: the failing tool prints which package + advisory. Bump the pin in `pyproject.toml` (Python) or `overlay/package.json` (npm) to the patched version listed in the advisory, push, and the lane should clear. If the patched version requires a major bump that breaks something, open a Bug-class commit (see below) so the regression is tracked.
 
 ## Code Style
 

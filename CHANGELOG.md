@@ -3,6 +3,12 @@
 All notable changes to meeting-scribe are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Security
+- **Dependabot config + security CI lane**: `.github/dependabot.yml` opens grouped weekly PRs for pip / npm / github-actions across `dev`. New `security` job in `tests.yml` runs `pip-audit` (PyPI advisories via OSV) + `npm audit` and **fails the build on HIGH+** severity, catching CVEs at PR time rather than days later through Dependabot. ML deps (`torch`, `torchaudio`, `numpy`, `av`) are excluded from auto-PRs because version drift changes numerical behavior — manual review path stays via the existing weekly freshness issue.
+- **Electron 33 → 41** (`overlay/package.json`): clears all 18 GHSA advisories Dependabot flagged on first push (4 high, 10 moderate, 4 low) — every advisory was against the same `electron` pin in the optional always-on-top translation overlay. The overlay code only uses stable Electron APIs (`BrowserWindow`, `globalShortcut`, `screen`, `setCertificateVerifyProc`); no app-code changes required.
+
 ## [1.5.0] — 2026-04-29
 
 ### Added

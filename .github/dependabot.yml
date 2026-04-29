@@ -1,0 +1,82 @@
+# Dependabot config — opens grouped weekly PRs for security + version updates.
+#
+# How this complements the rest of the security workflow:
+#   * .github/workflows/tests.yml has a `security` lane that fails on
+#     high-severity CVEs in the resolved dep tree at PR time.
+#   * .github/workflows/dependency-freshness.yml opens a single tracking
+#     issue per week when PyPI pins are >30 days behind latest.
+#   * Dependabot (this file) opens PRs grouped by ecosystem so we don't
+#     get a flood of one-pin-per-PR.
+#
+# Targeting `dev` (not `main`) so security updates land on the
+# integration branch first — the curated public release flow then
+# squash-merges to `main`/`origin/dev` per the project's release cadence.
+
+version: 2
+
+updates:
+  # Python dependencies (server + dev + benchmark extras)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Tokyo"
+    target-branch: "dev"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      # Roll patch + minor security updates into one PR per week.
+      python-security:
+        applies-to: security-updates
+        update-types: ["patch", "minor"]
+      # Group routine version bumps so the queue stays at-most one PR.
+      python-routine:
+        applies-to: version-updates
+        update-types: ["patch"]
+    # ML / inference deps are pinned tightly because version drift
+    # changes numerical behavior. Defer those to manual review via the
+    # weekly freshness issue, not auto-PR.
+    ignore:
+      - dependency-name: "torch"
+      - dependency-name: "torchaudio"
+      - dependency-name: "numpy"
+      - dependency-name: "av"
+
+  # npm — currently only the optional Electron overlay
+  - package-ecosystem: "npm"
+    directory: "/overlay"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Tokyo"
+    target-branch: "dev"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      npm-security:
+        applies-to: security-updates
+        update-types: ["patch", "minor"]
+      npm-routine:
+        applies-to: version-updates
+        update-types: ["patch", "minor"]
+
+  # GitHub Actions — workflow images / actions get advisories too.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Tokyo"
+    target-branch: "dev"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"

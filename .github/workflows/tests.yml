@@ -1,9 +1,9 @@
 name: Tests & Lint
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   schedule:
     # Nightly full lane runs as a CI backstop in case the local GB10
     # cron hasn't run. Failures don't block PRs.
@@ -43,6 +43,37 @@ jobs:
         run: PYTHONPATH=src pytest tests/ -v --tb=short
       - name: JS unit suite
         run: node --test tests/js/
+
+  # Security lane — every push + PR. Catches known CVEs in the resolved
+  # dep tree at PR time, before the weekly Dependabot batch surfaces.
+  # Hard-fails on HIGH+ severity in pip OR npm. Soft-warns on moderate
+  # (don't block the queue on every quarterly minor advisory).
+  security:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -e ".[dev]" pip-audit
+      - name: pip-audit (HIGH+ fails the build)
+        run: pip-audit --strict --vulnerability-service osv
+      - name: npm audit overlay (HIGH+ fails the build)
+        working-directory: overlay
+        # No package-lock yet (Electron is the only direct dep), so use
+        # --omit=dev with audit-level to gate. Falls back to soft-warn
+        # if no lockfile is present at all.
+        run: |
+          if [ -f package-lock.json ]; then
+            npm audit --audit-level=high --omit=dev
+          else
+            npm install --package-lock-only
+            npm audit --audit-level=high --omit=dev
+          fi
 
   # Browser lane — every push + PR. Adds ~3 min.
   # Runs the cross-window-sync subset that's load-bearing for the
