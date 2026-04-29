@@ -97,9 +97,16 @@ def start_test_server() -> subprocess.Popen:
         "warning",
     ]
 
-    # TLS certs
+    # TLS certs — `_wait_for_server` expects https://, and uvicorn rejects
+    # HTTPS handshakes on a plain HTTP listener with "Invalid HTTP request
+    # received". If certs aren't there (CI never runs `meeting-scribe
+    # setup`), generate them inline so the server speaks HTTPS.
     ssl_key = PROJECT_ROOT / "certs" / "key.pem"
     ssl_cert = PROJECT_ROOT / "certs" / "cert.pem"
+    if not (ssl_key.exists() and ssl_cert.exists()):
+        from meeting_scribe.cli._common import _ensure_admin_tls_certs
+
+        _ensure_admin_tls_certs()
     if ssl_key.exists() and ssl_cert.exists():
         cmd += ["--ssl-keyfile", str(ssl_key), "--ssl-certfile", str(ssl_cert)]
 
