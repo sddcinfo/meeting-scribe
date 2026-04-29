@@ -56,7 +56,13 @@ def start_test_server() -> subprocess.Popen:
 
     _test_meetings_dir = tempfile.mkdtemp(prefix="scribe-test-meetings-")
 
-    venv_python = PROJECT_ROOT / ".venv" / "bin" / "python3"
+    # Prefer the project venv (matches dev-box behavior + has the editable
+    # install) but fall back to the running interpreter when there's no
+    # venv. CI uses actions/setup-python directly, no .venv.
+    import sys
+
+    venv_python_path = PROJECT_ROOT / ".venv" / "bin" / "python3"
+    venv_python = venv_python_path if venv_python_path.exists() else Path(sys.executable)
     env = os.environ.copy()
     env["PYTHONPATH"] = str(PROJECT_ROOT / "src")
     env["SCRIBE_PORT"] = str(TEST_PORT)

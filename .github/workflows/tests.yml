@@ -61,7 +61,11 @@ jobs:
           node-version: "22"
       - run: pip install -e ".[dev]" pip-audit
       - name: pip-audit (HIGH+ fails the build)
-        run: pip-audit --strict --vulnerability-service osv
+        # `pip` itself is the package manager, not a runtime dep we ship.
+        # Ignore CVE-2026-3219 (pip 26.0.1) — it can't be reached from
+        # meeting-scribe code, only from operators running pip locally.
+        # Re-evaluate when CI pip is bumped past the fix.
+        run: pip-audit --strict --vulnerability-service osv --ignore-vuln=CVE-2026-3219
       - name: npm audit overlay (HIGH+ fails the build)
         working-directory: overlay
         # No package-lock yet (Electron is the only direct dep), so use
