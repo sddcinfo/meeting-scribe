@@ -22,7 +22,7 @@ def load_recipe(name: str) -> dict:
     """Load a recipe by short name or model key.
 
     Args:
-        name: Recipe filename stem (e.g., "qwen3.5-35b-translation")
+        name: Recipe filename stem (e.g., "qwen3.6-35b-translation")
               or model_key value (e.g., "translation").
 
     Returns:

@@ -156,7 +156,7 @@ class TestStackHealth:
         tr = _post(
             "http://localhost:8010/v1/chat/completions",
             json={
-                "model": "Intel/Qwen3.5-35B-A3B-int4-AutoRound",
+                "model": "Qwen/Qwen3.6-35B-A3B-FP8",
                 "messages": [{"role": "user", "content": "Translate to Japanese: Hello"}],
                 "max_tokens": 50,
             },
