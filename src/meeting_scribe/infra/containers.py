@@ -74,10 +74,17 @@ def pull_models(
 ) -> None:
     """Download models to the GB10's HuggingFace cache.
 
+    Uses the ``hf`` CLI (huggingface_hub >= 1.0). The legacy
+    ``huggingface-cli`` is a no-op shim on huggingface_hub 1.x and prints
+    a deprecation warning instead of downloading anything — using it here
+    silently empty-pulls and the offline-mode containers crash-loop with
+    ``LocalEntryNotFoundError`` on first start.
+
     Args:
-        ssh: SSH connection to the GB10 node.
+        ssh: Runner (Local or SSH) targeting the GB10 node.
         model_ids: List of HuggingFace model IDs to download.
-        hf_cache_dir: Path to HuggingFace cache on the GB10.
+        hf_cache_dir: Path to the HF cache root on the GB10. Weights land
+            under ``{hf_cache_dir}/hub/<repo>``.
     """
     for model_id in model_ids:
         logger.info("Downloading model: %s", model_id)
@@ -85,8 +92,11 @@ def pull_models(
             [
                 "bash",
                 "-c",
-                f'HF_HOME="{hf_cache_dir}" huggingface-cli download "{model_id}"',
+                f'HF_HOME="{hf_cache_dir}" hf download "{model_id}"',
             ],
             timeout=3600,
-            check=False,
+            # Surface failures rather than swallowing them — a silent
+            # pull-models is the worst-case bug here, since the failure
+            # only manifests later as a crash-looping container.
+            check=True,
         )
