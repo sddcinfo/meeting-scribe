@@ -24,7 +24,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -107,8 +106,7 @@ def test_fixture_corpus_present(fixtures_present):
     }
     missing = expected - names
     assert not missing, (
-        f"expected fixtures missing: {missing}. "
-        f"Run scripts/scrub_journal.py to regenerate."
+        f"expected fixtures missing: {missing}. Run scripts/scrub_journal.py to regenerate."
     )
 
 
@@ -155,7 +153,10 @@ def test_journal_replay_snapshot(fixture_name):
         e_count = expected["segment_count"]
         diff_segments: list[str] = []
         for sid in actual["by_segment"]:
-            if sid in expected["by_segment"] and actual["by_segment"][sid] != expected["by_segment"][sid]:
+            if (
+                sid in expected["by_segment"]
+                and actual["by_segment"][sid] != expected["by_segment"][sid]
+            ):
                 diff_segments.append(sid)
                 if len(diff_segments) >= 5:
                     break

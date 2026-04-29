@@ -80,6 +80,14 @@ def hotspot_state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     # at top level so we need to patch the imported reference.
     monkeypatch.setattr(_ap_control, "_is_dev_mode", lambda: False)
 
+    # _ensure_regdomain shells out to the `iw` binary, which is missing
+    # on stock GitHub Actions Ubuntu runners. Returns False in CI ⇒
+    # _start_wifi_ap exits early ⇒ HOTSPOT_STATE_FILE is never written
+    # ⇒ tests fail with FileNotFoundError when reading state. Force-true
+    # the regdomain check so the tests exercise the rotation path that
+    # they're actually trying to cover.
+    monkeypatch.setattr(_ap_control, "_ensure_regdomain", lambda: True)
+
     # Reset the per-meeting rotation tracker so tests are independent.
     _ap_control._reset_rotation_state_for_tests()
 

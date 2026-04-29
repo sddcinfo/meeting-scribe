@@ -266,7 +266,7 @@ class TerminalSession:
             return
         try:
             chunk = os.read(self.master_fd, READ_CHUNK)
-        except (BlockingIOError, InterruptedError):
+        except BlockingIOError, InterruptedError:
             return
         except OSError as e:
             logger.debug("pty read error (%s): %s — closing", self.tmux_session, e)

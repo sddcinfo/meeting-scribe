@@ -1,0 +1,9 @@
+# meeting-scribe pins Python here so a fresh GB10 can bootstrap end-to-end
+# without a separate "go install Python 3.14 first" step. The bootstrap will
+# install mise itself if it's missing, then resolve this file.
+#
+# Customer devices only need Python — no node (zero build step), no age, no
+# extra dev tooling.
+
+[tools]
+python = "3.14.4"

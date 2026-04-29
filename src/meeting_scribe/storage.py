@@ -69,7 +69,7 @@ def _is_reprocess_active(meeting_dir: Path) -> bool:
     try:
         payload = json.loads(lock.read_text())
         pid = int(payload.get("pid", -1))
-    except (ValueError, OSError, json.JSONDecodeError):
+    except ValueError, OSError, json.JSONDecodeError:
         return False
     if pid <= 0:
         return False
@@ -302,7 +302,7 @@ class AudioWriterProcess:
                             break
                         continue
                     msg = conn.recv()
-                except (EOFError, BrokenPipeError, OSError):
+                except EOFError, BrokenPipeError, OSError:
                     # Pipe closed — parent died or called close
                     break
 
@@ -321,7 +321,7 @@ class AudioWriterProcess:
             self._pipe.send((self._CMD_WRITE_AT, pcm, elapsed_ms))
             self._total_written += len(pcm)
             self._last_elapsed_ms = elapsed_ms
-        except (BrokenPipeError, OSError):
+        except BrokenPipeError, OSError:
             logger.warning("Audio writer process pipe broken — audio may be lost")
             self._started = False
 
@@ -343,7 +343,7 @@ class AudioWriterProcess:
         if self._pipe:
             try:
                 self._pipe.send((self._CMD_CLOSE,))
-            except (BrokenPipeError, OSError):
+            except BrokenPipeError, OSError:
                 pass
             self._pipe.close()
             self._pipe = None
@@ -786,7 +786,7 @@ class MeetingStorage:
                 continue
             try:
                 e = _json.loads(line)
-            except (ValueError, _json.JSONDecodeError):
+            except ValueError, _json.JSONDecodeError:
                 continue
             sid = e.get("segment_id")
             if not sid:
@@ -838,7 +838,7 @@ class MeetingStorage:
                 continue
             try:
                 meta = _json.loads(meta_path.read_text())
-            except (_json.JSONDecodeError, OSError):
+            except _json.JSONDecodeError, OSError:
                 continue
 
             audio_path = d / "audio" / "recording.pcm"
@@ -858,7 +858,7 @@ class MeetingStorage:
                 try:
                     ts = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                     age_hours = (now - ts).total_seconds() / 3600
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
 
             results.append(

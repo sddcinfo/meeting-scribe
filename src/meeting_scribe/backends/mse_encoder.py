@@ -173,7 +173,7 @@ class Fmp4AacEncoder:
         try:
             for packet in self._stream.encode(None):
                 self._container.mux(packet)
-        except (av.error.EOFError, ValueError):
+        except av.error.EOFError, ValueError:
             # Some ffmpeg builds raise EOFError after the stream is
             # flushed once — treat as idempotent no-op.
             pass

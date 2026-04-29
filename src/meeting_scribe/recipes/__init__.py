@@ -22,7 +22,7 @@ def load_recipe(name: str) -> dict:
     """Load a recipe by short name or model key.
 
     Args:
-        name: Recipe filename stem (e.g., "qwen3.5-35b-translation")
+        name: Recipe filename stem (e.g., "qwen3.6-35b-translation")
               or model_key value (e.g., "translation").
 
     Returns:
@@ -48,10 +48,18 @@ def load_recipe(name: str) -> dict:
 
 
 def all_model_ids() -> list[str]:
-    """Get all HuggingFace model IDs from recipes."""
+    """HuggingFace model IDs that meeting-scribe is responsible for pulling.
+
+    Skips recipes flagged ``mode: shared`` — those are managed by an
+    external service (auto-sre) and should not land in meeting-scribe's
+    /data/huggingface cache. Pulling them here just wastes ~17 GB of
+    customer-device disk on a model that runs out of process anyway.
+    """
     ids = []
-    for recipe_path in RECIPES_DIR.glob("*.yaml"):
+    for recipe_path in sorted(RECIPES_DIR.glob("*.yaml")):
         recipe = _load_yaml(recipe_path)
+        if recipe.get("mode") == "shared":
+            continue
         model_id = recipe.get("model_id")
         if model_id:
             ids.append(model_id)

@@ -1,7 +1,7 @@
 # meeting-scribe GB10 model stack
 #
 # Translation uses the shared autosre vLLM model on port 8010
-# (Intel/Qwen3.5-35B-A3B-int4-AutoRound, managed by `autosre start`).
+# (Qwen/Qwen3.6-35B-A3B-FP8, managed by `autosre start`).
 # This compose only manages ASR, diarization, and TTS.
 #
 # Memory budget (single GB10, 128GB):

@@ -154,7 +154,7 @@ async def _stream_and_collect(
             # Give the reader a moment to drain
             try:
                 await asyncio.wait_for(reader_task, timeout=2)
-            except (TimeoutError, asyncio.CancelledError):
+            except TimeoutError, asyncio.CancelledError:
                 pass
     finally:
         with httpx.Client(verify=False, timeout=60) as c:

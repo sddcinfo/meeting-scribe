@@ -116,7 +116,7 @@ class VllmTranslateBackend(TranslateBackend):
     """Translation via vLLM OpenAI-compatible chat endpoint.
 
     Works with any LLM served by vLLM. For best JA↔EN results, use
-    a multilingual model like qwen3.5 or nemotron.
+    a multilingual model like qwen3.6 or nemotron.
 
     The vLLM server handles batching — multiple concurrent translate()
     calls are batched automatically for maximum throughput.

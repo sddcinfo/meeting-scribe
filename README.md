@@ -38,9 +38,34 @@ The 35B FP8 translation model is the heaviest component (≈35 GB VRAM when load
 - **Multi-browser sync** — Late-joining clients receive a journal replay
 - **Zero build step** — Static HTML/CSS/JS, instant refresh during development
 
+## Prerequisites
+
+A "fresh GB10" for this README means:
+
+- **NVIDIA GB10** (DGX Spark) running aarch64 Linux. `nvidia-smi` must work — driver ≥ 580 + CUDA 13.
+- **Docker** installed, with your user in the `docker` group so `docker ps` runs without sudo. Bootstrap does not configure docker for you.
+- **A HuggingFace token** with the gated models below accepted in a browser. Without it, the diarization container fails silently at runtime — `pyannote/speaker-diarization-community-1` is gated and the bootstrap doesn't inspect failures from inside the container.
+- **Passwordless sudo** *(optional)* so bootstrap can grant `cap_net_bind_service` to the venv Python for the port-80 captive portal. Without it, the admin UI on `:8080` still works but you'll run one manual `sudo setcap` command at the end.
+
+### HuggingFace gated models
+
+Open each URL once in a browser, click *Agree and access*:
+
+- <https://huggingface.co/pyannote/speaker-diarization-community-1> — diarization (required, fails the loudest)
+- <https://huggingface.co/pyannote/segmentation-3.0> — diarization dependency
+- <https://huggingface.co/Qwen/Qwen3-ASR-1.7B> — ASR
+- <https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8> — translation (heaviest pull)
+- <https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base> — TTS
+
+Then create a token at <https://huggingface.co/settings/tokens> with *Read* scope. Bootstrap will prompt for it.
+
+### First-run timing
+
+Plan **~20–40 minutes** of disk I/O on first install: ~24 GB for the `vllm/vllm-openai` base image, ~55 GB of HF model weights, plus container build layers and editable-install layers. Subsequent runs are idempotent and re-use everything cached.
+
 ## Quick Start
 
-Two commands on a fresh GB10 (NVIDIA DGX Spark, aarch64 Linux with CUDA):
+Two commands on a fresh GB10 that meets the prerequisites above:
 
 ```bash
 git clone https://github.com/sddcinfo/meeting-scribe.git
@@ -49,8 +74,29 @@ cd meeting-scribe && ./bootstrap.sh
 
 `bootstrap.sh` gates on platform, installs OS packages (ffmpeg, libportaudio,
 etc.), pins Python via mise (or uses system python3.14+), creates a `.venv`,
-editable-installs meeting-scribe, then hands off to `meeting-scribe setup`
-for HF token / TLS certs / container stack / systemd registration.
+editable-installs meeting-scribe, clones+installs auto-sre as a sibling
+directory (`../auto-sre`), then hands off to `meeting-scribe setup` for the
+HF token prompt, TLS certs, container build, and systemd registration. It
+ends with `meeting-scribe validate --quick` to confirm everything is reachable.
+
+> **Translation needs auto-sre.** Bootstrap clones it for you, but
+> `meeting-scribe start` will only translate when you also run
+> `autosre start` in another shell (or stand up your own vLLM on `:8010`).
+> Set `MEETING_SCRIBE_SKIP_AUTOSRE=1` to skip the auto-sre clone if you're
+> managing the translate backend yourself.
+
+### Verify
+
+After bootstrap returns, sanity-check the install:
+
+```bash
+meeting-scribe validate --quick
+```
+
+5-second sweep across all four backends (ASR, translate, TTS, diarization)
+plus a furigana probe. Anything red is a backend that isn't reachable —
+the translate vLLM is the usual suspect since it takes 3+ minutes to load
+the 35 B FP8 weights from cold.
 
 Manual install (for dev machines where you want to manage the pieces yourself):
 

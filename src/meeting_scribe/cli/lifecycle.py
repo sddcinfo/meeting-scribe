@@ -636,8 +636,8 @@ def health(port: int) -> None:
         click.echo("  GPU VRAM:    not available")
 
     # Direct container health checks.  URLs come from ServerConfig so a
-    # translate-endpoint move (e.g. Qwen3.5-INT4 on 8000 → Qwen3.6-FP8 on
-    # 8010) stops reporting spurious "not responding".  We still hit each
+    # translate-endpoint move (e.g. swapping ports or model variants)
+    # stops reporting spurious "not responding".  We still hit each
     # container directly — this panel is the "bypass scribe, hit the
     # model server" diagnostic, so it must not piggyback on scribe's own
     # active/inactive flag.

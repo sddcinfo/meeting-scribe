@@ -8,6 +8,7 @@ close semantics.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -250,8 +251,14 @@ async def test_bounded_stdin_backpressures_producer():
         sampler_task = asyncio.create_task(sampler())
         await pusher()
         await asyncio.sleep(0.1)
-        sampler_task.cancel()
-        with pytest.raises(asyncio.CancelledError):
+        # The sampler may already have finished its 400-iter loop on a
+        # slow runner before the pusher completed (locally pusher beats
+        # sampler; on the GitHub Ubuntu runner it's the other way around).
+        # Either outcome is fine — what matters is that we get the peak
+        # reading without leaving a dangling task.
+        if not sampler_task.done():
+            sampler_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
             await sampler_task
         # Budget must not have been exceeded at any sample.
         assert max_pending_seen <= ps.STDIN_BUDGET, (

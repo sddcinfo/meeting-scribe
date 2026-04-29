@@ -60,7 +60,7 @@ _STUB_SETTINGS = {
 
 
 @pytest.fixture
-def scribe_settings_server(tmp_path, monkeypatch) -> Generator[dict[str, Any], None, None]:
+def scribe_settings_server(tmp_path, monkeypatch) -> Generator[dict[str, Any]]:
     secret_path = tmp_path / "admin-secret"
     monkeypatch.setenv("SCRIBE_ADMIN_SECRET_FILE", str(secret_path))
 

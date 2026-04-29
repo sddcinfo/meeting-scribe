@@ -1,0 +1,46 @@
+# Translation — shared with auto-sre's coding agent.
+#
+# meeting-scribe DOES NOT launch this model. It runs in auto-sre's vLLM
+# container on port 8010. The recipe lives here as the documentation
+# sentinel that pull-models, the shared-recipe-guard tests, and the
+# all_model_ids() filter all key off (`mode: shared` skips it from
+# customer-device pulls — auto-sre owns the weights).
+#
+# Replaced the prior qwen3.5-35b-translation.yaml (Intel-AutoRound INT4
+# on the custom albond `vllm-qwen35-v2:latest` image) on 2026-04-29.
+# Production has been on Qwen3.6-FP8 + stock vllm/vllm-openai since
+# 2026-04-25 per the phase-5 migration close-out.
+
+model_key: translation
+model_id: Qwen/Qwen3.6-35B-A3B-FP8
+short_name: Qwen3.6-35B-FP8 Translation (shared)
+description: "Shared model for translation + Claude Code coding agent (native FP8)"
+
+mode: shared  # Managed by auto-sre, not by meeting-scribe
+tensor_parallel: 1
+port: 8010
+max_model_len: 262144
+gpu_memory_utilization: 0.70
+max_num_seqs: 8
+
+quantization: fp8
+kv_cache_dtype: auto
+
+extra_args:
+  - "--enable-prefix-caching"
+  - "--enable-chunked-prefill"
+  - "--load-format=fastsafetensors"
+  - "--attention-backend=flashinfer"
+  - "--enable-auto-tool-choice"
+  - "--tool-call-parser=qwen3_coder"
+  - "--reasoning-parser=qwen3"
+
+capabilities:
+  tool_calling: true
+  reasoning: true
+  multimodal: false
+  max_context: 262144
+  active_params: "3B"
+  total_params: "35B"
+
+best_for: "Real-time multilingual translation, speaker name extraction, coding agent"

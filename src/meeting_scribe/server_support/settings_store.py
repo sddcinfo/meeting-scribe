@@ -58,7 +58,7 @@ def _load_settings_override() -> dict:
         _settings_cache = result
         _settings_cache_mtime = mtime
         return result
-    except (OSError, _json.JSONDecodeError):
+    except OSError, _json.JSONDecodeError:
         return _settings_cache or {}
 
 

@@ -49,14 +49,11 @@ def test_bench_start_writes_state_and_stop_cleans_up(temp_state, monkeypatch) ->
     class _FakeCompleted:
         returncode = 0
 
-    monkeypatch.setattr(
-        bench_mod.subprocess, "run", lambda *a, **k: _FakeCompleted()
-    )
+    monkeypatch.setattr(bench_mod.subprocess, "run", lambda *a, **k: _FakeCompleted())
 
     # Stub slo_probe spawn with a sleep loop the test can SIGTERM.
     class _FakeProc:
         def __init__(self):
-            import os
             import sys
 
             self._proc = bench_mod.subprocess.Popen(
@@ -65,9 +62,7 @@ def test_bench_start_writes_state_and_stop_cleans_up(temp_state, monkeypatch) ->
             self.pid = self._proc.pid
 
     fake = _FakeProc()
-    monkeypatch.setattr(
-        bench_mod.subprocess, "Popen", lambda *a, **k: fake
-    )
+    monkeypatch.setattr(bench_mod.subprocess, "Popen", lambda *a, **k: fake)
 
     result = runner.invoke(
         cli_root,

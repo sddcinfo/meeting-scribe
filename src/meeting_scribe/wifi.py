@@ -280,7 +280,7 @@ def _load_hotspot_state() -> dict | None:
         return None
     try:
         return json.loads(HOTSPOT_STATE_FILE.read_text())
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return None
 
 
@@ -309,7 +309,7 @@ def _wpa_supplicant_ap_security() -> dict[str, str] | None:
             timeout=3,
             check=False,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+    except FileNotFoundError, subprocess.TimeoutExpired, OSError:
         return None
     if proc.returncode != 0:
         return None
@@ -380,9 +380,9 @@ def _stop_portal_redirector() -> None:
                     pid = int(pid_str)
                     try:
                         os.kill(pid, signal.SIGTERM)
-                    except (ProcessLookupError, PermissionError):
+                    except ProcessLookupError, PermissionError:
                         pass
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 pass
             pid_file.unlink(missing_ok=True)
 
@@ -395,7 +395,7 @@ def _stop_portal_redirector() -> None:
                 timeout=5,
                 check=False,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        except FileNotFoundError, subprocess.TimeoutExpired, OSError:
             pass
 
 
@@ -410,7 +410,7 @@ def _teardown_captive_portal() -> None:
                 timeout=5,
                 check=False,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        except FileNotFoundError, subprocess.TimeoutExpired, OSError:
             pass
     _teardown_iptables()
 
@@ -436,7 +436,7 @@ def _teardown_iptables() -> None:
                 timeout=5,
                 check=False,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        except FileNotFoundError, subprocess.TimeoutExpired, OSError:
             break
         if result.returncode != 0:
             break
@@ -553,7 +553,7 @@ def _remove_firewall() -> None:
                     timeout=5,
                     check=False,
                 )
-            except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            except FileNotFoundError, subprocess.TimeoutExpired, OSError:
                 break
             found = False
             for line in (result.stdout or "").splitlines():
@@ -580,7 +580,7 @@ def _remove_firewall() -> None:
                 timeout=5,
                 check=False,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        except FileNotFoundError, subprocess.TimeoutExpired, OSError:
             break
         found = False
         for line in (result.stdout or "").splitlines():
@@ -827,7 +827,7 @@ def _build_live_config() -> WifiConfig | None:
     channel_str = fields.get("802-11-wireless.channel", str(DEFAULT_CHANNEL))
     try:
         channel = int(channel_str)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         channel = DEFAULT_CHANNEL
 
     # Determine mode from state file
@@ -1028,7 +1028,7 @@ async def wifi_status() -> dict:
                 if line.strip() and "FAILED" not in line
             )
             result["client_count"] = count
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+    except FileNotFoundError, subprocess.TimeoutExpired, OSError:
         pass
 
     return result
@@ -1098,7 +1098,7 @@ def wifi_status_sync() -> dict:
                 if line.strip() and "FAILED" not in line
             )
             result["client_count"] = count
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+    except FileNotFoundError, subprocess.TimeoutExpired, OSError:
         pass
 
     return result

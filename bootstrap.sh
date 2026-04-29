@@ -57,11 +57,36 @@ if [[ ${#need_pkgs[@]} -gt 0 ]]; then
 fi
 
 # ── 3. Python + venv ──────────────────────────────────────────────
-# Prefer mise if available (it pins Python per .tool-versions / mise.toml).
-# Fall back to system python3 — but guard for < 3.14 since scribe needs 3.14+.
+# Prefer mise (it pins Python per mise.toml). Auto-install mise if it's
+# missing AND we'd otherwise fall back to a too-old system python — fresh
+# customer GB10s do not ship with 3.14, so a silent fallback would just
+# fail at the next step.
+need_mise_install=0
+if ! command -v mise >/dev/null 2>&1; then
+    if [[ -f mise.toml || -f .tool-versions ]]; then
+        # We have a toolchain spec but no mise binary. Best path: install mise.
+        need_mise_install=1
+    elif ! command -v python3 >/dev/null 2>&1; then
+        echo "bootstrap.sh: no python3 and no mise. Install one or the other first." >&2
+        exit 1
+    fi
+fi
+if [[ "${need_mise_install}" == "1" ]]; then
+    echo "[bootstrap] mise missing — installing via the upstream installer"
+    curl -fsSL https://mise.jdx.dev/install.sh | sh
+    # The installer drops mise at ~/.local/bin/mise; activate for this script
+    # without depending on shell rc files (we don't touch user shell config).
+    export PATH="${HOME}/.local/bin:${PATH}"
+    if ! command -v mise >/dev/null 2>&1; then
+        echo "bootstrap.sh: mise install reported success but the binary is not on PATH." >&2
+        echo "  Looked for: ${HOME}/.local/bin/mise" >&2
+        exit 1
+    fi
+fi
+
 if command -v mise >/dev/null 2>&1 && [[ -f mise.toml || -f .tool-versions ]]; then
     echo "[bootstrap] installing toolchain via mise"
-    mise install
+    mise install --yes
     PYBIN="$(mise exec -- which python)"
 else
     if ! command -v python3 >/dev/null 2>&1; then
@@ -89,11 +114,106 @@ echo "[bootstrap] installing meeting-scribe (editable)"
 pip install --upgrade pip
 pip install -e .
 
-# ── 5. Hand off to the app setup flow ─────────────────────────────
-# ``meeting-scribe setup`` covers: HF_TOKEN check, TLS cert generation,
-# docker compose up, model warmup, optional systemd registration.
+# ── 5. Sister-clone auto-sre (translate vLLM helper) ──────────────
+# meeting-scribe's translation backend is a vLLM at :8010, served by
+# auto-sre. We clone it as a sibling directory so a customer install
+# is one bootstrap end-to-end. Skip with MEETING_SCRIBE_SKIP_AUTOSRE=1
+# if the user is bringing their own translate backend.
+if [[ "${MEETING_SCRIBE_SKIP_AUTOSRE:-0}" != "1" ]]; then
+    AUTOSRE_DIR="${SCRIPT_DIR}/../auto-sre"
+    if [[ ! -d "${AUTOSRE_DIR}/.git" ]]; then
+        echo "[bootstrap] cloning auto-sre into ${AUTOSRE_DIR}"
+        git clone https://github.com/sddcinfo/auto-sre.git "${AUTOSRE_DIR}"
+    else
+        echo "[bootstrap] auto-sre already present at ${AUTOSRE_DIR}"
+        git -C "${AUTOSRE_DIR}" fetch --quiet origin || true
+    fi
+    if [[ ! -d "${AUTOSRE_DIR}/.venv" ]]; then
+        echo "[bootstrap] creating auto-sre .venv"
+        "${PYBIN}" -m venv "${AUTOSRE_DIR}/.venv"
+    fi
+    echo "[bootstrap] installing auto-sre (editable)"
+    "${AUTOSRE_DIR}/.venv/bin/pip" install --upgrade pip --quiet
+    "${AUTOSRE_DIR}/.venv/bin/pip" install -e "${AUTOSRE_DIR}" --quiet
+    echo "[bootstrap] auto-sre ready — run 'autosre start' in another shell to bring up translate"
+else
+    echo "[bootstrap] MEETING_SCRIBE_SKIP_AUTOSRE=1 — skipping auto-sre clone"
+fi
+
+# ── 6. App-layer setup (TLS cert, HF_TOKEN check, port-80 cap) ───
+# ``meeting-scribe setup`` is a configuration validator — it does NOT
+# pull images or start containers. We invoke it for the cert/cap/HF
+# checks, then bring the stack up in step 7.
 echo
 echo "[bootstrap] base install complete"
-echo "[bootstrap] handing off to 'meeting-scribe setup' for app-layer config"
+echo "[bootstrap] running 'meeting-scribe setup' for app-layer config"
 echo
-exec meeting-scribe setup "$@"
+meeting-scribe setup "$@"
+
+# ── 7. Pre-pull HF model weights ──────────────────────────────────
+# The model containers run with HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1
+# and mount ${HF_CACHE_DIR:-/data/huggingface} as their HF cache. They
+# will crash-loop with LocalEntryNotFoundError if weights aren't there
+# before they start. Plan ~12 GB pyannote + ~3 GB ASR weights, ~5–15 min.
+echo
+if [[ ! -d /data/huggingface ]]; then
+    echo "[bootstrap] creating /data/huggingface"
+    if sudo -n test -w /data 2>/dev/null; then
+        sudo -n install -d -o "$USER" -g "$(id -gn)" -m 0775 /data/huggingface
+    else
+        mkdir -p /data/huggingface 2>/dev/null || \
+            echo "[bootstrap] could not create /data/huggingface — chmod /data and retry"
+    fi
+fi
+echo "[bootstrap] pre-pulling HF model weights ('meeting-scribe gb10 pull-models')"
+meeting-scribe gb10 pull-models || \
+    echo "[bootstrap] pull-models reported issues — see above. The containers will crash-loop without weights."
+
+# ── 8. Build local container images ──────────────────────────────
+# ``meeting-scribe gb10 up`` only builds when the tagged image is missing.
+# A stale tagged image from an earlier setup (e.g., a different model
+# default that's since been changed) will be silently reused, then crash
+# at runtime. Build explicitly so a customer install is never running
+# code older than this checkout.
+echo
+echo "[bootstrap] (re)building local container images"
+docker compose -f docker-compose.gb10.yml build pyannote-diarize qwen3-tts vllm-asr || \
+    echo "[bootstrap] compose build reported issues — see above"
+
+# ── 9. Bring up the in-tree model backends ───────────────────────
+# ``meeting-scribe gb10 up`` starts pyannote-diarize, scribe-asr, scribe-tts
+# (×2). Idempotent on rerun. Translate is NOT started here — it lives in
+# auto-sre (sister-cloned in step 5).
+echo
+echo "[bootstrap] starting model backends ('meeting-scribe gb10 up')"
+meeting-scribe gb10 up || \
+    echo "[bootstrap] gb10 up reported issues — try 'meeting-scribe gb10 status' for details"
+
+# ── 8. Smoke-test ──────────────────────────────────────────────────
+# 5-second sweep across all four backends. Non-fatal — translate will
+# still be down (it lives in auto-sre, not started by this script).
+echo
+echo "[bootstrap] running 'meeting-scribe validate --quick'"
+meeting-scribe validate --quick || true
+
+# ── 9. Operator next steps ────────────────────────────────────────
+echo
+cat <<'NEXT_STEPS'
+─────────────────────────────────────────────────────────────────────
+[bootstrap] meeting-scribe install complete.
+
+Translate (vLLM @ :8010) is not running yet — start it via auto-sre:
+
+    cd ../auto-sre
+    .venv/bin/autosre setup         # one-time (selects vLLM backend on GB10)
+    .venv/bin/autosre start         # cold-loads the 35 B FP8 model (3+ min)
+
+Then start the scribe server:
+
+    meeting-scribe start
+
+Verify everything is green:
+
+    meeting-scribe validate --quick
+─────────────────────────────────────────────────────────────────────
+NEXT_STEPS

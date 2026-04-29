@@ -84,7 +84,7 @@ class SSHRunner:
         try:
             result = self.run(["echo", "ok"], timeout=timeout, check=False)
             return result.returncode == 0 and "ok" in result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        except subprocess.TimeoutExpired, FileNotFoundError, OSError:
             return False
 
     def rsync(

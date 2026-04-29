@@ -83,7 +83,7 @@ Question: {question}"""
                     resp = await client.get("/v1/models")
                     model = resp.json()["data"][0]["id"]
                 except Exception:
-                    model = "Qwen/Qwen3.5-35B-A3B-FP8"
+                    model = "Qwen/Qwen3.6-35B-A3B-FP8"
 
             logger.info("Q&A using model=%s, vllm_url=%s", model, vllm_url)
 
@@ -128,7 +128,7 @@ Question: {question}"""
                             logger.info(
                                 "Q&A finish_reason=%s at chunk %d", finish_reason, chunk_count
                             )
-                    except (json.JSONDecodeError, KeyError, IndexError):
+                    except json.JSONDecodeError, KeyError, IndexError:
                         continue
 
             elapsed_ms = (time.monotonic() - t0) * 1000

@@ -515,7 +515,9 @@ def _generate_timeline(meeting_id: str, meeting_dir=None) -> None:
     logger.info(
         "Generated timeline.json: %d segments%s, %dms",
         len(segments),
-        f" + {len(timeline.get('exclusive_segments') or [])} exclusive" if "exclusive_segments" in timeline else "",
+        f" + {len(timeline.get('exclusive_segments') or [])} exclusive"
+        if "exclusive_segments" in timeline
+        else "",
         duration_ms,
     )
 

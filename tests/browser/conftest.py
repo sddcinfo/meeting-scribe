@@ -30,7 +30,7 @@ STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 
 
 @pytest.fixture(autouse=True)
-def _isolate_tmux_socket(monkeypatch) -> Generator[str, None, None]:
+def _isolate_tmux_socket(monkeypatch) -> Generator[str]:
     """Pin every browser test to a per-run tmux socket.
 
     Without this, tests that spawn real tmux (autosre suite, anything
@@ -218,7 +218,7 @@ class _ServerThread(threading.Thread):
 
 
 @pytest.fixture(scope="session")
-def synthetic_mse_server() -> Generator[int, None, None]:
+def synthetic_mse_server() -> Generator[int]:
     """Start a synthetic MSE server and yield its port."""
     init, fragments = generate_test_fmp4(duration_s=3.0)
     app = _build_synthetic_app(init, fragments)
@@ -230,7 +230,7 @@ def synthetic_mse_server() -> Generator[int, None, None]:
 
 
 @pytest.fixture(scope="session")
-def corrupt_init_server() -> Generator[int, None, None]:
+def corrupt_init_server() -> Generator[int]:
     """Start a server that sends a corrupt init segment."""
     init, fragments = generate_test_fmp4(duration_s=1.0)
     app = _build_synthetic_app(init, fragments, corrupt_init=True)

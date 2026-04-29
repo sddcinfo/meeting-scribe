@@ -46,7 +46,7 @@ def _current_regdomain() -> str | None:
             timeout=3,
             check=False,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+    except FileNotFoundError, subprocess.TimeoutExpired, OSError:
         return None
     if result.returncode != 0:
         return None
@@ -133,7 +133,7 @@ def _ensure_regdomain_persistent() -> bool:
                     timeout=3,
                     check=False,
                 )
-            except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            except FileNotFoundError, subprocess.TimeoutExpired, OSError:
                 pass
     except OSError:
         pass
