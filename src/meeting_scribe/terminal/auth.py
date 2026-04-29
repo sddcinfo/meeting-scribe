@@ -16,6 +16,7 @@ Three layers of credential:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import hmac
 import logging
@@ -59,14 +60,35 @@ class AdminSecretStore:
             return cls(path=actual_path, secret=data)
         actual_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         raw = secrets.token_hex(32).encode()
-        # Write with mode 0o600 atomically.
-        tmp = actual_path.with_suffix(actual_path.suffix + ".tmp")
+        # Write with mode 0o600 atomically. Per-PID tmp filename so
+        # concurrent imports (pytest-xdist workers) don't race on the
+        # same path: worker A finishes os.replace, worker B's tmp is
+        # already gone, second os.replace dies with FileNotFoundError.
+        tmp = actual_path.with_suffix(actual_path.suffix + f".tmp.{os.getpid()}")
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         try:
             os.write(fd, raw)
         finally:
             os.close(fd)
-        os.replace(tmp, actual_path)
+        try:
+            os.replace(tmp, actual_path)
+        except FileNotFoundError:
+            # A racing worker beat us to it. Drop our tmp and use theirs.
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(tmp)
+            if actual_path.exists():
+                cls._enforce_perms(actual_path)
+                data = actual_path.read_bytes().strip()
+                if data:
+                    return cls(path=actual_path, secret=data)
+            raise
+        # If a racing worker also won, our tmp may have been replaced into
+        # actual_path by their os.replace before ours. Either way, the
+        # value at actual_path is what's authoritative — re-read it.
+        if actual_path.exists():
+            data = actual_path.read_bytes().strip()
+            if data:
+                raw = data
         os.chmod(actual_path, 0o600)
         logger.info(
             "generated admin secret at %s (mode 600) — required for terminal bootstrap", actual_path

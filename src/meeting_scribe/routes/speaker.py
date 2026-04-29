@@ -126,7 +126,7 @@ async def rename_cluster(
     # Parse cluster_id (may be int or string-int)
     try:
         target_cid = int(cluster_id)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return JSONResponse({"error": "Invalid cluster_id"}, status_code=400)
 
     # Find all segments belonging to this cluster (apply corrections + dedup)
@@ -273,7 +273,7 @@ async def assign_speaker_to_seat(
                 sp_cluster = sp.get("cluster_id", sp.get("speaker_id"))
                 try:
                     sp_cluster_int = int(sp_cluster) if sp_cluster is not None else -1
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     sp_cluster_int = -1
                 if sp_cluster_int == cluster_id:
                     sp["display_name"] = display_name

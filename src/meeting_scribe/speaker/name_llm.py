@@ -1,7 +1,7 @@
 """LLM-based speaker name extraction.
 
 Replaces regex heuristic with neural understanding via vLLM.
-Reuses the translation vLLM endpoint (Qwen3.5-35B) — no extra model needed.
+Reuses the translation vLLM endpoint (Qwen3.6-35B) — no extra model needed.
 Falls back to regex if LLM is unavailable.
 
 Uses max_tokens=20 to keep latency minimal (name extraction, not generation).

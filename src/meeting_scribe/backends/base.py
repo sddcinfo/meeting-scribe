@@ -5,7 +5,7 @@ All inference is behind swappable ABCs for GB10 production.
 Backend hierarchy:
     ASRBackend       — Qwen3-ASR-1.7B via vLLM
     DiarizeBackend   — pyannote.audio speaker diarization
-    TranslateBackend — vLLM+Qwen3.5
+    TranslateBackend — vLLM+Qwen3.6
     TTSBackend       — Qwen3-TTS via vLLM
 """
 

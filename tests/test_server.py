@@ -56,7 +56,13 @@ def start_test_server() -> subprocess.Popen:
 
     _test_meetings_dir = tempfile.mkdtemp(prefix="scribe-test-meetings-")
 
-    venv_python = PROJECT_ROOT / ".venv" / "bin" / "python3"
+    # Prefer the project venv (matches dev-box behavior + has the editable
+    # install) but fall back to the running interpreter when there's no
+    # venv. CI uses actions/setup-python directly, no .venv.
+    import sys
+
+    venv_python_path = PROJECT_ROOT / ".venv" / "bin" / "python3"
+    venv_python = venv_python_path if venv_python_path.exists() else Path(sys.executable)
     env = os.environ.copy()
     env["PYTHONPATH"] = str(PROJECT_ROOT / "src")
     env["SCRIBE_PORT"] = str(TEST_PORT)
@@ -91,9 +97,16 @@ def start_test_server() -> subprocess.Popen:
         "warning",
     ]
 
-    # TLS certs
+    # TLS certs — `_wait_for_server` expects https://, and uvicorn rejects
+    # HTTPS handshakes on a plain HTTP listener with "Invalid HTTP request
+    # received". If certs aren't there (CI never runs `meeting-scribe
+    # setup`), generate them inline so the server speaks HTTPS.
     ssl_key = PROJECT_ROOT / "certs" / "key.pem"
     ssl_cert = PROJECT_ROOT / "certs" / "cert.pem"
+    if not (ssl_key.exists() and ssl_cert.exists()):
+        from meeting_scribe.cli._common import _ensure_admin_tls_certs
+
+        _ensure_admin_tls_certs()
     if ssl_key.exists() and ssl_cert.exists():
         cmd += ["--ssl-keyfile", str(ssl_key), "--ssl-certfile", str(ssl_cert)]
 
@@ -109,8 +122,19 @@ def start_test_server() -> subprocess.Popen:
         )
 
     if not _wait_for_server(TEST_PORT):
+        # Dump the server's stdout/stderr inline so CI logs (where the
+        # /tmp file isn't accessible) show *why* it failed instead of
+        # just "failed to start".
+        log_excerpt = ""
+        try:
+            log_excerpt = log_file.read_text(errors="replace")[-4000:]
+        except Exception as exc:
+            log_excerpt = f"<could not read log: {exc}>"
         stop_test_server()
-        pytest.fail(f"Test server failed to start on port {TEST_PORT}. Check logs: {log_file}")
+        pytest.fail(
+            f"Test server failed to start on port {TEST_PORT}.\n"
+            f"--- last 4 KiB of {log_file} ---\n{log_excerpt}\n--- end of server log ---"
+        )
 
     return _test_server_proc
 
@@ -123,7 +147,7 @@ def stop_test_server():
         try:
             os.kill(_test_server_proc.pid, signal.SIGTERM)
             _test_server_proc.wait(timeout=10)
-        except (ProcessLookupError, subprocess.TimeoutExpired):
+        except ProcessLookupError, subprocess.TimeoutExpired:
             try:
                 os.kill(_test_server_proc.pid, signal.SIGKILL)
             except ProcessLookupError:

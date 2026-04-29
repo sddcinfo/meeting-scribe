@@ -2,7 +2,7 @@
 
 Context (2026-04-14 OOM):
     ``cli.py:gb10_up`` used to iterate recipe names and call
-    ``start_container()`` on each — including ``qwen3.5-35b-translation``
+    ``start_container()`` on each — including ``qwen3.6-35b-translation``
     which is marked ``mode: shared`` in its recipe. The safety
     contract ("this model is managed by autosre, don't launch it from
     here") lived only in the recipe file comment + the compose file
@@ -40,9 +40,9 @@ def test_translation_recipe_still_marked_shared():
     assertions, future automation) stops working. Catch it here."""
     from meeting_scribe.recipes import load_recipe
 
-    recipe = load_recipe("qwen3.5-35b-translation")
+    recipe = load_recipe("qwen3.6-35b-translation")
     assert recipe.get("mode") == "shared", (
-        "qwen3.5-35b-translation.yaml must set `mode: shared` — "
+        "qwen3.6-35b-translation.yaml must set `mode: shared` — "
         "it's the documentation sentinel that says 'this is managed "
         "by autosre, not by scribe'"
     )

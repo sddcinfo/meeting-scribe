@@ -11,8 +11,8 @@ authors = [{ name = "Brad Lay" }]
 license = { text = "MIT" }
 dependencies = [
     # Server
-    "fastapi==0.135.3",
-    "uvicorn[standard]==0.44.0",
+    "fastapi==0.136.1",
+    "uvicorn[standard]==0.46.0",
 
     # Core audio/ML
     "numpy==2.4.4",
@@ -26,6 +26,13 @@ dependencies = [
     # ASR runs entirely in the vLLM Qwen3-ASR container; the Python venv
     # stays transformers-free and makes OpenAI-compatible HTTP calls.
 
+    # HuggingFace CLI — `meeting-scribe gb10 pull-models` shells out to
+    # `huggingface-cli download` to pre-populate /data/huggingface before
+    # the offline-mode containers start. Without this declared dependency,
+    # customer installs silently no-op the pre-pull and the containers
+    # crash-loop with LocalEntryNotFoundError.
+    "huggingface_hub[cli]>=0.36.0",
+
     # HTTP client (vLLM translation, TTS)
     "httpx==0.28.1",
 
@@ -36,8 +43,8 @@ dependencies = [
     "python-pptx>=1.0.0",
 
     # Utilities
-    "click==8.3.2",
-    "pydantic==2.12.5",
+    "click==8.3.3",
+    "pydantic==2.13.3",
     "pyyaml==6.0.3",
     "pykakasi==2.3.0",
 ]
@@ -47,8 +54,13 @@ dev = [
     "pytest==9.0.3",
     "pytest-asyncio==1.3.0",
     "pytest-playwright>=0.6.2",
+    # Parallel pytest — `-n auto` cuts the smoke job from ~3:30 to ~1:30
+    # on the 4-core GitHub runner. Tests that depend on the test_server
+    # fixture stay correct because the fixture is session-scoped and
+    # xdist gives each worker its own session.
+    "pytest-xdist>=3.6.0",
     "websockets==16.0",
-    "ruff==0.15.10",
+    "ruff==0.15.12",
 ]
 # Optional: higher-accuracy slide language detection. Adds ~170 MB but
 # materially improves classification of short/mixed-language slide text.

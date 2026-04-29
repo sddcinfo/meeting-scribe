@@ -61,7 +61,7 @@ class TestPriorityHeaders:
 
     @pytest.mark.asyncio
     async def test_translate_sends_priority_minus_10(self):
-        be = VllmTranslateBackend(base_url="http://localhost:8010", model="qwen3.5-int4")
+        be = VllmTranslateBackend(base_url="http://localhost:8010", model="qwen3.6-fp8")
         captured: dict = {}
 
         async def fake_post(url, json, **kw):

@@ -1,7 +1,7 @@
-"""AI-powered meeting summary generation via Qwen3.5.
+"""AI-powered meeting summary generation via Qwen3.6.
 
 Reads the meeting transcript from journal.jsonl, sends a structured prompt
-to the vLLM translation endpoint (Qwen3.5-35B), and generates a comprehensive
+to the vLLM translation endpoint (Qwen3.6-35B), and generates a comprehensive
 meeting summary with key insights, named entities, categorized action items,
 and speaker statistics.
 
@@ -240,7 +240,7 @@ async def _call_vllm_summary(
                 resp = await client.get("/v1/models")
                 model = resp.json()["data"][0]["id"]
             except Exception:
-                model = "Qwen/Qwen3.5-35B-A3B-FP8"
+                model = "Qwen/Qwen3.6-35B-A3B-FP8"
 
         t0 = time.monotonic()
         try:
@@ -582,7 +582,7 @@ def _parse_json_response(raw: str) -> dict | None:
     """Extract JSON from LLM response, handling thinking tags, markdown code blocks."""
     raw = raw.strip()
 
-    # Strip Qwen3.5 thinking tags
+    # Strip Qwen3.6 thinking tags
     import re
 
     raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()

@@ -216,9 +216,7 @@ class Qwen3TTSBackend(TTSBackend):
         if len(alive) == 1:
             logger.info("TTS: ready at %s (single replica)", alive[0])
         else:
-            logger.info(
-                "TTS: ready, %d replicas in pool: %s", len(alive), ", ".join(alive)
-            )
+            logger.info("TTS: ready, %d replicas in pool: %s", len(alive), ", ".join(alive))
 
     async def stop(self) -> None:
         self._voice_cache.clear()

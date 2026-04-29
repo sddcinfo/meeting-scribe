@@ -274,7 +274,7 @@ async def _handle_ws(websocket: WebSocket, cfg: TerminalRouterConfig) -> None:
             # Shield close so a cancelled WS handler still frees the PTY and child.
             try:
                 await asyncio.shield(session.close(reason="ws_closed"))
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 # Fire-and-forget best-effort cleanup if the shield was interrupted.
                 with contextlib.suppress(OSError):
                     os.close(session.master_fd)

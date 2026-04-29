@@ -150,9 +150,7 @@ def _attach_speakers_to_events(
     # the one we use for primary assignment) and promote the cluster to
     # primary on THAT event (the previous primary becomes a secondary).
     diarize_clusters = {
-        seg["cluster_id"]
-        for src in (diarize_segments, exclusive_segments)
-        for seg in src
+        seg["cluster_id"] for src in (diarize_segments, exclusive_segments) for seg in src
     }
     primary_clusters_seen: set[int] = set()
     for ev in events:
@@ -166,9 +164,11 @@ def _attach_speakers_to_events(
         # (preferring exclusive_segments for the search since that's
         # the source of truth; fall back to standard if the cluster
         # only ever appeared in standard).
-        rescue_source = exclusive_segments if any(
-            s["cluster_id"] == miss_cid for s in exclusive_segments
-        ) else diarize_segments
+        rescue_source = (
+            exclusive_segments
+            if any(s["cluster_id"] == miss_cid for s in exclusive_segments)
+            else diarize_segments
+        )
         best_ev = None
         best_ov = 0
         for ev in events:

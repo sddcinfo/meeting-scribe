@@ -803,9 +803,7 @@ async def finalize_meeting(
                     # standard diarization outputs.  Additive on the
                     # artifact set; UI consumers ignore unknown files.
                     # See plans/2026-Q3-followups.md C2 for the rationale.
-                    _persist_exclusive_segments(
-                        meeting_dir, diarize_result.exclusive_segments
-                    )
+                    _persist_exclusive_segments(meeting_dir, diarize_result.exclusive_segments)
 
                     with journal_path.open("a") as f:
                         for event in events_list:
@@ -1460,8 +1458,7 @@ async def _stop_meeting_locked(preserve_empty: bool = False) -> JSONResponse:
                     diarize_segments = diarize_result.segments
                     diarize_exclusive = diarize_result.exclusive_segments
                     logger.info(
-                        "finalize.step=full_diarize meeting=%s took=%.1fs "
-                        "segments=%d exclusive=%d",
+                        "finalize.step=full_diarize meeting=%s took=%.1fs segments=%d exclusive=%d",
                         mid,
                         time.monotonic() - _diarize_t0,
                         len(diarize_segments),
@@ -1504,9 +1501,7 @@ async def _stop_meeting_locked(preserve_empty: bool = False) -> JSONResponse:
                                 continue
                             event_dict["revision"] = (event_dict.get("revision", 0) or 0) + 1
                             f.write(_json.dumps(event_dict, ensure_ascii=False) + "\n")
-                    unique = len(
-                        {s["cluster_id"] for s in (diarize_segments or diarize_exclusive)}
-                    )
+                    unique = len({s["cluster_id"] for s in (diarize_segments or diarize_exclusive)})
                     logger.info(
                         "Stop diarization: %d standard / %d exclusive segments, "
                         "%d unique global speakers",

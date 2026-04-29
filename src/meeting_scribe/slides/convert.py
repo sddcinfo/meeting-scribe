@@ -231,7 +231,7 @@ def extract_embedded_thumbnail(pptx_path: Path, dest_png: Path) -> bool:
                         tmp.write_bytes(data)
                 tmp.replace(dest_png)
                 return True
-    except (zipfile.BadZipFile, OSError):
+    except zipfile.BadZipFile, OSError:
         logger.debug("No usable embedded thumbnail in %s", pptx_path)
     return False
 
@@ -254,7 +254,7 @@ def _unoserver_endpoint() -> tuple[str, int] | None:
     try:
         with socket.create_connection((_UNOSERVER_HOST, port), timeout=0.2):
             return (_UNOSERVER_HOST, port)
-    except (TimeoutError, OSError):
+    except TimeoutError, OSError:
         return None
 
 

@@ -46,8 +46,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIBE_APP_JS = REPO_ROOT / "static" / "js" / "scribe-app.js"
 INDEX_HTML = REPO_ROOT / "static" / "index.html"
@@ -141,9 +139,9 @@ def test_preflight_set_iteration_safe():
                 bad_sites.append(f"{path.relative_to(REPO_ROOT)}:{line_no} — `for ws in {target}:`")
 
     assert not bad_sites, (
-        f"unguarded iteration over ws_connections (the 7b9c7c5 regression class):\n"
+        "unguarded iteration over ws_connections (the 7b9c7c5 regression class):\n"
         + "\n".join(f"  {s}" for s in bad_sites)
-        + f"\nWrap with `for ws in list(state.ws_connections):` to snapshot."
+        + "\nWrap with `for ws in list(state.ws_connections):` to snapshot."
     )
 
 
@@ -181,11 +179,7 @@ def test_segment_count_listener_guards_null_in_popout():
         f"adjust the regex. Body: {body!r}"
     )
     # And it must guard null.
-    has_guard = (
-        "if (el)" in body
-        or "if(el)" in body
-        or "?.textContent" in body
-    )
+    has_guard = "if (el)" in body or "if(el)" in body or "?.textContent" in body
     assert has_guard, (
         "the #segment-count store.subscribe callback must guard against "
         "null (popout DOM doesn't render that element). Without the guard, "

@@ -230,7 +230,7 @@ from tests.pytest_flaky_skip import (
 _orig_collection_modifyitems = globals().get("pytest_collection_modifyitems")
 
 
-def pytest_collection_modifyitems(config, items):  # noqa: ANN001
+def pytest_collection_modifyitems(config, items):
     if _orig_collection_modifyitems is not None:
         _orig_collection_modifyitems(config, items)
     _flaky_collection_modifyitems(config, items)

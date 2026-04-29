@@ -46,7 +46,7 @@ _HOST_PAGE = """<!doctype html>
 
 
 @pytest.fixture
-def scribe_autosre_server(tmp_path, monkeypatch) -> Generator[dict[str, Any], None, None]:
+def scribe_autosre_server(tmp_path, monkeypatch) -> Generator[dict[str, Any]]:
     secret_path = tmp_path / "admin-secret"
     monkeypatch.setenv("SCRIBE_ADMIN_SECRET_FILE", str(secret_path))
     # Use tmux rather than /bin/sh — autosre does real TTY detection and

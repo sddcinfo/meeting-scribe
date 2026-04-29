@@ -89,7 +89,7 @@ Keep commit messages to 1-2 lines. Focus on the "why" not the "what".
 ## Known Limitations
 
 - **pyannote diarization**: Requires `HF_TOKEN` environment variable for downloading pyannote.audio model weights from Hugging Face (gated model, accept license first).
-- **Translation**: Uses vLLM (Qwen3.5-35B) for GPU-accelerated translation.
+- **Translation**: Uses vLLM (Qwen3.6-35B) for GPU-accelerated translation.
 - **Room layout**: Session-scoped via `scribe_session` cookie. Multiple browsers can have independent layouts.
 - **Speaker matching**: Runs in ThreadPoolExecutor. May lag with rapid multi-speaker input.
 
