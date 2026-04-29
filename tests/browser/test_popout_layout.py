@@ -27,13 +27,6 @@ import pytest
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
-
-pytestmark = pytest.mark.skip(
-    reason="Stale preset list (developer/fullstack/sidebyside/demo were "
-    "removed in the popout-layout simplification to 3 presets — "
-    "translate/translator/triple). Needs behavior-based rewrite, "
-    "not a name swap."
-)
 from fastapi.staticfiles import StaticFiles
 
 from meeting_scribe.terminal.auth import AdminSecretStore, CookieSigner, TicketStore
@@ -41,7 +34,15 @@ from meeting_scribe.terminal.bootstrap import BootstrapConfig, register_bootstra
 from meeting_scribe.terminal.registry import ActiveTerminals
 from meeting_scribe.terminal.router import TerminalRouterConfig, register_terminal_routes
 
-pytestmark = pytest.mark.browser
+pytestmark = [
+    pytest.mark.browser,
+    pytest.mark.skip(
+        reason="Stale preset list (developer/fullstack/sidebyside/demo were "
+        "removed in the popout-layout simplification to 3 presets — "
+        "translate/translator/triple). Needs behavior-based rewrite, "
+        "not a name swap."
+    ),
+]
 
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
