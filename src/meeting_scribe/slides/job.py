@@ -220,7 +220,7 @@ class SlideJobRunner:
         self._current_task.cancel()
         try:
             await self._current_task
-        except (asyncio.CancelledError, Exception):
+        except asyncio.CancelledError, Exception:
             pass
         logger.warning("Force-cancelled in-flight slide pipeline (drain --force)")
         return True
@@ -336,7 +336,7 @@ class SlideJobRunner:
             self._current_task.cancel()
             try:
                 await self._current_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
 
         self._cancelled = False

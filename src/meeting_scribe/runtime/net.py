@@ -92,7 +92,7 @@ def _detect_management_ip_via_nm() -> str | None:
             timeout=5,
             check=True,
         ).stdout.strip()
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+    except subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired:
         return None
 
     # Filter to wired ethernet connections.
@@ -120,7 +120,7 @@ def _detect_management_ip_via_nm() -> str | None:
             timeout=5,
             check=True,
         ).stdout.strip()
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+    except subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired:
         return None
 
     # Parse "IP4.ADDRESS[1]:192.168.8.153/24" → "192.168.8.153"

@@ -779,7 +779,7 @@ class TestTTSDeepHealth:
                     sm_str = parts[3]
                     if pid == tts_pid and sm_str != "-":
                         sm_samples.append(int(sm_str))
-                except (ValueError, IndexError):
+                except ValueError, IndexError:
                     continue
 
         if not sm_samples:

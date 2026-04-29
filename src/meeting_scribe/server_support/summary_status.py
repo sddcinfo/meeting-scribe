@@ -129,7 +129,7 @@ def read_status(meeting_dir: Path) -> dict[str, Any] | None:
         return None
     try:
         return json.loads(p.read_text())
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return None
 
 
@@ -140,7 +140,7 @@ def next_attempt_id(meeting_dir: Path) -> int:
         return 1
     try:
         return int(prior.get("attempt_id", 0)) + 1
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return 1
 
 

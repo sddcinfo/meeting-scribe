@@ -74,8 +74,11 @@ def test_https_rejection_uses_tcp_reset():
     rules = _iptables_rule_strings()
     # Find rules that REJECT TCP traffic.
     https_rules = [
-        r for r in rules
-        if "-j REJECT" in r and "-p tcp" in r and ("--dport 443" in r or "--dport {admin_port}" in r)
+        r
+        for r in rules
+        if "-j REJECT" in r
+        and "-p tcp" in r
+        and ("--dport 443" in r or "--dport {admin_port}" in r)
     ]
     assert https_rules, "no TCP-REJECT rule found for ports 443/admin"
     for r in https_rules:
@@ -91,13 +94,13 @@ def test_default_deny_uses_icmp_port_unreachable():
     not silent drop)."""
     rules = _iptables_rule_strings()
     default_deny = [
-        r for r in rules
+        r
+        for r in rules
         if "-j REJECT" in r and "-p tcp" not in r and "-p udp" not in r and "-p icmp" not in r
     ]
     # We may have several catch-all REJECT rules (INPUT and FORWARD)
     assert default_deny, "no default-deny REJECT rule found"
     for r in default_deny:
         assert "--reject-with icmp-port-unreachable" in r, (
-            f"default-deny REJECT rule missing --reject-with "
-            f"icmp-port-unreachable: {r}"
+            f"default-deny REJECT rule missing --reject-with icmp-port-unreachable: {r}"
         )

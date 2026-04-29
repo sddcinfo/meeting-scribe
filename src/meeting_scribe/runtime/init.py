@@ -59,9 +59,7 @@ async def init_tts() -> None:
         from meeting_scribe.backends.tts_qwen3 import Qwen3TTSBackend
 
         tts_url = state.config.tts_vllm_url or (
-            state.config.translate_vllm_url
-            if state.config.translate_backend == "vllm"
-            else None
+            state.config.translate_vllm_url if state.config.translate_backend == "vllm" else None
         )
         tts = Qwen3TTSBackend(vllm_url=tts_url or None)
         # Retry: TTS container may still be starting during parallel init.
@@ -136,9 +134,7 @@ async def init_translation(
 
         # Realtime URL (smaller live-path model, optional) takes precedence
         # over the main translate URL.
-        realtime_url = (
-            state.config.translate_realtime_vllm_url or state.config.translate_vllm_url
-        )
+        realtime_url = state.config.translate_realtime_vllm_url or state.config.translate_vllm_url
         be = VllmTranslateBackend(
             base_url=realtime_url,
             model=state.config.translate_vllm_model or None,

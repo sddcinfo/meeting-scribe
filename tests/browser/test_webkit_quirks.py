@@ -43,7 +43,9 @@ def _build_app() -> FastAPI:
 
     @app.get("/api/languages")
     async def languages():
-        return JSONResponse({"languages": [{"code": "en", "name": "English", "native_name": "English"}]})
+        return JSONResponse(
+            {"languages": [{"code": "en", "name": "English", "native_name": "English"}]}
+        )
 
     @app.get("/api/status")
     async def status():
@@ -83,6 +85,7 @@ class _ServerThread(threading.Thread):
     def wait_ready(self, timeout: float = 10.0) -> None:
         import time
         import urllib.request
+
         self._started.wait(timeout)
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -129,9 +132,7 @@ def test_webkit_scrollintoview_supported(webkit_browser, webkit_server):
     try:
         page.goto(f"{webkit_server}/?popout=view", wait_until="domcontentloaded")
         page.wait_for_function("() => !!window._gridRenderer", timeout=8000)
-        is_func = page.evaluate(
-            "() => typeof Element.prototype.scrollIntoView === 'function'"
-        )
+        is_func = page.evaluate("() => typeof Element.prototype.scrollIntoView === 'function'")
         assert is_func, "WebKit Element.scrollIntoView is missing or non-function"
     finally:
         ctx.close()
@@ -148,9 +149,7 @@ def test_webkit_scrollto_supported(webkit_browser, webkit_server):
     try:
         page.goto(f"{webkit_server}/?popout=view", wait_until="domcontentloaded")
         page.wait_for_function("() => !!window._gridRenderer", timeout=8000)
-        is_func = page.evaluate(
-            "() => typeof Element.prototype.scrollTo === 'function'"
-        )
+        is_func = page.evaluate("() => typeof Element.prototype.scrollTo === 'function'")
         assert is_func, "WebKit Element.scrollTo is missing"
     finally:
         ctx.close()

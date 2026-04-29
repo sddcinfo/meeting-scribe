@@ -215,7 +215,7 @@ async def _collect_finals(ws, timeout: float = 10.0) -> list[dict]:
             e = json.loads(msg)
             if e.get("is_final") and e.get("text"):
                 events.append(e)
-    except (TimeoutError, websockets.exceptions.ConnectionClosedOK):
+    except TimeoutError, websockets.exceptions.ConnectionClosedOK:
         pass
     return events
 
@@ -263,7 +263,7 @@ async def test_asr_with_translation(audio_en_bytes):
                     if tr.get("text") and tr.get("status") == "done":
                         translated.append(e)
                         break  # Got one translation, that's enough
-            except (TimeoutError, websockets.exceptions.ConnectionClosedOK):
+            except TimeoutError, websockets.exceptions.ConnectionClosedOK:
                 pass
 
         assert len(translated) > 0, "No translation received"

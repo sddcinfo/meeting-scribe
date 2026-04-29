@@ -44,7 +44,7 @@ def _read_pid(pid_file: Path) -> int | None:
         pid = int(pid_file.read_text().strip())
         os.kill(pid, 0)
         return pid
-    except (ValueError, ProcessLookupError, PermissionError):
+    except ValueError, ProcessLookupError, PermissionError:
         pid_file.unlink(missing_ok=True)
         return None
 
@@ -88,7 +88,7 @@ def _server_state() -> tuple[str, int | None, str | None]:
             check=False,
             timeout=2,
         )
-    except (FileNotFoundError, subprocess.SubprocessError):
+    except FileNotFoundError, subprocess.SubprocessError:
         return ("foreground", _get_pid(), None)
 
     if r.returncode != 0 or not r.stdout.strip():
@@ -113,7 +113,7 @@ def _server_state() -> tuple[str, int | None, str | None]:
     if pid is not None:
         try:
             os.kill(pid, 0)
-        except (ProcessLookupError, PermissionError):
+        except ProcessLookupError, PermissionError:
             pid = None
     return ("systemd", pid, kv.get("ActiveState") or None)
 
@@ -245,7 +245,7 @@ def _management_ip() -> str:
         tokens = out.split()
         if "src" in tokens:
             return tokens[tokens.index("src") + 1]
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+    except subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired:
         pass
     return "127.0.0.1"
 
@@ -299,7 +299,7 @@ def _ensure_containers_running() -> None:
             check=True,
         )
         running = set(result.stdout.strip().splitlines())
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+    except subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired:
         return  # Can't check — let the server handle it
 
     missing = [c for c in _REQUIRED_CONTAINERS if c not in running]

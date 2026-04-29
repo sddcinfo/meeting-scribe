@@ -50,10 +50,10 @@ def _ctx_kwargs(width: int, height: int, dpr: float = 2.0) -> dict:
 
 DEVICES = [
     # name, ctx kwargs
-    ("iPhone 17 Pro Max",     _ctx_kwargs(440, 956, 3.0)),
-    ("iPhone 14",             _ctx_kwargs(390, 844, 3.0)),
+    ("iPhone 17 Pro Max", _ctx_kwargs(440, 956, 3.0)),
+    ("iPhone 14", _ctx_kwargs(390, 844, 3.0)),
     ("iPad Pro 11 landscape", _ctx_kwargs(1194, 834, 2.0)),
-    ("Pixel 7",               _ctx_kwargs(412, 915, 2.625)),
+    ("Pixel 7", _ctx_kwargs(412, 915, 2.625)),
 ]
 
 
@@ -79,7 +79,9 @@ def _build_app() -> FastAPI:
 
     @app.get("/api/languages")
     async def languages():
-        return JSONResponse({"languages": [{"code": "en", "name": "English", "native_name": "English"}]})
+        return JSONResponse(
+            {"languages": [{"code": "en", "name": "English", "native_name": "English"}]}
+        )
 
     @app.get("/api/status")
     async def status():
@@ -119,6 +121,7 @@ class _ServerThread(threading.Thread):
     def wait_ready(self, timeout: float = 10.0) -> None:
         import time
         import urllib.request
+
         self._started.wait(timeout)
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -155,8 +158,12 @@ def mobile_server() -> Generator[str]:
 TABLET_DEVICES = [d for d in DEVICES if d[1]["viewport"]["width"] >= 1000]
 
 
-@pytest.mark.parametrize(("device_name", "device_profile"), TABLET_DEVICES, ids=[d[0] for d in TABLET_DEVICES])
-def test_admin_landing_no_horizontal_overflow_on_tablets(browser, mobile_server, device_name, device_profile):
+@pytest.mark.parametrize(
+    ("device_name", "device_profile"), TABLET_DEVICES, ids=[d[0] for d in TABLET_DEVICES]
+)
+def test_admin_landing_no_horizontal_overflow_on_tablets(
+    browser, mobile_server, device_name, device_profile
+):
     """Admin landing must not overflow on tablet-class viewports.
 
     Phones are deliberately excluded — the admin page is desktop / tablet
@@ -233,7 +240,9 @@ def test_iphone_popout_buttons_meet_minimum_tap_target(browser, mobile_server):
     `.popout-btn` style targets desktop affordances and renders ~24 px
     high on small viewports. The fix is the same CSS pass.
     """
-    pytest.xfail("popout-header buttons render below 40 px on phone viewports — same fix as popout overflow")
+    pytest.xfail(
+        "popout-header buttons render below 40 px on phone viewports — same fix as popout overflow"
+    )
     ctx = browser.new_context(**_ctx_kwargs(440, 956, 3.0))
     page = ctx.new_page()
     try:

@@ -56,31 +56,37 @@ def _build_app() -> FastAPI:
 
     @app.get("/api/languages")
     async def languages():
-        return JSONResponse({
-            "languages": [
-                {"code": "en", "name": "English", "native_name": "English"},
-                {"code": "ja", "name": "Japanese", "native_name": "日本語"},
-            ]
-        })
+        return JSONResponse(
+            {
+                "languages": [
+                    {"code": "en", "name": "English", "native_name": "English"},
+                    {"code": "ja", "name": "Japanese", "native_name": "日本語"},
+                ]
+            }
+        )
 
     @app.get("/api/status")
     async def status():
-        return JSONResponse({
-            "meeting": {"id": "vr-test", "language_pair": ["en", "ja"]},
-            "backends": {"asr": True, "translate": True, "diarize": True},
-            "connections": 1,
-        })
+        return JSONResponse(
+            {
+                "meeting": {"id": "vr-test", "language_pair": ["en", "ja"]},
+                "backends": {"asr": True, "translate": True, "diarize": True},
+                "connections": 1,
+            }
+        )
 
     @app.get("/api/meetings/{mid}")
     async def meeting(mid: str):
-        return JSONResponse({
-            "meta": {
-                "meeting_id": mid,
-                "language_pair": ["en", "ja"],
-                "state": "RECORDING",
-            },
-            "events": list(state["events"]),
-        })
+        return JSONResponse(
+            {
+                "meta": {
+                    "meeting_id": mid,
+                    "language_pair": ["en", "ja"],
+                    "state": "RECORDING",
+                },
+                "events": list(state["events"]),
+            }
+        )
 
     @app.get("/api/meetings")
     async def meetings():
@@ -110,21 +116,23 @@ def _build_app() -> FastAPI:
 
     # Pre-seed a few segments so the screenshot has something to render.
     for i in range(3):
-        state["events"].append({
-            "segment_id": f"vr-seg-{i}",
-            "revision": 0,
-            "is_final": True,
-            "start_ms": i * 2000,
-            "end_ms": i * 2000 + 1500,
-            "language": "en",
-            "text": "Lorem ipsum dolor sit amet.",
-            "speakers": [{"cluster_id": i + 1, "source": "diarization"}],
-            "translation": {
-                "status": "done",
-                "text": "あいうえおかきくけこ。",
-                "target_language": "ja",
-            },
-        })
+        state["events"].append(
+            {
+                "segment_id": f"vr-seg-{i}",
+                "revision": 0,
+                "is_final": True,
+                "start_ms": i * 2000,
+                "end_ms": i * 2000 + 1500,
+                "language": "en",
+                "text": "Lorem ipsum dolor sit amet.",
+                "speakers": [{"cluster_id": i + 1, "source": "diarization"}],
+                "translation": {
+                    "status": "done",
+                    "text": "あいうえおかきくけこ。",
+                    "target_language": "ja",
+                },
+            }
+        )
 
     return app
 
@@ -148,6 +156,7 @@ class _ServerThread(threading.Thread):
     def wait_ready(self, timeout: float = 10.0) -> None:
         import time
         import urllib.request
+
         self._started.wait(timeout)
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
@@ -205,7 +214,9 @@ def _snapshot(page, name: str, *, byte_tolerance: int = 200) -> None:
     First run writes the baseline; subsequent runs compare. Update by
     deleting the .png and re-running.
     """
-    baseline = REPO_ROOT / "tests" / "browser" / "__snapshots__" / "visual_regression" / f"{name}.png"
+    baseline = (
+        REPO_ROOT / "tests" / "browser" / "__snapshots__" / "visual_regression" / f"{name}.png"
+    )
     baseline.parent.mkdir(parents=True, exist_ok=True)
     img = page.screenshot(
         full_page=False,

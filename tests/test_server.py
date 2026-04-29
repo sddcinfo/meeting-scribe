@@ -123,7 +123,7 @@ def stop_test_server():
         try:
             os.kill(_test_server_proc.pid, signal.SIGTERM)
             _test_server_proc.wait(timeout=10)
-        except (ProcessLookupError, subprocess.TimeoutExpired):
+        except ProcessLookupError, subprocess.TimeoutExpired:
             try:
                 os.kill(_test_server_proc.pid, signal.SIGKILL)
             except ProcessLookupError:

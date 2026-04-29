@@ -229,9 +229,7 @@ class _ServerThread(threading.Thread):
         with socket.socket() as s:
             s.bind(("127.0.0.1", 0))
             self.port = s.getsockname()[1]
-        config = uvicorn.Config(
-            self.app, host="127.0.0.1", port=self.port, log_level="error"
-        )
+        config = uvicorn.Config(self.app, host="127.0.0.1", port=self.port, log_level="error")
         self._server = uvicorn.Server(config)
         self._started.set()
         self._server.run()
@@ -244,9 +242,7 @@ class _ServerThread(threading.Thread):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:
-                urllib.request.urlopen(
-                    f"http://127.0.0.1:{self.port}/api/status", timeout=1
-                )
+                urllib.request.urlopen(f"http://127.0.0.1:{self.port}/api/status", timeout=1)
                 return
             except Exception:
                 time.sleep(0.05)
@@ -441,9 +437,7 @@ def _wait_until(page, expr_js: str, timeout_ms: int = 5000) -> None:
         except Exception:
             grid = {"error": "page.evaluate failed"}
         raise AssertionError(
-            f"wait_for_function timed out: {expr_js!r}\n"
-            f"page state: {grid}\n"
-            f"original error: {e}"
+            f"wait_for_function timed out: {expr_js!r}\npage state: {grid}\noriginal error: {e}"
         ) from e
 
 
@@ -494,17 +488,11 @@ def test_two_popouts_render_same_segments(browser, live_meeting_server):
         _wait_until(page_a, "() => window._gridRenderer?._segmentMap?.size >= 3")
         _wait_until(page_b, "() => window._gridRenderer?._segmentMap?.size >= 3")
 
-        ids_a = page_a.evaluate(
-            "() => Array.from(window._gridRenderer._segmentMap.keys()).sort()"
-        )
-        ids_b = page_b.evaluate(
-            "() => Array.from(window._gridRenderer._segmentMap.keys()).sort()"
-        )
+        ids_a = page_a.evaluate("() => Array.from(window._gridRenderer._segmentMap.keys()).sort()")
+        ids_b = page_b.evaluate("() => Array.from(window._gridRenderer._segmentMap.keys()).sort()")
 
         assert ids_a == ids_b, (
-            f"two popouts diverged on the same broadcast:\n"
-            f"  page_a = {ids_a}\n"
-            f"  page_b = {ids_b}"
+            f"two popouts diverged on the same broadcast:\n  page_a = {ids_a}\n  page_b = {ids_b}"
         )
         assert len(ids_a) == 3, f"expected 3 segments, got {ids_a}"
     finally:
@@ -567,13 +555,10 @@ def test_speaker_pulse_does_not_clear_popout_grid(browser, live_meeting_server):
             )
         except AssertionError as e:
             raise AssertionError(
-                f"{e}\n\n--- popout console + WS frames (last 60) ---\n"
-                + "\n".join(log[-60:])
+                f"{e}\n\n--- popout console + WS frames (last 60) ---\n" + "\n".join(log[-60:])
             ) from e
 
-        before = popout_page.evaluate(
-            "() => window._gridRenderer._segmentMap.size"
-        )
+        before = popout_page.evaluate("() => window._gridRenderer._segmentMap.size")
         assert before == 2, f"expected 2 segments before pulses, got {before}"
 
         # Fire 10 speaker_pulse events in rapid succession — same cadence
@@ -591,9 +576,7 @@ def test_speaker_pulse_does_not_clear_popout_grid(browser, live_meeting_server):
         # Give the popout a beat to process them.
         popout_page.wait_for_timeout(200)
 
-        after = popout_page.evaluate(
-            "() => window._gridRenderer._segmentMap.size"
-        )
+        after = popout_page.evaluate("() => window._gridRenderer._segmentMap.size")
         text_in_grid = popout_page.evaluate(
             "() => document.getElementById('transcript-grid').textContent"
         )
@@ -648,9 +631,7 @@ def test_popout_reconnect_replays_without_duplicates(browser, live_meeting_serve
         import urllib.request
 
         urllib.request.urlopen(
-            urllib.request.Request(
-                f"{base}/test/disconnect_all", method="POST"
-            ),
+            urllib.request.Request(f"{base}/test/disconnect_all", method="POST"),
             timeout=2,
         ).read()
 
@@ -675,9 +656,7 @@ def test_popout_reconnect_replays_without_duplicates(browser, live_meeting_serve
             timeout_ms=15000,
         )
 
-        ids = popout_page.evaluate(
-            "() => Array.from(window._gridRenderer._segmentMap.keys())"
-        )
+        ids = popout_page.evaluate("() => Array.from(window._gridRenderer._segmentMap.keys())")
         # No duplicates after replay (Map keys are inherently unique;
         # we still assert against the expected set so a partial replay
         # surfaces clearly).
@@ -715,9 +694,7 @@ def test_cross_language_pair_renders_in_correct_columns(
     popout_page = popout_ctx.new_page()
 
     try:
-        popout_page.goto(
-            f"{server['base_url']}/?popout=view&test=1", wait_until="domcontentloaded"
-        )
+        popout_page.goto(f"{server['base_url']}/?popout=view&test=1", wait_until="domcontentloaded")
         _wait_until(popout_page, "() => !!window._gridRenderer")
         _wait_for_popout_ws_open(popout_page)
 
@@ -753,12 +730,10 @@ def test_cross_language_pair_renders_in_correct_columns(
         )
         assert cols is not None
         assert src_text.split(".")[0] in cols["a"], (
-            f"source text not in column A for {source_lang}↔{target_lang}: "
-            f"colA={cols['a']!r}"
+            f"source text not in column A for {source_lang}↔{target_lang}: colA={cols['a']!r}"
         )
         assert tgt_text.split(".")[0].split("。")[0] in cols["b"], (
-            f"translation not in column B for {source_lang}↔{target_lang}: "
-            f"colB={cols['b']!r}"
+            f"translation not in column B for {source_lang}↔{target_lang}: colB={cols['b']!r}"
         )
     finally:
         popout_ctx.close()

@@ -45,16 +45,12 @@ def test_every_registered_type_has_a_sample():
             continue
         sample = json.loads(path.read_text())
         if sample.get("type") != et.value:
-            mismatched.append(
-                f"{et.value} (sample.type={sample.get('type')!r})"
-            )
+            mismatched.append(f"{et.value} (sample.type={sample.get('type')!r})")
     assert not missing, (
         f"Missing samples for: {missing}. "
         f"Add tests/contracts/ws_event_samples/<type>.json for each."
     )
-    assert not mismatched, (
-        f"Sample 'type' fields don't match filename: {mismatched}"
-    )
+    assert not mismatched, f"Sample 'type' fields don't match filename: {mismatched}"
 
 
 def test_every_sample_corresponds_to_a_registered_type():

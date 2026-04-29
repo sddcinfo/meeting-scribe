@@ -179,11 +179,7 @@ def test_segment_count_listener_guards_null_in_popout():
         f"adjust the regex. Body: {body!r}"
     )
     # And it must guard null.
-    has_guard = (
-        "if (el)" in body
-        or "if(el)" in body
-        or "?.textContent" in body
-    )
+    has_guard = "if (el)" in body or "if(el)" in body or "?.textContent" in body
     assert has_guard, (
         "the #segment-count store.subscribe callback must guard against "
         "null (popout DOM doesn't render that element). Without the guard, "

@@ -32,5 +32,5 @@ def _is_valid_timezone(name: str) -> bool:
     try:
         ZoneInfo(name)
         return True
-    except (ZoneInfoNotFoundError, ValueError):
+    except ZoneInfoNotFoundError, ValueError:
         return False

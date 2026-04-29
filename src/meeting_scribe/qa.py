@@ -128,7 +128,7 @@ Question: {question}"""
                             logger.info(
                                 "Q&A finish_reason=%s at chunk %d", finish_reason, chunk_count
                             )
-                    except (json.JSONDecodeError, KeyError, IndexError):
+                    except json.JSONDecodeError, KeyError, IndexError:
                         continue
 
             elapsed_ms = (time.monotonic() - t0) * 1000

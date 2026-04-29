@@ -50,5 +50,7 @@ def pytest_collection_modifyitems(config, items):
                 if lane == "smoke":
                     item.add_marker(pytest.mark.skip(reason=f"flaky-quarantine: {reason}"))
                 else:
-                    item.add_marker(pytest.mark.xfail(reason=f"flaky-quarantine: {reason}", strict=False))
+                    item.add_marker(
+                        pytest.mark.xfail(reason=f"flaky-quarantine: {reason}", strict=False)
+                    )
                 break

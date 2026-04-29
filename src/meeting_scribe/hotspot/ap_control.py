@@ -357,7 +357,7 @@ def _reap_orphan_captive_portals() -> None:
                 timeout=5,
                 check=False,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired):
+        except FileNotFoundError, subprocess.TimeoutExpired:
             pass
 
 

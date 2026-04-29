@@ -95,7 +95,7 @@ async def _check_one_service(
                     data = resp.json().get("data", [])
                     if data:
                         model = data[0].get("id")
-        except (httpx.HTTPError, KeyError, IndexError):
+        except httpx.HTTPError, KeyError, IndexError:
             pass
 
     error = None if healthy else f"Service not responding at {health_url}"

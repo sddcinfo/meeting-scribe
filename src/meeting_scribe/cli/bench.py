@@ -259,8 +259,7 @@ def bench_stop(force: bool) -> None:
                     pass
             else:
                 click.secho(
-                    f"Probe pid {pid} still alive after SIGTERM.  "
-                    f"Run with --force to SIGKILL.",
+                    f"Probe pid {pid} still alive after SIGTERM.  Run with --force to SIGKILL.",
                     fg="red",
                 )
                 sys.exit(2)

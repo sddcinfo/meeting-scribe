@@ -197,9 +197,7 @@ def _merge_clusters_via_embeddings(
     # Per-chunk merge maps so we can apply the same (local_cluster_id →
     # global_id) transformation to the exclusive segments after the
     # standard segments have been merged + consolidated.
-    per_chunk_local_to_global: list[dict[int, int]] = [
-        {} for _ in chunk_segments_list
-    ]
+    per_chunk_local_to_global: list[dict[int, int]] = [{} for _ in chunk_segments_list]
 
     flat = []
     for chunk_idx, segs in enumerate(chunk_segments_list):
@@ -423,7 +421,11 @@ def _merge_clusters_via_embeddings(
             return gid
 
         for chunk_idx, excl_segs in enumerate(chunk_exclusive_list):
-            local_to_global = per_chunk_local_to_global[chunk_idx] if chunk_idx < len(per_chunk_local_to_global) else {}
+            local_to_global = (
+                per_chunk_local_to_global[chunk_idx]
+                if chunk_idx < len(per_chunk_local_to_global)
+                else {}
+            )
             for seg in excl_segs:
                 local_id = seg["local_cluster_id"]
                 global_id = local_to_global.get(local_id)
