@@ -341,8 +341,8 @@ def test_storage_migrates_removed_slug(page, unit_server):
     )
     # Mapping per popout-layout-storage.js#_migrateRemovedSlug.
     assert result == {
-        "preset": "triple",            # fullstack → triple
-        "lastTermPreset": "triple",    # sidebyside → triple
+        "preset": "triple",  # fullstack → triple
+        "lastTermPreset": "triple",  # sidebyside → triple
         "lastNoTermPreset": "translate",  # developer → translate
     }
 

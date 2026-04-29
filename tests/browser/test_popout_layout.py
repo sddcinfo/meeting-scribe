@@ -229,12 +229,7 @@ def test_terminal_state_survives_preset_swap(page, scribe_layout_server):
     )
     page.wait_for_timeout(400)
     # Sanity: the terminal is no longer in the rendered tree.
-    assert (
-        page.evaluate(
-            "() => document.querySelector('.lyt-slot[data-panel=terminal]')"
-        )
-        is None
-    )
+    assert page.evaluate("() => document.querySelector('.lyt-slot[data-panel=terminal]')") is None
 
     # Back to triple — the same xterm instance must be re-parented and
     # the sentinel from before the swap must still be in the buffer.
@@ -302,9 +297,7 @@ def test_ratio_persists_per_preset(page, scribe_layout_server):
     """
     _authorize_popout(page, scribe_layout_server)
     page.select_option("#popout-layout-picker", "triple")
-    page.wait_for_function(
-        "() => window._popoutLayoutState().preset === 'triple'", timeout=3000
-    )
+    page.wait_for_function("() => window._popoutLayoutState().preset === 'triple'", timeout=3000)
     page.evaluate(
         """() => {
             const S = window.PopoutLayoutStorage;
@@ -379,9 +372,7 @@ def test_empty_panels_show_placeholder(page, scribe_layout_server):
     """
     _authorize_popout(page, scribe_layout_server)
     page.select_option("#popout-layout-picker", "triple")
-    page.wait_for_function(
-        "() => window._popoutLayoutState().preset === 'triple'", timeout=4000
-    )
+    page.wait_for_function("() => window._popoutLayoutState().preset === 'triple'", timeout=4000)
     page.wait_for_timeout(500)
     slots = page.evaluate(
         """() => [...document.querySelectorAll('.lyt-slot-leaf')].map(s => ({
@@ -477,9 +468,7 @@ def test_edit_menu_remove_collapses_split(page, scribe_layout_server):
             "() => [...document.querySelectorAll('.lyt-slot-leaf')].map(s => s.dataset.panel)"
         )
     )
-    assert panels == ["slides", "transcript"], (
-        f"terminal should be gone; got {panels}"
-    )
+    assert panels == ["slides", "transcript"], f"terminal should be gone; got {panels}"
 
 
 def test_migration_from_terminal_visible_lands_on_triple(page, scribe_layout_server):
