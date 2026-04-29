@@ -140,21 +140,54 @@ else
     echo "[bootstrap] MEETING_SCRIBE_SKIP_AUTOSRE=1 — skipping auto-sre clone"
 fi
 
-# ── 6. Hand off to the app setup flow ─────────────────────────────
-# ``meeting-scribe setup`` covers: HF_TOKEN check, TLS cert generation,
-# docker compose up, model warmup, optional systemd registration. We
-# don't ``exec`` it any more — we want to run ``validate --quick`` after.
+# ── 6. App-layer setup (TLS cert, HF_TOKEN check, port-80 cap) ───
+# ``meeting-scribe setup`` is a configuration validator — it does NOT
+# pull images or start containers. We invoke it for the cert/cap/HF
+# checks, then bring the stack up in step 7.
 echo
 echo "[bootstrap] base install complete"
 echo "[bootstrap] running 'meeting-scribe setup' for app-layer config"
 echo
 meeting-scribe setup "$@"
 
-# ── 7. Smoke-test ──────────────────────────────────────────────────
-# 5-second sweep of all four backends. Non-fatal — bootstrap is done
-# even if one backend is still warming. The output tells the operator
-# what (if anything) needs another minute.
+# ── 7. Bring up the in-tree model backends ───────────────────────
+# ``meeting-scribe gb10 up`` builds + starts the pyannote-diarize, scribe-asr
+# and scribe-tts containers. First run pulls the ~24 GB vllm-openai base
+# image, builds the local ASR layer, and pulls HF model weights. Plan
+# 15–30 min on a cold customer device. Idempotent on rerun (no-ops if the
+# containers are already healthy). Translate is NOT started here — it
+# lives in auto-sre (sister-cloned in step 5); run ``autosre start`` after.
+echo
+echo "[bootstrap] starting model backends ('meeting-scribe gb10 up')"
+echo "[bootstrap] first run is 15–30 min for the image pull + HF weights"
+meeting-scribe gb10 up || \
+    echo "[bootstrap] gb10 up reported issues — try 'meeting-scribe gb10 status' for details"
+
+# ── 8. Smoke-test ──────────────────────────────────────────────────
+# 5-second sweep across all four backends. Non-fatal — translate will
+# still be down (it lives in auto-sre, not started by this script).
 echo
 echo "[bootstrap] running 'meeting-scribe validate --quick'"
-meeting-scribe validate --quick || \
-    echo "[bootstrap] validate reported issues — see above. Translate vLLM cold-load is the usual suspect (3+ min)."
+meeting-scribe validate --quick || true
+
+# ── 9. Operator next steps ────────────────────────────────────────
+echo
+cat <<'NEXT_STEPS'
+─────────────────────────────────────────────────────────────────────
+[bootstrap] meeting-scribe install complete.
+
+Translate (vLLM @ :8010) is not running yet — start it via auto-sre:
+
+    cd ../auto-sre
+    .venv/bin/autosre setup         # one-time (selects vLLM backend on GB10)
+    .venv/bin/autosre start         # cold-loads the 35 B FP8 model (3+ min)
+
+Then start the scribe server:
+
+    meeting-scribe start
+
+Verify everything is green:
+
+    meeting-scribe validate --quick
+─────────────────────────────────────────────────────────────────────
+NEXT_STEPS
