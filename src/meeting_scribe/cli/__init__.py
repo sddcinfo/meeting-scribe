@@ -35,6 +35,7 @@ from meeting_scribe.cli import (
     benchmark,  # noqa: F401
     config,  # noqa: F401
     gb10,  # noqa: F401
+    install_service,  # noqa: F401
     library,  # noqa: F401
     lifecycle,  # noqa: F401
     meetings,  # noqa: F401

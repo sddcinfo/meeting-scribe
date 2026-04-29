@@ -189,28 +189,55 @@ echo "[bootstrap] starting model backends ('meeting-scribe gb10 up')"
 meeting-scribe gb10 up || \
     echo "[bootstrap] gb10 up reported issues — try 'meeting-scribe gb10 status' for details"
 
-# ── 8. Smoke-test ──────────────────────────────────────────────────
+# ── 10. Install user systemd unit so scribe starts on boot ────────
+# A customer GB10 expects to power-cycle and have meeting-scribe come
+# back up without anyone logging in. ``install-service`` writes a
+# user-level unit, runs ``loginctl enable-linger`` so the user
+# manager runs at boot, and starts the service now. ``--no-start``
+# defers the actual start to the existing flow below — the explicit
+# ``meeting-scribe start`` below handles first-run feedback nicely
+# (and lines up with the README).
+echo
+echo "[bootstrap] installing meeting-scribe.service (user systemd unit)"
+meeting-scribe install-service --no-start || \
+    echo "[bootstrap] install-service reported issues — see above. " \
+         "You can re-run it later: meeting-scribe install-service"
+
+# ── 11. Smoke-test ─────────────────────────────────────────────────
 # 5-second sweep across all four backends. Non-fatal — translate will
 # still be down (it lives in auto-sre, not started by this script).
 echo
 echo "[bootstrap] running 'meeting-scribe validate --quick'"
 meeting-scribe validate --quick || true
 
-# ── 9. Operator next steps ────────────────────────────────────────
+# ── 12. Start the scribe server ────────────────────────────────────
+# install-service in step 10 already enabled the unit for boot;
+# starting it now is what the customer actually wants from a fresh
+# bootstrap (so the URL prints below works without a separate step).
+echo
+echo "[bootstrap] starting meeting-scribe.service"
+meeting-scribe start || \
+    echo "[bootstrap] meeting-scribe start reported issues — see above"
+
+# ── 13. Operator next steps ────────────────────────────────────────
 echo
 cat <<'NEXT_STEPS'
 ─────────────────────────────────────────────────────────────────────
 [bootstrap] meeting-scribe install complete.
 
+Auto-start: meeting-scribe.service is installed as a user systemd unit
+and enabled. It will come back up on boot without manual intervention.
+To check or manage it:
+
+    systemctl --user status meeting-scribe.service
+    journalctl --user -u meeting-scribe.service -f
+    meeting-scribe stop / start / restart
+
 Translate (vLLM @ :8010) is not running yet — start it via auto-sre:
 
     cd ../auto-sre
-    .venv/bin/autosre setup         # one-time (selects vLLM backend on GB10)
-    .venv/bin/autosre start         # cold-loads the 35 B FP8 model (3+ min)
-
-Then start the scribe server:
-
-    meeting-scribe start
+    .venv/bin/autosre install-service   # boot autostart for translate
+    .venv/bin/autosre start             # cold-loads the 35 B FP8 model (3+ min)
 
 Verify everything is green:
 
