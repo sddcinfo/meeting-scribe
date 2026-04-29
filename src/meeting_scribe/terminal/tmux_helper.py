@@ -10,6 +10,7 @@ per-attach argv never mutates shared state.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import logging
 import os
@@ -89,9 +90,20 @@ def write_tmux_config(path: Path | None = None) -> Path:
             return target
     except FileNotFoundError:
         pass
-    tmp = target.with_suffix(target.suffix + ".tmp")
+    # Per-PID tmp suffix so concurrent imports (pytest-xdist) don't race
+    # on the same path. Same pattern as AdminSecretStore.load_or_create.
+    tmp = target.with_suffix(target.suffix + f".tmp.{os.getpid()}")
     tmp.write_text(body)
-    os.replace(tmp, target)
+    try:
+        os.replace(tmp, target)
+    except FileNotFoundError:
+        # A racing worker beat us to the rename. Drop our tmp and accept
+        # whatever they wrote — the body is deterministic so the value at
+        # `target` is interchangeable with what we would have written.
+        with contextlib.suppress(FileNotFoundError):
+            tmp.unlink()
+        if not target.exists():
+            raise
     logger.info("wrote %s (tmux config v%d)", target, _CONFIG_VERSION)
     return target
 
