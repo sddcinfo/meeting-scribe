@@ -42,7 +42,10 @@ jobs:
       - name: Pytest unit suite
         run: PYTHONPATH=src pytest tests/ -v --tb=short
       - name: JS unit suite
-        run: node --test tests/js/
+        # `node --test <dir>` only walks for *.test.js/cjs/mjs in some
+        # versions; pass an explicit glob so we get every .test.mjs
+        # without depending on Node's directory-walk behavior.
+        run: node --test tests/js/*.test.mjs
 
   # Security lane — every push + PR. Catches known CVEs in the resolved
   # dep tree at PR time, before the weekly Dependabot batch surfaces.
