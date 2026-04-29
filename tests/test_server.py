@@ -115,8 +115,19 @@ def start_test_server() -> subprocess.Popen:
         )
 
     if not _wait_for_server(TEST_PORT):
+        # Dump the server's stdout/stderr inline so CI logs (where the
+        # /tmp file isn't accessible) show *why* it failed instead of
+        # just "failed to start".
+        log_excerpt = ""
+        try:
+            log_excerpt = log_file.read_text(errors="replace")[-4000:]
+        except Exception as exc:
+            log_excerpt = f"<could not read log: {exc}>"
         stop_test_server()
-        pytest.fail(f"Test server failed to start on port {TEST_PORT}. Check logs: {log_file}")
+        pytest.fail(
+            f"Test server failed to start on port {TEST_PORT}.\n"
+            f"--- last 4 KiB of {log_file} ---\n{log_excerpt}\n--- end of server log ---"
+        )
 
     return _test_server_proc
 
