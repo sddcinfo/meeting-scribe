@@ -6,6 +6,7 @@ model via HTTP. Superior Japanese quality.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import io
 import logging
@@ -13,11 +14,64 @@ import os
 import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
+from dataclasses import dataclass, field
+from typing import Literal
 
 import httpx
 import numpy as np
 
 from meeting_scribe.runtime import state
+
+
+# ── W6a — Recovery state machine ────────────────────────────────
+#
+# The 2026-04-30 ASR cascade exposed three coupled gaps:
+#
+#   1. Watchdog fired 40+ times with no escalation. Fixed in W6b.
+#   2. Recovery, when it eventually happened (Docker auto-restart),
+#      lost ~30s of audio because the backend treated the in-flight
+#      request's failure as "no transcript for this segment, advance".
+#      Recording.pcm kept growing the whole time, but ASR never
+#      revisited that range. Fixed here.
+#   3. Stale httpx requests can complete late, after the backend has
+#      already been recovered + replayed. Without a generation guard
+#      they emit duplicate / out-of-order transcripts. Fixed here
+#      via `_recovery_generation`.
+
+_RecoveryState = Literal["NORMAL", "RECOVERY_PENDING", "REPLAYING"]
+
+# Defensive ceiling on `_submissions` size — see W6a plan note.
+# At a worst-case sustained submission rate of ~3 Hz during failure,
+# 500 entries covers ~3 minutes of complete inability to recover
+# before any submissions get dropped.
+_MAX_UNRESOLVED_SUBMISSIONS = 500
+
+# Hard cap on total replay duration. If a single recovery's replay
+# would take >120s of audio, log ERROR and skip the remainder —
+# better degraded than dead.
+_REPLAY_DURATION_CAP_S = 120.0
+
+
+@dataclass
+class InflightSubmission:
+    """Tracks a single ASR submission's audio offsets + status, so
+    after a watchdog escalation we can replay from the EARLIEST
+    unresolved offset (not from the much-later escalation tail).
+
+    Eviction policy:
+    - status="complete" → REMOVED from `_submissions` immediately
+      (successful submissions never accumulate).
+    - status="failed" or "inflight" → KEPT until either a successful
+      replay supersedes them (offset < replay_end_offset) or the
+      defensive ceiling fires.
+    """
+
+    request_id: int
+    audio_start_offset: int   # recording.pcm byte offset of first chunk
+    audio_end_offset: int     # one past the last chunk
+    submitted_at: float       # time.monotonic()
+    status: Literal["inflight", "complete", "failed"]
+    generation: int           # _recovery_generation at submission time
 import soundfile as sf  # type: ignore[import-untyped]
 
 from meeting_scribe.backends.asr_filters import (
@@ -109,8 +163,246 @@ class VllmASRBackend(ASRBackend):
         # origin — [P1-2-i5] strict policy.
         self.audio_wall_at_start: float | None = None
 
+        # ── W6a — Recovery state machine ────────────────────────
+        # Per-submission offset tracking + recovery-generation epoch.
+        # See module docstring for the design rationale; W6b drives
+        # state transitions via `_begin_recovery_pending()` and the
+        # supervisor task in `runtime/recovery_supervisor.py`.
+        self._submissions: list[InflightSubmission] = []
+        self._next_request_id: int = 0
+        self._recovery_state: _RecoveryState = "NORMAL"
+        self._recovery_start_offset: int | None = None
+        self._recovery_generation: int = 0
+        # Asyncio event the supervisor awaits; set by _begin_recovery_pending.
+        self._recovery_requested: asyncio.Event = asyncio.Event()
+        self._inflight_tasks: set[asyncio.Task] = set()
+
     def set_event_callback(self, fn: Callable[[TranscriptEvent], Awaitable[None]]) -> None:
         self._on_event = fn
+
+    # ── W6a — Recovery state machine helpers ────────────────────
+    # All offset capture goes through `_begin_recovery_pending()`. Do
+    # NOT inline `current_recording_pcm_offset()` on the watchdog
+    # escalation path elsewhere — that's the iteration-3/4 bug the
+    # plan explicitly forbids.
+
+    def _begin_recovery_pending(self) -> None:
+        """Single source of truth for offset capture on watchdog escalation.
+
+        Replay must cover audio submitted to a hung backend during the
+        multi-watchdog-fire window before escalation, so we capture
+        the earliest unresolved submission's start offset, NOT the
+        current tail of recording.pcm.
+
+        Idempotent: if state is already RECOVERY_PENDING or REPLAYING
+        the call is a no-op. This blocks stale-task-driven re-entry
+        — a superseded httpx request whose timeout fires mid-recovery
+        cannot bump the watchdog counter past 3 again and re-trigger
+        this method (the response-path generation guard already
+        ignores its result; this guard is the second line of defence).
+        """
+        if self._recovery_state != "NORMAL":
+            return  # already in recovery; no-op
+
+        # Bump epoch FIRST — older submissions become stale before
+        # they have a chance to mutate any shared state.
+        self._recovery_generation += 1
+
+        # Best-effort cancel of in-flight tasks. The generation guard
+        # remains the safety net regardless of cancellation.
+        for task in list(self._inflight_tasks):
+            if not task.done():
+                task.cancel()
+
+        unresolved = [
+            s for s in self._submissions
+            if s.status in ("inflight", "failed")
+        ]
+        if unresolved:
+            self._recovery_start_offset = min(
+                s.audio_start_offset for s in unresolved
+            )
+        else:
+            # Defensive fallback. Shouldn't happen because watchdog
+            # fires imply timed-out submissions exist; if it does we
+            # may have lost some audio — log loudly.
+            logger.warning(
+                "ASR recovery escalation with empty in-flight submissions "
+                "deque; falling back to current recording offset, "
+                "transcript may have a hole"
+            )
+            self._recovery_start_offset = state.current_recording_pcm_offset()
+
+        self._recovery_state = "RECOVERY_PENDING"
+        try:
+            state.metrics.watchdog_escalations_total += 1
+        except AttributeError:
+            pass  # metrics not yet wired (warmup); harmless
+        self._recovery_requested.set()
+
+    def _track_submission_start(
+        self, audio_start_offset: int, audio_end_offset: int
+    ) -> InflightSubmission:
+        """Record an outgoing transcribe request. Caller is
+        responsible for calling `_track_submission_complete` /
+        `_track_submission_failed` exactly once per submission (with
+        the generation guard built in). Enforces the
+        _MAX_UNRESOLVED_SUBMISSIONS ceiling defensively."""
+        self._next_request_id += 1
+        sub = InflightSubmission(
+            request_id=self._next_request_id,
+            audio_start_offset=audio_start_offset,
+            audio_end_offset=audio_end_offset,
+            submitted_at=time.monotonic(),
+            status="inflight",
+            generation=self._recovery_generation,
+        )
+        self._submissions.append(sub)
+
+        # Defensive ceiling — drop oldest "failed" entry if exceeded.
+        # Never drop "inflight" (those are still pending real outcome).
+        if len(self._submissions) > _MAX_UNRESOLVED_SUBMISSIONS:
+            for i, s in enumerate(self._submissions):
+                if s.status == "failed":
+                    del self._submissions[i]
+                    logger.error(
+                        "ASR submission tracking exceeded %d unresolved "
+                        "entries; dropping oldest failed entry "
+                        "(request_id=%d offset=%d) — transcript may have "
+                        "a hole",
+                        _MAX_UNRESOLVED_SUBMISSIONS,
+                        s.request_id,
+                        s.audio_start_offset,
+                    )
+                    # Future: emit a structured `submission_tracking_overflow`
+                    # WS event (W6b will own that wiring).
+                    break
+
+        return sub
+
+    def _track_submission_complete(self, sub: InflightSubmission) -> bool:
+        """Mark a submission complete. Returns True if the result
+        should be processed (generation matches), False if it's a
+        stale-generation response that must be silently discarded."""
+        if sub.generation != self._recovery_generation:
+            logger.debug(
+                "ignoring stale response from generation %d (current=%d)",
+                sub.generation,
+                self._recovery_generation,
+            )
+            return False
+        # Success → REMOVE the entry (do not let completed submissions
+        # accumulate; the deque retains only inflight + failed).
+        try:
+            self._submissions.remove(sub)
+        except ValueError:
+            pass  # already evicted by replay; harmless
+        return True
+
+    def _track_submission_failed(
+        self, sub: InflightSubmission, exc: BaseException
+    ) -> bool:
+        """Mark a submission failed. Returns True if the failure
+        should be processed (generation matches), False if it's a
+        stale-generation result that must be silently discarded.
+
+        Failed entries are RETAINED in `_submissions` so the next
+        recovery escalation knows the earliest unresolved offset.
+        Replay (or the defensive ceiling) is what eventually evicts
+        them."""
+        if sub.generation != self._recovery_generation:
+            logger.debug(
+                "ignoring stale failure from generation %d (current=%d): %s",
+                sub.generation,
+                self._recovery_generation,
+                exc,
+            )
+            return False
+        sub.status = "failed"
+        return True
+
+    async def replay_until_caught_up(self, start_offset: int) -> int:
+        """Replay recording.pcm from `start_offset` to the current
+        write head, submitting each chunk through the production
+        transcribe path. Returns the final replay-end offset.
+
+        Bounded by `_REPLAY_DURATION_CAP_S` (120s of audio); past
+        that, log ERROR + advance offset to live + return. Better
+        degraded than dead.
+
+        Caller (W6b supervisor) is responsible for setting state to
+        REPLAYING before calling this and resetting to NORMAL after
+        completion. The replay submissions themselves go through the
+        normal `process_audio_bytes` path with `_is_replay=True` so
+        the live-suppression check skips them."""
+        offset = start_offset
+        bytes_per_sec = 16000 * 2  # s16le @ 16 kHz
+        replay_started_at = time.monotonic()
+        # Read a 3.5s buffer's worth of audio per replay step — same
+        # natural cadence as the normal flush threshold.
+        chunk_bytes = int(3.5 * bytes_per_sec)
+        chunk_bytes -= chunk_bytes % 2  # keep alignment
+
+        meeting_dir = (
+            state.current_meeting and state.storage.meeting_dir(state.current_meeting.meeting_id)
+        )
+        pcm_path = meeting_dir / "audio" / "recording.pcm" if meeting_dir else None
+        if pcm_path is None or not pcm_path.exists():
+            logger.warning(
+                "replay_until_caught_up: no recording.pcm path; nothing to replay"
+            )
+            return offset
+
+        with pcm_path.open("rb") as fh:
+            while True:
+                live_offset = state.current_recording_pcm_offset()
+                if offset >= live_offset:
+                    break  # caught up
+
+                # Cap total replay duration.
+                replayed_s = (offset - start_offset) / bytes_per_sec
+                if replayed_s > _REPLAY_DURATION_CAP_S:
+                    skipped_s = (live_offset - offset) / bytes_per_sec
+                    logger.error(
+                        "ASR replay duration exceeded %.0fs, skipping "
+                        "%.1fs of audio (offset=%d → %d)",
+                        _REPLAY_DURATION_CAP_S,
+                        skipped_s,
+                        offset,
+                        live_offset,
+                    )
+                    offset = live_offset
+                    break
+
+                fh.seek(offset)
+                read_n = min(chunk_bytes, live_offset - offset)
+                pcm = fh.read(read_n)
+                if not pcm:
+                    break
+                # Sample offset for transcript alignment is byte-offset
+                # divided by 2 (s16le).
+                sample_offset = offset // 2
+                await self.process_audio_bytes(
+                    pcm, sample_offset=sample_offset, _is_replay=True
+                )
+                offset += len(pcm)
+
+        replay_end_offset = offset
+
+        # Drop submissions superseded by replay (those whose
+        # audio_start_offset falls in [start_offset, replay_end_offset)).
+        self._submissions = [
+            s for s in self._submissions
+            if s.audio_start_offset >= replay_end_offset
+        ]
+        logger.info(
+            "ASR replay caught up at offset=%d (replayed %d bytes, %.1fs, %.1fs wall)",
+            replay_end_offset,
+            replay_end_offset - start_offset,
+            (replay_end_offset - start_offset) / bytes_per_sec,
+            time.monotonic() - replay_started_at,
+        )
+        return replay_end_offset
 
     def _build_system_prompt(self) -> str:
         """Build the ASR system prompt with the meeting's expected languages.
@@ -200,6 +492,8 @@ class VllmASRBackend(ASRBackend):
         audio: np.ndarray,
         sample_offset: int,
         sample_rate: int = 16000,
+        *,
+        _is_replay: bool = False,
     ) -> AsyncIterator[TranscriptEvent]:
         """Buffer audio and transcribe when threshold is reached.
 
@@ -207,8 +501,30 @@ class VllmASRBackend(ASRBackend):
         sample in ``audio`` within the meeting's audio file. Events
         emitted from this call are stamped with (start, end) derived
         from the first sample of the buffer, not an internal counter.
+
+        ``_is_replay`` is set by W6a's `replay_until_caught_up` so
+        replay submissions bypass the live-suppression check during
+        RECOVERY_PENDING / REPLAYING. Live audio still goes to
+        recording.pcm via the unrelated audio_writer path; replay
+        re-reads from there and feeds it through the recovered backend.
         """
         if self._client is None:
+            return
+
+        # ── W6a — Live suppression during recovery ─────────────
+        # During RECOVERY_PENDING / REPLAYING, the inference endpoint
+        # is presumed wedged or being recreated. Live audio chunks
+        # still arrive via WS and still get appended to recording.pcm
+        # (independent path), so the audio is preserved on disk.
+        # Submitting them to the wedged endpoint would just generate
+        # more failed submissions and pollute the deque. Reset the
+        # in-memory chunk buffer and return early.
+        if not _is_replay and self._recovery_state in ("RECOVERY_PENDING", "REPLAYING"):
+            self._buffer.clear()
+            self._buffer_samples = 0
+            if self._segment_id is not None and self._revision > 0:
+                self._segment_id = None
+                self._revision = 0
             return
 
         if self._segment_id is None:
@@ -269,6 +585,14 @@ class VllmASRBackend(ASRBackend):
             # default). The list of names is built per-meeting from the
             # active language_pair so any pair the user picks gets the hint.
             _rtt_t0 = time.monotonic()
+            # W6a: track this submission's audio offsets so a future
+            # watchdog escalation can replay from the earliest
+            # unresolved one. Bytes-per-sample = 2 for s16le.
+            _audio_start_offset = self._buffer_start_sample * 2
+            _audio_end_offset = _audio_start_offset + len(combined) * 2
+            _submission = self._track_submission_start(
+                _audio_start_offset, _audio_end_offset
+            )
             try:
                 system_prompt = self._build_system_prompt()
                 resp = await self._client.post(
@@ -301,6 +625,13 @@ class VllmASRBackend(ASRBackend):
                     },
                 )
                 resp.raise_for_status()
+                # W6a: stale-response guard. If recovery escalated
+                # while this request was in flight, the response is
+                # from an old generation — silently discard. The
+                # supervisor's replay path will re-submit this audio
+                # range under the current generation.
+                if not self._track_submission_complete(_submission):
+                    return
                 # W5: backend RTT histogram. Sampled only on successful
                 # requests so failures (which dominate the early seconds
                 # of a CUDA-wedge incident) don't pollute the percentile.
@@ -344,6 +675,12 @@ class VllmASRBackend(ASRBackend):
                     )
                     text = ""
             except (httpx.HTTPError, KeyError, IndexError) as e:
+                # W6a: stale-failure guard. A late-arriving timeout
+                # or HTTP error from a superseded generation must NOT
+                # mutate state — the new generation's submission for
+                # this audio range owns the outcome.
+                if not self._track_submission_failed(_submission, e):
+                    return
                 logger.warning("vLLM ASR request failed: %s", e)
                 text = ""
                 lang = "unknown"
@@ -409,7 +746,13 @@ class VllmASRBackend(ASRBackend):
                 yield event
             self._buffer_threshold = int(4.0 * SAMPLE_RATE)
 
-    async def process_audio_bytes(self, pcm_s16le: bytes, sample_offset: int | None = None) -> None:
+    async def process_audio_bytes(
+        self,
+        pcm_s16le: bytes,
+        sample_offset: int | None = None,
+        *,
+        _is_replay: bool = False,
+    ) -> None:
         """Process raw s16le PCM bytes.
 
         ``sample_offset`` is the absolute sample index of the FIRST
@@ -418,9 +761,13 @@ class VllmASRBackend(ASRBackend):
         but callers that own a meeting-wide audio file (the live
         server) MUST pass the real offset so transcript alignment
         survives server restarts and meeting resume.
+
+        ``_is_replay`` is forwarded to ``process_audio`` so W6a's
+        replay path bypasses the live-suppression check during
+        RECOVERY_PENDING / REPLAYING.
         """
         audio = np.frombuffer(pcm_s16le, dtype=np.int16).astype(np.float32) / 32768.0
         if sample_offset is None:
             sample_offset = self._buffer_start_sample + self._buffer_samples
-        async for _ in self.process_audio(audio, sample_offset):
+        async for _ in self.process_audio(audio, sample_offset, _is_replay=_is_replay):
             pass
