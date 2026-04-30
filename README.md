@@ -44,8 +44,8 @@ A "fresh GB10" for this README means:
 
 - **NVIDIA GB10** (DGX Spark) running aarch64 Linux. `nvidia-smi` must work — driver ≥ 580 + CUDA 13.
 - **Docker** installed, with your user in the `docker` group so `docker ps` runs without sudo. Bootstrap does not configure docker for you.
-- **A HuggingFace token** with the gated models below accepted in a browser. Without it, the diarization container fails silently at runtime — `pyannote/speaker-diarization-community-1` is gated and the bootstrap doesn't inspect failures from inside the container.
-- **Passwordless sudo** *(optional)* so bootstrap can grant `cap_net_bind_service` to the venv Python for the port-80 captive portal. Without it, the admin UI on `:8080` still works but you'll run one manual `sudo setcap` command at the end.
+- **A HuggingFace token** with the gated models below accepted in a browser. Bootstrap prompts for it (or pre-set `HF_TOKEN` for unattended installs).
+- **`sudo` access** for the invoking user. Bootstrap runs as root and configures everything else (apt packages, capability grants, scoped passwordless sudo for the service, systemd units, wifi radio, regdomain).
 
 ### HuggingFace gated models
 
@@ -57,7 +57,7 @@ Open each URL once in a browser, click *Agree and access*:
 - <https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8> — translation (heaviest pull)
 - <https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base> — TTS
 
-Then create a token at <https://huggingface.co/settings/tokens> with *Read* scope. Bootstrap will prompt for it.
+Then create a token at <https://huggingface.co/settings/tokens> with *Read* scope.
 
 ### First-run timing
 
@@ -65,38 +65,97 @@ Plan **~20–40 minutes** of disk I/O on first install: ~24 GB for the `vllm/vll
 
 ## Quick Start
 
-Two commands on a fresh GB10 that meets the prerequisites above:
+One canonical command on a fresh GB10:
 
 ```bash
 git clone https://github.com/sddcinfo/meeting-scribe.git
-cd meeting-scribe && ./bootstrap.sh
+cd meeting-scribe && sudo ./bootstrap.sh
 ```
 
-`bootstrap.sh` gates on platform, installs OS packages (ffmpeg, libportaudio,
-etc.), pins Python via mise (or uses system python3.14+), creates a `.venv`,
-editable-installs meeting-scribe, clones+installs auto-sre as a sibling
-directory (`../auto-sre`), then hands off to `meeting-scribe setup` for the
-HF token prompt, TLS certs, container build, and systemd registration. It
-ends with `meeting-scribe validate --quick` to confirm everything is reachable.
+That's the wipe-and-reinstall flow. Bootstrap exits non-zero if any
+post-install validation phase fails — there is no "partial install"
+state where the customer has to chase down what went wrong.
 
-> **Translation needs auto-sre.** Bootstrap clones it for you, but
-> `meeting-scribe start` will only translate when you also run
-> `autosre start` in another shell (or stand up your own vLLM on `:8010`).
-> Set `MEETING_SCRIBE_SKIP_AUTOSRE=1` to skip the auto-sre clone if you're
-> managing the translate backend yourself.
+What `sudo ./bootstrap.sh` does, in order:
+
+1. **Platform gate** — aarch64 Linux + `nvidia-smi` available.
+2. **Locale prompts** — country code (wifi regdomain), timezone,
+   default language pair. Defaults are auto-detected from the
+   system; press Enter to accept or type to override. Pass
+   `--yes` (or set `MEETING_SCRIBE_YES=1`) to accept defaults
+   for unattended installs.
+3. **OS packages** — `apt install` ffmpeg, libportaudio, rfkill, iw, etc.
+4. **WiFi radio** — `rfkill unblock wifi` + `nmcli radio wifi on`
+   (two independent kill switches). Persists the regdomain so
+   subsequent reboots keep the right country code.
+5. **Scoped sudoers** — installs `/etc/sudoers.d/meeting-scribe`
+   granting passwordless sudo *only* on `nmcli`, `iw`, `rfkill`,
+   `iptables`, `ip6tables`, `setcap`. Validated with `visudo -c`
+   before being moved into place.
+6. **Python toolchain + venv** — runs as the invoking user via
+   `sudo -u $SUDO_USER` so file ownership is correct. mise pins
+   Python 3.14, creates `.venv`, editable-installs meeting-scribe.
+7. **Sister-clone auto-sre** — clones into `../auto-sre`, sets up
+   its venv, installs the auto-sre user systemd unit so the
+   translate vLLM autostarts on boot.
+8. **App-layer config** — `meeting-scribe setup` runs (HF token
+   prompt if not in env, TLS cert generation, port-80
+   `cap_net_bind_service`).
+9. **HF model pre-pull** — downloads ~80 GB of model weights to
+   `/data/huggingface` so containers boot offline.
+10. **Container builds** — pyannote-diarize, qwen3-tts, vllm-asr.
+11. **Backend startup** — `meeting-scribe gb10 up` brings the four
+    in-tree containers to healthy.
+12. **systemd units** — installs `meeting-scribe.service` as a
+    user unit, runs `loginctl enable-linger` so it autostarts at
+    boot before any console login.
+13. **Server start + acceptance gate** — starts
+    `meeting-scribe.service` and runs `meeting-scribe validate
+    --customer-flow` (see [Verify](#verify) below). Bootstrap
+    exits with the validator's return code.
+
+The only manual step left after bootstrap returns is **`autosre
+start --no-scribe`** to cold-load the 35 B FP8 translate model (3-7
+minutes). Or just reboot — the autosre unit is enabled, so systemd
+brings it up automatically on next boot.
 
 ### Verify
 
-After bootstrap returns, sanity-check the install:
+The acceptance gate runs at the end of bootstrap. Re-run it any
+time on the device:
 
 ```bash
-meeting-scribe validate --quick
+meeting-scribe validate --customer-flow
 ```
 
-5-second sweep across all four backends (ASR, translate, TTS, diarization)
-plus a furigana probe. Anything red is a backend that isn't reachable —
-the translate vLLM is the usual suspect since it takes 3+ minutes to load
-the 35 B FP8 weights from cold.
+Seven phases, each guarding a specific failure mode that has bitten
+us in production:
+
+| Phase | What it checks |
+|-------|----------------|
+| `systemd_unit` | `meeting-scribe.service` is `active` under the user manager |
+| `wifi_radio` | rfkill clear AND `nmcli radio wifi=enabled` (both kill switches) |
+| `sudoers_d` | `/etc/sudoers.d/meeting-scribe` is installed |
+| `multipart_dep` | `python_multipart` importable (PPTX upload depends on it) |
+| `status_latency` | 3 back-to-back `GET /api/status`, p95 < 500ms |
+| `slides_upload` | Real multipart POST of `tests/fixtures/test_slides.pptx`; fails only on the python-multipart assertion |
+| `meeting_qr` | Starts a temp meeting, polls `/api/meeting/wifi` for up to 60s, asserts SSID + password + QR SVG come back, cancels the meeting |
+
+`VALIDATE GREEN` = customer-ready. Any `FAIL` exits non-zero with
+a remediation hint. `meeting-scribe validate --quick` is the older
+backend-liveness sweep and is still available for quick diagnostic
+sweeps that don't need to start a meeting.
+
+### Unattended installs (CI / re-imaging)
+
+```bash
+HF_TOKEN=hf_xxx MEETING_SCRIBE_YES=1 sudo -E ./bootstrap.sh
+```
+
+`-E` preserves `HF_TOKEN` through the `sudo` boundary; `MEETING_SCRIBE_YES=1`
+accepts every prompt with its auto-detected default. Bootstrap still exits
+non-zero if `validate --customer-flow` fails, so CI gets a hard signal
+either way.
 
 Manual install (for dev machines where you want to manage the pieces yourself):
 
