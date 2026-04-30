@@ -102,6 +102,118 @@ def _persist_exclusive_segments(meeting_dir, exclusive_segments: list[dict]) -> 
     )
 
 
+async def _meeting_start_preflight() -> JSONResponse | None:
+    """Synthetic-inference preflight gate (W4). Runs the same probe
+    contract that the W6b recovery supervisor uses, against ASR +
+    translate + diarize. Fail-fast on any REQUIRED backend (ASR or
+    translate) — return 503 with structured error. Diarize is
+    WARNING-ONLY (logged + dashboard toast, never blocks start).
+
+    Returns ``None`` on success (caller continues to the existing
+    deep_backend_health gate); returns a 503 ``JSONResponse`` on
+    REQUIRED-backend failure.
+
+    Probe contract: HTTP 200 + valid response schema. NOT non-empty
+    transcribed text — the fixture is a 200 Hz tone, not speech, so
+    a healthy backend may legitimately return empty content."""
+    from meeting_scribe.runtime.synthetic_probe import (
+        asr_synthetic_probe,
+        diarize_synthetic_probe,
+        translate_synthetic_probe,
+    )
+
+    cfg = state.config
+    asr_url = cfg.asr_vllm_url
+    asr_model = cfg.asr_model
+    translate_url = cfg.translate_vllm_url
+    translate_model = cfg.translate_vllm_model or "Qwen/Qwen3.6-35B-A3B-FP8"
+    diarize_url = cfg.diarize_url
+
+    # Run all three probes concurrently — they hit independent
+    # backends, so latency is bounded by the slowest, not the sum.
+    asr_task = asyncio.create_task(
+        asr_synthetic_probe(
+            asr_url, asr_model, state.metrics.asr_request_rtt_ms
+        )
+    )
+    translate_task = asyncio.create_task(
+        translate_synthetic_probe(
+            translate_url, translate_model, state.metrics.translate_request_rtt_ms
+        )
+    )
+    diarize_task = asyncio.create_task(
+        diarize_synthetic_probe(
+            diarize_url, state.metrics.diarize_request_rtt_ms
+        )
+    )
+
+    asr_result, translate_result, diarize_result = await asyncio.gather(
+        asr_task, translate_task, diarize_task, return_exceptions=False
+    )
+
+    # Diarize is warning-only — log + emit a dashboard toast but
+    # don't refuse meeting start.
+    if not diarize_result.ok:
+        logger.warning(
+            "Meeting-start preflight: diarize probe degraded "
+            "(status=%s latency=%.0fms detail=%s) — meeting will "
+            "start with diarize_degraded; speaker labels may be "
+            "delayed until the backend recovers.",
+            diarize_result.status,
+            diarize_result.latency_ms,
+            diarize_result.detail,
+        )
+        # Future: push WS event for the dashboard toast. Out of
+        # scope for W4 — the warning log is enough to surface in
+        # the diagnostics panel.
+
+    # ASR + translate are REQUIRED. If either failed, return 503
+    # with the failure shape the dashboard / CLI / customer-flow
+    # validate know how to interpret.
+    failed: list[dict] = []
+    if not asr_result.ok:
+        failed.append({
+            "backend": "asr",
+            "status": asr_result.status,
+            "latency_ms": round(asr_result.latency_ms, 1),
+            "detail": asr_result.detail,
+        })
+    if not translate_result.ok:
+        failed.append({
+            "backend": "translate",
+            "status": translate_result.status,
+            "latency_ms": round(translate_result.latency_ms, 1),
+            "detail": translate_result.detail,
+        })
+    if failed:
+        logger.warning(
+            "Refusing to start meeting — synthetic inference probe failed: %s",
+            failed,
+        )
+        return JSONResponse(
+            {
+                "error": "Synthetic inference probe failed",
+                "preflight_failed": failed,
+                "message": (
+                    "ASR or translate is responding to /v1/models but "
+                    "inference is wedged. Check the diagnostics dashboard "
+                    "and retry once ASR RTT p95 drops below the threshold."
+                ),
+            },
+            status_code=503,
+        )
+
+    logger.info(
+        "Meeting-start preflight passed (asr=%.0fms translate=%.0fms diarize=%s/%s/%.0fms)",
+        asr_result.latency_ms,
+        translate_result.latency_ms,
+        diarize_result.status,
+        ("ok" if diarize_result.ok else "warn"),
+        diarize_result.latency_ms,
+    )
+    return None
+
+
 @router.post("/api/meeting/start")
 async def start_meeting(request: fastapi.Request) -> JSONResponse:
     """Start a new meeting, or return the current one if already recording.
@@ -144,6 +256,20 @@ async def _start_meeting_locked(request: fastapi.Request) -> JSONResponse:
                 "language_pair": state.current_meeting.language_pair,
             }
         )
+
+    # ── SYNTHETIC INFERENCE PREFLIGHT (W4) ───────────────────────
+    # Fail-fast admission gate: confirm that ASR + translate actually
+    # respond to a real inference request, not just /v1/models.
+    # Today's 2026-04-30 ASR cascade started with a backend whose
+    # /health returned 200 + /v1/models returned 200 + inference was
+    # wedged. The deep_backend_health gate below catches the first two
+    # cases; this preflight catches the third before recording starts.
+    # Disabled via SCRIBE_MEETING_PREFLIGHT=0 for emergency operator
+    # bypass — see plan W4 + risk-rollback table.
+    if os.environ.get("SCRIBE_MEETING_PREFLIGHT", "1") != "0":
+        preflight_failure = await _meeting_start_preflight()
+        if preflight_failure is not None:
+            return preflight_failure
 
     # ── DEEP HEALTH GATE ──────────────────────────────────────────
     # Force a fresh check (bypass cache) — don't use a stale reading to
