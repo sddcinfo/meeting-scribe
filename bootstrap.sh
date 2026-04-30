@@ -200,9 +200,18 @@ if [[ ${#need_pkgs[@]} -gt 0 ]]; then
 fi
 
 # ── 4. WiFi radio: unblock + persist regdomain ────────────────────
+# Two independent kill switches; both must be off before NetworkManager
+# can put the wlan interface in a usable state. rfkill is the kernel-
+# level one; ``nmcli radio wifi`` is NetworkManager's own switch (it
+# defaults to ``disabled`` on Ubuntu 24.04 server installs and stays
+# that way across reboots until explicitly turned on).
 if command -v rfkill >/dev/null 2>&1; then
     rfkill unblock wifi || true
     echo "[bootstrap] rfkill: wifi radio unblocked"
+fi
+if command -v nmcli >/dev/null 2>&1; then
+    nmcli radio wifi on 2>/dev/null || true
+    echo "[bootstrap] nmcli: wifi radio enabled"
 fi
 
 # Persist regdomain via /etc/default/crda or /etc/sysconfig/regdomain
