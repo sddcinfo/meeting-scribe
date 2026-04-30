@@ -13,6 +13,12 @@ dependencies = [
     # Server
     "fastapi==0.136.1",
     "uvicorn[standard]==0.46.0",
+    # multipart parsing — FastAPI's UploadFile / Form handling delegates
+    # to this and asserts at request time if it's missing. The slides
+    # upload route would 500 with an unhelpful "must be installed" error
+    # on a fresh install otherwise. Pinned alongside fastapi so the
+    # parser version matches what fastapi was tested against.
+    "python-multipart>=0.0.20",
 
     # Core audio/ML
     "numpy==2.4.4",

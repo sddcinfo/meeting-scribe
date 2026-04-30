@@ -88,6 +88,12 @@ def hotspot_state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     # they're actually trying to cover.
     monkeypatch.setattr(_ap_control, "_ensure_regdomain", lambda: True)
 
+    # Default: the AP_CON_NAME profile is already provisioned, so tests
+    # exercise the rotation path. The first-run bootstrap path
+    # (when _nmcli_connection_exists returns False) has its own
+    # dedicated test that overrides this default.
+    monkeypatch.setattr(wifi, "_nmcli_connection_exists", lambda: True)
+
     # Reset the per-meeting rotation tracker so tests are independent.
     _ap_control._reset_rotation_state_for_tests()
 
@@ -590,6 +596,56 @@ class TestStartWifiAp:
         # A warning was logged about the mismatch.
         warn_lines = [r.message for r in caplog.records if r.levelno >= logging.WARNING]
         assert any("does not match rotation target" in m for m in warn_lines)
+
+    @patch("meeting_scribe.hotspot.ap_control._apply_hotspot_firewall")
+    @patch("meeting_scribe.hotspot.ap_control._start_captive_portal")
+    @patch("meeting_scribe.wifi._nmcli_ap_is_active")
+    @patch("meeting_scribe.wifi._nmcli_read_live_ap_credentials")
+    @patch("meeting_scribe.wifi._run_nmcli_sync")
+    def test_missing_profile_triggers_first_run_bootstrap(
+        self,
+        mock_nmcli: MagicMock,
+        mock_read_creds: MagicMock,
+        mock_is_active: MagicMock,
+        mock_portal: MagicMock,
+        mock_firewall: MagicMock,
+        hotspot_state_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Regression test for the fresh-install bug where the rotation
+        path's blind ``nmcli con modify DellDemo-AP`` returned "unknown
+        connection" because no nmcli profile had ever been created for
+        the AP. After this fix, ``_start_wifi_ap`` detects the missing
+        profile and goes through the full ``_bring_up_ap`` path with
+        the meeting's freshly-rotated credentials.
+        """
+        monkeypatch.setattr(wifi, "_nmcli_connection_exists", lambda: False)
+
+        # AP comes up after _bring_up_ap completes.
+        mock_nmcli.return_value = _mk_completed(returncode=0)
+        mock_is_active.return_value = True
+        mock_read_creds.return_value = ("Dell Demo CCCC", "BEEFFACE")
+
+        with patch("secrets.token_hex") as mock_token:
+            mock_token.side_effect = ["cc", "beefface"]
+            asyncio.run(_ap_control._start_wifi_ap())
+
+        # The rotation-path's modify+down+up should NOT have run — the
+        # bootstrap path is responsible for creating the profile.
+        cmd_strings = [" ".join(c.args[0]) for c in mock_nmcli.call_args_list]
+        # ``con modify ... 802-11-wireless.ssid`` is the rotation path's
+        # signature — should be absent because we never reached
+        # _rotate_profile_and_bounce.
+        assert not any("con modify" in cs and "802-11-wireless.ssid" in cs for cs in cmd_strings), (
+            "rotation-path modify ran despite missing profile — "
+            "first-run bootstrap should have short-circuited it"
+        )
+
+        # State + portal + firewall still get set up.
+        state = _load_state(hotspot_state_file)
+        assert state["mode"] == "meeting"
+        mock_portal.assert_called_once()
+        mock_firewall.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
