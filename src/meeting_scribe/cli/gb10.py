@@ -216,13 +216,12 @@ def pull_models_cmd(host: str) -> None:
 @gb10.command("start")
 @click.option("--port", "-p", default=DEFAULT_PORT, help="Server port")
 @click.option("--debug", is_flag=True, help="Enable debug logging")
-def gb10_start(port: int, debug: bool) -> None:
+@click.pass_context
+def gb10_start(ctx: click.Context, port: int, debug: bool) -> None:
     """Start meeting-scribe server with GB10 profile.
 
     Binds to 0.0.0.0 so the server is accessible from the WiFi hotspot.
     """
-    from click.testing import CliRunner
-
     from meeting_scribe.cli.lifecycle import start
 
     os.environ["SCRIBE_PROFILE"] = "gb10"
@@ -230,8 +229,9 @@ def gb10_start(port: int, debug: bool) -> None:
     click.echo("Starting with GB10 profile (Qwen3-ASR, vLLM, pyannote)...")
     click.echo(f"  Bind: 0.0.0.0:{port} (accessible from hotspot)")
 
-    runner = CliRunner()
-    args = [f"--port={port}", "--foreground"]
-    if debug:
-        args.append("--debug")
-    runner.invoke(start, args)
+    # ctx.invoke runs the target command in the live click.Context so
+    # its click.echo output reaches the terminal. The previous
+    # CliRunner().invoke(...) was Click's *test* harness — it captured
+    # stdout/stderr into a Result object and silently swallowed every
+    # status message, masking failures behind exit code 0.
+    ctx.invoke(start, port=port, foreground=True, debug=debug)

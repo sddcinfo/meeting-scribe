@@ -312,16 +312,14 @@ def stop() -> None:
 @cli.command()
 @click.option("--port", "-p", default=DEFAULT_PORT)
 @click.option("--debug", is_flag=True)
-def restart(port: int, debug: bool) -> None:
+@click.pass_context
+def restart(ctx: click.Context, port: int, debug: bool) -> None:
     """Restart the server + run a smoke test so silent partial failures don't slip through.
 
     Delegates to ``systemctl --user restart`` when the unit is systemd-
     managed so preflight / notify semantics are preserved. Falls back to
     the in-process click stop+start dance for foreground/dev runs.
     """
-
-    from click.testing import CliRunner
-
     mode, _pid, _active = _server_state()
     if mode == "systemd":
         click.echo(f"Restarting {_SYSTEMD_UNIT} via systemctl --user...")
@@ -335,10 +333,14 @@ def restart(port: int, debug: bool) -> None:
             click.secho(f"systemctl --user restart failed: {r.stderr.strip()}", fg="red")
             sys.exit(r.returncode or 1)
     else:
-        runner = CliRunner()
-        runner.invoke(stop)
+        # ctx.invoke runs the target command in the live click.Context
+        # so its click.echo output reaches the terminal. The previous
+        # CliRunner().invoke(...) was Click's *test* harness — it
+        # captured stdout into a Result object, so a failed restart
+        # exited with no visible diagnostics.
+        ctx.invoke(stop)
         time.sleep(1)
-        runner.invoke(start, [f"--port={port}"] + (["--debug"] if debug else []))
+        ctx.invoke(start, port=port, debug=debug, foreground=False)
 
     # Smoke test — surfaces broken startup (empty-reply-from-server,
     # wrong-port binds, crashed background loops). Runs best-effort:
