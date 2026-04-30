@@ -280,6 +280,46 @@ If `wifi_mode` in `~/.config/meeting-scribe/settings.json` is not `"off"`, meeti
 MIT — see [LICENSE](LICENSE). Anyone is free to use, fork, and modify this
 software.
 
+### Third-party model licenses
+
+The MIT license above covers **this repository's source code only**. The
+HuggingFace models that meeting-scribe pulls and runs are governed by their
+own upstream licenses, summarized below.
+
+> **Scope:** this table reflects the **specific model IDs and versions
+> currently wired into this repo** (see [Model Stack](#model-stack) and
+> [HuggingFace gated models](#huggingface-gated-models)). If you swap a
+> model for a different revision, sibling variant (e.g. `-Instruct` vs
+> `-Base`), or a successor release, **re-verify the license** — both Qwen
+> and Cohere maintain other model lines under non-Apache terms (custom
+> "Qwen License", C4AI CC-BY-NC, etc.) and pyannote ships premium
+> pipelines under separate commercial terms. Always check the model card
+> before upgrading.
+
+| Model | License | Gated | Commercial use | Key obligations |
+|-------|---------|-------|----------------|-----------------|
+| `pyannote/speaker-diarization-community-1` | **CC-BY-4.0** | Yes (contact-info acceptance) | ✅ | Attribution required; credit pyannote and link the license |
+| `Qwen/Qwen3-ASR-1.7B` | **Apache-2.0** | No | ✅ | Preserve license + NOTICE on redistribution |
+| `Qwen/Qwen3-TTS-12Hz-0.6B-Base` | **Apache-2.0** | No | ✅ | Preserve license + NOTICE on redistribution |
+| `Qwen/Qwen3.6-35B-A3B-FP8` | **Apache-2.0** | No | ✅ | Preserve license + NOTICE on redistribution |
+| `CohereLabs/cohere-transcribe-03-2026` *(bench-only, not in production stack)* | **Apache-2.0** | Yes (contact-info acceptance) | ✅ | Preserve license + NOTICE; contact-info acceptance is a separate click-through, not a license restriction |
+
+Notes:
+
+- **All five permit commercial use** with attribution. None are copyleft
+  or NonCommercial.
+- **Two are gated** (pyannote, Cohere). A HuggingFace token with prior
+  in-browser acceptance is required — see
+  [HuggingFace gated models](#huggingface-gated-models). The `-release`
+  suffix sometimes seen on the Cohere ID is not the canonical model card;
+  the bare `cohere-transcribe-03-2026` is the gated artifact.
+- **CC-BY-4.0 (pyannote) is the only attribution-strict license** in the
+  set — if you ship a product UI, an "About" / credits screen
+  acknowledging pyannote satisfies it.
+- The Cohere model is currently used **only in the `2026-Q2` benchmark
+  Track A** (`containers/cohere-transcribe/`, `docker-compose.gb10.yml`)
+  and is not loaded by the production stack.
+
 ## Contributions
 
 This repository is published for consumption, not co-development. Pull
