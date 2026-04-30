@@ -5,6 +5,97 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Reliability — 2026-04-30 ASR-cascade hardening
+
+A live meeting failed when `scribe-asr` hit `cudaErrorNotPermitted`
+and the in-process watchdog logged "no response in 10s" 40+ times
+with zero escalation. Forensic traceback uncovered six independent
+gaps; this release closes all of them and adds the prevention
+layers that make the failure mode self-recovering instead of
+operator-paged.
+
+#### Added
+- **W4 — `meeting_start_preflight()` admission gate**: synthetic
+  inference probes against ASR + translate + diarize before a
+  meeting is allowed to start. Wait-with-deadline contract
+  (default 30 s, override via `SCRIBE_PREFLIGHT_BUDGET_S=0` for
+  fail-fast) so a normal cold-start warmup finishes inside the
+  budget while a truly wedged backend exhausts it. Diarize is
+  warning-only — never blocks. Probe payload reuses the production
+  request-builder so the gate exercises the same code path live
+  traffic does.
+- **W5 — Reliability dashboard tiles**: ASR RTT p95, watchdog
+  fires/min, time-since-last-final, GPU free MB. Backed by
+  per-request RTT histograms (asr / translate / diarize) on
+  `runtime/metrics.py` and the new `gpu.vram_free_mb` field in
+  `/api/status`.
+- **W6a — ASR recovery state machine + offset-based replay**: when
+  the watchdog escalates, `recording.pcm` from the earliest
+  unresolved submission's offset is replayed through the recovered
+  backend, preserving transcript alignment instead of advancing
+  past the wedge with empty text. Per-submission offset tracking
+  + recovery-generation epoch guard prevents stale httpx responses
+  from mutating state mid-recovery.
+- **W6b — Background recovery supervisor + circuit breaker**:
+  watchdog escalation enqueues recovery on a separate task (audio
+  ingest stays non-blocking). Supervisor polls the W4 synthetic
+  probe; on probe success drives REPLAYING → NORMAL. Optional
+  `compose_restart vllm-asr --recreate` after 30 s of failing
+  probes when `SCRIBE_RELIABILITY_AUTO_RECREATE=1` (default OFF
+  for the first week of production); 10-min circuit breaker
+  prevents recreate loops.
+- **Cold-start UX**: Start button gated by `/api/status` backend
+  readiness; "Backends warming up…" banner above the start button
+  when any required backend is not yet ready. Operator no longer
+  clicks Start during cold start and discovers the 503 the hard
+  way.
+- **`containers/vllm-asr/Dockerfile` digest pin**:
+  `vllm/vllm-openai:v0.20.0-aarch64-cu130-ubuntu2404` by `sha256:`
+  digest, plus a new `containers/vllm-asr/README.md` documenting
+  the version-pin contract. `:latest` rolling forward unannounced
+  was the proximate trigger of the original incident.
+- **Docker ecosystem in dependabot**: weekly upgrade PRs for the
+  vllm-asr base image so future bumps are explicit + reviewable.
+
+#### Changed
+- **`meeting-scribe gb10 pull-models --include-shared` default
+  ON**: customer-install bootstrap now downloads the autosre-owned
+  `Qwen/Qwen3.6-35B-A3B-FP8` alongside scribe's native models.
+  Prevents autosre crash-looping on first boot after a
+  wipe-and-reinstall with `LocalEntryNotFoundError`
+  (`HF_HUB_OFFLINE=1` blocks recovery download). Pass
+  `--no-include-shared` on a dev box that doesn't run autosre.
+- **Per-service drift guard**
+  (`tests/test_recipes.py::TestComposeRecipeDriftGuard`): expanded
+  from ASR-only (vllm command flags) to also cover diarize + TTS
+  via `environment:` block parsing. Now catches recipe ↔ compose
+  drift across all four services at PR time.
+- **Boot-time source-drift warn**:
+  `infra.compose.warn_on_recipe_source_drift()` runs once at
+  server lifespan startup, emits WARNING per recipe ↔ compose
+  mismatch (non-fatal — operator may have tuned compose during
+  incident response without yet syncing the recipe). Catches the
+  cases the CI test alone cannot see (host hand-edited compose
+  without git, stale image baked with old recipe values).
+- **CLI silence fix** (`cli/gb10.py`, `cli/lifecycle.py`): replaced
+  `click.testing.CliRunner.invoke(...)` with `ctx.invoke(...)`.
+  The test harness was capturing stdout into a `Result` object,
+  so `meeting-scribe gb10 restart-container` previously returned
+  exit 0 with no output — silent recovery path during the
+  original incident.
+- **`recipes/qwen3-asr-vllm.yaml` aligned to production**:
+  `gpu_memory_utilization: 0.10` (was an aspirational `0.04` that
+  was never feasible — Qwen3-ASR's encoder cache budget alone
+  exceeds the 0.04 cap on 124 GB GPU). The compose hardcoded
+  `0.10` from day one; this commit makes recipe + compose match
+  reality.
+
+#### First-run-timing impact
+- Bootstrap disk-I/O budget bumped from ~20–40 min to ~30–50 min
+  to reflect the now-mandatory `Qwen/Qwen3.6-35B-A3B-FP8` download
+  in `meeting-scribe gb10 pull-models`. Total HF cache footprint
+  ~90 GB (was ~55 GB).
+
 ### Security
 - **Dependabot config + security CI lane**: `.github/dependabot.yml` opens grouped weekly PRs for pip / npm / github-actions across `dev`. New `security` job in `tests.yml` runs `pip-audit` (PyPI advisories via OSV) + `npm audit` and **fails the build on HIGH+** severity, catching CVEs at PR time rather than days later through Dependabot. ML deps (`torch`, `torchaudio`, `numpy`, `av`) are excluded from auto-PRs because version drift changes numerical behavior — manual review path stays via the existing weekly freshness issue.
 - **Electron 33 → 41** (`overlay/package.json`): clears all 18 GHSA advisories Dependabot flagged on first push (4 high, 10 moderate, 4 low) — every advisory was against the same `electron` pin in the optional always-on-top translation overlay. The overlay code only uses stable Electron APIs (`BrowserWindow`, `globalShortcut`, `screen`, `setCertificateVerifyProc`); no app-code changes required.

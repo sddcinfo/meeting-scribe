@@ -97,15 +97,24 @@ holds the ~400 ms live-path SLO with comfortable margin.
 The MoE router gate's BF16 GEMM hit `CUBLAS_STATUS_INTERNAL_ERROR`
 under burst concurrency on 2026-04-18 23:45 — see
 `reports/reliability/cublas_crash_2026-04-18.md`.  Two env vars in the
-production recipe (`repos/auto-sre/autosre/backends/recipes/qwen3.6-fp8-nightly.yaml`)
+production recipe
+(`repos/auto-sre/autosre/backends/recipes/qwen3.6-35b-a3b-fp8.yaml`)
 cover this failure mode:
 
 - `CUBLAS_WORKSPACE_CONFIG=:4096:8` — pre-sizes 8 × 4 MiB cuBLAS workspaces.
 - `VLLM_MARLIN_USE_ATOMIC_ADD=1` — NVIDIA DGX Spark thread 366822 recommendation.
 
-`--attention-backend=flashinfer` is also required: flipping it brought
+`attention_backend: flashinfer` is also required: flipping it brought
 coding TTFT p99 from 751 ms → 279 ms on this hardware.  The flag is
-now flagged perf-sensitive in `recipe_guard.py`.
+flagged perf-sensitive in `recipe_guard.py`.
+
+All three settings are codified in the recipe yaml (committed
+2026-04-30 on auto-sre after the cross-machine perf audit caught
+the customer GB10 running without them via undocumented manual
+overrides).  Both `_start_local` (dev) and `_start_solo` (customer)
+paths funnel through the same `_build_runtime_env` helper so the
+two container envs are bit-for-bit identical regardless of which
+launch dispatcher fires.
 
 **Refinement-side quality uplift** (production default
 `refinement_context_window_segments=4`): folds the last 4

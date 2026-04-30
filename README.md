@@ -61,7 +61,13 @@ Then create a token at <https://huggingface.co/settings/tokens> with *Read* scop
 
 ### First-run timing
 
-Plan **~20–40 minutes** of disk I/O on first install: ~24 GB for the `vllm/vllm-openai` base image, ~55 GB of HF model weights, plus container build layers and editable-install layers. Subsequent runs are idempotent and re-use everything cached.
+Plan **~30–50 minutes** of disk I/O on first install: ~24 GB for
+the `vllm/vllm-openai` base image, ~90 GB of HF model weights
+(ASR + TTS + diarization + the autosre-managed Qwen3.6-35B-A3B-FP8
+translate model — `meeting-scribe gb10 pull-models` defaults to
+`--include-shared` so the install is fully self-contained), plus
+container build layers and editable-install layers. Subsequent
+runs are idempotent and re-use everything cached.
 
 ## Quick Start
 
@@ -183,6 +189,123 @@ $EDITOR .env
 # Admin UI:     https://127.0.0.1:8080  (also on LAN management IP)
 # Guest portal: http://127.0.0.1/       (also on hotspot AP IP 10.42.0.1)
 ```
+
+## Customer Install Media
+
+Build a wipe-and-reinstall USB / PXE bundle that runs the entire flow above
+without any human keystrokes after the F7 boot prompt — useful for shipping
+a turnkey GB10 to a customer or re-imaging a borked system. Implemented as
+three `sddc` subcommands; see `~/.claude/plans/hashed-giggling-rivest.md`
+for the full design.
+
+### One-time prerequisites (on the build machine)
+
+```bash
+sudo apt install -y xorriso whois        # whois → mkpasswd
+```
+
+### Three commands end-to-end
+
+```bash
+# 1. Fetch the Dell DGX OS recovery ISO (~9.21 GB, public Akamai mirror)
+sddc dgx-iso fetch \
+  --service-tag <YOUR-SERVICE-TAG> \
+  --url 'https://dl.dell.com/FOLDER<id>M/1/Dell_Pro_Max_with_GB10_FCM1253_<region>_DGX_OS7_A01_Recovery_Image.iso' \
+  --save-mapping \
+  --out ~/Downloads/dgx-os.iso
+# Find the URL on dell.com/support → enter service tag → Drivers & Downloads
+# → "Operating System" → DGX OS Reinstallation Image. The first run with
+# --save-mapping caches it; subsequent fetches just need --service-tag.
+
+# 2. Build the customized install ISO
+sddc build-customer-iso \
+  --base-iso ~/Downloads/dgx-os.iso \
+  --out      ./dist/meeting-scribe-customer.iso \
+  --scribe-ref main
+# Default: SSH disabled on the installed system. Verify success via local
+# console (cat /var/log/meeting-scribe-firstboot.json). Add
+# `--ssh-key ~/.ssh/id_ed25519.pub` for permanent remote access, or
+# `--ephemeral-validation-key` for a one-shot key auto-removed after success.
+
+# 3. Flash to USB (or stage dist/pxe-bundle/ on a netboot HTTP root)
+sddc flash-usb /dev/sdX ./dist/meeting-scribe-customer.iso
+```
+
+Plug the USB into the customer GB10, press **F7** at the Dell logo, select
+the USB. Walk away. ≤30 minutes later: `validate --customer-flow` has run
+under the installer, the result is at `/var/log/meeting-scribe-firstboot.json`
+on the installed disk, and the system is ready for the one remaining manual
+step (`autosre start --no-scribe` with `HF_TOKEN` for the first vLLM cold-load).
+
+### What the ISO does
+
+1. Subiquity autoinstall partitions the disk and lays down DGX OS 7.x with
+   `linux-nvidia-64k`, the operator's chosen locale/keyboard, and the
+   `meetingscribe` user (force-change console password, no remote password).
+2. A one-shot `meeting-scribe-firstboot.service` waits for connectivity
+   (DNS + curl probe of GitHub/PyPI/Docker Hub/mise + `apt-get update`),
+   clones meeting-scribe at the **commit SHA pinned at build time**,
+   verifies the SHA matches, then runs `bootstrap.sh` in unattended mode
+   and `validate --customer-flow` as the acceptance gate.
+3. On success it writes `/var/lib/meeting-scribe/firstboot.done` and
+   disables itself. Transient network failures retry up to 10× per hour
+   via `Restart=on-failure`.
+
+### Security defaults
+
+- **No remote SSH on fresh install.** `sshd` is masked unless you opt in.
+- **No vendor SSH keys baked in.** Every authorized key is explicit
+  (`--ssh-key` repeatable; no auto-discovery from `~/.ssh/`).
+- **Pinned-SHA supply chain.** The build resolves the requested ref to a
+  commit SHA via `git ls-remote` and bakes that exact SHA into the
+  firstboot script. Firstboot aborts with exit 11 if the cloned HEAD
+  doesn't match — moved tags or repo takeover fail closed.
+- **No blanket sudo grant during install.** Firstboot runs as root and
+  uses `bootstrap.sh`'s native dual-mode (`SUDO_USER` env) to drop
+  privileges. There's no temporary `/etc/sudoers.d/...` NOPASSWD entry
+  that could leak on failure.
+- **Apt connectivity probed by apt itself.** `apt-get update` honors
+  every `Acquire::*::Proxy` setting natively — including path-prefixed
+  proxies that a curl-based probe would mishandle.
+
+### PXE bundle
+
+`dist/pxe-bundle/` contains `customer.iso`, `vmlinuz`, `initrd`,
+`user-data`, `meta-data`, `boot.cfg.snippet`, and a `README.md` documenting
+how to wire it into iPXE or GRUB-via-HTTP. Same artifact either way — the
+kernel/initrd boot, then mount the served ISO via `iso-scan/filename=`.
+
+### Secure Boot
+
+**No need to disable it.** The build preserves the Secure Boot trust chain
+intact:
+
+- shim (MS-signed `bootaa64.efi`) — byte-identical to base ISO
+- grub (Canonical-signed `grubaa64.efi`) — byte-identical
+- MOK Manager (`mmaa64.efi`) — byte-identical
+- Kernel (Canonical-signed `/casper/vmlinuz`) — byte-identical
+
+Ubuntu's chain validates the **binaries** (firmware → shim → grub → kernel
+→ modules). `grub.cfg` and the autoinstall payload we add are plain text,
+not signature-verified — so our edits don't break anything. The build
+asserts byte-identity of every signed binary as a final acceptance gate
+and fails loudly if any of them changed (catches future regressions where
+someone accidentally swaps a signed file).
+
+### Troubleshooting on the customer side
+
+If the install never finishes: SSH or console in, then:
+
+```bash
+cat /var/log/meeting-scribe-firstboot.json | jq .
+journalctl -u meeting-scribe-firstboot.service --no-pager
+cat /var/log/meeting-scribe-firstboot.log | tail -100
+```
+
+Exit codes: `10` = connectivity exhausted retries, `11` = clone SHA mismatch
+(supply-chain failure), `12` = `validate --customer-flow` did not pass,
+`13` = no apt sources configured (structural). The unit is `Restart=on-failure`,
+so transient connectivity failures retry up to 10× per hour automatically.
 
 ## Architecture
 
