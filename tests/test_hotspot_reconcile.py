@@ -54,6 +54,17 @@ def _mk_completed(
     )
 
 
+@pytest.fixture(autouse=True)
+def _reset_ap_state_cache() -> None:
+    """Drop wifi's in-process AP-state cache between tests.
+
+    The TTL cache (5s) lives at module scope so values from one test
+    bleed into the next. Reset before every test so each test sees
+    a fresh module state.
+    """
+    wifi._invalidate_ap_state_cache()
+
+
 @pytest.fixture
 def hotspot_state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect HOTSPOT_STATE_FILE to a per-test tmp path.
@@ -96,6 +107,11 @@ def hotspot_state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
     # Reset the per-meeting rotation tracker so tests are independent.
     _ap_control._reset_rotation_state_for_tests()
+
+    # Drop the AP-state cache so cached values from a previous test
+    # don't bleed into this one (the read-side TTL cache lives at
+    # module scope and persists across tests in the same process).
+    wifi._invalidate_ap_state_cache()
 
     return path
 
@@ -342,6 +358,36 @@ class TestAPIsActive:
     def test_nmcli_error_returns_false(self, mock_run: MagicMock) -> None:
         mock_run.return_value = _mk_completed(returncode=1, stderr="broken")
         assert wifi._nmcli_ap_is_active() is False
+
+    @patch("meeting_scribe.wifi.subprocess.run")
+    def test_subsequent_calls_within_ttl_skip_subprocess(self, mock_run: MagicMock) -> None:
+        """The whole point of the cache: rapid re-polls don't shell
+        out per call."""
+        mock_run.return_value = _mk_completed(stdout="DellDemo-AP:wlP9s9\n")
+
+        for _ in range(5):
+            assert wifi._nmcli_ap_is_active() is True
+
+        # First call hit subprocess; subsequent four were cached.
+        assert mock_run.call_count == 1
+
+    @patch("meeting_scribe.wifi.subprocess.run")
+    def test_cache_invalidated_after_nmcli_write(self, mock_run: MagicMock) -> None:
+        """Any state-mutating nmcli call invalidates the cache so the
+        very next read sees fresh state."""
+        mock_run.return_value = _mk_completed(stdout="DellDemo-AP:wlP9s9\n")
+
+        # Prime the cache.
+        assert wifi._nmcli_ap_is_active() is True
+        assert mock_run.call_count == 1
+
+        # A write goes through _run_nmcli_sync, which invalidates.
+        wifi._run_nmcli_sync(["con", "down", "DellDemo-AP"], timeout=5)
+        write_calls_so_far = mock_run.call_count
+
+        # Next read should re-shell despite being inside the TTL window.
+        assert wifi._nmcli_ap_is_active() is True
+        assert mock_run.call_count == write_calls_so_far + 1
 
 
 # ---------------------------------------------------------------------------
