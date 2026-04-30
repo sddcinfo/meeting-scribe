@@ -72,6 +72,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # terminal.
     _diag.setup_diagnostics_logging(state.config.meetings_dir.parent)
 
+    # Source-drift sentinel: emits a WARNING per recipe ↔ compose
+    # mismatch so a host that booted from a stale image / hand-edited
+    # compose surfaces the divergence in logs. CI test
+    # (tests/test_recipes.py::TestComposeRecipeDriftGuard) is the
+    # strict gate; this is the runtime safety net. See
+    # `meeting_scribe.infra.compose.assert_recipe_source_parity`.
+    from meeting_scribe.infra.compose import warn_on_recipe_source_drift
+    warn_on_recipe_source_drift()
+
     # Regulatory domain must be JP before any WiFi AP work happens.
     # We enforce + verify at startup so a cold boot doesn't produce an
     # AP that phones can't connect to (country 00 caps 5 GHz TX power).

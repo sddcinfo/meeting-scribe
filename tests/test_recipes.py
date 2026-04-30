@@ -125,6 +125,30 @@ def _extract_vllm_flags(compose_command: list[str] | str) -> dict[str, str]:
     return flags
 
 
+def _extract_compose_env(env_block: list[str] | None) -> dict[str, str]:
+    """Parse a docker-compose service.environment list of ``KEY=VALUE``
+    strings into a ``{key: value}`` dict. Resolves shell-expansion
+    defaults — ``${VAR:-default}`` becomes ``default``; ``${VAR}`` (no
+    default) becomes the empty string. Used by the drift guard for
+    diarize and TTS, whose containers are configured via env vars
+    rather than vLLM command flags."""
+    if not env_block:
+        return {}
+    out: dict[str, str] = {}
+    for entry in env_block:
+        if not isinstance(entry, str) or "=" not in entry:
+            continue
+        key, _, val = entry.partition("=")
+        val = val.strip()
+        m = re.match(r"^\$\{[^:}]+:-([^}]*)\}$", val)
+        if m:
+            val = m.group(1)
+        elif val.startswith("${") and val.endswith("}"):
+            val = ""
+        out[key.strip()] = val
+    return out
+
+
 class TestComposeRecipeDriftGuard:
     """Catch the class of regression where docker-compose.gb10.yml hardcodes
     a vLLM flag value that diverges from the canonical recipe.
@@ -165,3 +189,52 @@ class TestComposeRecipeDriftGuard:
     def test_asr_port_matches_recipe(self, asr_compose_flags):
         recipe = load_recipe("asr-vllm")
         assert int(asr_compose_flags["port"]) == recipe["port"]
+
+    # ---------- Diarize + TTS use environment: blocks, not vllm flags ---------
+
+    @pytest.fixture(scope="class")
+    def diarize_compose_env(self) -> dict[str, str]:
+        compose = yaml.safe_load(COMPOSE_PATH.read_text())
+        env = compose["services"]["pyannote-diarize"]["environment"]
+        return _extract_compose_env(env)
+
+    @pytest.fixture(scope="class")
+    def tts_compose_env(self) -> dict[str, str]:
+        compose = yaml.safe_load(COMPOSE_PATH.read_text())
+        env = compose["services"]["qwen3-tts"]["environment"]
+        return _extract_compose_env(env)
+
+    @pytest.fixture(scope="class")
+    def tts2_compose_env(self) -> dict[str, str]:
+        compose = yaml.safe_load(COMPOSE_PATH.read_text())
+        env = compose["services"]["qwen3-tts-2"]["environment"]
+        return _extract_compose_env(env)
+
+    def test_diarize_port_matches_recipe(self, diarize_compose_env):
+        recipe = load_recipe("diarization")
+        assert int(diarize_compose_env["DIARIZE_PORT"]) == recipe["port"]
+
+    def test_diarize_max_speakers_matches_recipe(self, diarize_compose_env):
+        recipe = load_recipe("diarization")
+        assert int(diarize_compose_env["DIARIZE_MAX_SPEAKERS"]) == recipe["max_speakers"]
+
+    def test_diarize_pipeline_id_matches_recipe(self, diarize_compose_env):
+        recipe = load_recipe("diarization")
+        assert diarize_compose_env["DIARIZE_PIPELINE_ID"] == recipe["model_id"]
+
+    def test_tts_port_matches_recipe(self, tts_compose_env):
+        recipe = load_recipe("tts")
+        assert int(tts_compose_env["TTS_PORT"]) == recipe["port"]
+
+    def test_tts_model_matches_recipe(self, tts_compose_env):
+        recipe = load_recipe("tts")
+        assert tts_compose_env["TTS_MODEL"] == recipe["model_id"]
+
+    def test_tts2_replica_uses_distinct_port(self, tts_compose_env, tts2_compose_env):
+        # Replica MUST NOT share the primary's port (would collide on host network).
+        assert tts2_compose_env["TTS_PORT"] != tts_compose_env["TTS_PORT"]
+
+    def test_tts2_replica_uses_same_model_as_recipe(self, tts2_compose_env):
+        # Both replicas must serve the same model (the recipe).
+        recipe = load_recipe("tts")
+        assert tts2_compose_env["TTS_MODEL"] == recipe["model_id"]
