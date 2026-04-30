@@ -197,7 +197,19 @@ def gb10_status(host: str) -> None:
     default="localhost",
     help="GB10 IP address (default: localhost)",
 )
-def pull_models_cmd(host: str) -> None:
+@click.option(
+    "--include-shared/--no-include-shared",
+    default=True,
+    help=(
+        "Include recipes flagged `mode: shared` (the autosre-owned "
+        "translation model). Default ON — customer-install GB10s "
+        "always run autosre locally and need the model pre-cached "
+        "to avoid `LocalEntryNotFoundError` crash-loops on first "
+        "boot. Pass --no-include-shared on a dev box that explicitly "
+        "doesn't run autosre to skip the ~35 GB Qwen3.6 download."
+    ),
+)
+def pull_models_cmd(host: str, include_shared: bool) -> None:
     """Download all required models to the GB10's HuggingFace cache."""
     from meeting_scribe.infra.containers import pull_models as _pull
     from meeting_scribe.infra.runner import get_runner
@@ -205,7 +217,7 @@ def pull_models_cmd(host: str) -> None:
 
     ssh = get_runner(host)
 
-    model_ids = all_model_ids()
+    model_ids = all_model_ids(include_shared=include_shared)
     click.echo(f"Pulling {len(model_ids)} models to {host}:/data/huggingface...")
     for mid in model_ids:
         click.echo(f"  {mid}")

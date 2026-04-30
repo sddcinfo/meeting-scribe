@@ -73,13 +73,28 @@ class TestAllModelIds:
         assert isinstance(ids, list)
         assert len(ids) >= 3
 
-    def test_all_model_ids_excludes_shared(self):
-        """The translation recipe is mode=shared (autosre owns it).
-        all_model_ids() must filter it out so customer pull-models
-        doesn't waste ~35 GB downloading weights it'll never serve."""
+    def test_all_model_ids_excludes_shared_by_default(self):
+        """Default (include_shared=False) preserves the pre-2026-04-30
+        behaviour for callers that don't opt in. Customer-install
+        path must explicitly pass include_shared=True (see the
+        bootstrap-time test below)."""
         ids = all_model_ids()
         assert "Qwen/Qwen3.6-35B-A3B-FP8" not in ids
         # ASR + TTS + diarization are scribe's responsibility and stay in.
+        assert any("ASR" in mid for mid in ids)
+        assert any("TTS" in mid for mid in ids)
+        assert any("speaker-diarization" in mid for mid in ids)
+
+    def test_all_model_ids_includes_shared_when_opted_in(self):
+        """The customer-install bootstrap calls pull-models with
+        --include-shared (the new CLI default) so a wipe-and-reinstall
+        lands the autosre-owned Qwen3.6-35B-A3B-FP8 alongside the
+        scribe-native models. Without it, autosre crash-loops on
+        first boot with LocalEntryNotFoundError because the recipe's
+        HF_HUB_OFFLINE=1 blocks any recovery download."""
+        ids = all_model_ids(include_shared=True)
+        assert "Qwen/Qwen3.6-35B-A3B-FP8" in ids
+        # Scribe-native models must still be present.
         assert any("ASR" in mid for mid in ids)
         assert any("TTS" in mid for mid in ids)
         assert any("speaker-diarization" in mid for mid in ids)

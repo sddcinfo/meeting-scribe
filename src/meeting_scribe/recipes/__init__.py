@@ -47,18 +47,34 @@ def load_recipe(name: str) -> dict:
     raise FileNotFoundError(msg)
 
 
-def all_model_ids() -> list[str]:
-    """HuggingFace model IDs that meeting-scribe is responsible for pulling.
+def all_model_ids(include_shared: bool = False) -> list[str]:
+    """HuggingFace model IDs that meeting-scribe needs cached locally.
 
-    Skips recipes flagged ``mode: shared`` — those are managed by an
-    external service (auto-sre) and should not land in meeting-scribe's
-    /data/huggingface cache. Pulling them here just wastes ~17 GB of
-    customer-device disk on a model that runs out of process anyway.
+    Args:
+        include_shared: When False (default — preserves the
+            pre-2026-04-30 behaviour for any caller that depended
+            on it), skip recipes flagged ``mode: shared`` (the
+            autosre-owned translation model). When True, include
+            them — required by the customer-install bootstrap
+            because customer GB10s always run autosre alongside
+            meeting-scribe and a wipe-and-reinstall MUST land a
+            fully-cached /data/huggingface so neither stack races
+            a download on first start.
+
+    The original docstring noted the shared-skip was to "not waste
+    ~17 GB on a model that runs out of process anyway". That
+    rationale held when customer devices weren't running their own
+    autosre instance. After the customer-install path was unified
+    in bootstrap.sh:292+, customer devices DO run autosre locally,
+    and the 35B becomes mandatory cargo on the device — wiping +
+    reinstalling without it leaves autosre crash-looping on first
+    boot with `LocalEntryNotFoundError` because `HF_HUB_OFFLINE=1`
+    blocks the recovery download.
     """
     ids = []
     for recipe_path in sorted(RECIPES_DIR.glob("*.yaml")):
         recipe = _load_yaml(recipe_path)
-        if recipe.get("mode") == "shared":
+        if not include_shared and recipe.get("mode") == "shared":
             continue
         model_id = recipe.get("model_id")
         if model_id:
