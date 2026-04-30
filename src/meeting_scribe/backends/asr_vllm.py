@@ -177,6 +177,18 @@ class VllmASRBackend(ASRBackend):
         self._recovery_requested: asyncio.Event = asyncio.Event()
         self._inflight_tasks: set[asyncio.Task] = set()
 
+        # ── W6b — Watchdog escalation counter ───────────────────
+        # Increments on every watchdog fire (the dashboard tile shows
+        # fires from the FIRST fire — see W5 watchdog_fires_total
+        # contract). On reaching 3 consecutive fires (~30s of inference
+        # hang), calls _begin_recovery_pending() to enter
+        # RECOVERY_PENDING and signal the background supervisor.
+        # Reset to 0 on every successful response.
+        self._watchdog_consecutive_fires: int = 0
+        # Threshold for transition. Configurable so tests can drive
+        # the path with a smaller value, but prod stays at 3.
+        self._watchdog_escalation_threshold: int = 3
+
     def set_event_callback(self, fn: Callable[[TranscriptEvent], Awaitable[None]]) -> None:
         self._on_event = fn
 
@@ -557,6 +569,22 @@ class VllmASRBackend(ASRBackend):
                 self._watchdog_timeout,
                 self._buffer_samples,
             )
+            # ── W6b — Count + escalate ───────────────────────────
+            # EVERY fire bumps the dashboard counter (W5 contract).
+            # Consecutive fires accumulate independently; on reaching
+            # the threshold, transition to RECOVERY_PENDING via the
+            # single source of truth helper. The audio path returns
+            # immediately after — recovery work runs in the
+            # background supervisor task.
+            self._watchdog_consecutive_fires += 1
+            try:
+                state.metrics.watchdog_fires_total += 1
+                state.metrics._watchdog_fire_timestamps.append(time.monotonic())
+            except AttributeError:
+                pass  # metrics not yet wired (warmup); harmless
+
+            if self._watchdog_consecutive_fires >= self._watchdog_escalation_threshold:
+                self._begin_recovery_pending()
 
         if self._buffer_samples >= self._buffer_threshold or watchdog_triggered:
             combined = np.concatenate(self._buffer)
@@ -632,6 +660,10 @@ class VllmASRBackend(ASRBackend):
                 # range under the current generation.
                 if not self._track_submission_complete(_submission):
                     return
+                # W6b: any successful response resets the consecutive
+                # fire counter so a single hiccup doesn't accumulate
+                # toward an unwarranted recovery escalation.
+                self._watchdog_consecutive_fires = 0
                 # W5: backend RTT histogram. Sampled only on successful
                 # requests so failures (which dominate the early seconds
                 # of a CUDA-wedge incident) don't pollute the percentile.

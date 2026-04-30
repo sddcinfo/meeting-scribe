@@ -219,6 +219,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         _health_monitors.silence_watchdog_loop(), name="silence-watchdog"
     )
 
+    # W6b: ASR recovery supervisor. Awaits backend's
+    # `_recovery_requested` event (set by the watchdog escalation
+    # at consecutive_fires>=3) and drives the state machine through
+    # probe-poll → optional compose_restart → replay. See
+    # `runtime/recovery_supervisor.py` for the full design.
+    from meeting_scribe.runtime.recovery_supervisor import asr_recovery_loop
+    _asr_recovery_task = asyncio.create_task(
+        asr_recovery_loop(), name="asr-recovery-supervisor"
+    )
+
     # A4: replay any pending_translations.jsonl backlogs left by a
     # prior crash / partial finalize. Runs as a background task so the
     # main lifespan completes immediately; the recovery work blocks
