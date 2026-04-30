@@ -18,6 +18,7 @@ import httpx
 from meeting_scribe import runtime_config
 from meeting_scribe.backends.base import TranslateBackend
 from meeting_scribe.languages import get_translation_prompt
+from meeting_scribe.runtime import state
 
 logger = logging.getLogger(__name__)
 
@@ -326,6 +327,14 @@ class VllmTranslateBackend(TranslateBackend):
                 },
             )
             resp.raise_for_status()
+            # W5: backend RTT histogram. Sampled only on successful
+            # requests so failures don't pollute the percentile.
+            try:
+                state.metrics.translate_request_rtt_ms.append(
+                    (time.monotonic() - t0) * 1000
+                )
+            except AttributeError:
+                pass  # state.metrics not yet initialised at warmup time
             data = resp.json()
             translated = data["choices"][0]["message"]["content"].strip()
 

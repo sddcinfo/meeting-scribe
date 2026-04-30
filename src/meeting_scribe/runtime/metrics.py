@@ -95,6 +95,35 @@ class Metrics:
         self.tts_health_state: str = "healthy"
         self.tts_health_since: float = 0.0
 
+        # ── Backend RTT histograms [W5 — reliability dashboard] ────
+        # Per-request round-trip time (request build → response received)
+        # for each model backend. Distinct from `tts_synth_ms` (TTS-only,
+        # end-to-end audio latency) and `end_to_end_lag_ms` (live-path
+        # listener latency). These RTT histograms drive (a) the W4
+        # adaptive-timeout logic for synthetic probes, and (b) the W5
+        # dashboard tile "ASR RTT p95".
+        self.asr_request_rtt_ms: deque[float] = deque(maxlen=256)
+        self.translate_request_rtt_ms: deque[float] = deque(maxlen=256)
+        self.diarize_request_rtt_ms: deque[float] = deque(maxlen=256)
+
+        # ── Watchdog fire counters [W5 — every fire, plus escalations] ──
+        # `watchdog_fires_total` is incremented on EVERY ASR watchdog
+        # fire (W6b will wire the increment in `backends/asr_vllm.py`).
+        # `_watchdog_fire_timestamps` powers the per-minute rate tile.
+        # `watchdog_escalations_total` separately counts the >=3
+        # consecutive-fires transition into RECOVERY_PENDING (W6b).
+        self.watchdog_fires_total: int = 0
+        self._watchdog_fire_timestamps: deque[float] = deque(maxlen=256)
+        self.watchdog_escalations_total: int = 0
+
+        # ── ASR final-event metrics [W5 — final-latency tile] ──────
+        # `utterance_end_to_final_ms` samples the latency from the last
+        # audio chunk of an utterance to the moment the ASR final
+        # transcript is emitted. `last_final_ts` powers the
+        # "Time Since Final" staleness tile.
+        self.utterance_end_to_final_ms: deque[float] = deque(maxlen=256)
+        self.last_final_ts: float = 0.0
+
     @property
     def elapsed_seconds(self) -> float:
         if self.meeting_start == 0:
@@ -155,6 +184,20 @@ class Metrics:
             "removed_on_send_error": self.listener_removed_on_send_error,
             "send_ms": _percentile_dict(self.listener_send_ms),
         }
+        # ── W5 — derived reliability fields ───────────────────────
+        now = time.monotonic()
+        # Watchdog fires per minute: count timestamps within the last 60s
+        # (the deque is bounded at 256, so this is at most a 256-element
+        # filter — cheap).
+        watchdog_fires_per_min = sum(
+            1 for ts in self._watchdog_fire_timestamps if now - ts < 60.0
+        )
+        # Time since the most recent ASR final, in seconds. None if no
+        # final has been emitted yet (fresh meeting / boot).
+        time_since_last_final_s: float | None = None
+        if self.last_final_ts > 0:
+            time_since_last_final_s = round(now - self.last_final_ts, 1)
+
         return {
             "elapsed_s": round(self.elapsed_seconds, 1),
             "audio_chunks": self.audio_chunks,
@@ -172,6 +215,14 @@ class Metrics:
             "tts": tts_block,
             "listener": listener_block,
             "loop_lag_ms": _percentile_dict(self.loop_lag_ms),
+            "asr_request_rtt_ms": _percentile_dict(self.asr_request_rtt_ms),
+            "translate_request_rtt_ms": _percentile_dict(self.translate_request_rtt_ms),
+            "diarize_request_rtt_ms": _percentile_dict(self.diarize_request_rtt_ms),
+            "utterance_end_to_final_ms": _percentile_dict(self.utterance_end_to_final_ms),
+            "watchdog_fires_total": self.watchdog_fires_total,
+            "watchdog_fires_per_min": watchdog_fires_per_min,
+            "watchdog_escalations_total": self.watchdog_escalations_total,
+            "time_since_last_final_s": time_since_last_final_s,
             "crash": _sanitised_crash_state(),
         }
 

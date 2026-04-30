@@ -71,6 +71,18 @@ async def _process_event(event: TranscriptEvent) -> None:
     state.metrics.last_asr_event_time = time.monotonic()
     if event.is_final:
         state.metrics.asr_finals += 1
+        # W5: utterance-end-to-final latency for the dashboard tile.
+        # `utterance_end_at` is the monotonic ts at which the speaker's
+        # audio actually ended (audio_wall_at_start + end_ms/1000).
+        # Difference vs the existing `last_asr_event_time` is that this
+        # measures *speaker latency* (perceived "when did transcript
+        # appear after I stopped talking"), not just inter-event delta.
+        now_mono = time.monotonic()
+        if event.utterance_end_at is not None:
+            ms = (now_mono - event.utterance_end_at) * 1000
+            if 0 <= ms < 60_000:  # filter clock-skew + outliers
+                state.metrics.utterance_end_to_final_ms.append(ms)
+        state.metrics.last_final_ts = now_mono
     else:
         state.metrics.asr_partials += 1
 

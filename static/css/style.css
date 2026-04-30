@@ -4483,6 +4483,11 @@ body:not(.metrics-split) .metric-card-wide {
 .metric-bar-warn { background: #f59e0b; }
 .metric-bar-danger { background: #ef4444; }
 
+/* W5: reliability tile color coding for ASR RTT, watchdog fires,
+   time-since-final, GPU free.  Same palette as the VRAM bar. */
+.metric-value-warn { color: #f59e0b; }
+.metric-value-crit { color: #ef4444; }
+
 .metric-backends {
   display: flex;
   flex-wrap: wrap;

@@ -213,6 +213,10 @@ async def get_status(request: fastapi.Request) -> JSONResponse:
         gpu_data = {
             "vram_used_mb": vram.used_mb,
             "vram_total_mb": vram.total_mb,
+            # W5: free_mb feeds the "GPU Free" reliability tile so
+            # operators can see headroom collapsing before it kills a
+            # meeting (today's incident started at ~1.9 GB free).
+            "vram_free_mb": vram.free_mb,
             "vram_pct": round(vram.pct, 1),
         }
 

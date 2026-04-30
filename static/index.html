@@ -543,6 +543,26 @@
             <div class="metric-card-label">Backends</div>
             <div class="metric-card-value metric-backends" id="mc-backends">—</div>
           </div>
+          <!-- W5: Reliability tiles. Surfaces the signals that today's
+               2026-04-30 ASR cascade incident hid behind log scraping —
+               operators can SEE degradation building before it kills a
+               meeting. -->
+          <div class="metric-card">
+            <div class="metric-card-label">ASR RTT p95</div>
+            <div class="metric-card-value" id="mc-asr-rtt-p95">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Watchdog (1m)</div>
+            <div class="metric-card-value" id="mc-watchdog-fires">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Time Since Final</div>
+            <div class="metric-card-value" id="mc-since-final">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">GPU Free</div>
+            <div class="metric-card-value" id="mc-gpu-free">—</div>
+          </div>
         </div>
         <div class="backend-detail-panel" id="backend-detail-panel"></div>
         <div class="backend-detail-panel" id="system-resources-panel"></div>

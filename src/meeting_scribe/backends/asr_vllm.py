@@ -16,6 +16,8 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 
 import httpx
 import numpy as np
+
+from meeting_scribe.runtime import state
 import soundfile as sf  # type: ignore[import-untyped]
 
 from meeting_scribe.backends.asr_filters import (
@@ -266,6 +268,7 @@ class VllmASRBackend(ASRBackend):
             # phonemes for many words; Qwen3-ASR's English bias wins by
             # default). The list of names is built per-meeting from the
             # active language_pair so any pair the user picks gets the hint.
+            _rtt_t0 = time.monotonic()
             try:
                 system_prompt = self._build_system_prompt()
                 resp = await self._client.post(
@@ -298,6 +301,15 @@ class VllmASRBackend(ASRBackend):
                     },
                 )
                 resp.raise_for_status()
+                # W5: backend RTT histogram. Sampled only on successful
+                # requests so failures (which dominate the early seconds
+                # of a CUDA-wedge incident) don't pollute the percentile.
+                try:
+                    state.metrics.asr_request_rtt_ms.append(
+                        (time.monotonic() - _rtt_t0) * 1000
+                    )
+                except AttributeError:
+                    pass  # state.metrics not yet initialised at warmup time
                 result = resp.json()
                 raw = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
 

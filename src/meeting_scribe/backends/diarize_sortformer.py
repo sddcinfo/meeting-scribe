@@ -28,6 +28,7 @@ import numpy as np
 
 from meeting_scribe.backends.base import DiarizeBackend
 from meeting_scribe.models import SpeakerAttribution
+from meeting_scribe.runtime import state
 
 if TYPE_CHECKING:
     from meeting_scribe.speaker.verification import SpeakerVerifier
@@ -518,6 +519,7 @@ class SortformerBackend(DiarizeBackend):
         # exactly the bug that used to plague the live path.
         min_speakers_hdr = "2" if window_duration_s >= 15.0 else "0"
 
+        _rtt_t0 = time.monotonic()
         try:
             pcm_s16 = (combined * 32768).astype(np.int16).tobytes()
             resp = await self._client.post(
@@ -531,6 +533,13 @@ class SortformerBackend(DiarizeBackend):
                 },
             )
             resp.raise_for_status()
+            # W5: backend RTT histogram (successful requests only).
+            try:
+                state.metrics.diarize_request_rtt_ms.append(
+                    (time.monotonic() - _rtt_t0) * 1000
+                )
+            except AttributeError:
+                pass  # state.metrics not yet initialised at warmup time
             result = resp.json()
             if self._consecutive_failures > 0:
                 logger.info(

@@ -9368,4 +9368,47 @@ function updateMetricsDashboard(data) {
     .join(' ');
   const backendsEl = document.getElementById('mc-backends');
   if (backendsEl) backendsEl.innerHTML = backendStr;
+
+  // W5 — reliability tiles. Color-coded via CSS class so warn/crit
+  // states pop visually before they kill a meeting.
+  const setColored = (id, text, level) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = `metric-card-value ${level === 'crit' ? 'metric-value-crit' : level === 'warn' ? 'metric-value-warn' : ''}`;
+  };
+
+  // ASR RTT p95 — backend control-path latency.  Warn >800ms, crit >2000ms.
+  const asrRtt = (m.asr_request_rtt_ms && m.asr_request_rtt_ms.p95) || null;
+  if (asrRtt === null) {
+    setColored('mc-asr-rtt-p95', '—', 'ok');
+  } else {
+    const lvl = asrRtt > 2000 ? 'crit' : asrRtt > 800 ? 'warn' : 'ok';
+    setColored('mc-asr-rtt-p95', `${asrRtt.toFixed(0)}ms`, lvl);
+  }
+
+  // Watchdog fires per minute.  Warn >0.5/min, crit >2/min.
+  const wdRate = m.watchdog_fires_per_min || 0;
+  const wdLvl = wdRate > 2 ? 'crit' : wdRate > 0.5 ? 'warn' : 'ok';
+  setColored('mc-watchdog-fires', `${wdRate}`, wdLvl);
+
+  // Time since last ASR final.  Warn >5s, crit >15s.  null on a fresh
+  // meeting (no finals yet) — render '—' rather than alarming.
+  const tsf = m.time_since_last_final_s;
+  if (tsf === null || tsf === undefined) {
+    setColored('mc-since-final', '—', 'ok');
+  } else {
+    const lvl = tsf > 15 ? 'crit' : tsf > 5 ? 'warn' : 'ok';
+    setColored('mc-since-final', `${tsf.toFixed(1)}s`, lvl);
+  }
+
+  // GPU free MB.  Warn <8GB, crit <4GB.  Inverse of the other tiles.
+  const freeMb = gpu ? (gpu.vram_free_mb || 0) : null;
+  if (freeMb === null) {
+    setColored('mc-gpu-free', '—', 'ok');
+  } else {
+    const lvl = freeMb < 4096 ? 'crit' : freeMb < 8192 ? 'warn' : 'ok';
+    const gb = (freeMb / 1024).toFixed(1);
+    setColored('mc-gpu-free', `${gb} GB`, lvl);
+  }
 }
