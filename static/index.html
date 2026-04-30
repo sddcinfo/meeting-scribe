@@ -485,6 +485,16 @@
           </select>
         </div>
         <div class="setup-hint" id="setup-hint">Enroll each speaker's voice to begin</div>
+        <!-- Backends-warming banner: only visible while ASR/translate are
+             still cold-starting after a server restart. checkStatus() in
+             scribe-app.js flips its visibility + disables the Start button
+             so the operator can see "wait" instead of clicking and getting
+             a 503 modal. -->
+        <div id="backends-warming-banner" class="backends-warming-banner" style="display:none">
+          <span class="backends-warming-icon">◐</span>
+          <span class="backends-warming-text">Backends warming up…</span>
+          <span class="backends-warming-detail" id="backends-warming-detail"></span>
+        </div>
         <button id="btn-start-meeting" class="btn-start-meeting">
           Start Meeting
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>

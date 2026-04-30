@@ -105,13 +105,18 @@ def _persist_exclusive_segments(meeting_dir, exclusive_segments: list[dict]) -> 
 async def _meeting_start_preflight() -> JSONResponse | None:
     """Synthetic-inference preflight gate (W4). Runs the same probe
     contract that the W6b recovery supervisor uses, against ASR +
-    translate + diarize. Fail-fast on any REQUIRED backend (ASR or
-    translate) — return 503 with structured error. Diarize is
-    WARNING-ONLY (logged + dashboard toast, never blocks start).
+    translate + diarize. Wait-with-deadline admission: re-runs the
+    probes on a 2 s cadence up to a total budget (default 30 s,
+    override via SCRIBE_PREFLIGHT_BUDGET_S) so a normal cold-start
+    warmup completes before the meeting fails.
 
-    Returns ``None`` on success (caller continues to the existing
-    deep_backend_health gate); returns a 503 ``JSONResponse`` on
-    REQUIRED-backend failure.
+    Returns ``None`` on success; returns a 503 ``JSONResponse`` on
+    REQUIRED-backend failure after the budget is exhausted. Diarize
+    is WARNING-ONLY (logged, never blocks).
+
+    Failure response shape MATCHES the existing deep_backend_health
+    gate so the frontend's "Backends not ready" modal renders the
+    same way (``data.not_ready[].backend / .detail``).
 
     Probe contract: HTTP 200 + valid response schema. NOT non-empty
     transcribed text — the fixture is a 200 Hz tone, not speech, so
@@ -129,89 +134,97 @@ async def _meeting_start_preflight() -> JSONResponse | None:
     translate_model = cfg.translate_vllm_model or "Qwen/Qwen3.6-35B-A3B-FP8"
     diarize_url = cfg.diarize_url
 
-    # Run all three probes concurrently — they hit independent
-    # backends, so latency is bounded by the slowest, not the sum.
-    asr_task = asyncio.create_task(
-        asr_synthetic_probe(
-            asr_url, asr_model, state.metrics.asr_request_rtt_ms
-        )
-    )
-    translate_task = asyncio.create_task(
-        translate_synthetic_probe(
-            translate_url, translate_model, state.metrics.translate_request_rtt_ms
-        )
-    )
-    diarize_task = asyncio.create_task(
-        diarize_synthetic_probe(
-            diarize_url, state.metrics.diarize_request_rtt_ms
-        )
-    )
+    budget_s = float(os.environ.get("SCRIBE_PREFLIGHT_BUDGET_S", "30"))
+    retry_interval_s = float(os.environ.get("SCRIBE_PREFLIGHT_RETRY_INTERVAL_S", "2"))
 
-    asr_result, translate_result, diarize_result = await asyncio.gather(
-        asr_task, translate_task, diarize_task, return_exceptions=False
-    )
+    deadline = time.monotonic() + budget_s
+    attempt = 0
+    last_asr = None
+    last_translate = None
+    last_diarize = None
 
-    # Diarize is warning-only — log + emit a dashboard toast but
-    # don't refuse meeting start.
-    if not diarize_result.ok:
-        logger.warning(
-            "Meeting-start preflight: diarize probe degraded "
-            "(status=%s latency=%.0fms detail=%s) — meeting will "
-            "start with diarize_degraded; speaker labels may be "
-            "delayed until the backend recovers.",
-            diarize_result.status,
-            diarize_result.latency_ms,
-            diarize_result.detail,
+    while True:
+        attempt += 1
+        # Run all three probes concurrently — they hit independent
+        # backends, so latency is bounded by the slowest, not the sum.
+        asr_result, translate_result, diarize_result = await asyncio.gather(
+            asr_synthetic_probe(asr_url, asr_model, state.metrics.asr_request_rtt_ms),
+            translate_synthetic_probe(
+                translate_url, translate_model, state.metrics.translate_request_rtt_ms
+            ),
+            diarize_synthetic_probe(diarize_url, state.metrics.diarize_request_rtt_ms),
         )
-        # Future: push WS event for the dashboard toast. Out of
-        # scope for W4 — the warning log is enough to surface in
-        # the diagnostics panel.
+        last_asr, last_translate, last_diarize = asr_result, translate_result, diarize_result
 
-    # ASR + translate are REQUIRED. If either failed, return 503
-    # with the failure shape the dashboard / CLI / customer-flow
-    # validate know how to interpret.
-    failed: list[dict] = []
-    if not asr_result.ok:
-        failed.append({
+        if asr_result.ok and translate_result.ok:
+            # Required backends green — succeed even if diarize is
+            # still warming. Diarize is enrichment, not a blocker.
+            logger.info(
+                "Meeting-start preflight passed on attempt %d "
+                "(asr=%.0fms translate=%.0fms diarize=%s/%s/%.0fms)",
+                attempt,
+                asr_result.latency_ms,
+                translate_result.latency_ms,
+                diarize_result.status,
+                ("ok" if diarize_result.ok else "warn"),
+                diarize_result.latency_ms,
+            )
+            if not diarize_result.ok:
+                logger.warning(
+                    "Meeting starting with diarize_degraded "
+                    "(status=%s latency=%.0fms detail=%s) — speaker "
+                    "labels may be delayed until the backend recovers.",
+                    diarize_result.status,
+                    diarize_result.latency_ms,
+                    diarize_result.detail,
+                )
+            return None
+
+        # Budget check — out of time, return the latest failure shape.
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+
+        # Sleep before retrying, but don't oversleep the budget.
+        await asyncio.sleep(min(retry_interval_s, max(0.0, remaining)))
+
+    # Budget exhausted. Return the LAST attempt's failures using the
+    # ``not_ready`` shape that the frontend modal already understands.
+    not_ready: list[dict] = []
+    if last_asr is not None and not last_asr.ok:
+        not_ready.append({
             "backend": "asr",
-            "status": asr_result.status,
-            "latency_ms": round(asr_result.latency_ms, 1),
-            "detail": asr_result.detail,
+            "detail": (
+                f"probe {last_asr.status} ({last_asr.latency_ms:.0f}ms): "
+                f"{last_asr.detail or 'unknown'}"
+            ),
         })
-    if not translate_result.ok:
-        failed.append({
+    if last_translate is not None and not last_translate.ok:
+        not_ready.append({
             "backend": "translate",
-            "status": translate_result.status,
-            "latency_ms": round(translate_result.latency_ms, 1),
-            "detail": translate_result.detail,
+            "detail": (
+                f"probe {last_translate.status} ({last_translate.latency_ms:.0f}ms): "
+                f"{last_translate.detail or 'unknown'}"
+            ),
         })
-    if failed:
-        logger.warning(
-            "Refusing to start meeting — synthetic inference probe failed: %s",
-            failed,
-        )
-        return JSONResponse(
-            {
-                "error": "Synthetic inference probe failed",
-                "preflight_failed": failed,
-                "message": (
-                    "ASR or translate is responding to /v1/models but "
-                    "inference is wedged. Check the diagnostics dashboard "
-                    "and retry once ASR RTT p95 drops below the threshold."
-                ),
-            },
-            status_code=503,
-        )
-
-    logger.info(
-        "Meeting-start preflight passed (asr=%.0fms translate=%.0fms diarize=%s/%s/%.0fms)",
-        asr_result.latency_ms,
-        translate_result.latency_ms,
-        diarize_result.status,
-        ("ok" if diarize_result.ok else "warn"),
-        diarize_result.latency_ms,
+    logger.warning(
+        "Refusing to start meeting after %d preflight attempts (budget %.0fs): %s",
+        attempt,
+        budget_s,
+        not_ready,
     )
-    return None
+    return JSONResponse(
+        {
+            "error": "Backends not ready",
+            "not_ready": not_ready,
+            "message": (
+                f"Backends did not warm up within {budget_s:.0f}s. "
+                "Wait for all backend pills in the header to turn green, "
+                "then try again."
+            ),
+        },
+        status_code=503,
+    )
 
 
 @router.post("/api/meeting/start")

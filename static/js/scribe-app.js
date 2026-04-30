@@ -3759,6 +3759,43 @@ async function checkStatus() {
       window._lastTtsHealth = ttsHealth;
     }
 
+    // ── Pre-emptive Start-button gate (W4 Fix #3) ─────────────────
+    // Disable the Start button + show a "Backends warming up…" banner
+    // while any REQUIRED backend (ASR or translate) is not yet ready.
+    // The operator gets a visible "wait" affordance instead of clicking
+    // Start during cold-start and discovering the 503 the hard way.
+    // The backend's wait-with-deadline preflight covers the subtler
+    // case of a backend that's "ready" by /v1/models but slow on the
+    // first inference call; together they hide cold-start latency from
+    // the operator entirely.
+    {
+      const asrReady = !!(details.asr && details.asr.ready);
+      const translateReady = !!(details.translate && details.translate.ready);
+      const allRequiredReady = asrReady && translateReady;
+      const banner = document.getElementById('backends-warming-banner');
+      const bannerDetail = document.getElementById('backends-warming-detail');
+      const startBtn = document.getElementById('btn-start-meeting');
+      if (banner && startBtn) {
+        if (allRequiredReady) {
+          banner.style.display = 'none';
+          // Don't override `disabled` set by other gates (e.g. mid-start
+          // double-click guard) — only re-enable if the gate set it.
+          if (startBtn.dataset.gatedByWarmup === '1') {
+            startBtn.disabled = false;
+            delete startBtn.dataset.gatedByWarmup;
+          }
+        } else {
+          const waiting = [];
+          if (!asrReady) waiting.push(`ASR (${(details.asr && details.asr.detail) || 'loading'})`);
+          if (!translateReady) waiting.push(`Translate (${(details.translate && details.translate.detail) || 'loading'})`);
+          if (bannerDetail) bannerDetail.textContent = waiting.join(' · ');
+          banner.style.display = '';
+          startBtn.disabled = true;
+          startBtn.dataset.gatedByWarmup = '1';
+        }
+      }
+    }
+
     // Crash red-dot on the server pill (if backend reported an unhandled
     // exception from a background task). Sanitised — only ts/component/code.
     const crash = (data.metrics || {}).crash;
