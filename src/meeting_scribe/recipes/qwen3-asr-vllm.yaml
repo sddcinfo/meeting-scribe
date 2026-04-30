@@ -11,10 +11,15 @@ mode: solo
 tensor_parallel: 1
 port: 8003
 max_model_len: 4096
-gpu_memory_utilization: 0.04  # Model is ~3GB; 0.10 (=12GB) caused
-# OOM crash-loops when the 35B translate + autosre 35B were already
-# consuming 94 GB of the 121 GB GPU. 0.04 = 4.8 GB is plenty for the
-# model + activations at max_num_seqs=4.
+gpu_memory_utilization: 0.10  # 12.4 GB cap on 124 GB GPU.
+# The recipe original 0.04 was aspirational and never feasible —
+# Qwen3-ASR encoder cache budget alone (~7 GB) exceeds 0.04 4.96 GB
+# cap, so 0.04 always crashed engine init with "No available memory
+# for cache blocks". Production has run on 0.10 since release.
+# Earlier 0.10-causes-OOM warning was specific to a two-35B layout
+# (translate + autosre = 94 GB consumed); current design is
+# one-shared-35B (~73 GB), leaving ~30 GB free with ASR at 0.10.
+# Validated against vllm v0.20.0 pinned in containers/vllm-asr/Dockerfile.
 max_num_seqs: 4
 
 kv_cache_dtype: null
