@@ -308,7 +308,15 @@ if [[ "${MEETING_SCRIBE_SKIP_AUTOSRE:-0}" != "1" ]]; then
         '${AUTOSRE_DIR}/.venv/bin/pip' install --upgrade pip --quiet
         '${AUTOSRE_DIR}/.venv/bin/pip' install -e '${AUTOSRE_DIR}' --quiet
     "
-    echo "[bootstrap] auto-sre ready — translate vLLM service installs in step 12"
+    # Install the autosre user systemd unit (no-start; vLLM cold-load
+    # takes 3-7 min and we don't block bootstrap on that). The customer
+    # then runs ``autosre start`` once when they're ready for the
+    # cold-load — translate is the only manual step left after this.
+    if [[ -x "${AUTOSRE_DIR}/.venv/bin/autosre" ]]; then
+        as_user "'${AUTOSRE_DIR}/.venv/bin/autosre' install-service --no-start" || \
+            echo "[bootstrap] autosre install-service reported issues — see above"
+        echo "[bootstrap] autosre.service installed (boot autostart enabled)"
+    fi
 else
     echo "[bootstrap] MEETING_SCRIBE_SKIP_AUTOSRE=1 — skipping auto-sre clone"
 fi
@@ -366,16 +374,31 @@ echo "[bootstrap] installing meeting-scribe.service (user systemd unit)"
 as_user '.venv/bin/meeting-scribe install-service --no-start' || \
     echo "[bootstrap] install-service reported issues — see above"
 
-# ── 14. Smoke-test ────────────────────────────────────────────────
-echo
-echo "[bootstrap] running 'meeting-scribe validate --quick'"
-as_user '.venv/bin/meeting-scribe validate --quick' || true
-
-# ── 15. Start the scribe server ───────────────────────────────────
+# ── 14. Start the scribe server ───────────────────────────────────
 echo
 echo "[bootstrap] starting meeting-scribe.service"
 as_user '.venv/bin/meeting-scribe start' || \
     echo "[bootstrap] meeting-scribe start reported issues — see above"
+
+# Give the server a beat to settle (uvicorn ready signal + first
+# nmcli reconcile) before the validator hits it. 3 seconds is enough
+# for the lifespan to reach READY=1 once all four backends respond.
+sleep 3
+
+# ── 15. Acceptance gate: customer-flow validation ────────────────
+# This is the contract: bootstrap MUST produce a state where every
+# customer-flow phase passes. If any phase fails, bootstrap exits
+# non-zero so the operator sees the failure inline instead of
+# discovering it during a customer demo. Run it as TARGET_USER so
+# the on-disk admin secret resolves correctly.
+echo
+echo "[bootstrap] running 'meeting-scribe validate --customer-flow' (acceptance gate)"
+if as_user '.venv/bin/meeting-scribe validate --customer-flow'; then
+    VALIDATE_RC=0
+else
+    VALIDATE_RC=$?
+    echo "[bootstrap] WARNING: validate --customer-flow exited rc=${VALIDATE_RC}" >&2
+fi
 
 # ── 16. Operator next steps ───────────────────────────────────────
 echo
@@ -387,24 +410,31 @@ Country:    ${COUNTRY_CODE}
 Timezone:   ${TIMEZONE}
 Languages:  ${LANG_PAIR}
 
-Auto-start: meeting-scribe.service is installed as a user systemd
-unit and enabled. It will come back up on boot without any console
-login (loginctl enable-linger is set).
+Auto-start: meeting-scribe.service AND autosre.service are both
+installed as user systemd units (loginctl enable-linger is set).
+Reboot survival is automatic — both come back without a console
+login.
 
 Service management (no sudo needed for these):
 
-    systemctl --user status meeting-scribe.service
+    systemctl --user status meeting-scribe.service autosre.service
     journalctl --user -u meeting-scribe.service -f
     meeting-scribe stop / start / restart
 
-Translate (vLLM @ :8010) is not running yet — start it via auto-sre:
+Translate vLLM is enabled for boot but not started (3-7 min cold
+load). Start it once when you're ready for the first meeting:
 
-    cd ../auto-sre
-    .venv/bin/autosre install-service   # boot autostart for translate
-    .venv/bin/autosre start             # cold-loads the 35 B FP8 model (3+ min)
+    autosre start --no-scribe
 
-Verify everything is green:
+Or wait for the next reboot — systemd will start it automatically.
 
-    meeting-scribe validate --quick
+To re-run the acceptance gate any time:
+
+    meeting-scribe validate --customer-flow
 ─────────────────────────────────────────────────────────────────────
 NEXT_STEPS
+
+# Bootstrap exit code reflects the acceptance gate. The customer
+# sees a hard failure if anything went wrong, not a silent partial
+# install.
+exit "${VALIDATE_RC}"
