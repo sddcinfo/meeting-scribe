@@ -93,7 +93,14 @@ prompt_default() {
     local default="$2"
     local var
     if [[ "${YES_MODE}" == "1" || ! -t 0 ]]; then
-        printf '[bootstrap] %s: %s (auto)\n' "${label}" "${default}"
+        # Display goes to stderr so command substitution
+        # (`X="$(prompt_default …)"`) captures ONLY the default value on
+        # stdout. Without this, the prompt line poisoned the captured
+        # variable and downstream sed expressions blew up
+        # (observed 2026-05-01 customer GB10 cold-wipe: REGDOMAIN got
+        # the prompt text + JP and `sed` errored "unterminated `s'
+        # command").
+        printf '[bootstrap] %s: %s (auto)\n' "${label}" "${default}" >&2
         echo "${default}"
         return
     fi
