@@ -293,27 +293,21 @@ as_user '
         "$PYBIN" -m venv .venv
     fi
     .venv/bin/pip install --upgrade pip
-    # Lock-first install order (plan §1.6a). The original plan called
-    # for pip-sync (destructive: prunes packages not in the lockfile),
-    # but pip-tools 7.5.x breaks on pip 26+ with `DirectUrl object has
-    # no attribute info` — observed 2026-05-01 cold-wipe of customer
-    # GB10. Until pip-tools 7.6 ships, we install via plain pip:
-    #   1. pip install -r requirements.lock pins every transitive to
-    #      the dev tip's resolution
-    #   2. pip install --no-deps -e . installs the project itself so
-    #      pyproject.toml ranges cannot drag in newer transitives
-    #   3. pip check validates the resolved set is internally consistent
-    # Loses the "prune strays" property but that only matters across
-    # bootstrap re-runs in the same venv — for cold installs (the only
-    # case `bootstrap.sh` actually runs) the venv starts empty.
-    if [[ -f requirements.lock ]]; then
-        .venv/bin/pip install --quiet -r requirements.lock
-        .venv/bin/pip install --quiet --no-deps -e .
-        .venv/bin/pip check
+    # Install order: try the lockfile first (pin every transitive to
+    # the dev tip resolution), fall back to plain editable install if
+    # the lockfile fails — typically because a transitive (e.g.
+    # nvidia-cusparselt-cu13) was resolved on a different architecture
+    # and has no portable wheel. Observed 2026-05-01 cold-wipe of
+    # customer GB10: dev-box-resolved lockfile included an
+    # nvidia-cusparselt-cu13 wheel that didn't apply on the customer's
+    # aarch64. Plain `pip install -e .` lets pip pick per-platform.
+    if [[ -f requirements.lock ]] && \
+       .venv/bin/pip install --quiet -r requirements.lock 2>/dev/null && \
+       .venv/bin/pip install --quiet --no-deps -e . && \
+       .venv/bin/pip check; then
+        echo "[bootstrap] installed via requirements.lock"
     else
-        # Fallback for older checkouts without the lockfile (e.g. an
-        # operator running bootstrap.sh against a tag pre-this-change).
-        echo "[bootstrap] WARNING: requirements.lock missing, falling back to unlocked editable install"
+        echo "[bootstrap] lockfile install failed (likely architecture mismatch) — falling back to unlocked editable install"
         .venv/bin/pip install -e .
     fi
 '
