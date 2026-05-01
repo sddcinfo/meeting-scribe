@@ -79,6 +79,8 @@ def current_recording_pcm_offset() -> int:
         return 0
     # AudioWriter and AudioWriterProcess both expose .current_offset.
     return getattr(audio_writer, "current_offset", 0)
+
+
 meeting_start_time: float = 0.0  # monotonic time for audio alignment
 detected_speakers: list[DetectedSpeaker] = []  # per-meeting speaker state
 speaker_verifier: Any = None  # SpeakerVerifier instance

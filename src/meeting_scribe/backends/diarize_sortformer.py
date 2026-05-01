@@ -535,9 +535,7 @@ class SortformerBackend(DiarizeBackend):
             resp.raise_for_status()
             # W5: backend RTT histogram (successful requests only).
             try:
-                state.metrics.diarize_request_rtt_ms.append(
-                    (time.monotonic() - _rtt_t0) * 1000
-                )
+                state.metrics.diarize_request_rtt_ms.append((time.monotonic() - _rtt_t0) * 1000)
             except AttributeError:
                 pass  # state.metrics not yet initialised at warmup time
             result = resp.json()

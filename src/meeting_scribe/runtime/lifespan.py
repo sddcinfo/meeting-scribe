@@ -79,6 +79,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # strict gate; this is the runtime safety net. See
     # `meeting_scribe.infra.compose.assert_recipe_source_parity`.
     from meeting_scribe.infra.compose import warn_on_recipe_source_drift
+
     warn_on_recipe_source_drift()
 
     # Regulatory domain must be JP before any WiFi AP work happens.
@@ -231,9 +232,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # probe-poll → optional compose_restart → replay. See
     # `runtime/recovery_supervisor.py` for the full design.
     from meeting_scribe.runtime.recovery_supervisor import asr_recovery_loop
-    _asr_recovery_task = asyncio.create_task(
-        asr_recovery_loop(), name="asr-recovery-supervisor"
-    )
+
+    _asr_recovery_task = asyncio.create_task(asr_recovery_loop(), name="asr-recovery-supervisor")
 
     # A4: replay any pending_translations.jsonl backlogs left by a
     # prior crash / partial finalize. Runs as a background task so the

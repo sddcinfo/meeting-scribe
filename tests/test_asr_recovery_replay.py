@@ -116,10 +116,7 @@ class TestRecoveryStartOffset:
         with patch.object(av.state, "current_recording_pcm_offset", return_value=999):
             backend._begin_recovery_pending()
         assert backend._recovery_start_offset == 999
-        assert any(
-            "empty in-flight submissions" in r.message
-            for r in caplog.records
-        )
+        assert any("empty in-flight submissions" in r.message for r in caplog.records)
 
 
 class TestRecoveryGenerationGuard:
@@ -143,8 +140,7 @@ class TestRecoveryGenerationGuard:
 
         # Exactly one DEBUG log line about the stale response.
         debug_msgs = [
-            r for r in caplog.records
-            if "stale response" in r.message and r.levelname == "DEBUG"
+            r for r in caplog.records if "stale response" in r.message and r.levelname == "DEBUG"
         ]
         assert len(debug_msgs) == 1, [r.message for r in caplog.records]
 
@@ -217,7 +213,6 @@ class TestDefensiveCeiling:
         # The oldest failed entry (request_id=2, offset=100) was dropped.
         # The inflight entry (request_id=1, offset=0) survives.
         assert inflight_sub in backend._submissions, "inflight entry was dropped (regression)"
-        assert any(
-            "exceeded" in r.message and r.levelname == "ERROR"
-            for r in caplog.records
-        ), [r.message for r in caplog.records]
+        assert any("exceeded" in r.message and r.levelname == "ERROR" for r in caplog.records), [
+            r.message for r in caplog.records
+        ]

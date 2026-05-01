@@ -49,15 +49,11 @@ class TestAdaptiveTimeout:
 
 class TestOpenAIChatResponseValidator:
     def test_accepts_valid_with_empty_text(self):
-        ok, why = sp._openai_chat_response_valid(
-            {"choices": [{"message": {"content": ""}}]}
-        )
+        ok, why = sp._openai_chat_response_valid({"choices": [{"message": {"content": ""}}]})
         assert ok and why is None, why
 
     def test_accepts_valid_with_text(self):
-        ok, why = sp._openai_chat_response_valid(
-            {"choices": [{"message": {"content": "hello"}}]}
-        )
+        ok, why = sp._openai_chat_response_valid({"choices": [{"message": {"content": "hello"}}]})
         assert ok and why is None, why
 
     def test_rejects_non_dict(self):
@@ -136,9 +132,7 @@ class TestPostAndValidateClassification:
     @pytest.mark.asyncio
     async def test_http_error_on_500(self):
         async def fake_post(*args, **kwargs):
-            return httpx.Response(
-                500, text="boom", request=httpx.Request("POST", "http://x")
-            )
+            return httpx.Response(500, text="boom", request=httpx.Request("POST", "http://x"))
 
         with patch("httpx.AsyncClient.post", new=AsyncMock(side_effect=fake_post)):
             r = await sp._post_and_validate(

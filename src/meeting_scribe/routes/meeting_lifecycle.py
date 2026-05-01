@@ -191,21 +191,25 @@ async def _meeting_start_preflight() -> JSONResponse | None:
     # ``not_ready`` shape that the frontend modal already understands.
     not_ready: list[dict] = []
     if last_asr is not None and not last_asr.ok:
-        not_ready.append({
-            "backend": "asr",
-            "detail": (
-                f"probe {last_asr.status} ({last_asr.latency_ms:.0f}ms): "
-                f"{last_asr.detail or 'unknown'}"
-            ),
-        })
+        not_ready.append(
+            {
+                "backend": "asr",
+                "detail": (
+                    f"probe {last_asr.status} ({last_asr.latency_ms:.0f}ms): "
+                    f"{last_asr.detail or 'unknown'}"
+                ),
+            }
+        )
     if last_translate is not None and not last_translate.ok:
-        not_ready.append({
-            "backend": "translate",
-            "detail": (
-                f"probe {last_translate.status} ({last_translate.latency_ms:.0f}ms): "
-                f"{last_translate.detail or 'unknown'}"
-            ),
-        })
+        not_ready.append(
+            {
+                "backend": "translate",
+                "detail": (
+                    f"probe {last_translate.status} ({last_translate.latency_ms:.0f}ms): "
+                    f"{last_translate.detail or 'unknown'}"
+                ),
+            }
+        )
     logger.warning(
         "Refusing to start meeting after %d preflight attempts (budget %.0fs): %s",
         attempt,

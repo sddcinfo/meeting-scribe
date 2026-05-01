@@ -45,16 +45,14 @@ class TestAssertRecipeSourceParity:
             text = " ".join(str(p) for p in cmd)
         else:
             text = str(cmd)
-        bad = text.replace("--gpu-memory-utilization 0.10",
-                           "--gpu-memory-utilization 0.42")
+        bad = text.replace("--gpu-memory-utilization 0.10", "--gpu-memory-utilization 0.42")
         assert bad != text, "expected the substitution to land — compose value drifted?"
         data["services"]["vllm-asr"]["command"] = bad
         _write_compose_dict(tmp_path, data, monkeypatch)
 
         mismatches = compose_mod.assert_recipe_source_parity()
         assert any(
-            m.service == "vllm-asr" and m.field == "gpu-memory-utilization"
-            for m in mismatches
+            m.service == "vllm-asr" and m.field == "gpu-memory-utilization" for m in mismatches
         ), f"expected gpu-memory-utilization drift, got {mismatches}"
 
     def test_detects_diarize_max_speakers_drift(self, tmp_path, monkeypatch):
@@ -86,10 +84,9 @@ class TestAssertRecipeSourceParity:
         _write_compose_dict(tmp_path, data, monkeypatch)
 
         mismatches = compose_mod.assert_recipe_source_parity()
-        assert any(
-            m.service == "qwen3-tts" and m.field == "TTS_MODEL"
-            for m in mismatches
-        ), f"expected TTS_MODEL drift, got {mismatches}"
+        assert any(m.service == "qwen3-tts" and m.field == "TTS_MODEL" for m in mismatches), (
+            f"expected TTS_MODEL drift, got {mismatches}"
+        )
 
 
 class TestWarnOnRecipeSourceDrift:
@@ -108,9 +105,9 @@ class TestWarnOnRecipeSourceDrift:
             compose_mod.warn_on_recipe_source_drift()
 
         warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
-        assert any("recipe drift" in r.message and "vllm-asr" in r.message
-                   for r in warnings), \
+        assert any("recipe drift" in r.message and "vllm-asr" in r.message for r in warnings), (
             f"expected drift WARNING, got: {[r.message for r in warnings]}"
+        )
 
     def test_no_warning_when_aligned(self, caplog):
         """No warnings when compose and recipes are aligned (the live state)."""
@@ -118,11 +115,13 @@ class TestWarnOnRecipeSourceDrift:
             compose_mod.warn_on_recipe_source_drift()
 
         drift_warnings = [
-            r for r in caplog.records
+            r
+            for r in caplog.records
             if r.levelno == logging.WARNING and "recipe drift" in r.message
         ]
-        assert drift_warnings == [], \
+        assert drift_warnings == [], (
             f"unexpected drift warnings: {[r.message for r in drift_warnings]}"
+        )
 
     def test_helper_swallows_exceptions(self, tmp_path, monkeypatch, caplog):
         """A broken compose file must not abort boot — it logs and returns."""

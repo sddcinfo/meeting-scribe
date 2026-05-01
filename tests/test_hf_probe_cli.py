@@ -186,6 +186,7 @@ def test_token_never_appears_in_argv() -> None:
     spawned hf-probe process. This invokes the actual subprocess (not
     CliRunner) to inspect real argv on Linux. Skipped on non-Linux."""
     import sys
+
     if not sys.platform.startswith("linux"):
         pytest.skip("argv-leak check only meaningful on Linux")
 
@@ -201,8 +202,12 @@ def test_token_never_appears_in_argv() -> None:
     # the process exits.
     proc = subprocess.Popen(
         [
-            sys.executable, "-m", "meeting_scribe.cli", "hf-probe",
-            "--read-token-from-stdin", "--no-include-shared",
+            sys.executable,
+            "-m",
+            "meeting_scribe.cli",
+            "hf-probe",
+            "--read-token-from-stdin",
+            "--no-include-shared",
         ],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
@@ -226,9 +231,7 @@ def test_token_never_appears_in_argv() -> None:
     finally:
         proc.wait(timeout=10)
 
-    assert secret.encode() not in cmdline, (
-        f"Token leaked into argv! cmdline={cmdline!r}"
-    )
+    assert secret.encode() not in cmdline, f"Token leaked into argv! cmdline={cmdline!r}"
 
 
 # ── Runtime-manifest emission ─────────────────────────────────
@@ -240,6 +243,7 @@ def test_emit_runtime_manifest_includes_revisions_when_ok(mock_validate) -> None
     JSON output must include a runtime_manifest section with the
     captured commit SHAs."""
     import json
+
     mock_validate.return_value = _ok_report()
     runner = CliRunner()
     result = runner.invoke(
@@ -261,6 +265,7 @@ def test_emit_runtime_manifest_omitted_when_not_ok(mock_validate) -> None:
     customer-side probe is the sole authority for model_revisions, and
     a partial-resolution manifest would silently drop revision pinning."""
     import json
+
     mock_validate.return_value = _gated_report()
     runner = CliRunner()
     result = runner.invoke(

@@ -125,26 +125,34 @@ def _emit_report_json(report: ValidationReport, *, runtime_manifest: bool) -> st
 
 @cli.command("hf-probe")
 @click.option(
-    "--read-token-from-stdin", is_flag=True, default=False,
+    "--read-token-from-stdin",
+    is_flag=True,
+    default=False,
     help="Read the HF token from stdin (one line, ≤4 KB). Required for "
-         "orchestrator use — never accepts the token via argv or env.",
+    "orchestrator use — never accepts the token via argv or env.",
 )
 @click.option(
-    "--json", "as_json", is_flag=True, default=False,
-    help="Emit a JSON ValidationReport on stdout. Default emits "
-         "human-rendered text on stderr.",
+    "--json",
+    "as_json",
+    is_flag=True,
+    default=False,
+    help="Emit a JSON ValidationReport on stdout. Default emits human-rendered text on stderr.",
 )
 @click.option(
-    "--emit-runtime-manifest", is_flag=True, default=False,
+    "--emit-runtime-manifest",
+    is_flag=True,
+    default=False,
     help="When the report is ok, include a RuntimeManifest skeleton "
-         "(model_revisions resolved from HF) in the JSON output. Used "
-         "by `sddc gb10 onboard` stage 2.5 to capture the customer-side "
-         "model SHAs for the two-manifest model.",
+    "(model_revisions resolved from HF) in the JSON output. Used "
+    "by `sddc gb10 onboard` stage 2.5 to capture the customer-side "
+    "model SHAs for the two-manifest model.",
 )
 @click.option(
-    "--include-shared/--no-include-shared", default=True, show_default=True,
+    "--include-shared/--no-include-shared",
+    default=True,
+    show_default=True,
     help="Include the autosre-shared translation model. The customer-install "
-         "flow always pulls this onto the device, so the gate must check it.",
+    "flow always pulls this onto the device, so the gate must check it.",
 )
 def hf_probe(
     read_token_from_stdin: bool,

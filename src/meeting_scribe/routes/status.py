@@ -203,12 +203,18 @@ async def get_metrics() -> fastapi.Response:
 
     pressure = latest_pressure()
     if pressure is not None:
-        _g("scribe_mem_pressure_some_avg10", pressure.some_avg10,
-           help_text="% time at least one task stalled on memory in last 10s")
+        _g(
+            "scribe_mem_pressure_some_avg10",
+            pressure.some_avg10,
+            help_text="% time at least one task stalled on memory in last 10s",
+        )
         _g("scribe_mem_pressure_some_avg60", pressure.some_avg60)
         _g("scribe_mem_pressure_some_avg300", pressure.some_avg300)
-        _g("scribe_mem_pressure_full_avg10", pressure.full_avg10,
-           help_text="% time ALL tasks stalled on memory in last 10s")
+        _g(
+            "scribe_mem_pressure_full_avg10",
+            pressure.full_avg10,
+            help_text="% time ALL tasks stalled on memory in last 10s",
+        )
         _g("scribe_mem_pressure_full_avg60", pressure.full_avg60)
         _g("scribe_mem_pressure_full_avg300", pressure.full_avg300)
         _g("scribe_mem_pressure_some_total_us", pressure.some_total_us)

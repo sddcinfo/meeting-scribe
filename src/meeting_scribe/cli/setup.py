@@ -105,13 +105,14 @@ def first_run_setup():
         click.secho("[MISSING] HF_TOKEN not configured.", fg="yellow")
         click.echo(
             "\nMeeting-scribe needs a Hugging Face READ token to download these\n"
-            "4 gated models. You MUST click \"Agree and access repository\" on\n"
+            '4 gated models. You MUST click "Agree and access repository" on\n'
             "each one (in a browser, while logged in to the same HF account)\n"
             "BEFORE pasting the token here:\n"
         )
         # Recipe-driven, so adding a new gated model auto-extends the prompt.
         try:
             from meeting_scribe.recipes import all_model_ids
+
             for mid in all_model_ids(include_shared=True):
                 click.echo(f"  https://huggingface.co/{mid}")
         except Exception:
@@ -125,7 +126,7 @@ def first_run_setup():
                 click.echo(f"  https://huggingface.co/{mid}")
         click.echo(
             "\nMint a token at: https://huggingface.co/settings/tokens\n"
-            "(role \"read\" is sufficient; \"write\" is unnecessary).\n"
+            '(role "read" is sufficient; "write" is unnecessary).\n'
         )
         token = click.prompt(
             "Paste the token here, or press Enter to skip",
@@ -141,6 +142,7 @@ def first_run_setup():
         # Validate against gated-model list before persisting to .env.
         from meeting_scribe.hf_preflight import validate_hf_access
         from meeting_scribe.recipes import all_model_ids
+
         click.echo(f"\nValidating HF_TOKEN ({hf_token[:6]}…) against gated models…")
         report = validate_hf_access(hf_token, all_model_ids(include_shared=True))
         if report.ok:
@@ -156,7 +158,8 @@ def first_run_setup():
             click.secho(
                 "[WARN] Network unreachable from this host — token saved unverified. "
                 "The customer-side probe (during `sddc gb10 onboard` stage 2.5) is "
-                "the authoritative gate.", fg="yellow",
+                "the authoritative gate.",
+                fg="yellow",
             )
             if not _hf_token_in_dotenv(dotenv):
                 with open(dotenv, "a") as f:

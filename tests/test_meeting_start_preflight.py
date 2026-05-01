@@ -102,6 +102,7 @@ async def test_asr_failure_returns_503(state, monkeypatch):
     assert result is not None
     assert result.status_code == 503
     import json as _json
+
     body = _json.loads(result.body)
     assert body["error"] == "Backends not ready"
     assert "not_ready" in body, body
@@ -134,6 +135,7 @@ async def test_translate_failure_returns_503(state, monkeypatch):
     assert result is not None
     assert result.status_code == 503
     import json as _json
+
     body = _json.loads(result.body)
     assert body["error"] == "Backends not ready"
     assert any(f["backend"] == "translate" for f in body["not_ready"])
@@ -162,10 +164,7 @@ async def test_diarize_failure_is_warning_only(state, caplog):
     ):
         result = await ml._meeting_start_preflight()
     assert result is None  # diarize did NOT block the start
-    assert any(
-        "diarize_degraded" in record.message
-        for record in caplog.records
-    )
+    assert any("diarize_degraded" in record.message for record in caplog.records)
 
 
 @pytest.mark.asyncio
@@ -191,6 +190,7 @@ async def test_both_required_failures_in_one_response(state, monkeypatch):
     assert result is not None
     assert result.status_code == 503
     import json as _json
+
     body = _json.loads(result.body)
     backends = {f["backend"] for f in body["not_ready"]}
     assert backends == {"asr", "translate"}
@@ -264,6 +264,7 @@ async def test_wait_with_deadline_returns_last_failure_on_exhaustion(state, monk
     assert result is not None
     assert result.status_code == 503
     import json as _json
+
     body = _json.loads(result.body)
     asr_detail = next(f["detail"] for f in body["not_ready"] if f["backend"] == "asr")
     # Latest probe was schema_error/third. First/second must NOT be the surfaced state.

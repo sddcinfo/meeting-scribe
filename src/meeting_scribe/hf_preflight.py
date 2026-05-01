@@ -41,6 +41,7 @@ from huggingface_hub.errors import (
 # / proxy / TLS hiccups land as `NETWORK_ERROR`, not a stack trace.
 try:  # huggingface_hub vendors requests; fall through if unavailable.
     import requests.exceptions as _req_exc
+
     _NETWORK_EXC: tuple[type[BaseException], ...] = (
         _req_exc.ConnectionError,
         _req_exc.Timeout,
@@ -63,6 +64,7 @@ class HfStatus(StrEnum):
 @dataclasses.dataclass
 class HfModelResult:
     """Per-model classification row."""
+
     model_id: str
     status: HfStatus
     detail: str = ""
@@ -77,6 +79,7 @@ class HfModelResult:
 @dataclasses.dataclass
 class ValidationReport:
     """Aggregated HF access validation."""
+
     token_prefix: str
     whoami: str | None
     results: list[HfModelResult] = dataclasses.field(default_factory=list)
@@ -102,12 +105,8 @@ class ValidationReport:
         issues, without ever softening the contract for token/EULA
         failures.
         """
-        return (
-            any(r.status is HfStatus.NETWORK_ERROR for r in self.results)
-            and all(
-                r.status in (HfStatus.OK, HfStatus.NETWORK_ERROR)
-                for r in self.results
-            )
+        return any(r.status is HfStatus.NETWORK_ERROR for r in self.results) and all(
+            r.status in (HfStatus.OK, HfStatus.NETWORK_ERROR) for r in self.results
         )
 
     def render(self) -> str:
@@ -130,7 +129,7 @@ class ValidationReport:
                     f" ✗ {r.model_id} — your token can't read this model.\n"
                     f"   Likely cause: you haven't accepted the model's terms.\n"
                     f"   Open {r.url} in a browser,\n"
-                    f"   click \"Agree and access repository\", then re-run."
+                    f'   click "Agree and access repository", then re-run.'
                 )
             elif r.status is HfStatus.NOT_FOUND:
                 lines.append(

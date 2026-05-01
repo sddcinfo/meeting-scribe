@@ -190,6 +190,7 @@ def test_detects_gated_not_accepted(mock_api_cls) -> None:
         if mid == "Qwen/Qwen3.6-35B-A3B-FP8":
             raise _gated_error()
         return _ok_model_info()
+
     api.model_info.side_effect = _model_info
     mock_api_cls.return_value = api
 
@@ -287,6 +288,7 @@ def test_uses_recipe_model_ids() -> None:
     the orchestrator passes the recipe-derived list. Sanity-check that
     `all_model_ids(include_shared=True)` returns the four gated models."""
     from meeting_scribe.recipes import all_model_ids
+
     ids = set(all_model_ids(include_shared=True))
     expected = {
         "Qwen/Qwen3.6-35B-A3B-FP8",

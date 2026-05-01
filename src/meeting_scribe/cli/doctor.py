@@ -29,10 +29,8 @@ def doctor() -> None:
 
 
 @doctor.command("watch-pressure")
-@click.option("--interval", default=2.0, show_default=True,
-              help="Seconds between samples.")
-@click.option("--once", is_flag=True,
-              help="Print one sample and exit. Useful for `watch -n 1`.")
+@click.option("--interval", default=2.0, show_default=True, help="Seconds between samples.")
+@click.option("--once", is_flag=True, help="Print one sample and exit. Useful for `watch -n 1`.")
 def watch_pressure(interval: float, once: bool) -> None:
     """Tail /proc/pressure/memory with severity classification.
 

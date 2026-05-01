@@ -43,19 +43,43 @@ def _load_expected_phrases() -> dict:
 
 
 @cli.command("demo-smoke")
-@click.option("--host", default="127.0.0.1", show_default=True,
-              help="Admin host. Use the GB10's IP for remote runs.")
-@click.option("--port", default=DEFAULT_PORT, show_default=True,
-              help="Admin HTTPS port (defaults to meeting-scribe's 8080).")
-@click.option("--source-lang", default="en", show_default=True,
-              help="Slide source language for the translate gate.")
-@click.option("--target-lang", default="ja", show_default=True,
-              help="Slide target language. Default ja matches the typical "
-                   "demo (English deck → Japanese translation).")
-@click.option("--total-budget", default=60, show_default=True,
-              help="Hard timeout for the whole sequence in seconds.")
-@click.option("--insecure/--no-insecure", default=True, show_default=True,
-              help="Skip TLS verification (admin uses a self-signed cert).")
+@click.option(
+    "--host",
+    default="127.0.0.1",
+    show_default=True,
+    help="Admin host. Use the GB10's IP for remote runs.",
+)
+@click.option(
+    "--port",
+    default=DEFAULT_PORT,
+    show_default=True,
+    help="Admin HTTPS port (defaults to meeting-scribe's 8080).",
+)
+@click.option(
+    "--source-lang",
+    default="en",
+    show_default=True,
+    help="Slide source language for the translate gate.",
+)
+@click.option(
+    "--target-lang",
+    default="ja",
+    show_default=True,
+    help="Slide target language. Default ja matches the typical "
+    "demo (English deck → Japanese translation).",
+)
+@click.option(
+    "--total-budget",
+    default=60,
+    show_default=True,
+    help="Hard timeout for the whole sequence in seconds.",
+)
+@click.option(
+    "--insecure/--no-insecure",
+    default=True,
+    show_default=True,
+    help="Skip TLS verification (admin uses a self-signed cert).",
+)
 def demo_smoke(
     host: str,
     port: int,
@@ -95,14 +119,14 @@ def demo_smoke(
         r = client.post(f"{base}/api/meeting/start", json={})
         if r.status_code != 200:
             click.secho(
-                f"FAIL: /api/meeting/start returned {r.status_code} "
-                f"({r.text[:200]})", fg="red", err=True,
+                f"FAIL: /api/meeting/start returned {r.status_code} ({r.text[:200]})",
+                fg="red",
+                err=True,
             )
             sys.exit(1)
         meeting_id = r.json().get("meeting_id")
         if not meeting_id:
-            click.secho(f"FAIL: no meeting_id in response: {r.text[:200]}",
-                        fg="red", err=True)
+            click.secho(f"FAIL: no meeting_id in response: {r.text[:200]}", fg="red", err=True)
             sys.exit(1)
         click.echo(f"           meeting_id={meeting_id}")
 
@@ -112,13 +136,20 @@ def demo_smoke(
         with _PPTX.open("rb") as f:
             r = client.post(
                 f"{base}/api/meetings/{meeting_id}/slides/upload",
-                files={"file": (_PPTX.name, f, "application/vnd.openxmlformats-officedocument.presentationml.presentation")},
+                files={
+                    "file": (
+                        _PPTX.name,
+                        f,
+                        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    )
+                },
                 data={"source_lang": source_lang, "target_lang": target_lang},
             )
         if r.status_code != 200:
             click.secho(
-                f"FAIL: slides/upload returned {r.status_code} "
-                f"({r.text[:300]})", fg="red", err=True,
+                f"FAIL: slides/upload returned {r.status_code} ({r.text[:300]})",
+                fg="red",
+                err=True,
             )
             sys.exit(1)
         deck = r.json()
@@ -140,7 +171,9 @@ def demo_smoke(
                 if consecutive_404 >= 60:  # 30s of solid 404s = real failure
                     click.secho(
                         f"FAIL: slides poll returned 404 for {consecutive_404 // 2}s "
-                        f"({r.text[:200]})", fg="red", err=True,
+                        f"({r.text[:200]})",
+                        fg="red",
+                        err=True,
                     )
                     sys.exit(1)
                 time.sleep(0.5)
@@ -148,8 +181,9 @@ def demo_smoke(
             consecutive_404 = 0
             if r.status_code != 200:
                 click.secho(
-                    f"FAIL: slides poll returned {r.status_code} "
-                    f"({r.text[:200]})", fg="red", err=True,
+                    f"FAIL: slides poll returned {r.status_code} ({r.text[:200]})",
+                    fg="red",
+                    err=True,
                 )
                 sys.exit(1)
             payload = r.json()
@@ -170,15 +204,15 @@ def demo_smoke(
                 break
             if stage == "error" or payload.get("error"):
                 err = payload.get("error") or "(no detail)"
-                click.secho(f"FAIL: slide processing errored: {err}",
-                            fg="red", err=True)
+                click.secho(f"FAIL: slide processing errored: {err}", fg="red", err=True)
                 sys.exit(1)
             time.sleep(0.5)
         else:
             click.secho(
                 f"FAIL: slide processing did not reach stage=complete within "
                 f"{total_budget}s (last stage={last_stage})",
-                fg="red", err=True,
+                fg="red",
+                err=True,
             )
             sys.exit(1)
 
@@ -195,9 +229,11 @@ def demo_smoke(
                 json={
                     "model": "Qwen/Qwen3.6-35B-A3B-FP8",
                     "messages": [
-                        {"role": "system",
-                         "content": "Translate the user's message to English. "
-                                    "Respond with the translation only."},
+                        {
+                            "role": "system",
+                            "content": "Translate the user's message to English. "
+                            "Respond with the translation only.",
+                        },
                         {"role": "user", "content": "こんにちは、世界。"},
                     ],
                     "max_tokens": 64,
@@ -213,13 +249,15 @@ def demo_smoke(
         except httpx.RequestError as e:
             click.secho(
                 f"FAIL: translate probe could not reach {translate_url}: {e}",
-                fg="red", err=True,
+                fg="red",
+                err=True,
             )
             sys.exit(1)
         if r.status_code != 200:
             click.secho(
-                f"FAIL: translate probe returned {r.status_code} "
-                f"({r.text[:200]})", fg="red", err=True,
+                f"FAIL: translate probe returned {r.status_code} ({r.text[:200]})",
+                fg="red",
+                err=True,
             )
             sys.exit(1)
         choices = r.json().get("choices") or []
@@ -228,23 +266,24 @@ def demo_smoke(
         # empty content on reasoning models. Demo-smoke checks the visible
         # translation in either field — the operator only cares that the
         # pipeline produced something usable.
-        tr_text = (msg.get("content") or msg.get("reasoning_content") or "")
+        tr_text = msg.get("content") or msg.get("reasoning_content") or ""
         tr_text = tr_text.strip() if isinstance(tr_text, str) else ""
         if not tr_text:
             click.secho(
                 f"FAIL: translate probe returned empty content. Response: "
                 f"{json.dumps(r.json(), ensure_ascii=False)[:300]}",
-                fg="red", err=True,
+                fg="red",
+                err=True,
             )
             sys.exit(1)
         # Truncate long output (reasoning models can produce paragraphs).
         preview = tr_text if len(tr_text) <= 100 else tr_text[:97] + "…"
-        click.secho(f"           ✓ translate: 'こんにちは、世界。' → '{preview}'",
-                    fg="green")
+        click.secho(f"           ✓ translate: 'こんにちは、世界。' → '{preview}'", fg="green")
 
         click.secho(
             f"\n[demo-smoke] GREEN — total {_human(time.monotonic() - started)}",
-            fg="green", bold=True,
+            fg="green",
+            bold=True,
         )
 
     finally:

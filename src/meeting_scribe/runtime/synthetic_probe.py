@@ -76,9 +76,7 @@ class ProbeResult:
 _HARD_MIN_TIMEOUT_S = 0.5  # never fire a probe with less than 0.5s budget
 
 
-def _adaptive_timeout(
-    histogram: deque[float], cold_default_s: float, ceiling_s: float
-) -> float:
+def _adaptive_timeout(histogram: deque[float], cold_default_s: float, ceiling_s: float) -> float:
     """Threshold for a single probe call.
 
     Adapts to recent backend behaviour:
@@ -153,7 +151,10 @@ def _build_translate_payload(model_id: str) -> dict:
     return {
         "model": model_id,
         "messages": [
-            {"role": "system", "content": "You are a translator. Translate the user's text to English."},
+            {
+                "role": "system",
+                "content": "You are a translator. Translate the user's text to English.",
+            },
             {"role": "user", "content": "ping"},
         ],
         "max_tokens": 8,

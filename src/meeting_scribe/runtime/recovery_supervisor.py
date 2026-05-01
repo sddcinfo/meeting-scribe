@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 # integration drill gets a deterministic small value.
 SUPERVISOR_POLL_INTERVAL_S = 3.0
 RECREATE_AFTER_PENDING_S = 30.0  # only consider recreate after this much
-                                  # time in PENDING with failing probes
+# time in PENDING with failing probes
 CIRCUIT_BREAKER_WINDOW_S = 600.0  # max 1 recreate per 10 min
 
 
@@ -138,10 +138,7 @@ async def _drive_one_recovery(
 
         # Probe failed. Decide whether to trigger an explicit recreate.
         time_in_pending_s = time.monotonic() - started_at
-        if (
-            _auto_recreate_enabled()
-            and time_in_pending_s >= RECREATE_AFTER_PENDING_S
-        ):
+        if _auto_recreate_enabled() and time_in_pending_s >= RECREATE_AFTER_PENDING_S:
             now = time.monotonic()
             last_ts = last_recreate_ts_getter()
             if (now - last_ts) >= CIRCUIT_BREAKER_WINDOW_S:
@@ -151,14 +148,11 @@ async def _drive_one_recovery(
                     time_in_pending_s,
                 )
                 from meeting_scribe.infra.compose import compose_restart
+
                 try:
-                    await asyncio.to_thread(
-                        compose_restart, "vllm-asr", recreate=True
-                    )
+                    await asyncio.to_thread(compose_restart, "vllm-asr", recreate=True)
                 except Exception:
-                    logger.exception(
-                        "recovery_supervisor: compose_restart vllm-asr failed"
-                    )
+                    logger.exception("recovery_supervisor: compose_restart vllm-asr failed")
                 last_recreate_ts_setter(now)
             else:
                 # Circuit breaker tripped — log + (future) emit
@@ -172,10 +166,7 @@ async def _drive_one_recovery(
                     "skipping compose_restart, polling probe only",
                     remaining,
                 )
-        elif (
-            not _auto_recreate_enabled()
-            and time_in_pending_s >= RECREATE_AFTER_PENDING_S
-        ):
+        elif not _auto_recreate_enabled() and time_in_pending_s >= RECREATE_AFTER_PENDING_S:
             # AUTO_RECREATE=0 path. Log the would-have-recreated
             # decision so operators can validate the supervisor's
             # judgment over the first week of production.
@@ -206,9 +197,7 @@ async def _drive_one_recovery(
     )
     backend._recovery_state = "REPLAYING"
     try:
-        replay_end = await backend.replay_until_caught_up(
-            backend._recovery_start_offset
-        )
+        replay_end = await backend.replay_until_caught_up(backend._recovery_start_offset)
     except Exception:
         logger.exception(
             "recovery_supervisor: replay_until_caught_up raised; "

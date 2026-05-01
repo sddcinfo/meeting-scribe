@@ -189,9 +189,7 @@ class Metrics:
         # Watchdog fires per minute: count timestamps within the last 60s
         # (the deque is bounded at 256, so this is at most a 256-element
         # filter — cheap).
-        watchdog_fires_per_min = sum(
-            1 for ts in self._watchdog_fire_timestamps if now - ts < 60.0
-        )
+        watchdog_fires_per_min = sum(1 for ts in self._watchdog_fire_timestamps if now - ts < 60.0)
         # Time since the most recent ASR final, in seconds. None if no
         # final has been emitted yet (fresh meeting / boot).
         time_since_last_final_s: float | None = None

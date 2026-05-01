@@ -65,11 +65,9 @@ def _assert_required_imports() -> None:
         return
     try:
         cfg = tomllib.loads(pyproject.read_text())
-    except (OSError, tomllib.TOMLDecodeError):
+    except OSError, tomllib.TOMLDecodeError:
         return
-    required = (
-        cfg.get("tool", {}).get("meeting-scribe", {}).get("required-imports", [])
-    )
+    required = cfg.get("tool", {}).get("meeting-scribe", {}).get("required-imports", [])
     if not isinstance(required, list):
         return
     missing: list[str] = []

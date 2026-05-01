@@ -279,14 +279,10 @@ def assert_recipe_source_parity() -> list[RecipeMismatch]:
             # Numeric compare where both sides are numbers; otherwise string.
             try:
                 if float(cv) != float(rv):
-                    mismatches.append(
-                        RecipeMismatch("vllm-asr", compose_key, cv, str(rv))
-                    )
-            except (TypeError, ValueError):
+                    mismatches.append(RecipeMismatch("vllm-asr", compose_key, cv, str(rv)))
+            except TypeError, ValueError:
                 if cv != str(rv):
-                    mismatches.append(
-                        RecipeMismatch("vllm-asr", compose_key, cv, str(rv))
-                    )
+                    mismatches.append(RecipeMismatch("vllm-asr", compose_key, cv, str(rv)))
 
     # Diarize — environment vars
     diar = services.get("pyannote-diarize") or {}
@@ -306,14 +302,10 @@ def assert_recipe_source_parity() -> list[RecipeMismatch]:
                 continue
             try:
                 if float(cv) != float(rv):
-                    mismatches.append(
-                        RecipeMismatch("pyannote-diarize", env_key, cv, str(rv))
-                    )
-            except (TypeError, ValueError):
+                    mismatches.append(RecipeMismatch("pyannote-diarize", env_key, cv, str(rv)))
+            except TypeError, ValueError:
                 if cv != str(rv):
-                    mismatches.append(
-                        RecipeMismatch("pyannote-diarize", env_key, cv, str(rv))
-                    )
+                    mismatches.append(RecipeMismatch("pyannote-diarize", env_key, cv, str(rv)))
 
     # TTS primary replica — environment vars; `qwen3-tts-2` has a distinct
     # port by design (8012 vs 8002), so we only check the primary's port
@@ -327,15 +319,11 @@ def assert_recipe_source_parity() -> list[RecipeMismatch]:
         if tts_svc == "qwen3-tts" and "TTS_PORT" in tts_env:
             cv, rv = tts_env["TTS_PORT"], recipe.get("port")
             if rv is not None and int(cv) != int(rv):
-                mismatches.append(
-                    RecipeMismatch(tts_svc, "TTS_PORT", cv, str(rv))
-                )
+                mismatches.append(RecipeMismatch(tts_svc, "TTS_PORT", cv, str(rv)))
         if "TTS_MODEL" in tts_env:
             cv, rv = tts_env["TTS_MODEL"], recipe.get("model_id")
             if rv is not None and cv != str(rv):
-                mismatches.append(
-                    RecipeMismatch(tts_svc, "TTS_MODEL", cv, str(rv))
-                )
+                mismatches.append(RecipeMismatch(tts_svc, "TTS_MODEL", cv, str(rv)))
 
     return mismatches
 

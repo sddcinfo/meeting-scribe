@@ -330,9 +330,7 @@ class VllmTranslateBackend(TranslateBackend):
             # W5: backend RTT histogram. Sampled only on successful
             # requests so failures don't pollute the percentile.
             try:
-                state.metrics.translate_request_rtt_ms.append(
-                    (time.monotonic() - t0) * 1000
-                )
+                state.metrics.translate_request_rtt_ms.append((time.monotonic() - t0) * 1000)
             except AttributeError:
                 pass  # state.metrics not yet initialised at warmup time
             data = resp.json()

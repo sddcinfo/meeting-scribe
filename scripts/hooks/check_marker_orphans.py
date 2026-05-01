@@ -28,6 +28,16 @@ KNOWN_MARKERS: frozenset[str] = frozenset({
     "browser",      # smoke (subset 1.A) + nightly (full Playwright)
     "manual",       # never auto-run; surfaced via runbook 3.L
 
+    # v2.0 fresh-GB10 install markers — local-only on the dev box
+    # (require pip-tools / qemu / real GB10 hardware respectively).
+    # Excluded from the default selection; not wired into a remote
+    # runner lane because the harness lives outside CI.
+    "lockfile_sync",  # plan §1.6a — pip-compile byte-equality
+    "demo_smoke",     # plan §4.1 — real e2e demo gate
+    "qemu_kvm",       # plan §4.2 — real ISO smoke-test, ~45 min
+    "qemu_tcg",       # plan §4.2 — cross-arch ISO smoke-test, ~2 hr
+    "real_gb10",      # plan §4.3 — real GB10 host on the LAN
+
     # Pytest builtin / framework markers — always allowed
     "asyncio",
     "parametrize",

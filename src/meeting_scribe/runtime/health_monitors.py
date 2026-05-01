@@ -189,9 +189,9 @@ async def silence_watchdog_loop() -> None:
 
 PRESSURE_PATH = Path("/proc/pressure/memory")
 _PRESSURE_TICK_S = 5.0
-_PRESSURE_SOME_AVG10_WARN = 10.0   # %  >10% of last 10s stalled = warning
-_PRESSURE_SOME_AVG10_CRIT = 25.0   # %  >25% = critical (host is hurting)
-_PRESSURE_FULL_AVG10_CRIT = 5.0    # %  any sustained "full" stall = critical
+_PRESSURE_SOME_AVG10_WARN = 10.0  # %  >10% of last 10s stalled = warning
+_PRESSURE_SOME_AVG10_CRIT = 25.0  # %  >25% = critical (host is hurting)
+_PRESSURE_FULL_AVG10_CRIT = 5.0  # %  any sustained "full" stall = critical
 # Hysteresis: don't re-spam at every tick. Re-warn only after the
 # pressure level visibly worsened or after a 60s cooldown.
 _PRESSURE_REWARN_S = 60.0
@@ -200,6 +200,7 @@ _PRESSURE_REWARN_S = 60.0
 @dataclasses.dataclass
 class MemPressureSnapshot:
     """One sample of /proc/pressure/memory."""
+
     some_avg10: float
     some_avg60: float
     some_avg300: float

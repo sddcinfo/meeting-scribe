@@ -66,11 +66,13 @@ class InflightSubmission:
     """
 
     request_id: int
-    audio_start_offset: int   # recording.pcm byte offset of first chunk
-    audio_end_offset: int     # one past the last chunk
-    submitted_at: float       # time.monotonic()
+    audio_start_offset: int  # recording.pcm byte offset of first chunk
+    audio_end_offset: int  # one past the last chunk
+    submitted_at: float  # time.monotonic()
     status: Literal["inflight", "complete", "failed"]
-    generation: int           # _recovery_generation at submission time
+    generation: int  # _recovery_generation at submission time
+
+
 import soundfile as sf  # type: ignore[import-untyped]
 
 from meeting_scribe.backends.asr_filters import (
@@ -225,14 +227,9 @@ class VllmASRBackend(ASRBackend):
             if not task.done():
                 task.cancel()
 
-        unresolved = [
-            s for s in self._submissions
-            if s.status in ("inflight", "failed")
-        ]
+        unresolved = [s for s in self._submissions if s.status in ("inflight", "failed")]
         if unresolved:
-            self._recovery_start_offset = min(
-                s.audio_start_offset for s in unresolved
-            )
+            self._recovery_start_offset = min(s.audio_start_offset for s in unresolved)
         else:
             # Defensive fallback. Shouldn't happen because watchdog
             # fires imply timed-out submissions exist; if it does we
@@ -310,9 +307,7 @@ class VllmASRBackend(ASRBackend):
             pass  # already evicted by replay; harmless
         return True
 
-    def _track_submission_failed(
-        self, sub: InflightSubmission, exc: BaseException
-    ) -> bool:
+    def _track_submission_failed(self, sub: InflightSubmission, exc: BaseException) -> bool:
         """Mark a submission failed. Returns True if the failure
         should be processed (generation matches), False if it's a
         stale-generation result that must be silently discarded.
@@ -354,14 +349,12 @@ class VllmASRBackend(ASRBackend):
         chunk_bytes = int(3.5 * bytes_per_sec)
         chunk_bytes -= chunk_bytes % 2  # keep alignment
 
-        meeting_dir = (
-            state.current_meeting and state.storage.meeting_dir(state.current_meeting.meeting_id)
+        meeting_dir = state.current_meeting and state.storage.meeting_dir(
+            state.current_meeting.meeting_id
         )
         pcm_path = meeting_dir / "audio" / "recording.pcm" if meeting_dir else None
         if pcm_path is None or not pcm_path.exists():
-            logger.warning(
-                "replay_until_caught_up: no recording.pcm path; nothing to replay"
-            )
+            logger.warning("replay_until_caught_up: no recording.pcm path; nothing to replay")
             return offset
 
         with pcm_path.open("rb") as fh:
@@ -393,9 +386,7 @@ class VllmASRBackend(ASRBackend):
                 # Sample offset for transcript alignment is byte-offset
                 # divided by 2 (s16le).
                 sample_offset = offset // 2
-                await self.process_audio_bytes(
-                    pcm, sample_offset=sample_offset, _is_replay=True
-                )
+                await self.process_audio_bytes(pcm, sample_offset=sample_offset, _is_replay=True)
                 offset += len(pcm)
 
         replay_end_offset = offset
@@ -403,8 +394,7 @@ class VllmASRBackend(ASRBackend):
         # Drop submissions superseded by replay (those whose
         # audio_start_offset falls in [start_offset, replay_end_offset)).
         self._submissions = [
-            s for s in self._submissions
-            if s.audio_start_offset >= replay_end_offset
+            s for s in self._submissions if s.audio_start_offset >= replay_end_offset
         ]
         logger.info(
             "ASR replay caught up at offset=%d (replayed %d bytes, %.1fs, %.1fs wall)",
@@ -617,9 +607,7 @@ class VllmASRBackend(ASRBackend):
             # unresolved one. Bytes-per-sample = 2 for s16le.
             _audio_start_offset = self._buffer_start_sample * 2
             _audio_end_offset = _audio_start_offset + len(combined) * 2
-            _submission = self._track_submission_start(
-                _audio_start_offset, _audio_end_offset
-            )
+            _submission = self._track_submission_start(_audio_start_offset, _audio_end_offset)
             try:
                 system_prompt = self._build_system_prompt()
                 resp = await self._client.post(
@@ -667,9 +655,7 @@ class VllmASRBackend(ASRBackend):
                 # requests so failures (which dominate the early seconds
                 # of a CUDA-wedge incident) don't pollute the percentile.
                 try:
-                    state.metrics.asr_request_rtt_ms.append(
-                        (time.monotonic() - _rtt_t0) * 1000
-                    )
+                    state.metrics.asr_request_rtt_ms.append((time.monotonic() - _rtt_t0) * 1000)
                 except AttributeError:
                     pass  # state.metrics not yet initialised at warmup time
                 result = resp.json()

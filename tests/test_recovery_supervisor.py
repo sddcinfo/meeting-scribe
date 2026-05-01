@@ -274,8 +274,7 @@ async def test_circuit_breaker_blocks_second_recreate_within_window(
 
     fake_compose.assert_not_called()
     assert any(
-        "circuit breaker tripped" in r.message and r.levelname == "ERROR"
-        for r in caplog.records
+        "circuit breaker tripped" in r.message and r.levelname == "ERROR" for r in caplog.records
     )
     # Replay still ran when probe eventually succeeded.
     backend.replay_until_caught_up.assert_awaited_once()
