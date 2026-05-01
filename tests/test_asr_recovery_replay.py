@@ -18,16 +18,15 @@ W6b/Tier-3 live drill, not here.
 
 from __future__ import annotations
 
-from collections import deque
 from unittest.mock import patch
 
 import pytest
 
 from meeting_scribe.backends import asr_vllm as av
 from meeting_scribe.backends.asr_vllm import (
+    _MAX_UNRESOLVED_SUBMISSIONS,
     InflightSubmission,
     VllmASRBackend,
-    _MAX_UNRESOLVED_SUBMISSIONS,
 )
 from meeting_scribe.runtime import state as runtime_state
 from meeting_scribe.runtime.metrics import Metrics

@@ -14,14 +14,13 @@ import os
 import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 
 import httpx
 import numpy as np
 
 from meeting_scribe.runtime import state
-
 
 # ── W6a — Recovery state machine ────────────────────────────────
 #

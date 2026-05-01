@@ -20,7 +20,6 @@ the plan's Tier-2 verification, not by this unit suite.
 
 from __future__ import annotations
 
-from collections import deque
 from unittest.mock import AsyncMock, patch
 
 import pytest

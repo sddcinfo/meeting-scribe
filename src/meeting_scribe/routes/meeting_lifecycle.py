@@ -141,7 +141,6 @@ async def _meeting_start_preflight() -> JSONResponse | None:
     attempt = 0
     last_asr = None
     last_translate = None
-    last_diarize = None
 
     while True:
         attempt += 1
@@ -154,7 +153,7 @@ async def _meeting_start_preflight() -> JSONResponse | None:
             ),
             diarize_synthetic_probe(diarize_url, state.metrics.diarize_request_rtt_ms),
         )
-        last_asr, last_translate, last_diarize = asr_result, translate_result, diarize_result
+        last_asr, last_translate = asr_result, translate_result
 
         if asr_result.ok and translate_result.ok:
             # Required backends green — succeed even if diarize is

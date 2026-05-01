@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections import deque
+from typing import ClassVar
 
 import pytest
 
@@ -99,7 +100,7 @@ class TestStatusFieldShapeStability:
     rename or disappear, the frontend tile silently shows '—' — these
     assertions are the contract-fail signal."""
 
-    EXPECTED_TOP_LEVEL_KEYS = {
+    EXPECTED_TOP_LEVEL_KEYS: ClassVar[set[str]] = {
         "asr_request_rtt_ms",
         "translate_request_rtt_ms",
         "diarize_request_rtt_ms",

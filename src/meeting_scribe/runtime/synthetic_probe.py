@@ -30,7 +30,6 @@ deadline.
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import io
 import logging
@@ -99,7 +98,7 @@ def _adaptive_timeout(
     if len(samples) < ADAPTIVE_MIN_SAMPLES:
         return cold_default_s
     samples.sort()
-    idx = max(0, min(len(samples) - 1, int(round(0.95 * (len(samples) - 1)))))
+    idx = max(0, min(len(samples) - 1, round(0.95 * (len(samples) - 1))))
     p95_ms = samples[idx]
     threshold_s = (p95_ms * ADAPTIVE_P95_MULTIPLIER) / 1000.0
     return max(_HARD_MIN_TIMEOUT_S, min(ceiling_s, threshold_s))
@@ -278,7 +277,7 @@ async def _post_and_validate(
             if headers is not None:
                 kwargs["headers"] = headers
             resp = await client.post(url, **kwargs)
-    except (httpx.TimeoutException, asyncio.TimeoutError) as exc:
+    except (TimeoutError, httpx.TimeoutException) as exc:
         return ProbeResult(
             status="timeout",
             latency_ms=(time.monotonic() - t0) * 1000,

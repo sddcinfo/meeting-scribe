@@ -38,7 +38,7 @@ import asyncio
 import logging
 import os
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from meeting_scribe.runtime import state
 from meeting_scribe.runtime.synthetic_probe import asr_synthetic_probe
@@ -89,7 +89,7 @@ async def asr_recovery_loop() -> None:
             )
         except asyncio.CancelledError:
             raise
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception(
                 "recovery_supervisor: unhandled exception during recovery; "
                 "clearing flag and continuing"
@@ -155,7 +155,7 @@ async def _drive_one_recovery(
                     await asyncio.to_thread(
                         compose_restart, "vllm-asr", recreate=True
                     )
-                except Exception:  # noqa: BLE001
+                except Exception:
                     logger.exception(
                         "recovery_supervisor: compose_restart vllm-asr failed"
                     )
@@ -209,7 +209,7 @@ async def _drive_one_recovery(
         replay_end = await backend.replay_until_caught_up(
             backend._recovery_start_offset
         )
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.exception(
             "recovery_supervisor: replay_until_caught_up raised; "
             "returning to NORMAL with possible transcript hole"

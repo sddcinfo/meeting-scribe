@@ -345,7 +345,7 @@ def warn_on_recipe_source_drift() -> None:
     mismatch, never raise. Safe to call from any startup path."""
     try:
         mismatches = assert_recipe_source_parity()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("recipe-parity check raised %s: %s", type(exc).__name__, exc)
         return
     for m in mismatches:

@@ -19,10 +19,8 @@ Locks down:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
-from collections import deque
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -33,7 +31,6 @@ from meeting_scribe.runtime import recovery_supervisor as supervisor
 from meeting_scribe.runtime import state as runtime_state
 from meeting_scribe.runtime.metrics import Metrics
 from meeting_scribe.runtime.synthetic_probe import ProbeResult
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Watchdog escalation counter — on the audio path
