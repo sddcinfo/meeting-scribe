@@ -41,6 +41,41 @@ def _venv_bin() -> Path:
     return PROJECT_ROOT / ".venv" / "bin"
 
 
+_OOM_DROP_IN_NAME = "oom-priority.conf"
+
+
+def _render_oom_drop_in() -> str:
+    """Drop-in that ships the OOM-protection settings as part of
+    `meeting-scribe install-service`. Lives at
+    ``service.d/oom-priority.conf`` so the operator-tunable bits stay
+    decoupled from the rendered base unit. Without this drop-in,
+    user-mode systemd inherits OOMScoreAdjust=+100 from
+    user@<uid>.service and another +100 from app.slice, leaving the
+    transcription server as the kernel's preferred OOM victim — the
+    2026-04-30 17:35 incident root cause. Paired with the +500 the
+    sddc-cli QEMU smoke-test sets on its own subprocess
+    (sddc.iso_qemu.run_qemu) so a runaway smoke-test guest is the
+    obvious target instead.
+    """
+    return """[Service]
+# Operator intent: protect the live transcription server from being
+# the OOM-killer's first choice. The kernel clamps -100 to +100 for
+# unprivileged user services (user@<uid>.service has no
+# CAP_SYS_RESOURCE, so a child cannot descend below the user
+# manager's baseline), but the declaration is honoured the day
+# CAP_SYS_RESOURCE is granted. The actual differential protection
+# comes from the matching +500 set on the QEMU smoke-test child in
+# sddc-cli/src/sddc/iso_qemu.py:run_qemu.
+OOMScoreAdjust=-100
+# Soft 2 GiB memory reservation for scribe — under host pressure the
+# kernel reclaim machinery skips anonymous pages below this floor
+# until every other unprotected cgroup has been touched. cgroup
+# memory.low works for user services without elevated capabilities,
+# unlike OOMScoreAdjust.
+MemoryLow=2G
+"""
+
+
 def _render_unit() -> str:
     venv_bin = _venv_bin()
     return f"""[Unit]
@@ -181,6 +216,23 @@ def install_service(no_enable: bool, no_start: bool, quiet: bool) -> None:
             click.secho(f"[OK] wrote {unit_path}", fg="green")
     elif not quiet:
         click.secho(f"[OK] {unit_path} already up-to-date", fg="green")
+
+    # OOM-priority drop-in. Kept out of the base unit body so an
+    # operator can hand-tune MemoryLow/OOMScoreAdjust without churning
+    # the rendered unit hash on every install-service run.
+    drop_in_dir = unit_dir / f"{_SYSTEMD_UNIT}.d"
+    drop_in_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
+    drop_in_path = drop_in_dir / _OOM_DROP_IN_NAME
+    drop_in_body = _render_oom_drop_in()
+    drop_in_existing = drop_in_path.read_text() if drop_in_path.exists() else None
+    if drop_in_existing != drop_in_body:
+        tmp = drop_in_path.with_suffix(drop_in_path.suffix + f".tmp.{os.getpid()}")
+        tmp.write_text(drop_in_body)
+        os.replace(tmp, drop_in_path)
+        if not quiet:
+            click.secho(f"[OK] wrote {drop_in_path}", fg="green")
+    elif not quiet:
+        click.secho(f"[OK] {drop_in_path} already up-to-date", fg="green")
 
     rc, _, err = _systemctl_user("daemon-reload")
     if rc != 0:
