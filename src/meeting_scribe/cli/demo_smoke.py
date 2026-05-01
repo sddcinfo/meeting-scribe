@@ -125,10 +125,27 @@ def demo_smoke(
         click.echo(f"           accepted, deck_id={deck.get('deck_id')}")
 
         # ─── 3. Poll for translated render ──────────────────────────
+        # Tolerate transient 404 from the slides poll: there's a brief
+        # window after upload where /api/meetings/{id}/slides returns
+        # 404 because the deck-registration commit hasn't propagated
+        # yet. Observed 2026-05-02 cold-wipe: ~5s window between
+        # upload-200 and slides-poll-200 on a freshly-started stack.
         click.echo("[demo-smoke] 3/4 waiting for slide processing…")
         last_stage = ""
+        consecutive_404 = 0
         while remaining() > 0:
             r = client.get(f"{base}/api/meetings/{meeting_id}/slides")
+            if r.status_code == 404:
+                consecutive_404 += 1
+                if consecutive_404 >= 60:  # 30s of solid 404s = real failure
+                    click.secho(
+                        f"FAIL: slides poll returned 404 for {consecutive_404 // 2}s "
+                        f"({r.text[:200]})", fg="red", err=True,
+                    )
+                    sys.exit(1)
+                time.sleep(0.5)
+                continue
+            consecutive_404 = 0
             if r.status_code != 200:
                 click.secho(
                     f"FAIL: slides poll returned {r.status_code} "
