@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-05-02
+
+The 2.0 line marks the first release validated end-to-end against
+a true cold-wipe of a customer GB10 (Dell Pro Max with GB10,
+192.168.1.100, 2026-05-02). Highlights:
+
+- **Fresh-GB10 install hardening** — single-command operator
+  flow (`sddc gb10 onboard`) takes a blank-state machine to live
+  meeting-scribe with `demo-smoke` green in 4.6 s. Defense-in-depth
+  HuggingFace EULA gate catches gated-model misconfigurations
+  before any 30 GB download starts.
+- **Slide translate UX** — adaptive batching + 4-way parallelism
+  (~6× faster than per-slide on a 20-slide deck).
+- **OOM hardening** — per-container memory caps, drop-in
+  `OOMScoreAdjust=-100` for the systemd unit, PSI canary, smoke-test
+  safety pre-flight.
+- **278 tests** — 1357 with the cold-wipe + integrity suite.
+
+Detailed sub-sections below.
+
 ### Fresh-GB10 install hardening — 2026-05-02
 
 A live customer demo on 2026-05-01 broke twice on the install path:
