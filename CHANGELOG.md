@@ -5,6 +5,72 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fresh-GB10 install hardening — 2026-05-02
+
+A live customer demo on 2026-05-01 broke twice on the install path:
+a 30 GB `hf download` ran for 20 minutes before dying on a generic
+401 (gated-model EULA not accepted), and a missing
+`python-multipart` dependency silently broke PPTX upload mid-meeting.
+This release adds the gates that catch both before they bite a real
+operator. End-to-end validated by a cold-wipe + reflash of the
+customer GB10 → demo-smoke green in 4.6 s.
+
+#### New CLI surface
+
+- **`meeting-scribe hf-probe`** — validates the HF token + EULA
+  acceptance against every gated model in the recipe registry.
+  Token transport via stdin only (never in argv or env-on-cli), so
+  remote dispatch over SSH stays secret-safe. Exit codes 0 / 64
+  (token/EULA) / 65 (network-only).
+- **`meeting-scribe demo-smoke`** — real end-to-end demo gate:
+  start meeting → upload PPTX → poll for `stage=complete` → live
+  translate probe via the autosre vLLM proxy (`enable_thinking=false`).
+  Catches regressions that `validate --customer-flow` misses
+  because it only verifies HTTP-level plumbing, not real model
+  output.
+- **`meeting-scribe doctor watch-pressure`** — interactive PSI
+  tail for ad-hoc memory-pressure inspection.
+
+#### Setup UX
+
+- First-run `meeting-scribe setup` now lists every gated model
+  URL and validates the entered token against the recipe-driven
+  list before saving to `.env`. EULA-pending state is surfaced
+  cleanly so the operator knows exactly which model page to
+  open.
+
+#### Install integrity
+
+- New **`requirements.lock`** (`pip-compile` from `pyproject.toml`)
+  is the canonical dependency state. `bootstrap.sh` installs from
+  the lockfile first, falls back to plain `pip install -e .` if
+  the lock includes wheels not portable to the customer's
+  architecture (e.g. dev-resolved x86 lockfile on aarch64).
+  `scripts/check_lockfile_in_sync.py` (pytest marker
+  `lockfile_sync`) catches lockfile drift in CI.
+- New **`tool.meeting-scribe.required-imports`** in `pyproject.toml`,
+  enforced by `_assert_required_imports()` at the CLI entrypoint
+  — exits 78 (`EX_CONFIG`) BEFORE any uvicorn socket bind if a
+  declared import is missing. Closes the 2026-05-01 PPTX-upload
+  silent-break window.
+
+#### Defense-in-depth HF gate
+
+- `customer-bootstrap`: local advisory HF preflight on the dev
+  box BEFORE any SSH dispatch (saves the 20-minute round-trip on
+  bad-token / missing-EULA).
+- `gb10 pull-models`: customer-side HF preflight from the customer's
+  HF egress BEFORE the 30 GB download starts.
+
+#### `meeting-scribe install-service` drop-in
+
+- Renders `meeting-scribe.service.d/oom-priority.conf` alongside
+  the unit so a fresh GB10 inherits `OOMScoreAdjust=-100` +
+  `MemoryLow=2G` automatically. Paired with the QEMU smoke-test
+  child's `+500` adj bump, the kernel chooses a runaway
+  smoke-test guest as the OOM victim instead of the live
+  transcription server.
+
 ### Reliability — 2026-04-30 ASR-cascade hardening
 
 A live meeting failed when `scribe-asr` hit `cudaErrorNotPermitted`

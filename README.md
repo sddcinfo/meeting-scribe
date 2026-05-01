@@ -377,9 +377,42 @@ meeting-scribe wifi up --mode {admin,meeting}   # Bring up WiFi hotspot
 meeting-scribe wifi down
 meeting-scribe wifi status              # Live nmcli/wpa_cli state
 meeting-scribe validate [--quick|--full|--e2e]  # End-to-end backend health + quality probes
+meeting-scribe demo-smoke [--host HOST]  # Real e2e gate: meeting + PPTX upload + render + translate
+meeting-scribe hf-probe                 # Validate HF token + model EULA acceptance
+meeting-scribe doctor watch-pressure    # Tail /proc/pressure/memory with severity classification
 meeting-scribe versions list -m <id>    # List reprocess snapshots for a meeting
 meeting-scribe versions diff -m <id>    # Diff a snapshot against the current state
 meeting-scribe precommit                # Scan the working tree for sensitive data before commit
+```
+
+### Pre-flight: HuggingFace credential check
+
+Before any 30 GB model download, validate your token and per-model
+EULA acceptance — saves you a 20-minute round-trip on a 401/403:
+
+```bash
+# Interactive (reads HF_TOKEN from .env, prints the EULA URLs you may need):
+meeting-scribe hf-probe
+
+# Orchestrator/CI (token via stdin, machine-readable JSON, exit 0/64/65):
+printf '%s' "$HF_TOKEN" | meeting-scribe hf-probe --read-token-from-stdin --json
+```
+
+The `setup` first-run prompt now lists every gated-model URL and
+validates the token you paste before saving it to `.env`. See
+plan §1 of `plans/steady-plotting-eich.md` for the full design.
+
+### Real demo gate: `demo-smoke`
+
+`meeting-scribe validate --quick` only checks backend liveness.
+`demo-smoke` drives the actual demo path: starts a meeting, uploads
+a real PPTX fixture, polls until the deck renders + translates, then
+fires a live translate probe at the autosre vLLM. Target wall-time
+≤30 s on warm GPU. Use this as the acceptance gate after every cold
+install or post-upgrade restart:
+
+```bash
+meeting-scribe demo-smoke --host 192.168.1.100
 ```
 
 ## Per-Meeting Artifacts

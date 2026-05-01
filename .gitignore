@@ -64,6 +64,13 @@ benchmarks/samples/
 # Benchmark results — synthetic test data only, safe to commit
 # benchmarks/results/  (allowed)
 
+# Per-machine ad-hoc baselines are scratch data — committed runs use the
+# named-experiment pattern (`baseline_<date>_<change>.json`,
+# `<model>-<config>_<lang>_to_<lang>.json`, etc). The `_local_` infix
+# marks dev-box throwaways from 2026-04-30 OOM debugging — keep them
+# out of git so each machine's runs stay local.
+benchmarks/results/baseline_local_*.json
+
 # 2026-Q2 model-challenger bench — only decision_gate.md may land in repo.
 # All raw outputs (per-sample JSON, WAVs, MOS forms, RTTM, transcripts)
 # live offline at /data/meeting-scribe-fixtures/bench-runs/.  Belt + braces:
