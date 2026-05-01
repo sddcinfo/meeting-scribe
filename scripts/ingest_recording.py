@@ -5,7 +5,7 @@ that can be reviewed in the meeting history UI.
 
 Usage:
     PYTHONPATH=src .venv/bin/python3 scripts/ingest_recording.py \
-        --fixture ~/sddcinfo/test-fixtures/90min_english_2026-04-07 \
+        --fixture ~/test-fixtures/90min_english_2026-04-07 \
         --speakers "Brad,John,Leon,Joel,Mark"
 """
 
