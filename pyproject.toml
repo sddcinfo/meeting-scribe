@@ -67,6 +67,11 @@ dev = [
     "pytest-xdist>=3.6.0",
     "websockets==16.0",
     "ruff==0.15.12",
+    # Lockfile management — `pip-compile` regenerates requirements.lock
+    # from pyproject.toml; `pip-sync` (the destructive sibling that
+    # bootstrap.sh uses) lives in the same package. Adding here so the
+    # dev/customer venvs both have it available without a side install.
+    "pip-tools>=7.5.0",
 ]
 # Optional: higher-accuracy slide language detection. Adds ~170 MB but
 # materially improves classification of short/mixed-language slide text.
@@ -90,6 +95,23 @@ bench = [
 
 [project.scripts]
 meeting-scribe = "meeting_scribe.cli:main"
+
+[tool.meeting-scribe]
+# Imports the CLI entrypoint asserts before exec'ing the server. If any
+# of these fails to import, `meeting-scribe start` exits 78 (EX_CONFIG)
+# BEFORE any uvicorn socket bind — preventing the "port answers but app
+# is broken" window seen on 2026-05-01 when python-multipart was silently
+# missing from the customer venv. Add a name here when a new transitive
+# becomes load-bearing for a request path; the lockfile already pins the
+# version, this list pins the import-time presence.
+required-imports = [
+    "python_multipart",  # FastAPI form/UploadFile handling — slide upload route
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "huggingface_hub",
+    "yaml",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/meeting_scribe"]
@@ -211,4 +233,13 @@ markers = [
     "slow: long-running tests (>30s)",
     "browser: Playwright browser tests (run: playwright install chromium)",
     "manual: human-only checks tracked in tests/manual/README.md (never auto-run)",
+    # Plan §1.6a — lockfile drift check. Runs `pip-compile` against the
+    # committed pyproject.toml and asserts byte-equality with
+    # `requirements.lock`. Excluded from the default selection because
+    # it requires `pip-tools` to be installed in the venv.
+    "lockfile_sync: lockfile is byte-equal to a fresh pip-compile",
+    "demo_smoke: real e2e demo gate (start meeting + upload PPTX + ASR + translate)",
+    "qemu_kvm: requires qemu-kvm (real ISO smoke-test, ~45 min)",
+    "qemu_tcg: requires qemu-system-* (cross-arch ISO smoke-test in CI, ~2 hr)",
+    "real_gb10: requires a real GB10 host reachable on the LAN",
 ]

@@ -36,6 +36,7 @@ from meeting_scribe.cli import (
     config,  # noqa: F401
     doctor,  # noqa: F401
     gb10,  # noqa: F401
+    hf_probe,  # noqa: F401
     install_service,  # noqa: F401
     library,  # noqa: F401
     lifecycle,  # noqa: F401

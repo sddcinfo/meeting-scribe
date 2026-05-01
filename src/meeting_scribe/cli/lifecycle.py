@@ -28,6 +28,7 @@ from meeting_scribe.cli._common import (
     PID_FILE,
     PROJECT_ROOT,
     _api_request,
+    _assert_required_imports,
     _ensure_admin_tls_certs,
     _ensure_containers_running,
     _ensure_port80_bind,
@@ -108,6 +109,16 @@ def start(port: int, debug: bool, foreground: bool) -> None:
     if not venv_python.exists():
         click.secho("No .venv found. Run: python3 -m venv .venv && pip install -e .", fg="red")
         sys.exit(1)
+
+    # Pre-bind dependency self-check (plan §1.6b). Reads
+    # tool.meeting-scribe.required-imports from pyproject.toml and
+    # importlib.import_module()s each one. Exits 78 (EX_CONFIG) on
+    # ImportError BEFORE any socket creation, so the unit never
+    # reaches "Type=notify activating" with a stale/broken process
+    # listening on a half-bound port. Catches the 2026-05-01 PPTX
+    # upload regression where python-multipart was missing from the
+    # customer venv.
+    _assert_required_imports()
 
     # Guest HTTP listener binds port 80 in-process — requires
     # CAP_NET_BIND_SERVICE on the venv interpreter. Grant it before spawn.

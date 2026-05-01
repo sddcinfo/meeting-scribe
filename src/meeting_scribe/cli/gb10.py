@@ -211,13 +211,46 @@ def gb10_status(host: str) -> None:
 )
 def pull_models_cmd(host: str, include_shared: bool) -> None:
     """Download all required models to the GB10's HuggingFace cache."""
+    import os
+    import sys
+
+    from meeting_scribe.cli._common import PROJECT_ROOT
+    from meeting_scribe.hf_preflight import validate_hf_access
     from meeting_scribe.infra.containers import pull_models as _pull
     from meeting_scribe.infra.runner import get_runner
     from meeting_scribe.recipes import all_model_ids
 
+    model_ids = all_model_ids(include_shared=include_shared)
+
+    # Defense-in-depth HF gate (plan §1.3 call site #4). The orchestrator
+    # would have already run the local + remote probes; running again
+    # here is cheap (~2s) and idempotent. It catches the case where
+    # `meeting-scribe gb10 pull-models` is invoked stand-alone without
+    # going through `sddc gb10 onboard`.
+    hf_token = os.environ.get("HF_TOKEN", "")
+    if not hf_token:
+        dotenv = PROJECT_ROOT / ".env"
+        if dotenv.exists():
+            for line in dotenv.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("HF_TOKEN="):
+                    hf_token = line.partition("=")[2].strip().strip("'\"")
+                    break
+    if not hf_token:
+        click.secho(
+            "HF_TOKEN not configured. Run `meeting-scribe setup` first to "
+            "validate your token + accept gated-model EULAs.",
+            fg="red",
+        )
+        sys.exit(1)
+    click.echo(f"Validating HF_TOKEN ({hf_token[:6]}…) against {len(model_ids)} model(s)…")
+    report = validate_hf_access(hf_token, model_ids)
+    if not report.ok:
+        click.secho(report.render(), fg="red", err=True)
+        sys.exit(1)
+
     ssh = get_runner(host)
 
-    model_ids = all_model_ids(include_shared=include_shared)
     click.echo(f"Pulling {len(model_ids)} models to {host}:/data/huggingface...")
     for mid in model_ids:
         click.echo(f"  {mid}")

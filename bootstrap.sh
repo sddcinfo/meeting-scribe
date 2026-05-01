@@ -286,7 +286,26 @@ as_user '
         "$PYBIN" -m venv .venv
     fi
     .venv/bin/pip install --upgrade pip
-    .venv/bin/pip install -e .
+    # Lock-first install order (plan §1.6a). pip-sync prunes packages
+    # not in the lockfile in addition to installing/upgrading the pinned
+    # set, so a resumed bootstrap or post-fast-forward re-run produces a
+    # bit-for-bit lockfile-exact venv. Then install the project itself
+    # with --no-deps so pyproject.toml ranges cannot drag in newer
+    # transitives that would drift from the lock.
+    if [[ -f requirements.lock ]]; then
+        .venv/bin/pip install --quiet --upgrade pip-tools
+        .venv/bin/pip-sync --quiet requirements.lock
+        .venv/bin/pip install --quiet --no-deps -e .
+        .venv/bin/pip check
+    else
+        # Fallback for older checkouts without the lockfile (e.g. an
+        # operator running bootstrap.sh against a tag pre-this-change).
+        # Honest behaviour is the prior unlocked install; the lockfile-
+        # sync test gate (scripts/check_lockfile_in_sync.py) catches
+        # missing lockfiles in CI before they reach customers.
+        echo "[bootstrap] WARNING: requirements.lock missing, falling back to unlocked editable install"
+        .venv/bin/pip install -e .
+    fi
 '
 
 # ── 7. Sister-clone auto-sre ──────────────────────────────────────

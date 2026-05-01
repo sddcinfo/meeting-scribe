@@ -35,6 +35,65 @@ _SYSTEMD_UNIT = "meeting-scribe.service"
 _COMPOSE_FILE = PROJECT_ROOT / "docker-compose.gb10.yml"
 _REQUIRED_CONTAINERS = ["scribe-diarization", "scribe-tts", "scribe-asr"]
 
+# sysexits — EX_CONFIG. Used by the required-imports self-check below.
+_EX_CONFIG = 78
+
+
+def _assert_required_imports() -> None:
+    """Pre-bind dependency probe (plan §1.6b).
+
+    Reads `tool.meeting-scribe.required-imports` from `pyproject.toml`
+    and `importlib.import_module()`s each one. Exits 78 (EX_CONFIG)
+    on the first ImportError. Called by `cli/lifecycle.py:start()`
+    BEFORE any subprocess spawn or `os.execvpe`, so the failure
+    happens before any socket is created — never reaches the
+    uvicorn-binds-then-lifespan-runs window.
+
+    Tolerates a missing pyproject.toml or a missing list (returns
+    silently): a stripped runtime layout shouldn't crash the server,
+    only a missing actual import should. The lockfile is the
+    authoritative install gate; this is a startup tripwire that
+    catches the case where the lockfile was wired up but
+    `pip install -e .` skipped a dep.
+    """
+    import importlib
+    import sys
+    import tomllib
+
+    pyproject = PROJECT_ROOT / "pyproject.toml"
+    if not pyproject.is_file():
+        return
+    try:
+        cfg = tomllib.loads(pyproject.read_text())
+    except (OSError, tomllib.TOMLDecodeError):
+        return
+    required = (
+        cfg.get("tool", {}).get("meeting-scribe", {}).get("required-imports", [])
+    )
+    if not isinstance(required, list):
+        return
+    missing: list[str] = []
+    for name in required:
+        if not isinstance(name, str):
+            continue
+        try:
+            importlib.import_module(name)
+        except ImportError as e:
+            missing.append(f"{name} ({e})")
+    if missing:
+        click.secho(
+            "MissingDependencyError: pyproject.toml lists imports that are "
+            "not installed in the active venv:\n  - "
+            + "\n  - ".join(missing)
+            + "\n\nThis usually means `pip install -e .` skipped a dependency "
+            "(e.g. an `editable + lockfile` race during bootstrap). Re-run:\n"
+            "    pip install -r requirements.lock && pip install --no-deps -e .\n"
+            "or re-run `bootstrap.sh` if the venv was hand-edited.",
+            fg="red",
+            err=True,
+        )
+        sys.exit(_EX_CONFIG)
+
 
 def _read_pid(pid_file: Path) -> int | None:
     """Return the PID from `pid_file` if the process is alive, else None."""
