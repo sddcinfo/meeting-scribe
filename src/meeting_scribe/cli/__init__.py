@@ -34,6 +34,7 @@ from meeting_scribe.cli import (
     bench,  # noqa: F401
     benchmark,  # noqa: F401
     config,  # noqa: F401
+    doctor,  # noqa: F401
     gb10,  # noqa: F401
     install_service,  # noqa: F401
     library,  # noqa: F401

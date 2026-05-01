@@ -218,6 +218,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     _silence_watchdog_task = asyncio.create_task(
         _health_monitors.silence_watchdog_loop(), name="silence-watchdog"
     )
+    # Memory-pressure canary — added 2026-05-01 after the 2026-04-30
+    # OOM that killed scribe with no in-process warning. PSI samples
+    # surface host swap thrash before the kernel global-OOMs.
+    _mem_pressure_task = asyncio.create_task(
+        _health_monitors.mem_pressure_monitor(), name="mem-pressure-monitor"
+    )
 
     # W6b: ASR recovery supervisor. Awaits backend's
     # `_recovery_requested` event (set by the watchdog escalation
@@ -423,6 +429,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         _loop_lag_task,
         _health_eval_task,
         _silence_watchdog_task,
+        _mem_pressure_task,
     ):
         _t.cancel()
     for _t in (
@@ -430,6 +437,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         _loop_lag_task,
         _health_eval_task,
         _silence_watchdog_task,
+        _mem_pressure_task,
     ):
         try:
             await _t
