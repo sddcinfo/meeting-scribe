@@ -44,10 +44,16 @@ jobs:
       - run: pip install -e ".[dev]"
       - name: Marker-orphan check
         run: python scripts/hooks/check_marker_orphans.py
-      - name: Pytest unit suite (xdist auto-parallel)
-        # -n auto = one worker per CPU core. Github runners have 4 cores,
-        # so this is ~3.5x faster than serial without hammering memory.
-        run: PYTHONPATH=src pytest tests/ -n auto --tb=short
+      - name: Pytest unit suite
+        # Run serially. Two tests are race-sensitive under xdist
+        # auto-parallel (test_probe_fail_then_success_with_auto_recreate
+        # uses an AsyncMock against the sync compose_restart called
+        # via asyncio.to_thread, and test_missing_profile_triggers_first_run_bootstrap
+        # depends on subprocess state-file ordering that xdist worker
+        # scheduling can disrupt). Serial runs in ~65s on a Github
+        # runner — fast enough that parallelizing isn't worth the
+        # flakiness.
+        run: PYTHONPATH=src pytest tests/ --tb=short
       - name: JS unit suite
         # `node --test <dir>` only walks for *.test.js/cjs/mjs in some
         # versions; pass an explicit glob so we get every .test.mjs

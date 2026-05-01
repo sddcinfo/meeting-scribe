@@ -80,3 +80,29 @@ updates:
     labels:
       - "dependencies"
       - "ci"
+
+  # Docker base images. The 2026-04-30 ASR cascade (live meeting failure
+  # via cudaErrorNotPermitted + cuDNN/cuBLAS contention) traced back to
+  # `vllm/vllm-openai:latest` silently rolling forward from v0.19.x to
+  # v0.20.0, whose stricter KV-cache accounting invalidated the recipe.
+  # Pin contracts for ASR base images now live in
+  # `containers/vllm-asr/Dockerfile` and `containers/vllm-asr/README.md`;
+  # Dependabot watches the FROM lines and opens explicit, reviewable
+  # upgrade PRs instead of letting :latest drift unobserved.
+  - package-ecosystem: "docker"
+    directory: "/containers/vllm-asr"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Tokyo"
+    target-branch: "dev"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "vllm"
+    groups:
+      docker-vllm:
+        patterns:
+          - "vllm/vllm-openai"

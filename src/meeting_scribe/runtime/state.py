@@ -68,6 +68,19 @@ _client_prefs: dict[WebSocket, Any] = {}  # dict[WebSocket, ClientSession]
 _audio_out_clients: set[WebSocket] = set()
 _audio_out_prefs: dict[WebSocket, Any] = {}  # dict[WebSocket, ClientSession]
 audio_writer: AudioWriter | AudioWriterProcess | None = None
+
+
+def current_recording_pcm_offset() -> int:
+    """Current byte offset of the live recording.pcm write head, or 0
+    if no audio writer is open. W6a's recovery state machine uses
+    this to bound replay windows after ASR recovers — see
+    `meeting_scribe.backends.asr_vllm` for the consumer."""
+    if audio_writer is None:
+        return 0
+    # AudioWriter and AudioWriterProcess both expose .current_offset.
+    return getattr(audio_writer, "current_offset", 0)
+
+
 meeting_start_time: float = 0.0  # monotonic time for audio alignment
 detected_speakers: list[DetectedSpeaker] = []  # per-meeting speaker state
 speaker_verifier: Any = None  # SpeakerVerifier instance

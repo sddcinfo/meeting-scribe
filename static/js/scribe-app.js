@@ -3759,6 +3759,43 @@ async function checkStatus() {
       window._lastTtsHealth = ttsHealth;
     }
 
+    // ── Pre-emptive Start-button gate (W4 Fix #3) ─────────────────
+    // Disable the Start button + show a "Backends warming up…" banner
+    // while any REQUIRED backend (ASR or translate) is not yet ready.
+    // The operator gets a visible "wait" affordance instead of clicking
+    // Start during cold-start and discovering the 503 the hard way.
+    // The backend's wait-with-deadline preflight covers the subtler
+    // case of a backend that's "ready" by /v1/models but slow on the
+    // first inference call; together they hide cold-start latency from
+    // the operator entirely.
+    {
+      const asrReady = !!(details.asr && details.asr.ready);
+      const translateReady = !!(details.translate && details.translate.ready);
+      const allRequiredReady = asrReady && translateReady;
+      const banner = document.getElementById('backends-warming-banner');
+      const bannerDetail = document.getElementById('backends-warming-detail');
+      const startBtn = document.getElementById('btn-start-meeting');
+      if (banner && startBtn) {
+        if (allRequiredReady) {
+          banner.style.display = 'none';
+          // Don't override `disabled` set by other gates (e.g. mid-start
+          // double-click guard) — only re-enable if the gate set it.
+          if (startBtn.dataset.gatedByWarmup === '1') {
+            startBtn.disabled = false;
+            delete startBtn.dataset.gatedByWarmup;
+          }
+        } else {
+          const waiting = [];
+          if (!asrReady) waiting.push(`ASR (${(details.asr && details.asr.detail) || 'loading'})`);
+          if (!translateReady) waiting.push(`Translate (${(details.translate && details.translate.detail) || 'loading'})`);
+          if (bannerDetail) bannerDetail.textContent = waiting.join(' · ');
+          banner.style.display = '';
+          startBtn.disabled = true;
+          startBtn.dataset.gatedByWarmup = '1';
+        }
+      }
+    }
+
     // Crash red-dot on the server pill (if backend reported an unhandled
     // exception from a background task). Sanitised — only ts/component/code.
     const crash = (data.metrics || {}).crash;
@@ -9368,4 +9405,47 @@ function updateMetricsDashboard(data) {
     .join(' ');
   const backendsEl = document.getElementById('mc-backends');
   if (backendsEl) backendsEl.innerHTML = backendStr;
+
+  // W5 — reliability tiles. Color-coded via CSS class so warn/crit
+  // states pop visually before they kill a meeting.
+  const setColored = (id, text, level) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = `metric-card-value ${level === 'crit' ? 'metric-value-crit' : level === 'warn' ? 'metric-value-warn' : ''}`;
+  };
+
+  // ASR RTT p95 — backend control-path latency.  Warn >800ms, crit >2000ms.
+  const asrRtt = (m.asr_request_rtt_ms && m.asr_request_rtt_ms.p95) || null;
+  if (asrRtt === null) {
+    setColored('mc-asr-rtt-p95', '—', 'ok');
+  } else {
+    const lvl = asrRtt > 2000 ? 'crit' : asrRtt > 800 ? 'warn' : 'ok';
+    setColored('mc-asr-rtt-p95', `${asrRtt.toFixed(0)}ms`, lvl);
+  }
+
+  // Watchdog fires per minute.  Warn >0.5/min, crit >2/min.
+  const wdRate = m.watchdog_fires_per_min || 0;
+  const wdLvl = wdRate > 2 ? 'crit' : wdRate > 0.5 ? 'warn' : 'ok';
+  setColored('mc-watchdog-fires', `${wdRate}`, wdLvl);
+
+  // Time since last ASR final.  Warn >5s, crit >15s.  null on a fresh
+  // meeting (no finals yet) — render '—' rather than alarming.
+  const tsf = m.time_since_last_final_s;
+  if (tsf === null || tsf === undefined) {
+    setColored('mc-since-final', '—', 'ok');
+  } else {
+    const lvl = tsf > 15 ? 'crit' : tsf > 5 ? 'warn' : 'ok';
+    setColored('mc-since-final', `${tsf.toFixed(1)}s`, lvl);
+  }
+
+  // GPU free MB.  Warn <8GB, crit <4GB.  Inverse of the other tiles.
+  const freeMb = gpu ? (gpu.vram_free_mb || 0) : null;
+  if (freeMb === null) {
+    setColored('mc-gpu-free', '—', 'ok');
+  } else {
+    const lvl = freeMb < 4096 ? 'crit' : freeMb < 8192 ? 'warn' : 'ok';
+    const gb = (freeMb / 1024).toFixed(1);
+    setColored('mc-gpu-free', `${gb} GB`, lvl);
+  }
 }

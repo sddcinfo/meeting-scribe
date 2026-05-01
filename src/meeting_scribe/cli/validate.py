@@ -33,6 +33,16 @@ from meeting_scribe.cli import cli
     "--e2e", "mode", flag_value="e2e", help="Full + live-meeting end-to-end lag (≤10min)."
 )
 @click.option(
+    "--customer-flow",
+    "mode",
+    flag_value="customer-flow",
+    help=(
+        "Post-install device check: systemd, radio, sudoers.d, "
+        "deps, /api/status latency, real PPTX upload, meeting → AP → QR (≤2 min). "
+        "Run on the customer GB10 itself after `sudo ./bootstrap.sh`."
+    ),
+)
+@click.option(
     "--hardware-class",
     default="gb10",
     show_default=True,
@@ -41,16 +51,21 @@ from meeting_scribe.cli import cli
 @click.option("--json", "json_only", is_flag=True, help="Emit machine-readable JSON to stdout.")
 def validate(mode: str, hardware_class: str, json_only: bool) -> None:
     """Validate every backend reaches AND produces sane output."""
-    from meeting_scribe.validate import run_validate
-
     if not json_only:
         click.echo(f"meeting-scribe validate --{mode} (baseline={hardware_class})")
         click.echo("")
 
     try:
-        report = asyncio.run(
-            run_validate(mode=mode, hardware_class=hardware_class, json_only=json_only)
-        )
+        if mode == "customer-flow":
+            from meeting_scribe.validate_customer import run_customer_flow
+
+            report = asyncio.run(run_customer_flow(json_only=json_only))
+        else:
+            from meeting_scribe.validate import run_validate
+
+            report = asyncio.run(
+                run_validate(mode=mode, hardware_class=hardware_class, json_only=json_only)
+            )
     except KeyboardInterrupt:
         click.secho("interrupted", fg="yellow", err=True)
         sys.exit(130)

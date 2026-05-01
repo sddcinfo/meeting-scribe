@@ -195,6 +195,23 @@ class AudioWriter:
         """Current drift in milliseconds (gap-adjusted)."""
         return self._drift_ms
 
+    @property
+    def current_offset(self) -> int:
+        """Current write position in recording.pcm — the byte offset
+        that the next write will start from.
+
+        W6a uses this to mark the boundary of a recovery window: when
+        the ASR watchdog escalates, the supervisor reads from the
+        earliest unresolved submission's offset up to the current
+        offset (which keeps growing while live audio is suppressed)
+        and replays that range through the recovered backend.
+
+        recording.pcm is the canonical archive of meeting audio
+        regardless of recovery state — the writer keeps appending
+        every chunk while the ASR backend's live submissions are
+        suppressed during RECOVERY_PENDING / REPLAYING."""
+        return self._total_written
+
     def write_append(self, pcm: bytes) -> None:
         """Simple append (when time tracking is not needed)."""
         if self._closed:
@@ -333,6 +350,12 @@ class AudioWriterProcess:
 
     @property
     def total_bytes(self) -> int:
+        return self._total_written
+
+    @property
+    def current_offset(self) -> int:
+        """Current write position — see AudioWriter.current_offset.
+        AudioWriterProcess shares the same byte-counter contract."""
         return self._total_written
 
     def close(self) -> None:

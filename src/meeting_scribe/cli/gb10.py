@@ -197,15 +197,60 @@ def gb10_status(host: str) -> None:
     default="localhost",
     help="GB10 IP address (default: localhost)",
 )
-def pull_models_cmd(host: str) -> None:
+@click.option(
+    "--include-shared/--no-include-shared",
+    default=True,
+    help=(
+        "Include recipes flagged `mode: shared` (the autosre-owned "
+        "translation model). Default ON — customer-install GB10s "
+        "always run autosre locally and need the model pre-cached "
+        "to avoid `LocalEntryNotFoundError` crash-loops on first "
+        "boot. Pass --no-include-shared on a dev box that explicitly "
+        "doesn't run autosre to skip the ~35 GB Qwen3.6 download."
+    ),
+)
+def pull_models_cmd(host: str, include_shared: bool) -> None:
     """Download all required models to the GB10's HuggingFace cache."""
+    import os
+    import sys
+
+    from meeting_scribe.cli._common import PROJECT_ROOT
+    from meeting_scribe.hf_preflight import validate_hf_access
     from meeting_scribe.infra.containers import pull_models as _pull
     from meeting_scribe.infra.runner import get_runner
     from meeting_scribe.recipes import all_model_ids
 
+    model_ids = all_model_ids(include_shared=include_shared)
+
+    # Defense-in-depth HF gate (plan §1.3 call site #4). The orchestrator
+    # would have already run the local + remote probes; running again
+    # here is cheap (~2s) and idempotent. It catches the case where
+    # `meeting-scribe gb10 pull-models` is invoked stand-alone without
+    # going through `sddc gb10 onboard`.
+    hf_token = os.environ.get("HF_TOKEN", "")
+    if not hf_token:
+        dotenv = PROJECT_ROOT / ".env"
+        if dotenv.exists():
+            for line in dotenv.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("HF_TOKEN="):
+                    hf_token = line.partition("=")[2].strip().strip("'\"")
+                    break
+    if not hf_token:
+        click.secho(
+            "HF_TOKEN not configured. Run `meeting-scribe setup` first to "
+            "validate your token + accept gated-model EULAs.",
+            fg="red",
+        )
+        sys.exit(1)
+    click.echo(f"Validating HF_TOKEN ({hf_token[:6]}…) against {len(model_ids)} model(s)…")
+    report = validate_hf_access(hf_token, model_ids)
+    if not report.ok:
+        click.secho(report.render(), fg="red", err=True)
+        sys.exit(1)
+
     ssh = get_runner(host)
 
-    model_ids = all_model_ids()
     click.echo(f"Pulling {len(model_ids)} models to {host}:/data/huggingface...")
     for mid in model_ids:
         click.echo(f"  {mid}")
@@ -216,13 +261,12 @@ def pull_models_cmd(host: str) -> None:
 @gb10.command("start")
 @click.option("--port", "-p", default=DEFAULT_PORT, help="Server port")
 @click.option("--debug", is_flag=True, help="Enable debug logging")
-def gb10_start(port: int, debug: bool) -> None:
+@click.pass_context
+def gb10_start(ctx: click.Context, port: int, debug: bool) -> None:
     """Start meeting-scribe server with GB10 profile.
 
     Binds to 0.0.0.0 so the server is accessible from the WiFi hotspot.
     """
-    from click.testing import CliRunner
-
     from meeting_scribe.cli.lifecycle import start
 
     os.environ["SCRIBE_PROFILE"] = "gb10"
@@ -230,8 +274,9 @@ def gb10_start(port: int, debug: bool) -> None:
     click.echo("Starting with GB10 profile (Qwen3-ASR, vLLM, pyannote)...")
     click.echo(f"  Bind: 0.0.0.0:{port} (accessible from hotspot)")
 
-    runner = CliRunner()
-    args = [f"--port={port}", "--foreground"]
-    if debug:
-        args.append("--debug")
-    runner.invoke(start, args)
+    # ctx.invoke runs the target command in the live click.Context so
+    # its click.echo output reaches the terminal. The previous
+    # CliRunner().invoke(...) was Click's *test* harness — it captured
+    # stdout/stderr into a Result object and silently swallowed every
+    # status message, masking failures behind exit code 0.
+    ctx.invoke(start, port=port, foreground=True, debug=debug)

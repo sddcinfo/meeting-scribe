@@ -142,7 +142,13 @@ def _deep_copy_settings() -> dict:
 
 
 def _run_nmcli_sync(args: list[str], timeout: int) -> subprocess.CompletedProcess[str]:
-    """Run ``sudo nmcli <args>`` synchronously. Errors are returned, not raised."""
+    """Run ``sudo nmcli <args>`` synchronously. Errors are returned, not raised.
+
+    Any call here is potentially state-mutating (``con add``, ``con modify``,
+    ``con up``, ``con down``), so we drop the read-side cache on entry —
+    the next read after this returns will see fresh state.
+    """
+    _invalidate_ap_state_cache()
     return subprocess.run(
         ["sudo", "nmcli", *args],
         capture_output=True,
@@ -150,6 +156,55 @@ def _run_nmcli_sync(args: list[str], timeout: int) -> subprocess.CompletedProces
         timeout=timeout,
         check=False,
     )
+
+
+# ── nmcli read-state cache ──────────────────────────────────────────────
+#
+# /api/admin/settings polls _nmcli_ap_is_active() and (when active)
+# _nmcli_read_live_ap_credentials() on every open of the admin panel.
+# Each call shells out to ``sudo nmcli`` — even with passwordless sudo,
+# the PAM session + NM D-Bus round-trip adds up. The AP state on a
+# customer device only changes when *we* call ``_run_nmcli_sync`` for a
+# write (con add/modify/up/down), so a tiny TTL cache saves the bulk of
+# the overhead with no risk of stale reads. ``_run_nmcli_sync`` clears
+# the cache so the very next read after a write sees the truth.
+
+_AP_STATE_TTL_S = 5.0
+
+
+@dataclass
+class _ApStateCache:
+    is_active: bool | None = None
+    credentials: tuple[str, str] | None = None
+    is_active_at: float = 0.0
+    credentials_at: float = 0.0
+
+
+_ap_state_cache = _ApStateCache()
+
+
+def _invalidate_ap_state_cache() -> None:
+    """Drop cached AP state. Called automatically on every nmcli write."""
+    _ap_state_cache.is_active = None
+    _ap_state_cache.credentials = None
+    _ap_state_cache.is_active_at = 0.0
+    _ap_state_cache.credentials_at = 0.0
+
+
+def _ap_state_cache_stats() -> dict[str, float]:
+    """Test-only introspection helper."""
+    return {
+        "is_active_age_s": (
+            (time.monotonic() - _ap_state_cache.is_active_at)
+            if _ap_state_cache.is_active is not None
+            else float("inf")
+        ),
+        "credentials_age_s": (
+            (time.monotonic() - _ap_state_cache.credentials_at)
+            if _ap_state_cache.credentials is not None
+            else float("inf")
+        ),
+    }
 
 
 def _parse_nmcli_fields(output: str) -> dict[str, str]:
@@ -174,9 +229,28 @@ def _nmcli_read_live_ap_credentials() -> tuple[str, str] | None:
     Reads via ``nmcli --show-secrets`` so the psk is returned in plaintext.
     This is the authoritative source for what the radio is actually
     broadcasting — the state file is a derived cache of this.
+
+    Cached for ``_AP_STATE_TTL_S`` to amortize the sudo+nmcli cost
+    across rapid polls (admin-settings panel poll, view broadcast
+    refresh). The cache is invalidated on every nmcli write — see
+    ``_run_nmcli_sync``.
     """
-    proc = _run_nmcli_sync(
+    now = time.monotonic()
+    if (
+        _ap_state_cache.credentials is not None
+        and now - _ap_state_cache.credentials_at < _AP_STATE_TTL_S
+    ):
+        # Sentinel ``("", "")`` distinguishes "cached: no creds" from
+        # "not cached"; collapse it back to None for the caller.
+        creds = _ap_state_cache.credentials
+        return None if creds == ("", "") else creds
+
+    # ``--show-secrets`` is a NM read; classify it as such so the
+    # invalidate side-effect inside _run_nmcli_sync doesn't fire here.
+    proc = subprocess.run(
         [
+            "sudo",
+            "nmcli",
             "--show-secrets",
             "-t",
             "-f",
@@ -185,28 +259,53 @@ def _nmcli_read_live_ap_credentials() -> tuple[str, str] | None:
             "show",
             AP_CON_NAME,
         ],
+        capture_output=True,
+        text=True,
         timeout=_NMCLI_CON_SHOW_TIMEOUT,
+        check=False,
     )
     if proc.returncode != 0:
-        return None
-    fields = _parse_nmcli_fields(proc.stdout)
-    ssid = fields.get("802-11-wireless.ssid", "")
-    psk = fields.get("802-11-wireless-security.psk", "")
-    if not ssid:
-        return None
-    return ssid, psk
+        result: tuple[str, str] | None = None
+    else:
+        fields = _parse_nmcli_fields(proc.stdout)
+        ssid = fields.get("802-11-wireless.ssid", "")
+        psk = fields.get("802-11-wireless-security.psk", "")
+        result = (ssid, psk) if ssid else None
+
+    _ap_state_cache.credentials = result if result is not None else ("", "")
+    _ap_state_cache.credentials_at = now
+    return result
 
 
 def _nmcli_ap_is_active() -> bool:
-    """Return True if the AP profile is currently active on the radio."""
-    proc = _run_nmcli_sync(
-        ["-t", "-f", "NAME,DEVICE", "con", "show", "--active"],
+    """Return True if the AP profile is currently active on the radio.
+
+    Cached for ``_AP_STATE_TTL_S``; the cache is invalidated on every
+    nmcli write. See ``_run_nmcli_sync``.
+    """
+    now = time.monotonic()
+    if (
+        _ap_state_cache.is_active is not None
+        and now - _ap_state_cache.is_active_at < _AP_STATE_TTL_S
+    ):
+        return _ap_state_cache.is_active
+
+    proc = subprocess.run(
+        ["sudo", "nmcli", "-t", "-f", "NAME,DEVICE", "con", "show", "--active"],
+        capture_output=True,
+        text=True,
         timeout=_NMCLI_CON_SHOW_TIMEOUT,
+        check=False,
     )
     if proc.returncode != 0:
-        return False
-    prefix = f"{AP_CON_NAME}:"
-    return any(line.startswith(prefix) for line in proc.stdout.splitlines())
+        result = False
+    else:
+        prefix = f"{AP_CON_NAME}:"
+        result = any(line.startswith(prefix) for line in proc.stdout.splitlines())
+
+    _ap_state_cache.is_active = result
+    _ap_state_cache.is_active_at = now
+    return result
 
 
 def _nmcli_connection_exists() -> bool:

@@ -52,11 +52,24 @@ COMPETITIVE-LANDSCAPE.md
 # by `meeting-scribe validate --full`.
 !tests/fixtures/validate/*.wav
 
+# Allowlist: synthetic-probe fixture is a 1.5s 200 Hz tone used by the
+# meeting-start preflight gate (W4). Generated deterministically by
+# scripts/gen_probe_audio_fixture.py, so committing the small (~48 KB)
+# binary keeps test setup zero-config.
+!tests/fixtures/probe_audio_1500ms.wav
+
 # Benchmark audio samples — contain voice recordings, never commit
 benchmarks/samples/
 
 # Benchmark results — synthetic test data only, safe to commit
 # benchmarks/results/  (allowed)
+
+# Per-machine ad-hoc baselines are scratch data — committed runs use the
+# named-experiment pattern (`baseline_<date>_<change>.json`,
+# `<model>-<config>_<lang>_to_<lang>.json`, etc). The `_local_` infix
+# marks dev-box throwaways from 2026-04-30 OOM debugging — keep them
+# out of git so each machine's runs stay local.
+benchmarks/results/baseline_local_*.json
 
 # 2026-Q2 model-challenger bench — only decision_gate.md may land in repo.
 # All raw outputs (per-sample JSON, WAVs, MOS forms, RTTM, transcripts)

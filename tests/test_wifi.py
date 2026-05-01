@@ -44,6 +44,13 @@ def _reset_settings_cache() -> None:
     _settings_store._settings_cache_mtime = 0.0
 
 
+@pytest.fixture(autouse=True)
+def _reset_ap_state_cache() -> None:
+    """Drop wifi's TTL-cached AP state between tests so values from
+    one test don't bleed into the next."""
+    wifi._invalidate_ap_state_cache()
+
+
 @pytest.fixture
 def state_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Redirect HOTSPOT_STATE_FILE to a per-test tmp path."""

@@ -2,18 +2,13 @@
 
 Mounts a synthetic FastAPI stack that serves the real index.html +
 popout-layout modules + terminal panel, then exercises preset switch,
-gutter drag, state persistence, availability pruning, and keyboard
-shortcuts. Uses the tmux-socket isolation fixture in conftest.py —
-never touches the user's live `-L scribe` socket.
+state persistence, availability pruning, edit-menu mutations, and
+keyboard shortcuts. Uses the tmux-socket isolation fixture in
+``conftest.py`` — never touches the user's live ``-L scribe`` socket.
 
-NOTE: Most assertions in this file were written against an older
-6-preset layout (translator/developer/fullstack/triple/sidebyside/demo)
-that was simplified to 3 presets in static/js/popout-layout-presets.js
-(translate/translator/triple). The tests need a behavior-based rewrite
-against the current preset set rather than a search-and-replace —
-several of them assert against panels/terminal-attach behavior that
-no longer maps cleanly to any current preset. Marked skip module-wide
-until the rewrite lands; tracked for follow-up.
+Tests target the current 3-preset registry
+(``translate / translator / triple``); ``triple`` is the only preset
+that includes a terminal pane.
 """
 
 from __future__ import annotations
@@ -34,15 +29,7 @@ from meeting_scribe.terminal.bootstrap import BootstrapConfig, register_bootstra
 from meeting_scribe.terminal.registry import ActiveTerminals
 from meeting_scribe.terminal.router import TerminalRouterConfig, register_terminal_routes
 
-pytestmark = [
-    pytest.mark.browser,
-    pytest.mark.skip(
-        reason="Stale preset list (developer/fullstack/sidebyside/demo were "
-        "removed in the popout-layout simplification to 3 presets — "
-        "translate/translator/triple). Needs behavior-based rewrite, "
-        "not a name swap."
-    ),
-]
+pytestmark = pytest.mark.browser
 
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
@@ -78,7 +65,6 @@ def scribe_layout_server(tmp_path, monkeypatch) -> Generator[dict[str, Any]]:
         ),
     )
 
-    # Minimal admin-settings stub for the popout UI.
     @app.get("/api/admin/settings")
     async def s(_r: Request):
         return JSONResponse(
@@ -148,10 +134,28 @@ def _authorize_popout(page, srv) -> None:
     )
 
 
+def _terminal_buffer_contains(page, sentinel: str) -> bool:
+    return page.evaluate(
+        """(needle) => {
+            const t = window._terminalPanel && window._terminalPanel._term;
+            if (!t) return false;
+            for (const k of ['active','normal','alternate']) {
+                const buf = t.buffer[k]; if (!buf) continue;
+                for (let i = 0; i < buf.length; i++) {
+                    const line = buf.getLine(i);
+                    if (line && line.translateToString(true).includes(needle)) return true;
+                }
+            }
+            return false;
+        }""",
+        sentinel,
+    )
+
+
 # ── Tests ─────────────────────────────────────────────────────────
 
 
-def test_popout_picker_renders_with_no_term_button(page, scribe_layout_server):
+def test_popout_picker_renders_three_presets(page, scribe_layout_server):
     _authorize_popout(page, scribe_layout_server)
     state = page.evaluate(
         """() => ({
@@ -162,21 +166,16 @@ def test_popout_picker_renders_with_no_term_button(page, scribe_layout_server):
     )
     assert state["pickerExists"]
     assert state["termBtnGone"]
-    assert state["options"] == [
-        "translator",
-        "developer",
-        "fullstack",
-        "triple",
-        "sidebyside",
-        "demo",
-    ]
+    assert state["options"] == ["translate", "translator", "triple"]
 
 
-def test_switch_to_developer_attaches_terminal(page, scribe_layout_server):
+def test_switch_to_triple_attaches_terminal(page, scribe_layout_server):
+    """Triple is the only preset with a terminal pane — switching to it
+    should mount + go live exactly one PTY session.
+    """
     srv = scribe_layout_server
     _authorize_popout(page, srv)
-    page.select_option("#popout-layout-picker", "developer")
-    # Wait for the terminal panel to mount + go live.
+    page.select_option("#popout-layout-picker", "triple")
     page.wait_for_function(
         "() => document.querySelector('.lyt-slot[data-panel=terminal] .terminal-panel') !== null",
         timeout=10000,
@@ -186,17 +185,18 @@ def test_switch_to_developer_attaches_terminal(page, scribe_layout_server):
         timeout=10000,
     )
     assert len(srv["registry"].items) == 1
-    # Stored preset reflects the change.
-    assert page.evaluate("() => window._popoutLayoutState().preset") == "developer"
+    assert page.evaluate("() => window._popoutLayoutState().preset") == "triple"
 
 
-def test_switching_presets_preserves_terminal_state(page, scribe_layout_server):
-    """Cached-root re-parenting: switching preset must NOT rebuild the
-    terminal instance — the xterm buffer's previous output survives.
+def test_terminal_state_survives_preset_swap(page, scribe_layout_server):
+    """Cached-root re-parenting: switching away from ``triple`` removes
+    the terminal slot from the DOM but the registry keeps the xterm
+    instance alive. Switching back must re-parent the same instance,
+    not rebuild it — the buffer's previous output must still be there.
     """
     srv = scribe_layout_server
     _authorize_popout(page, srv)
-    page.select_option("#popout-layout-picker", "developer")
+    page.select_option("#popout-layout-picker", "triple")
     page.wait_for_function(
         "() => document.querySelector('.term-status')?.dataset.state === 'live'",
         timeout=10000,
@@ -204,7 +204,6 @@ def test_switching_presets_preserves_terminal_state(page, scribe_layout_server):
     page.focus(".term-mount .xterm-helper-textarea")
     page.wait_for_timeout(300)
     page.keyboard.type("echo LAYOUT-STATE-42\n")
-    # Wait until the sentinel lands in the buffer.
     page.wait_for_function(
         """() => {
             const t = window._terminalPanel && window._terminalPanel._term;
@@ -221,52 +220,59 @@ def test_switching_presets_preserves_terminal_state(page, scribe_layout_server):
         timeout=5000,
     )
 
-    # Swap to fullstack — terminal re-parents into a new slot. Fullstack
-    # prunes its inner h-split when no slide deck is loaded, collapsing
-    # to [transcript / terminal] — the slot count changes, proving a real
-    # re-layout, while the cached xterm instance carries over.
-    page.select_option("#popout-layout-picker", "fullstack")
+    # Switch away to translator (no terminal) — terminal slot leaves the
+    # DOM. The cached xterm root in PopoutPanelRegistry survives.
+    page.select_option("#popout-layout-picker", "translator")
     page.wait_for_function(
-        "() => window._popoutLayoutState().preset === 'fullstack'",
+        "() => window._popoutLayoutState().preset === 'translator'",
         timeout=3000,
     )
-    page.wait_for_timeout(600)  # let the async render settle
-    # Sentinel must still be in the buffer — xterm was moved, not rebuilt.
-    buf_has = page.evaluate(
-        """() => {
-            const t = window._terminalPanel && window._terminalPanel._term;
-            if (!t) return false;
-            for (const k of ['active','normal','alternate']) {
-                const buf = t.buffer[k]; if (!buf) continue;
-                for (let i = 0; i < buf.length; i++) {
-                    const line = buf.getLine(i);
-                    if (line && line.translateToString(true).includes('LAYOUT-STATE-42')) return true;
-                }
-            }
-            return false;
-        }"""
+    page.wait_for_timeout(400)
+    # Sanity: the terminal is no longer in the rendered tree.
+    assert page.evaluate("() => document.querySelector('.lyt-slot[data-panel=terminal]')") is None
+
+    # Back to triple — the same xterm instance must be re-parented and
+    # the sentinel from before the swap must still be in the buffer.
+    page.select_option("#popout-layout-picker", "triple")
+    page.wait_for_function(
+        "() => document.querySelector('.lyt-slot[data-panel=terminal] .terminal-panel') !== null",
+        timeout=8000,
     )
-    assert buf_has, "terminal state was lost on preset swap"
+    page.wait_for_timeout(400)
+    assert _terminal_buffer_contains(page, "LAYOUT-STATE-42"), (
+        "terminal state was lost on preset swap"
+    )
 
 
-def test_keyboard_ctrl_shift_N_picks_preset(page, scribe_layout_server):
+def test_keyboard_ctrl_shift_digit_picks_preset(page, scribe_layout_server):
+    """Ctrl+Shift+1..3 jump to ``translate / translator / triple``
+    respectively (per ``PRESET_ORDER``).
+    """
     _authorize_popout(page, scribe_layout_server)
     page.evaluate("() => document.body.focus()")
-    page.keyboard.press("Control+Shift+2")  # developer
+    page.keyboard.press("Control+Shift+1")
     page.wait_for_function(
-        "() => window._popoutLayoutState().preset === 'developer'",
+        "() => window._popoutLayoutState().preset === 'translate'",
         timeout=3000,
     )
-    page.keyboard.press("Control+Shift+4")  # triple
+    page.keyboard.press("Control+Shift+3")
     page.wait_for_function(
         "() => window._popoutLayoutState().preset === 'triple'",
+        timeout=3000,
+    )
+    page.keyboard.press("Control+Shift+2")
+    page.wait_for_function(
+        "() => window._popoutLayoutState().preset === 'translator'",
         timeout=3000,
     )
 
 
 def test_keyboard_ctrl_shift_T_toggles_terminal(page, scribe_layout_server):
+    """Ctrl+Shift+T flips between ``lastTermPreset`` and
+    ``lastNoTermPreset``. With the default state, that's
+    ``translator`` ↔ ``triple``.
+    """
     _authorize_popout(page, scribe_layout_server)
-    # Start in translator (no terminal).
     page.select_option("#popout-layout-picker", "translator")
     page.wait_for_function(
         "() => window._popoutLayoutState().preset === 'translator'",
@@ -274,13 +280,11 @@ def test_keyboard_ctrl_shift_T_toggles_terminal(page, scribe_layout_server):
     )
     page.evaluate("() => document.body.focus()")
     page.keyboard.press("Control+Shift+T")
-    # Moves to lastTermPreset (default 'fullstack').
     page.wait_for_function(
-        "() => window._popoutLayoutState().preset === 'fullstack'",
+        "() => window._popoutLayoutState().preset === 'triple'",
         timeout=3000,
     )
     page.keyboard.press("Control+Shift+T")
-    # Back to lastNoTermPreset.
     page.wait_for_function(
         "() => window._popoutLayoutState().preset === 'translator'",
         timeout=3000,
@@ -288,63 +292,54 @@ def test_keyboard_ctrl_shift_T_toggles_terminal(page, scribe_layout_server):
 
 
 def test_ratio_persists_per_preset(page, scribe_layout_server):
-    """Setting a ratio for one preset's split does NOT affect another
-    preset's stored ratios — per-preset namespacing is enforced.
+    """Setting a ratio for ``triple`` does NOT touch ``translator``'s
+    bucket — per-preset namespacing is enforced.
     """
     _authorize_popout(page, scribe_layout_server)
-    page.select_option("#popout-layout-picker", "sidebyside")
-
-    # Programmatic ratio write — the drag path uses the same storage
-    # API and we already cover drag behavior in test_terminal_resize.py.
+    page.select_option("#popout-layout-picker", "triple")
+    page.wait_for_function("() => window._popoutLayoutState().preset === 'triple'", timeout=3000)
     page.evaluate(
         """() => {
             const S = window.PopoutLayoutStorage;
-            // Need to set sidebyside as current preset so setRatio
-            // lands in the 'sidebyside' bucket.
             let st = S.load();
-            st = S.setPreset(st, 'sidebyside');
-            st = S.setRatio(st, 'sidebyside:bottom', 0.3);
+            st = S.setPreset(st, 'triple');
+            st = S.setRatio(st, 'triple:bottom', 0.3);
         }"""
     )
     stored = page.evaluate("() => JSON.parse(localStorage.getItem('popout_layout_v2'))")
-    assert stored["ratiosByPreset"]["sidebyside"]["sidebyside:bottom"] == 0.3
-    # Fullstack ratios are untouched.
-    assert "fullstack" not in stored["ratiosByPreset"]
+    assert stored["ratiosByPreset"]["triple"]["triple:bottom"] == 0.3
+    assert "translator" not in stored["ratiosByPreset"]
 
 
-def test_demo_preset_has_no_transcript(page, scribe_layout_server):
+def test_translate_preset_is_transcript_only(page, scribe_layout_server):
+    """``translate`` is a single-leaf preset — only ``transcript`` should
+    be on screen, no slides or terminal.
+    """
     _authorize_popout(page, scribe_layout_server)
-    page.select_option("#popout-layout-picker", "demo")
-    # Wait for state AND for the DOM to reflect the new preset (the
-    # change handler kicks renderLayout async; state flips synchronously
-    # but the DOM update is a microtask behind).
+    page.select_option("#popout-layout-picker", "translate")
     page.wait_for_function(
         """() => {
-            if (window._popoutLayoutState().preset !== 'demo') return false;
+            if (window._popoutLayoutState().preset !== 'translate') return false;
             const panels = [...document.querySelectorAll('.lyt-slot-leaf')].map(s => s.dataset.panel);
-            // Demo renders either [slides|terminal] or just [terminal]
-            // depending on deck availability — in neither case is
-            // transcript present.
-            return panels.length > 0 && !panels.includes('transcript');
+            return panels.length === 1 && panels[0] === 'transcript';
         }""",
         timeout=5000,
     )
     panels = page.evaluate(
         "() => [...document.querySelectorAll('.lyt-slot-leaf')].map(s => s.dataset.panel)"
     )
-    assert "transcript" not in panels
+    assert panels == ["transcript"]
 
 
 def test_transcript_stays_visible_after_preset_swap(page, scribe_layout_server):
-    """Regression: the original bug where display:flex on #transcript-grid
-    broke its internal scrolling layout and made the translated view
-    invisible after a preset swap. Verify the element is in the tree
-    and its computed display is compatible with block flow.
+    """Regression: an earlier bug where ``display:flex`` on
+    ``#transcript-grid`` broke its internal scrolling layout and made
+    the translated view invisible after a preset swap. Verify the
+    element is in the tree, has size, and stays scrollable.
     """
     _authorize_popout(page, scribe_layout_server)
-    page.select_option("#popout-layout-picker", "fullstack")
-    page.wait_for_function("() => window._popoutLayoutState().preset === 'fullstack'", timeout=4000)
-    # Now switch to translator and confirm transcript is still connected + has size.
+    page.select_option("#popout-layout-picker", "triple")
+    page.wait_for_function("() => window._popoutLayoutState().preset === 'triple'", timeout=4000)
     page.select_option("#popout-layout-picker", "translator")
     page.wait_for_function(
         "() => window._popoutLayoutState().preset === 'translator'", timeout=4000
@@ -359,27 +354,25 @@ def test_transcript_stays_visible_after_preset_swap(page, scribe_layout_server):
             return {
                 connected: g.isConnected,
                 w: Math.round(r.width), h: Math.round(r.height),
-                // Forced display:flex was the bug — verify we do NOT
-                // impose that on the transcript grid.
                 display: cs.display,
                 overflowY: cs.overflowY,
             };
         }"""
     )
     assert info is not None and info["connected"] is True
-    assert info["w"] > 100 and info["h"] > 100  # actually taking up space
-    assert info["display"] != "flex"  # regression guard
-    assert info["overflowY"] == "auto"  # scrollable
+    assert info["w"] > 100 and info["h"] > 100
+    assert info["display"] != "flex"
+    assert info["overflowY"] == "auto"
 
 
 def test_empty_panels_show_placeholder(page, scribe_layout_server):
-    """When a panel is in the preset but has no content yet (no deck,
-    no meeting output, terminal connecting), the slot is marked with
-    data-empty + data-empty-text so the CSS ::before overlay renders
-    a friendly message."""
+    """Triple has all three panels; with no meeting running the
+    transcript slot should be marked empty so the CSS overlay can
+    render the ``waiting for audio`` hint.
+    """
     _authorize_popout(page, scribe_layout_server)
-    page.select_option("#popout-layout-picker", "developer")
-    page.wait_for_function("() => window._popoutLayoutState().preset === 'developer'", timeout=4000)
+    page.select_option("#popout-layout-picker", "triple")
+    page.wait_for_function("() => window._popoutLayoutState().preset === 'triple'", timeout=4000)
     page.wait_for_timeout(500)
     slots = page.evaluate(
         """() => [...document.querySelectorAll('.lyt-slot-leaf')].map(s => ({
@@ -388,20 +381,19 @@ def test_empty_panels_show_placeholder(page, scribe_layout_server):
             text: s.dataset.emptyText,
         }))"""
     )
-    # Transcript has no children (no meeting running) → empty=true.
     trans = next((s for s in slots if s["panel"] == "transcript"), None)
     assert trans and trans["empty"] == "true" and "audio" in (trans["text"] or "").lower()
 
 
 def test_edit_menu_opens_and_lists_actions(page, scribe_layout_server):
     """Hover a leaf slot, click the ⋮ menu button, assert the 4 actions
-    (split-right, split-down, change, remove) render."""
+    (split-right, split-down, change, remove) render.
+    """
     _authorize_popout(page, scribe_layout_server)
-    page.select_option("#popout-layout-picker", "developer")
+    page.select_option("#popout-layout-picker", "triple")
     page.wait_for_function(
         "() => document.querySelectorAll('.lyt-slot-leaf').length >= 2", timeout=4000
     )
-    # Force chrome visible + click its menu button for the first leaf.
     page.evaluate(
         """() => {
             const chrome = document.querySelector('.lyt-slot-leaf .lyt-leaf-chrome');
@@ -418,7 +410,7 @@ def test_edit_menu_opens_and_lists_actions(page, scribe_layout_server):
 
 
 def test_edit_menu_split_right_creates_custom_tree(page, scribe_layout_server):
-    """Clicking 'split-right' on a leaf transitions the layout to a
+    """Clicking ``split-right`` on a leaf transitions the layout to a
     custom tree with that leaf horizontally split against a new panel.
     """
     _authorize_popout(page, scribe_layout_server)
@@ -440,7 +432,6 @@ def test_edit_menu_split_right_creates_custom_tree(page, scribe_layout_server):
              && document.querySelector('.lyt-split[data-dir="h"]') !== null""",
         timeout=5000,
     )
-    # Verify a horizontal split now hosts transcript.
     info = page.evaluate(
         """() => {
             const split = document.querySelector('.lyt-split[data-dir="h"]');
@@ -451,20 +442,18 @@ def test_edit_menu_split_right_creates_custom_tree(page, scribe_layout_server):
         }"""
     )
     assert info["hasHorizontalSplit"]
-    # Transcript + some other panel (terminal or slides — suggestPanel
-    # prefers one not already present; translator has transcript+slides
-    # so it suggests terminal).
     assert "transcript" in info["panelsInDOM"]
-    assert "terminal" in info["panelsInDOM"] or "slides" in info["panelsInDOM"]
+    # ``_suggestPanel`` prefers a panel not already in the tree —
+    # translator has transcript+slides, so it suggests terminal.
+    assert "terminal" in info["panelsInDOM"]
 
 
 def test_edit_menu_remove_collapses_split(page, scribe_layout_server):
     """Removing a leaf from a binary split promotes its sibling up."""
     _authorize_popout(page, scribe_layout_server)
-    page.select_option("#popout-layout-picker", "developer")
-    page.wait_for_function("() => window._popoutLayoutState().preset === 'developer'", timeout=4000)
+    page.select_option("#popout-layout-picker", "triple")
+    page.wait_for_function("() => window._popoutLayoutState().preset === 'triple'", timeout=4000)
     page.wait_for_timeout(400)
-    # Click menu on terminal slot.
     page.evaluate(
         """() => {
             const chrome = document.querySelector('.lyt-slot-leaf[data-panel="terminal"] .lyt-leaf-chrome');
@@ -474,19 +463,21 @@ def test_edit_menu_remove_collapses_split(page, scribe_layout_server):
     page.wait_for_selector(".lyt-menu", timeout=2000)
     page.click(".lyt-menu-item[data-action='remove']")
     page.wait_for_function("() => window._popoutLayoutState().preset === 'custom'", timeout=4000)
-    panels = page.evaluate(
-        "() => [...document.querySelectorAll('.lyt-slot-leaf')].map(s => s.dataset.panel)"
+    panels = sorted(
+        page.evaluate(
+            "() => [...document.querySelectorAll('.lyt-slot-leaf')].map(s => s.dataset.panel)"
+        )
     )
-    assert panels == ["transcript"], f"terminal should be gone; got {panels}"
+    assert panels == ["slides", "transcript"], f"terminal should be gone; got {panels}"
 
 
-def test_migration_from_terminal_visible(page, scribe_layout_server):
-    """With only `terminal_visible=1` in localStorage, the first load
-    infers the `fullstack` preset (migration path from the old world).
+def test_migration_from_terminal_visible_lands_on_triple(page, scribe_layout_server):
+    """With only ``terminal_visible=1`` in localStorage, the first load
+    infers ``triple`` (the only current preset with a terminal pane).
+    Migration path from the old per-key boolean.
     """
     srv = scribe_layout_server
     page.goto(f"{srv['base_url']}/admin/bootstrap", wait_until="networkidle")
-    # Seed legacy state before touching the popout.
     page.evaluate("() => { localStorage.clear(); localStorage.setItem('terminal_visible', '1'); }")
     page.fill("#secret", srv["admin_secret"])
     page.click("#btn")
@@ -495,4 +486,4 @@ def test_migration_from_terminal_visible(page, scribe_layout_server):
         "() => typeof window._popoutLayoutState === 'function' && !!window._popoutLayoutState()",
         timeout=8000,
     )
-    assert page.evaluate("() => window._popoutLayoutState().preset") == "fullstack"
+    assert page.evaluate("() => window._popoutLayoutState().preset") == "triple"

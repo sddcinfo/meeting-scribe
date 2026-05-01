@@ -196,6 +196,30 @@ async def get_metrics() -> fastapi.Response:
     crash = snap.get("crash")
     _g("scribe_crash_state", 1 if crash else 0)
 
+    # Memory pressure (PSI). Surfaces the same data the
+    # mem_pressure_monitor logs against so dashboards and alerts can
+    # see host stalls even before the in-process warn threshold trips.
+    from meeting_scribe.runtime.health_monitors import latest_pressure
+
+    pressure = latest_pressure()
+    if pressure is not None:
+        _g(
+            "scribe_mem_pressure_some_avg10",
+            pressure.some_avg10,
+            help_text="% time at least one task stalled on memory in last 10s",
+        )
+        _g("scribe_mem_pressure_some_avg60", pressure.some_avg60)
+        _g("scribe_mem_pressure_some_avg300", pressure.some_avg300)
+        _g(
+            "scribe_mem_pressure_full_avg10",
+            pressure.full_avg10,
+            help_text="% time ALL tasks stalled on memory in last 10s",
+        )
+        _g("scribe_mem_pressure_full_avg60", pressure.full_avg60)
+        _g("scribe_mem_pressure_full_avg300", pressure.full_avg300)
+        _g("scribe_mem_pressure_some_total_us", pressure.some_total_us)
+        _g("scribe_mem_pressure_full_total_us", pressure.full_total_us)
+
     return fastapi.Response(
         content="\n".join(lines) + "\n",
         media_type="text/plain; version=0.0.4",
@@ -213,6 +237,10 @@ async def get_status(request: fastapi.Request) -> JSONResponse:
         gpu_data = {
             "vram_used_mb": vram.used_mb,
             "vram_total_mb": vram.total_mb,
+            # W5: free_mb feeds the "GPU Free" reliability tile so
+            # operators can see headroom collapsing before it kills a
+            # meeting (today's incident started at ~1.9 GB free).
+            "vram_free_mb": vram.free_mb,
             "vram_pct": round(vram.pct, 1),
         }
 

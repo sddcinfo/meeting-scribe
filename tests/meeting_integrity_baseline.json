@@ -1,7 +1,7 @@
 {
   "_comment": "Pre-existing integrity issues per meeting. New issues will fail the test. When an issue is fixed, re-run with UPDATE_INTEGRITY_BASELINE=1 to refresh this file.",
-  "total_meetings": 73,
-  "total_findings": 122,
+  "total_meetings": 74,
+  "total_findings": 123,
   "known_issues": {
     "06767922-784a-46a3-9ac8-df9c61f7b66f": [
       "low-speech-coverage",
@@ -222,6 +222,9 @@
     ],
     "f006a5c9-5492-4d9b-86d1-d095ddd1ce17": [
       "low-speech-coverage",
+      "small-unnamed-cluster"
+    ],
+    "f24f3751-d835-4e4d-af25-f0b55fc78bdb": [
       "small-unnamed-cluster"
     ],
     "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0": [

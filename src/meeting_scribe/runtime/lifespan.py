@@ -72,6 +72,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # terminal.
     _diag.setup_diagnostics_logging(state.config.meetings_dir.parent)
 
+    # Source-drift sentinel: emits a WARNING per recipe ↔ compose
+    # mismatch so a host that booted from a stale image / hand-edited
+    # compose surfaces the divergence in logs. CI test
+    # (tests/test_recipes.py::TestComposeRecipeDriftGuard) is the
+    # strict gate; this is the runtime safety net. See
+    # `meeting_scribe.infra.compose.assert_recipe_source_parity`.
+    from meeting_scribe.infra.compose import warn_on_recipe_source_drift
+
+    warn_on_recipe_source_drift()
+
     # Regulatory domain must be JP before any WiFi AP work happens.
     # We enforce + verify at startup so a cold boot doesn't produce an
     # AP that phones can't connect to (country 00 caps 5 GHz TX power).
@@ -209,6 +219,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     _silence_watchdog_task = asyncio.create_task(
         _health_monitors.silence_watchdog_loop(), name="silence-watchdog"
     )
+    # Memory-pressure canary — added 2026-05-01 after the 2026-04-30
+    # OOM that killed scribe with no in-process warning. PSI samples
+    # surface host swap thrash before the kernel global-OOMs.
+    _mem_pressure_task = asyncio.create_task(
+        _health_monitors.mem_pressure_monitor(), name="mem-pressure-monitor"
+    )
+
+    # W6b: ASR recovery supervisor. Awaits backend's
+    # `_recovery_requested` event (set by the watchdog escalation
+    # at consecutive_fires>=3) and drives the state machine through
+    # probe-poll → optional compose_restart → replay. See
+    # `runtime/recovery_supervisor.py` for the full design.
+    from meeting_scribe.runtime.recovery_supervisor import asr_recovery_loop
+
+    _asr_recovery_task = asyncio.create_task(asr_recovery_loop(), name="asr-recovery-supervisor")
 
     # A4: replay any pending_translations.jsonl backlogs left by a
     # prior crash / partial finalize. Runs as a background task so the
@@ -404,6 +429,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         _loop_lag_task,
         _health_eval_task,
         _silence_watchdog_task,
+        _mem_pressure_task,
     ):
         _t.cancel()
     for _t in (
@@ -411,6 +437,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         _loop_lag_task,
         _health_eval_task,
         _silence_watchdog_task,
+        _mem_pressure_task,
     ):
         try:
             await _t

@@ -28,6 +28,7 @@ from meeting_scribe.cli._common import (
     PID_FILE,
     PROJECT_ROOT,
     _api_request,
+    _assert_required_imports,
     _ensure_admin_tls_certs,
     _ensure_containers_running,
     _ensure_port80_bind,
@@ -108,6 +109,16 @@ def start(port: int, debug: bool, foreground: bool) -> None:
     if not venv_python.exists():
         click.secho("No .venv found. Run: python3 -m venv .venv && pip install -e .", fg="red")
         sys.exit(1)
+
+    # Pre-bind dependency self-check (plan §1.6b). Reads
+    # tool.meeting-scribe.required-imports from pyproject.toml and
+    # importlib.import_module()s each one. Exits 78 (EX_CONFIG) on
+    # ImportError BEFORE any socket creation, so the unit never
+    # reaches "Type=notify activating" with a stale/broken process
+    # listening on a half-bound port. Catches the 2026-05-01 PPTX
+    # upload regression where python-multipart was missing from the
+    # customer venv.
+    _assert_required_imports()
 
     # Guest HTTP listener binds port 80 in-process — requires
     # CAP_NET_BIND_SERVICE on the venv interpreter. Grant it before spawn.
@@ -312,16 +323,14 @@ def stop() -> None:
 @cli.command()
 @click.option("--port", "-p", default=DEFAULT_PORT)
 @click.option("--debug", is_flag=True)
-def restart(port: int, debug: bool) -> None:
+@click.pass_context
+def restart(ctx: click.Context, port: int, debug: bool) -> None:
     """Restart the server + run a smoke test so silent partial failures don't slip through.
 
     Delegates to ``systemctl --user restart`` when the unit is systemd-
     managed so preflight / notify semantics are preserved. Falls back to
     the in-process click stop+start dance for foreground/dev runs.
     """
-
-    from click.testing import CliRunner
-
     mode, _pid, _active = _server_state()
     if mode == "systemd":
         click.echo(f"Restarting {_SYSTEMD_UNIT} via systemctl --user...")
@@ -335,10 +344,14 @@ def restart(port: int, debug: bool) -> None:
             click.secho(f"systemctl --user restart failed: {r.stderr.strip()}", fg="red")
             sys.exit(r.returncode or 1)
     else:
-        runner = CliRunner()
-        runner.invoke(stop)
+        # ctx.invoke runs the target command in the live click.Context
+        # so its click.echo output reaches the terminal. The previous
+        # CliRunner().invoke(...) was Click's *test* harness — it
+        # captured stdout into a Result object, so a failed restart
+        # exited with no visible diagnostics.
+        ctx.invoke(stop)
         time.sleep(1)
-        runner.invoke(start, [f"--port={port}"] + (["--debug"] if debug else []))
+        ctx.invoke(start, port=port, debug=debug, foreground=False)
 
     # Smoke test — surfaces broken startup (empty-reply-from-server,
     # wrong-port binds, crashed background loops). Runs best-effort:

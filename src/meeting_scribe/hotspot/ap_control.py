@@ -176,6 +176,45 @@ async def _start_wifi_ap(meeting_id: str | None = None) -> None:
         new_ssid = f"Dell Demo {session_id}"
         new_password = secrets.token_hex(4).upper()
 
+        # First-run bootstrap: on a fresh customer GB10 the AP_CON_NAME
+        # profile doesn't exist yet, so the rotation path's blind
+        # ``nmcli con modify DellDemo-AP`` returns "unknown connection"
+        # and the AP never comes up. Detect that case here and create
+        # the profile via the full ``_bring_up_ap`` path with the
+        # freshly-generated meeting credentials. Subsequent rotations
+        # take the modify-and-bounce fast path below.
+        if not await loop.run_in_executor(None, _wifi._nmcli_connection_exists):
+            logger.info(
+                "WiFi AP profile %r missing on this host — creating it via "
+                "first-run bootstrap with the meeting's fresh credentials",
+                AP_CON_NAME,
+            )
+            try:
+                await _wifi._bring_up_ap(
+                    _wifi.WifiConfig(
+                        mode="meeting",
+                        ssid=new_ssid,
+                        password=new_password,
+                        band=_wifi.DEFAULT_BAND,
+                        channel=_wifi.DEFAULT_CHANNEL,
+                        regdomain=_wifi._effective_regdomain(),
+                        ap_ip=_wifi.AP_IP,
+                    )
+                )
+            except Exception as exc:
+                logger.error(
+                    "WiFi AP first-run bootstrap failed: %s — guests won't see "
+                    "the meeting's QR code until this is resolved",
+                    exc,
+                )
+                return
+            await loop.run_in_executor(None, _wifi._write_hotspot_state_sync)
+            await _start_captive_portal()
+            await _apply_hotspot_firewall()
+            if meeting_id is not None:
+                _LAST_ROTATED_MEETING_ID = meeting_id
+            return
+
     def _rotate_profile_and_bounce() -> subprocess.CompletedProcess[str] | None:
         """Update the NM profile and bounce it. All sync to avoid race."""
         import time as _time

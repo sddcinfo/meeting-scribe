@@ -4483,6 +4483,46 @@ body:not(.metrics-split) .metric-card-wide {
 .metric-bar-warn { background: #f59e0b; }
 .metric-bar-danger { background: #ef4444; }
 
+/* W5: reliability tile color coding for ASR RTT, watchdog fires,
+   time-since-final, GPU free.  Same palette as the VRAM bar. */
+.metric-value-warn { color: #f59e0b; }
+.metric-value-crit { color: #ef4444; }
+
+/* W4 Fix #3: backends-warming banner sits between the setup hint and
+   the Start button. Only visible while ASR or translate are still
+   warming up after a server restart. Amber to match the existing
+   "loading" pill style. */
+.backends-warming-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 6px;
+  color: #f59e0b;
+  font-size: 0.85rem;
+}
+.backends-warming-icon {
+  display: inline-block;
+  font-size: 1rem;
+  animation: backends-warming-spin 1.6s linear infinite;
+}
+.backends-warming-text {
+  font-weight: 600;
+}
+.backends-warming-detail {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+@keyframes backends-warming-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .metric-backends {
   display: flex;
   flex-wrap: wrap;

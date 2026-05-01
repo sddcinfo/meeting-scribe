@@ -41,6 +41,12 @@ services:
       context: containers/pyannote
     container_name: scribe-diarization
     network_mode: host
+    # Hard memory cap. 2026-04-30 OOM RCA: with no caps, runaway model
+    # loading or KV-cache ballooning can push the host into a global
+    # OOM that kills meeting-scribe instead of the offending container.
+    # 6g covers the 4 GB pyannote model + diarization buffers + a slice
+    # of the shm tmpfs. Override via env if a future model needs more.
+    mem_limit: ${SCRIBE_DIARIZE_MEM_LIMIT:-6g}
     deploy:
       resources:
         reservations:
@@ -86,6 +92,10 @@ services:
       context: containers/tts
     container_name: scribe-tts
     network_mode: host
+    # See pyannote-diarize above for the OOM-cap rationale. 4g covers
+    # the 1.2 GB Qwen3-TTS bf16 model + autoregressive decode buffers
+    # + a TTS-burst slice of the shm tmpfs. Two replicas total ≤ 8 GB.
+    mem_limit: ${SCRIBE_TTS_MEM_LIMIT:-4g}
     deploy:
       resources:
         reservations:
@@ -139,6 +149,9 @@ services:
       context: containers/tts
     container_name: scribe-tts-2
     network_mode: host
+    # Same cap as qwen3-tts above — both replicas share the SCRIBE_TTS_MEM_LIMIT
+    # knob so a single env var covers the pool. See qwen3-tts for rationale.
+    mem_limit: ${SCRIBE_TTS_MEM_LIMIT:-4g}
     deploy:
       resources:
         reservations:
@@ -192,6 +205,11 @@ services:
         --enforce-eager
         --load-format fastsafetensors
     network_mode: host
+    # See pyannote-diarize above for the OOM-cap rationale. 18g covers
+    # the ~12 GB Qwen3-ASR-1.7B model footprint + KV cache for the
+    # 4-slot, 4096-token max + ASR shm slice. Override via env if a
+    # future ASR model bump exceeds this.
+    mem_limit: ${SCRIBE_ASR_MEM_LIMIT:-18g}
     deploy:
       resources:
         reservations:
