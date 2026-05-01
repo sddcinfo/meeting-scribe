@@ -1,0 +1,9 @@
+{
+  "_doc": "Ground-truth phrases for fixture audio. Used by `meeting-scribe demo-smoke` to validate that ASR + translate produced sane output. Match is case-insensitive substring; one of the phrases must appear in the ASR final.",
+  "audio_en_short.wav": {
+    "asr_phrases": [
+      "testing one two three"
+    ],
+    "translation_lang": "ja"
+  }
+}
