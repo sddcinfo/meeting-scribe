@@ -76,7 +76,7 @@ def test_exit_0_when_ok(mock_validate) -> None:
     result = runner.invoke(
         hf_probe,
         ["--read-token-from-stdin"],
-        input="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+        input="hf_test_token_placeholder_value\n",
     )
     assert result.exit_code == EX_OK
 
@@ -88,7 +88,7 @@ def test_exit_64_when_bad_token(mock_validate) -> None:
     result = runner.invoke(
         hf_probe,
         ["--read-token-from-stdin"],
-        input="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+        input="hf_test_token_placeholder_value\n",
     )
     assert result.exit_code == EX_TOKEN_OR_EULA
 
@@ -100,7 +100,7 @@ def test_exit_64_when_gated(mock_validate) -> None:
     result = runner.invoke(
         hf_probe,
         ["--read-token-from-stdin"],
-        input="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+        input="hf_test_token_placeholder_value\n",
     )
     assert result.exit_code == EX_TOKEN_OR_EULA
 
@@ -115,7 +115,7 @@ def test_exit_65_when_network_only(mock_validate) -> None:
     result = runner.invoke(
         hf_probe,
         ["--read-token-from-stdin"],
-        input="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+        input="hf_test_token_placeholder_value\n",
     )
     assert result.exit_code == EX_NETWORK
 
