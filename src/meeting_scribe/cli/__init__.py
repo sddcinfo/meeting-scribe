@@ -46,6 +46,7 @@ from meeting_scribe.cli import (
     queue,  # noqa: F401
     setup,  # noqa: F401
     terminal,  # noqa: F401
+    trust,  # noqa: F401
     validate,  # noqa: F401
     versions,  # noqa: F401
     wifi,  # noqa: F401
