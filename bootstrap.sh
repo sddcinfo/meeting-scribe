@@ -257,6 +257,35 @@ ensure_apt_clean() {
     return 1
 }
 
+# NVIDIA DGX OOBE services run their own captive-portal WiFi hotspot on
+# port 80 (`/opt/nvidia/dgx-oobe/oobe-service`). They were the right thing
+# during initial customer onboarding, but on a meeting-scribe appliance
+# they collide head-on with our AP + portal. The hotspot ownership moved
+# into meeting-scribe (`wifi.py owns AP lifecycle`); the OOBE services
+# are leftover state we shouldn't keep running.
+disable_conflicting_dgx_oobe_services() {
+    local -a oobe_units=(
+        dgx-oobe.service
+        dgx-oobe-admin.service
+        dgx-oobe-hotspot.service
+        dgx-oobe-hotspot-watchdog.service
+    )
+    for unit in "${oobe_units[@]}"; do
+        if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q .; then
+            local state
+            state=$(systemctl is-active "${unit}" 2>/dev/null || true)
+            if [[ "${state}" == "active" || "${state}" == "activating" ]]; then
+                systemctl stop "${unit}" 2>/dev/null || true
+            fi
+            systemctl disable "${unit}" 2>/dev/null || true
+            systemctl mask "${unit}" 2>/dev/null || true
+            echo "[bootstrap] disabled+masked ${unit} (DGX OOBE flow superseded by meeting-scribe)"
+        fi
+    done
+}
+
+disable_conflicting_dgx_oobe_services
+
 need_pkgs=()
 for pkg in ffmpeg libportaudio2 libsndfile1 docker-compose-plugin rfkill iw; do
     if ! dpkg -s "$pkg" >/dev/null 2>&1; then
