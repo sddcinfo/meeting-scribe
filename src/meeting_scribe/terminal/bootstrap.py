@@ -16,7 +16,14 @@ from typing import TYPE_CHECKING, Any
 from fastapi import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from meeting_scribe.terminal.auth import COOKIE_NAME, AdminSecretStore, CookieSigner
+from meeting_scribe.runtime import state
+from meeting_scribe.terminal.auth import (
+    COOKIE_NAME,
+    AdminSecretStore,
+    CookieSigner,
+    decode_verified_cookie,
+    revoke_session,
+)
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -169,6 +176,53 @@ class BootstrapConfig:
     is_guest_scope: GuestScopeFn
 
 
+def _close_admin_ws_for_session(session_id: str) -> None:
+    """Best-effort: close every admin WS bound to ``session_id``.
+
+    Logout / re-auth call this so an outstanding privileged WS from the
+    revoked session can't keep streaming. Schedules close coroutines
+    via the running event loop; never raises (the cookie revocation
+    must remain idempotent).
+    """
+    bucket = state._admin_ws_by_session.pop(session_id, None)
+    if not bucket:
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # Not in an async context — best-effort no-op; the WS handler's
+        # finally block will clean up when its connection eventually
+        # closes naturally.
+        return
+    for ws in bucket:
+        close = getattr(ws, "close", None)
+        if close is None:
+            continue
+        coro = close(code=1008, reason="revoked")
+        if asyncio.iscoroutine(coro):
+            loop.create_task(coro)
+
+
+async def _logout(request: Request, cfg: BootstrapConfig) -> JSONResponse:
+    """Revoke the cookie's session_id, close active admin WS, delete the
+    cookie. Idempotent — works even when the cookie is missing or
+    invalid (no error path leaks state to unauthenticated callers).
+    """
+    cookie_value = request.cookies.get(COOKIE_NAME)
+    ok, session_id, issued_at = decode_verified_cookie(cfg.cookie_signer, cookie_value)
+    if ok and session_id is not None and issued_at is not None:
+        revoke_session(
+            session_id,
+            expiry_epoch=issued_at + cfg.cookie_signer.max_age_seconds,
+            revoked_sessions=state._revoked_sessions,
+        )
+        _close_admin_ws_for_session(session_id)
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(key=COOKIE_NAME, path="/")
+    resp.headers["Cache-Control"] = "no-store, private"
+    return resp
+
+
 def register_bootstrap_routes(app: FastAPI, cfg: BootstrapConfig) -> None:
     @app.get("/admin/bootstrap")
     async def bootstrap_page() -> HTMLResponse:
@@ -191,9 +245,29 @@ def register_bootstrap_routes(app: FastAPI, cfg: BootstrapConfig) -> None:
             logger.info("admin authorize failed (peer=%s)", peer)
             return JSONResponse({"error": "invalid secret"}, status_code=401)
 
+        # Re-auth on the same browser revokes the prior session_id +
+        # closes any privileged WS still alive under it before minting
+        # the new cookie. This is what makes "logout from another tab"
+        # close every tab's admin WS.
+        prior_cookie = request.cookies.get(COOKIE_NAME)
+        if prior_cookie:
+            ok, prior_sid, prior_issued = decode_verified_cookie(
+                cfg.cookie_signer, prior_cookie
+            )
+            if ok and prior_sid is not None and prior_issued is not None:
+                revoke_session(
+                    prior_sid,
+                    expiry_epoch=prior_issued + cfg.cookie_signer.max_age_seconds,
+                    revoked_sessions=state._revoked_sessions,
+                )
+                _close_admin_ws_for_session(prior_sid)
+
         cookie_value = cfg.cookie_signer.issue()
         resp = JSONResponse({"ok": True})
-        # Starlette set_cookie signature: key, value, max_age, expires, path, domain, secure, httponly, samesite
+        # Plan §A.4 / §A.6: SameSite=Strict (single-origin admin/guest),
+        # Secure=True (TLS-only), HttpOnly=True. The cookie gets the new
+        # 3-part format <issued>.<session_id>.<hmac> via the upgraded
+        # CookieSigner.
         resp.set_cookie(
             key=COOKIE_NAME,
             value=cookie_value,
@@ -201,15 +275,20 @@ def register_bootstrap_routes(app: FastAPI, cfg: BootstrapConfig) -> None:
             path="/",
             secure=True,
             httponly=True,
-            samesite="lax",
+            samesite="strict",
         )
         return resp
 
     @app.post("/api/admin/deauthorize")
     async def deauthorize(request: Request) -> JSONResponse:
-        resp = JSONResponse({"ok": True})
-        resp.delete_cookie(key=COOKIE_NAME, path="/")
-        return resp
+        # Backwards-compatible name kept for older clients; new code calls
+        # /api/admin/logout. Both perform the same revoke-session-and-
+        # close-WS dance.
+        return await _logout(request, cfg)
+
+    @app.post("/api/admin/logout")
+    async def logout(request: Request) -> JSONResponse:
+        return await _logout(request, cfg)
 
     @app.get("/api/admin/terminal-access")
     async def terminal_access(request: Request) -> JSONResponse:
