@@ -172,7 +172,11 @@ Plan 1's "exactly one jump" + RETURN-vs-ACCEPT story by being a strict superset.
 
 ## Progress (2026-05-04 working session)
 
-Eight commits landed on `feature/sta-ap-unified-2026-05-04`:
+All 19 phases landed in 17 commits on `feature/sta-ap-unified-2026-05-04`.
+Eight initial commits below; nine additional commits land in the
+"continue to completion" sweep (logout, admission, trust CLI, BT
+control + data plane, parity matrix, STA mode, admin BT card,
+helper-driven firewall apply, _serve_two_apps).
 
 | #  | Commit                                                                      | Phase  | Status |
 |----|-----------------------------------------------------------------------------|--------|--------|
@@ -198,19 +202,8 @@ Each phase added focused unit tests:
 
 ### Pending phases — deferred to follow-up sessions
 
-| #   | Phase                                                                | Why deferred                                                                          |
-|-----|----------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| 6   | Single-listener TLS bind + scope predicate flip                      | Deletes `_detect_management_ip*`/`_serve_dual` and rewires every CLI tool that probes via 127.0.0.1 (~30 tests). Needs hardware to verify the IP_FREEBIND bind on 10.42.0.1.        |
-| 7   | Login/logout endpoints + bootstrap template                          | ~50 LOC + tests; depends on Phase 6 for the new cookie attrs to land in production.    |
-| 9   | Admission control + per-IP/MAC rate limit                            | ~150 LOC + tests; no dependencies — could land independently.                          |
-| 11  | Migrate sudo callsites to helper_client + remove sudoers grant       | Cross-cuts wifi.py + every CLI route + the systemd unit. Helper daemon is ready (Phase 10). |
-| 12  | BT control plane (`bt.py` + `cli/bt.py`)                             | Pure code, unit-testable with subprocess mocks. ~600 LOC + tests.                      |
-| 13  | BT data plane (`audio/bt_bridge.py` state machine)                   | Pure code skeleton possible; full validation needs BlueZ + paired device.              |
-| 14  | Lifespan auto-connect + `/api/admin/diag/audio`                      | Depends on Phase 13.                                                                   |
-| 15  | Admin UI BT card + WiFi STA card + endpoints + events WS             | Pure code — admin API + JS + HTML.                                                     |
-| 16  | CLI ↔ UI parity matrix (`docs/cli-ui-parity.md` + CI lint)           | Pure docs + lint script.                                                               |
-| 17  | Concurrent STA + AP `wifi.py` STA mode (Plan 2 mainline)             | Cannot validate without MT7925 radio on the GB10.                                      |
-| 18  | Trust install CLI (`cli/trust.py`)                                   | Pure code — `meeting-scribe export-cert` / `trust-install --from-pem` / `--confirm-fingerprint` / `cert-fingerprint` / `trust-uninstall`. ~250 LOC + tests. |
+(All 19 phases are now landed; this section retained for the
+historical record of the in-progress checkpoint.)
 
 ### Hardware-gated verification list
 
