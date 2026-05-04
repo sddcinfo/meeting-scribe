@@ -384,6 +384,18 @@ def main() -> None:
             "Run `meeting-scribe setup` to generate a self-signed pair."
         )
 
+    # Read-only SAN sanity check. Aborts startup with a remediation message
+    # if the leaf cert lacks the AP IP SAN — the v1.0 trust anchor (leaf-only,
+    # no CA) requires every reachable address be in the SAN list. The check
+    # never mutates the cert path; cert (re)generation is provisioning-time
+    # only via `meeting-scribe setup`.
+    from meeting_scribe.runtime.cert_check import CertConfigError, assert_cert_sans
+
+    try:
+        assert_cert_sans(ssl_cert, required_ips={AP_IP})
+    except CertConfigError as cert_err:
+        raise RuntimeError(str(cert_err)) from cert_err
+
     # Admin: pre-bind two sockets (loopback + management IP). Both serve
     # HTTPS via one uvicorn.Server so there's only one lifespan and one
     # set of in-process globals.

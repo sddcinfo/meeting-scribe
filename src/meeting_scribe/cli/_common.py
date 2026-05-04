@@ -221,27 +221,93 @@ def _ensure_port80_bind() -> tuple[bool, str]:
     return False, hint
 
 
-def _ensure_admin_tls_certs() -> tuple[bool, str]:
-    """Generate a self-signed cert pair under ``certs/`` if missing.
+# Subject Alternative Names enforced on every meeting-scribe leaf cert. The
+# appliance is reachable only at the hotspot IP; the leaf-only trust anchor
+# (no CA) means broader SANs would expand the spoofable surface beyond the
+# v1.0 boundary. ``runtime/cert_check.py`` enforces the same set on every
+# server start.
+_REQUIRED_LEAF_IP_SANS: frozenset[str] = frozenset({AP_IP})
 
-    Idempotent: returns immediately if both files already exist.
-    Used by both ``meeting-scribe setup`` and the ``start`` path so
-    that a wiped ``certs/`` directory (e.g. a release workflow that
-    ran ``git clean -fdx`` on the live tree) self-heals rather than
-    crashing the service. The cert is a CN=meeting-scribe self-
-    signed RSA-2048 with a 365-day validity — same parameters
-    ``setup`` has always used.
+
+def _appliance_id_path() -> Path:
+    """Path that holds the per-device appliance ID.
+
+    Production deployments persist this at ``/etc/meeting-scribe/appliance-id``
+    (root-writable, service-readable). Dev / single-tree workflows use
+    ``certs/appliance-id`` next to the cert pair so a fresh checkout self-heals
+    without root. The prod path wins when present so a single test box can
+    transition from dev-checkout-style to prod-installed-style without losing
+    its ID.
+    """
+    prod = Path("/etc/meeting-scribe/appliance-id")
+    if prod.exists():
+        return prod
+    return PROJECT_ROOT / "certs" / "appliance-id"
+
+
+def _read_or_mint_appliance_id() -> str:
+    """Return the appliance ID, generating one on first call.
+
+    The ID is a 16-char hex token (``secrets.token_hex(8)``) — hostname-safe,
+    long enough that two random GB10s cannot collide in a fleet of millions.
+    Generated once, then frozen on disk; subsequent setup runs reuse it so
+    rotated leaf certs preserve the same Subject CN suffix.
+    """
+    import secrets
+
+    path = _appliance_id_path()
+    if path.exists():
+        existing = path.read_text(encoding="utf-8").strip()
+        if existing:
+            return existing
+    new_id = secrets.token_hex(8)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(new_id + "\n", encoding="utf-8")
+    return new_id
+
+
+def _ensure_admin_tls_certs() -> tuple[bool, str]:
+    """Generate a per-device self-signed leaf under ``certs/`` if missing.
+
+    Idempotent: returns immediately if both files already exist AND already
+    carry the required SANs. Stale certs (no SAN, or SAN missing the AP IP)
+    are regenerated in place — that path triggers when an older
+    pre-cutover-format leaf is still on disk; the new run produces the v1.0
+    leaf-only-with-SAN format.
+
+    The generated leaf carries:
+      * Subject ``CN=meeting-scribe/<appliance_id>`` — stable per device,
+        looked up via :func:`_read_or_mint_appliance_id`.
+      * Subject Alternative Name ``IP:10.42.0.1`` only — the appliance is
+        reachable nowhere else.
+      * RSA-2048, 365-day validity, no encryption on the key.
+
+    Used by both ``meeting-scribe setup`` and the ``start`` path so a wiped
+    ``certs/`` directory (e.g. a release workflow that ran ``git clean -fdx``)
+    self-heals rather than crashing the service.
 
     Returns (ok, detail):
-        ok=True  — certs present (either pre-existing or just generated)
+        ok=True  — certs present (either pre-existing AND valid, or just
+                   generated); detail names the appliance ID.
         ok=False — generation failed (openssl missing or error); caller
                    surfaces the detail message to the user.
     """
+    from meeting_scribe.runtime.cert_check import (
+        CertConfigError,
+        assert_cert_sans,
+    )
+
     certs_dir = PROJECT_ROOT / "certs"
     cert_pem = certs_dir / "cert.pem"
     key_pem = certs_dir / "key.pem"
+
     if cert_pem.exists() and key_pem.exists():
-        return True, "TLS certs exist in certs/"
+        try:
+            assert_cert_sans(cert_pem, required_ips=set(_REQUIRED_LEAF_IP_SANS))
+            return True, f"TLS certs exist in {certs_dir} (SANs validated)"
+        except CertConfigError:
+            # Stale pre-cutover cert without the AP IP SAN — regenerate.
+            pass
 
     if not shutil.which("openssl"):
         return (
@@ -250,6 +316,13 @@ def _ensure_admin_tls_certs() -> tuple[bool, str]:
         )
 
     certs_dir.mkdir(exist_ok=True)
+    appliance_id = _read_or_mint_appliance_id()
+    san_arg = ",".join(f"IP:{ip}" for ip in sorted(_REQUIRED_LEAF_IP_SANS))
+
+    # Atomic install via temp paths + rename — avoids a half-written cert
+    # surviving an interrupted setup run.
+    tmp_cert = cert_pem.with_suffix(".pem.tmp")
+    tmp_key = key_pem.with_suffix(".pem.tmp")
     result = subprocess.run(
         [
             "openssl",
@@ -258,24 +331,49 @@ def _ensure_admin_tls_certs() -> tuple[bool, str]:
             "-newkey",
             "rsa:2048",
             "-keyout",
-            str(key_pem),
+            str(tmp_key),
             "-out",
-            str(cert_pem),
+            str(tmp_cert),
             "-days",
             "365",
             "-nodes",
             "-subj",
-            "/CN=meeting-scribe",
+            # OpenSSL's -subj parser splits RDN on `/`, so the literal slash
+            # in the appliance-id-bearing CN must be backslash-escaped.
+            rf"/CN=meeting-scribe\/{appliance_id}",
+            "-addext",
+            f"subjectAltName = {san_arg}",
+            "-addext",
+            "keyUsage = digitalSignature, keyEncipherment",
+            "-addext",
+            "extendedKeyUsage = serverAuth",
+            "-addext",
+            "basicConstraints = critical, CA:FALSE",
         ],
         capture_output=True,
         text=True,
         check=False,
     )
-    if result.returncode == 0:
-        return True, f"self-signed certs generated at {certs_dir}"
-    return (
-        False,
-        f"openssl cert generation failed (rc={result.returncode}): {result.stderr.strip()[:200]}",
+    if result.returncode != 0:
+        for stale in (tmp_cert, tmp_key):
+            stale.unlink(missing_ok=True)
+        return (
+            False,
+            f"openssl cert generation failed (rc={result.returncode}): "
+            f"{result.stderr.strip()[:200]}",
+        )
+
+    # Move both files into place; if either rename fails we leave the prior
+    # cert untouched so the service keeps serving.
+    os.replace(tmp_cert, cert_pem)
+    os.replace(tmp_key, key_pem)
+    try:
+        os.chmod(key_pem, 0o600)
+    except OSError:
+        pass
+    return True, (
+        f"self-signed leaf generated at {certs_dir} "
+        f"(appliance_id={appliance_id}, SAN={san_arg})"
     )
 
 
