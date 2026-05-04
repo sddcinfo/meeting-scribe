@@ -269,6 +269,12 @@ disable_conflicting_dgx_oobe_services() {
         dgx-oobe-admin.service
         dgx-oobe-hotspot.service
         dgx-oobe-hotspot-watchdog.service
+        # DGX dashboard is a separate web UI on a different port, but it
+        # carries the same "we're the canonical UI for this appliance"
+        # framing that conflicts with meeting-scribe's admin path. Disable
+        # for the same reason — meeting-scribe owns the operator surface.
+        dgx-dashboard.service
+        dgx-dashboard-admin.service
     )
     for unit in "${oobe_units[@]}"; do
         if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q .; then
@@ -279,12 +285,33 @@ disable_conflicting_dgx_oobe_services() {
             fi
             systemctl disable "${unit}" 2>/dev/null || true
             systemctl mask "${unit}" 2>/dev/null || true
-            echo "[bootstrap] disabled+masked ${unit} (DGX OOBE flow superseded by meeting-scribe)"
+            echo "[bootstrap] disabled+masked ${unit} (superseded by meeting-scribe)"
+        fi
+    done
+}
+
+# Delete leftover NetworkManager profiles whose only purpose was the
+# OOBE hotspot. Disabling the systemd service stops the OOBE binary,
+# but the saved NM connection profile (e.g. `OobeHotspot`) survives
+# reboots and re-binds the radio's AP role on every boot — colliding
+# with meeting-scribe's AP. We delete the profile so meeting-scribe
+# owns the radio cleanly.
+delete_oobe_nm_profiles() {
+    if ! command -v nmcli >/dev/null 2>&1; then
+        return 0
+    fi
+    local -a oobe_profile_names=(OobeHotspot DgxHotspot)
+    for name in "${oobe_profile_names[@]}"; do
+        if nmcli -t -f NAME connection show 2>/dev/null | grep -qx "${name}"; then
+            nmcli connection down "${name}" 2>/dev/null || true
+            nmcli connection delete "${name}" 2>/dev/null || true
+            echo "[bootstrap] deleted NM connection profile '${name}' (DGX OOBE hotspot)"
         fi
     done
 }
 
 disable_conflicting_dgx_oobe_services
+delete_oobe_nm_profiles
 
 need_pkgs=()
 for pkg in ffmpeg libportaudio2 libsndfile1 docker-compose-plugin rfkill iw; do
