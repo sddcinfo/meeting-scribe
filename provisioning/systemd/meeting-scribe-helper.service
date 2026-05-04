@@ -40,8 +40,8 @@ Group=root
 ExecStartPre=/bin/mkdir -p /run/meeting-scribe
 ExecStart=/usr/local/lib/meeting-scribe/.venv/bin/python -m meeting_scribe_helper \
     --socket /run/meeting-scribe/helper.sock \
-    --service-user meeting-scribe \
-    --socket-group meeting-scribe
+    --service-user @SERVICE_USER@ \
+    --socket-group @SERVICE_GROUP@
 ExecStartPost=/usr/bin/timeout 10 sh -c 'until [ -S /run/meeting-scribe/helper.sock ]; do sleep 0.1; done'
 Restart=on-failure
 RestartSec=2

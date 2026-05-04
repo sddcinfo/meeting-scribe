@@ -604,6 +604,22 @@ install_helper_systemd_unit() {
         return 1
     fi
 
+    # Resolve the service user + group. The Plan §B.1 model uses a
+    # dedicated `meeting-scribe` user/group; the customer-install path
+    # uses `delldemo`. Pick whichever exists, with TARGET_USER as the
+    # source of truth for the customer-install case.
+    local svc_user svc_group
+    if id -u meeting-scribe >/dev/null 2>&1; then
+        svc_user=meeting-scribe
+    else
+        svc_user="${TARGET_USER}"
+    fi
+    if getent group meeting-scribe >/dev/null 2>&1; then
+        svc_group=meeting-scribe
+    else
+        svc_group="$(id -gn "${svc_user}")"
+    fi
+
     # Symlink the venv into the unit's ExecStart path so the unit doesn't
     # carry a per-user path. The repo lives under TARGET_HOME but the
     # helper runs as root — the symlink lets root invoke the same venv
@@ -616,8 +632,14 @@ install_helper_systemd_unit() {
     fi
     ln -s "${SCRIPT_DIR}" "${installed_lib}"
 
-    install -m 0644 "${helper_unit_src}" "${helper_unit_dst}"
-    install -m 0644 "${tmpfiles_src}" "${tmpfiles_dst}"
+    # Render templates: substitute @SERVICE_USER@ / @SERVICE_GROUP@.
+    sed -e "s/@SERVICE_USER@/${svc_user}/g" \
+        -e "s/@SERVICE_GROUP@/${svc_group}/g" \
+        "${helper_unit_src}" > "${helper_unit_dst}"
+    chmod 0644 "${helper_unit_dst}"
+    sed -e "s/@SERVICE_GROUP@/${svc_group}/g" \
+        "${tmpfiles_src}" > "${tmpfiles_dst}"
+    chmod 0644 "${tmpfiles_dst}"
 
     # Apply tmpfiles immediately so /run/meeting-scribe/ exists before
     # the unit's ExecStartPre runs.
@@ -628,7 +650,7 @@ install_helper_systemd_unit() {
     systemctl restart meeting-scribe-helper.service
     sleep 1
     if systemctl is-active --quiet meeting-scribe-helper.service; then
-        echo "[bootstrap] meeting-scribe-helper.service active (socket: /run/meeting-scribe/helper.sock)"
+        echo "[bootstrap] meeting-scribe-helper.service active (svc=${svc_user} grp=${svc_group}, socket: /run/meeting-scribe/helper.sock)"
     else
         echo "[bootstrap] WARN: meeting-scribe-helper.service did not reach active state" >&2
         systemctl status --no-pager meeting-scribe-helper.service 2>&1 | tail -10 >&2 || true
