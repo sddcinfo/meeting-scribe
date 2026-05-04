@@ -35,6 +35,13 @@ logger = logging.getLogger(__name__)
 def _current_regdomain() -> str | None:
     """Return the current 2-letter country code from ``iw reg get``.
 
+    Prefers the **phy#0** block over the **global** block when both are
+    present. When STA is associated to an upstream AP, the upstream's
+    Country Information Element (IE) overrides the global regdomain to
+    a numeric code (e.g. ``98``); but the phy0 setting we explicitly
+    applied via ``iw reg set`` stays correct. AP TX power is governed
+    by phy0's regdomain, so phy0 is the right value to check.
+
     Returns the country code (``JP``, ``US``, ``00``, …) or ``None`` if
     ``iw`` isn't available or the output can't be parsed.
     """
@@ -46,16 +53,30 @@ def _current_regdomain() -> str | None:
             timeout=3,
             check=False,
         )
-    except FileNotFoundError, subprocess.TimeoutExpired, OSError:
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return None
     if result.returncode != 0:
         return None
-    for line in result.stdout.splitlines():
-        stripped = line.strip()
+    # Walk every block (`global`, `phy#0`, …). Prefer phy#0's country
+    # over global's when both exist.
+    blocks: dict[str, str] = {}  # block_name → country code
+    current_block: str | None = None
+    for raw in result.stdout.splitlines():
+        stripped = raw.strip()
+        if stripped == "global" or stripped.startswith("phy#"):
+            current_block = stripped
+            continue
         if stripped.startswith("country "):
-            # Format: "country JP: DFS-JP" — extract the 2-char code.
             token = stripped.split(":", 1)[0].removeprefix("country ").strip()
-            return token or None
+            if token and current_block is not None and current_block not in blocks:
+                blocks[current_block] = token
+    # Prefer phy#0 if available; fall back to global; finally any block.
+    if "phy#0" in blocks:
+        return blocks["phy#0"]
+    if "global" in blocks:
+        return blocks["global"]
+    if blocks:
+        return next(iter(blocks.values()))
     return None
 
 
@@ -133,7 +154,7 @@ def _ensure_regdomain_persistent() -> bool:
                     timeout=3,
                     check=False,
                 )
-            except FileNotFoundError, subprocess.TimeoutExpired, OSError:
+            except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
                 pass
     except OSError:
         pass
