@@ -745,15 +745,24 @@ async def _bring_up_ap(cfg: WifiConfig) -> None:
     """
     loop = asyncio.get_event_loop()
 
-    # Step 1: regdomain
+    # Step 1: regdomain. Best-effort — the kernel may override our `iw
+    # reg set` if STA is associated and the upstream AP broadcasts a
+    # country IE. We log the divergence but proceed; the kernel
+    # enforces correct regulatory rules at TX time regardless of which
+    # block (`global` vs `phy#0`) reports the value.
     await loop.run_in_executor(None, _ensure_regdomain_persistent)
     if not await loop.run_in_executor(None, _ensure_regdomain):
-        raise RuntimeError(
-            f"Failed to set regulatory domain to {cfg.regdomain}. "
-            f"iw reg get reports: {_current_regdomain()!r}. "
-            "5 GHz AP transmit power would be capped."
+        live = _current_regdomain()
+        logger.warning(
+            "regdomain divergence: target=%s, live=%r — kernel will enforce "
+            "the live regdomain's rules for AP TX power. Common cause: STA "
+            "is associated and the upstream AP's country IE override is "
+            "applying. Proceeding.",
+            cfg.regdomain,
+            live,
         )
-    logger.info("regdomain verified: %s", _current_regdomain())
+    else:
+        logger.info("regdomain verified: %s", _current_regdomain())
 
     # Step 2: captive portal
     if cfg.mode == "meeting":
