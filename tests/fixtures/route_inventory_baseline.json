@@ -67,6 +67,17 @@
   },
   {
     "dependencies": [],
+    "endpoint": "meeting_scribe.terminal.bootstrap.register_bootstrap_routes.<locals>.logout",
+    "methods": [
+      "POST"
+    ],
+    "name": "logout",
+    "path": "/api/admin/logout",
+    "response_class": "starlette.responses.JSONResponse",
+    "type": "APIRoute"
+  },
+  {
+    "dependencies": [],
     "endpoint": "meeting_scribe.routes.admin.post_admin_pause_translation",
     "methods": [
       "POST"

@@ -564,6 +564,37 @@ def _captive_portal_active() -> bool:
 # ── Firewall ────────────────────────────────────────────────────────────
 
 
+async def apply_firewall_via_helper(
+    *,
+    mode: str = "meeting",
+    cidr: str | None = None,
+    sta_iface_present: bool | None = None,
+) -> None:
+    """v36 helper-driven firewall apply (Plan 1 + Plan 2 merge).
+
+    Replaces the legacy :func:`_apply_meeting_firewall` sudo path. The
+    canonical chain bodies + position-1 invariant + atomic restore
+    live in :mod:`meeting_scribe.firewall`; the actual root-context
+    iptables-restore runs inside the helper daemon.
+
+    Migration is opt-in via env: when ``SCRIBE_FW_HELPER=1`` the
+    legacy sudo callsite can swap to this function. Once the helper is
+    deployed everywhere, the legacy ``_apply_meeting_firewall`` path
+    is deleted and this becomes the only firewall apply path (Plan
+    §C.0 sudo-removal commit).
+    """
+    from meeting_scribe import helper_client
+    from meeting_scribe.wifi_sta import sta_iface_present as _sta_check
+
+    final_cidr = cidr or HOTSPOT_SUBNET_CIDR
+    final_sta = sta_iface_present if sta_iface_present is not None else _sta_check()
+    await helper_client.firewall_apply(
+        mode=mode,
+        cidr=final_cidr,
+        sta_iface_present=final_sta,
+    )
+
+
 def _apply_meeting_firewall(admin_port: int = MEETING_PORT) -> None:
     """Apply meeting-mode firewall: allow port 80, reject ``admin_port``/443, default-deny.
 

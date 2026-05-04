@@ -204,27 +204,127 @@ async def verb_wifi_status(args: dict[str, Any]) -> dict[str, Any]:
 async def verb_firewall_apply(args: dict[str, Any]) -> dict[str, Any]:
     """Apply the MS_* chain set + parent-jump position-1 invariant.
 
-    UID-gated to root only. The actual implementation will compose the
-    multi-table iptables-restore input via
-    :func:`meeting_scribe.firewall._build_restore_text` and shell out
-    via list-form argv — no shell string interpolation.
+    Composes the multi-table iptables-restore input via
+    :func:`meeting_scribe.firewall._build_restore_text` from the
+    canonical generator (single source of truth — Plan 2 P1#1) then
+    pipes it into ``iptables-restore -w 5`` via list-form argv. IPv6
+    runs in a separate ``ip6tables-restore`` invocation (own lock
+    domain).
+
+    UID-gated to root only.
     """
-    # Skeletal — the wired-up implementation lands together with the
-    # Plan §C.0 sudo-removal commit. Here we just sanity-check the
-    # arguments shape so the helper can exercise the verb dispatch end-
-    # to-end via the test client.
+    from meeting_scribe.firewall import (
+        MS_CHAINS_FILTER,
+        MS_CHAINS_FILTER_V6,
+        MS_CHAINS_NAT,
+        FirewallSnapshot,
+        _build_restore_text,
+        _expected_parent_jumps,
+    )
+
     mode = _validate_mode(_require_str(args, "mode"))
     cidr = _require_str(args, "cidr")
     if not re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}/\d{1,2}", cidr):
         raise VerbError("invalid_args", "cidr format")
     sta_present = bool(args.get("sta_iface_present", False))
+
+    snap = FirewallSnapshot(
+        captured_mode=mode,  # type: ignore[arg-type]
+        captured_cidr=cidr,
+        sta_iface_present=sta_present,
+    )
+
+    # Best-effort live dump fetch. Failures here surface as
+    # subprocess_timeout / binary_not_found via _run_argv but the
+    # generator below still produces the canonical bodies — so a
+    # parser-side gap doesn't accidentally clear our chains.
+    live_filter = await _run_argv(["iptables-save", "-t", "filter"], timeout=5.0)
+    live_nat = await _run_argv(["iptables-save", "-t", "nat"], timeout=5.0)
+    live_filter_v6 = await _run_argv(["ip6tables-save", "-t", "filter"], timeout=5.0)
+
+    desired_v4 = _build_restore_text(
+        table_blocks=[
+            (
+                "filter",
+                live_filter["stdout"],
+                MS_CHAINS_FILTER,
+                list(_expected_parent_jumps(table="filter", v6=False)),
+            ),
+            (
+                "nat",
+                live_nat["stdout"],
+                MS_CHAINS_NAT,
+                list(_expected_parent_jumps(table="nat", v6=False)),
+            ),
+        ],
+        snap=snap,
+    )
+    desired_v6 = _build_restore_text(
+        table_blocks=[
+            (
+                "filter",
+                live_filter_v6["stdout"],
+                MS_CHAINS_FILTER_V6,
+                list(_expected_parent_jumps(table="filter", v6=True)),
+            ),
+        ],
+        snap=snap,
+        v6=True,
+    )
+
+    rc_v4 = await _pipe_to(
+        ["iptables-restore", "-w", "5"], desired_v4, timeout=10.0
+    )
+    if rc_v4["rc"] != 0:
+        raise VerbError(
+            "iptables_restore_failed",
+            rc_v4["stderr"][:200],
+        )
+    rc_v6 = await _pipe_to(
+        ["ip6tables-restore", "-w", "5"], desired_v6, timeout=10.0
+    )
+    if rc_v6["rc"] != 0:
+        raise VerbError(
+            "ip6tables_restore_failed",
+            rc_v6["stderr"][:200],
+        )
     return {
-        "applied": False,
+        "applied": True,
         "mode": mode,
         "cidr": cidr,
         "sta_iface_present": sta_present,
-        "note": "skeleton — real apply lands with sudo-removal cutover",
+        "v4_chars": len(desired_v4),
+        "v6_chars": len(desired_v6),
     }
+
+
+async def _pipe_to(argv: list[str], text: str, *, timeout: float) -> dict[str, Any]:
+    """Run ``argv`` with ``text`` on stdin (used by iptables-restore).
+
+    Mirrors :func:`_run_argv` but adds the input pipe. The argv must be
+    list-form — no shell — and ``text`` is the canonical restore body
+    composed by :mod:`meeting_scribe.firewall`.
+    """
+    loop = asyncio.get_running_loop()
+
+    def _blocking() -> subprocess.CompletedProcess:
+        return subprocess.run(  # noqa: S603 — list-form, validated
+            argv,
+            input=text,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+
+    try:
+        proc = await loop.run_in_executor(None, _blocking)
+    except subprocess.TimeoutExpired as exc:
+        raise VerbError("subprocess_timeout", str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise VerbError("binary_not_found", argv[0]) from exc
+
+    return {"rc": proc.returncode, "stdout": proc.stdout, "stderr": proc.stderr}
 
 
 async def verb_firewall_status(args: dict[str, Any]) -> dict[str, Any]:

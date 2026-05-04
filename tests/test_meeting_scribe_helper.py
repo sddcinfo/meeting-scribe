@@ -166,24 +166,57 @@ def test_verb_firewall_apply_rejects_bad_cidr() -> None:
     asyncio.run(runner())
 
 
-def test_verb_firewall_apply_skeleton_returns_structured() -> None:
-    """Skeleton path returns a structured success dict so the verb
-    dispatch end-to-end can be exercised without root + iptables."""
+def test_verb_firewall_apply_runs_through_canonical_generator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """firewall.apply composes restore text via the canonical
+    generator and shells out via list-form argv. We mock both the
+    save-side subprocess (returns empty live state) AND the
+    restore-side pipe (asserts the generator's output is what we feed
+    in)."""
+    from meeting_scribe_helper import verbs as verbs_mod
 
-    async def runner() -> None:
-        result = await VERB_REGISTRY["firewall.apply"].handler(
+    captured_pipes: list[tuple[list[str], str]] = []
+
+    async def fake_run_argv(argv, *, timeout=10.0):
+        # iptables-save returns empty stdout → builder still emits
+        # canonical chain decls / bodies / parent jumps.
+        return {"rc": 0, "stdout": "", "stderr": ""}
+
+    async def fake_pipe_to(argv, text, *, timeout):
+        captured_pipes.append((argv, text))
+        return {"rc": 0, "stdout": "", "stderr": ""}
+
+    monkeypatch.setattr(verbs_mod, "_run_argv", fake_run_argv)
+    monkeypatch.setattr(verbs_mod, "_pipe_to", fake_pipe_to)
+
+    async def runner() -> dict[str, Any]:
+        return await VERB_REGISTRY["firewall.apply"].handler(
             {
                 "mode": "meeting",
                 "cidr": "10.42.0.0/24",
                 "sta_iface_present": True,
             }
         )
-        assert result["mode"] == "meeting"
-        assert result["cidr"] == "10.42.0.0/24"
-        assert result["sta_iface_present"] is True
-        assert "skeleton" in result["note"]
 
-    asyncio.run(runner())
+    result = asyncio.run(runner())
+    assert result["applied"] is True
+    assert result["mode"] == "meeting"
+    assert result["cidr"] == "10.42.0.0/24"
+    assert result["sta_iface_present"] is True
+    # Two pipes: filter+nat in one iptables-restore, v6 in
+    # ip6tables-restore.
+    assert len(captured_pipes) == 2
+    v4_argv, v4_text = captured_pipes[0]
+    v6_argv, v6_text = captured_pipes[1]
+    assert v4_argv[0] == "iptables-restore"
+    assert "-w" in v4_argv
+    assert v6_argv[0] == "ip6tables-restore"
+    # Canonical body landed in the restore input.
+    assert "*filter" in v4_text and "*nat" in v4_text
+    assert "MS_INPUT" in v4_text
+    # STA-active hotspot egress rule is present in MS_FWD.
+    assert "wlan_sta" in v4_text
 
 
 # ── End-to-end Unix-socket round-trip ────────────────────────────
