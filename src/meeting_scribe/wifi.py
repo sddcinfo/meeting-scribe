@@ -68,8 +68,14 @@ WIFI_IFACE = "wlP9s9"  # MT7925 on GB10
 DEFAULT_BAND = "a"  # 5 GHz
 DEFAULT_CHANNEL = 36
 MEETING_PORT = 8080
+# Plan 1 §A unified-hotspot v1.0: a single fixed SSID serves both admin
+# and guest traffic — discriminated only by the `scribe_admin` cookie at
+# the HTTPS layer. The pre-cutover "rotating per-meeting Demo XXXX" SSID
+# is preserved for the legacy `meeting` mode but new deployments default
+# to `Dell Meeting`.
 SSID_PREFIX = "Dell Demo"
-DEFAULT_ADMIN_SSID = "Dell Admin"
+DEFAULT_ADMIN_SSID = "Dell Meeting"
+DEFAULT_UNIFIED_SSID = "Dell Meeting"
 
 # Captive portal paths
 DNSMASQ_CONF_DIR = Path("/etc/NetworkManager/dnsmasq-shared.d")
