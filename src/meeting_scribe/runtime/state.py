@@ -152,6 +152,28 @@ _terminal_ticket_store: Any = None  # TicketStore
 _terminal_registry: Any = None  # ActiveTerminals
 
 
+# ── Per-boot signing subkey + session revocation ───────────────
+# ``boot_session_id`` is regenerated every time the server starts. The
+# CookieSigner's HMAC key is derived from ``(admin_secret,
+# boot_session_id)`` via HKDF, so a server restart invalidates every
+# previously-issued admin cookie — the strong logout-all guarantee for
+# v1.0. See ``terminal/auth.py:derive_cookie_subkey``.
+boot_session_id: bytes = b""
+
+# Logout / re-auth revocation set. Maps ``session_id`` (16-byte hex from
+# ``CookieSigner.issue``) → expiry epoch (when the cookie's max_age
+# would have run out). Live for the lifetime of the boot only;
+# ``boot_session_id`` rotation supersedes it across restarts.
+_revoked_sessions: dict[str, float] = {}
+
+# Active admin WebSockets per session. ``register_admin_ws`` (the async
+# context manager in terminal/auth.py) populates this; logout looks up the
+# logging-out session_id and closes every WS in its set; re-auth on the
+# same browser does the same for the prior session before minting a fresh
+# cookie.
+_admin_ws_by_session: dict[str, set[Any]] = {}
+
+
 # ── Slide translation worker ───────────────────────────────────
 # Initialized in lifespan if the worker container image is available.
 slide_job_runner: Any = None  # SlideJobRunner

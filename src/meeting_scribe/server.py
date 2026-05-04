@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import secrets
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -30,7 +31,12 @@ from meeting_scribe.server_support.request_scope import (
     _is_guest_scope,
 )
 from meeting_scribe.speaker.enrollment import SpeakerEnrollmentStore
-from meeting_scribe.terminal.auth import AdminSecretStore, CookieSigner, TicketStore
+from meeting_scribe.terminal.auth import (
+    AdminSecretStore,
+    CookieSigner,
+    TicketStore,
+    derive_cookie_subkey,
+)
 from meeting_scribe.terminal.bootstrap import BootstrapConfig, register_bootstrap_routes
 from meeting_scribe.terminal.registry import ActiveTerminals
 from meeting_scribe.terminal.router import TerminalRouterConfig, register_terminal_routes
@@ -97,7 +103,20 @@ state.enrollment_store = SpeakerEnrollmentStore()
 # capture these as constructor arguments. Assigned through
 # ``meeting_scribe.runtime.state`` so route modules can reach them.
 state._terminal_admin_secret = AdminSecretStore.load_or_create()
-state._terminal_cookie_signer = CookieSigner(state._terminal_admin_secret.secret)
+# Per-boot signing subkey: regenerated every server start so a restart
+# invalidates every previously-issued admin cookie. The CookieSigner takes
+# the derived subkey rather than the master secret so the master never
+# touches the HMAC. _revoked_sessions tracks live in-boot logout/re-auth
+# revocations; per-boot rotation handles the cross-restart case.
+state.boot_session_id = secrets.token_bytes(32)
+_cookie_subkey = derive_cookie_subkey(
+    state._terminal_admin_secret.secret,
+    state.boot_session_id,
+)
+state._terminal_cookie_signer = CookieSigner(
+    secret=_cookie_subkey,
+    is_revoked=lambda sid: sid in state._revoked_sessions,
+)
 state._terminal_ticket_store = TicketStore(state._terminal_admin_secret.secret)
 state._terminal_registry = ActiveTerminals(
     max_concurrent=int(os.environ.get("SCRIBE_TERM_MAX_SESSIONS", "4"))
