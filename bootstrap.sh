@@ -583,6 +583,61 @@ echo "[bootstrap] starting model backends ('meeting-scribe gb10 up')"
 as_user '.venv/bin/meeting-scribe gb10 up' || \
     echo "[bootstrap] gb10 up reported issues — see above"
 
+# ── 13a. Install root-owned helper daemon (Plan §C.0) ────────────
+# The privileged helper runs as root, listens on
+# /run/meeting-scribe/helper.sock, and accepts JSON-RPC requests
+# from UID 0 OR UID meeting-scribe via SO_PEERCRED. The web service
+# uses it for nmcli / iptables / regdomain ops without ever invoking
+# sudo from within the unprivileged daemon. Sudoers grant for the
+# meeting-scribe user is reduced to read-only verbs once the helper
+# is everywhere; for now the legacy sudoers fragment from §5 stays
+# in place and the helper is opt-in via SCRIBE_FW_HELPER=1.
+install_helper_systemd_unit() {
+    local helper_unit_src="${SCRIPT_DIR}/provisioning/systemd/meeting-scribe-helper.service"
+    local helper_unit_dst=/etc/systemd/system/meeting-scribe-helper.service
+    local tmpfiles_src="${SCRIPT_DIR}/provisioning/tmpfiles/meeting-scribe.conf"
+    local tmpfiles_dst=/etc/tmpfiles.d/meeting-scribe.conf
+    local installed_lib=/usr/local/lib/meeting-scribe
+
+    if [[ ! -f "${helper_unit_src}" ]]; then
+        echo "[bootstrap] helper unit source missing: ${helper_unit_src}" >&2
+        return 1
+    fi
+
+    # Symlink the venv into the unit's ExecStart path so the unit doesn't
+    # carry a per-user path. The repo lives under TARGET_HOME but the
+    # helper runs as root — the symlink lets root invoke the same venv
+    # interpreter without hardcoding a /home/<user>/ path.
+    install -d /usr/local/lib
+    if [[ -L "${installed_lib}" ]]; then
+        rm -f "${installed_lib}"
+    elif [[ -e "${installed_lib}" ]]; then
+        echo "[bootstrap] WARN: ${installed_lib} exists but is not a symlink; leaving alone" >&2
+    fi
+    ln -s "${SCRIPT_DIR}" "${installed_lib}"
+
+    install -m 0644 "${helper_unit_src}" "${helper_unit_dst}"
+    install -m 0644 "${tmpfiles_src}" "${tmpfiles_dst}"
+
+    # Apply tmpfiles immediately so /run/meeting-scribe/ exists before
+    # the unit's ExecStartPre runs.
+    systemd-tmpfiles --create "${tmpfiles_dst}" >/dev/null 2>&1 || true
+
+    systemctl daemon-reload
+    systemctl enable meeting-scribe-helper.service 2>&1 | tail -3
+    systemctl restart meeting-scribe-helper.service
+    sleep 1
+    if systemctl is-active --quiet meeting-scribe-helper.service; then
+        echo "[bootstrap] meeting-scribe-helper.service active (socket: /run/meeting-scribe/helper.sock)"
+    else
+        echo "[bootstrap] WARN: meeting-scribe-helper.service did not reach active state" >&2
+        systemctl status --no-pager meeting-scribe-helper.service 2>&1 | tail -10 >&2 || true
+    fi
+}
+
+install_helper_systemd_unit || \
+    echo "[bootstrap] helper install reported issues — see above"
+
 # ── 13. Install user systemd unit (boot autostart) ────────────────
 echo
 echo "[bootstrap] installing meeting-scribe.service (user systemd unit)"

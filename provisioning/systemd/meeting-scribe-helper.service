@@ -1,0 +1,57 @@
+[Unit]
+# Privileged helper daemon for meeting-scribe.
+#
+# Runs as root, listens on /run/meeting-scribe/helper.sock with mode
+# 0660 (group meeting-scribe). The web service connects via the helper
+# client at meeting_scribe.helper_client and authenticates via
+# SO_PEERCRED — no token, no shared secret. Allowed peer UIDs: 0
+# (root, for local recovery + sudo CLI) and the meeting-scribe service
+# user.
+#
+# Provisioned by bootstrap.sh's install_helper_systemd_unit step and
+# copied into /etc/systemd/system/. Tightly coupled to the helper code
+# in src/meeting_scribe_helper/ — every protocol/verb change should be
+# accompanied by a unit-file review (especially the
+# CapabilityBoundingSet + Restart policy below).
+#
+# Hardening choices:
+#   * Type=notify-reload + WatchdogSec — once the helper learns to
+#     emit sd_notify("READY=1") this becomes the proper readiness
+#     gate. For now we keep Type=simple and rely on the socket file's
+#     existence as the readiness signal (the bootstrap install hook
+#     polls for the socket before declaring success).
+#   * Restart=on-failure — a verb crash should not take the daemon down
+#     permanently; systemd respawns. RestartSec=2 to cap rapid loop.
+#   * CapabilityBoundingSet=full — the helper invokes nmcli, iptables,
+#     iw, etc. It NEEDS broad capabilities; we don't try to lock down
+#     individual ones. The privilege boundary is the SO_PEERCRED check
+#     + the typed verb allowlist, NOT systemd capability filtering.
+#   * NoNewPrivileges=no — needed because some verbs may setcap or
+#     chmod things; systemd-default false matches the required posture.
+Description=Meeting Scribe Privileged Helper Daemon
+Documentation=https://github.com/sddcinfo/meeting-scribe
+After=network-pre.target NetworkManager.service
+Wants=network-pre.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStartPre=/bin/mkdir -p /run/meeting-scribe
+ExecStart=/usr/local/lib/meeting-scribe/.venv/bin/python -m meeting_scribe_helper \
+    --socket /run/meeting-scribe/helper.sock \
+    --service-user meeting-scribe \
+    --socket-group meeting-scribe
+ExecStartPost=/usr/bin/timeout 10 sh -c 'until [ -S /run/meeting-scribe/helper.sock ]; do sleep 0.1; done'
+Restart=on-failure
+RestartSec=2
+
+# Standard journal logging — every verb invocation, denial, and error
+# emits a structured INFO/WARNING line for auditing. Secrets are
+# redacted by `meeting_scribe_helper.protocol.redact_sensitive`.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=meeting-scribe-helper
+
+[Install]
+WantedBy=multi-user.target
