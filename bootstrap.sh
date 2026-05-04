@@ -299,6 +299,23 @@ if [[ ${#need_pkgs[@]} -gt 0 ]]; then
     apt-get install -y "${need_pkgs[@]}"
 fi
 
+# Add the target user to the docker group so the meeting-scribe stack
+# (`gb10 up`, doctor's docker reach probe) works without sudo. The OEM
+# ISO sometimes provisions docker for the first GUI user but skips
+# delldemo on a fresh PXE install. Idempotent — `usermod -aG` is a
+# no-op when the user is already in the group, and the `getent` guard
+# avoids touching /etc/group when the group doesn't yet exist.
+if getent group docker >/dev/null 2>&1; then
+    if ! id -nG "${TARGET_USER}" | tr ' ' '\n' | grep -qx docker; then
+        usermod -aG docker "${TARGET_USER}"
+        echo "[bootstrap] added ${TARGET_USER} to docker group"
+        echo "[bootstrap]   note: existing SSH sessions don't see the new group"
+        echo "[bootstrap]   until next login. Subsequent invocations of"
+        echo "[bootstrap]   'meeting-scribe gb10 up' from this shell will need"
+        echo "[bootstrap]   'sg docker -c ...' OR a fresh login."
+    fi
+fi
+
 # ── 4. WiFi radio: unblock + persist regdomain ────────────────────
 # Two independent kill switches; both must be off before NetworkManager
 # can put the wlan interface in a usable state. rfkill is the kernel-
