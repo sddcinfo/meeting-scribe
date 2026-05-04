@@ -22,6 +22,40 @@ def _qr_svg(data: str) -> str:
     return buf.getvalue().decode()
 
 
-def _wifi_qr_svg(ssid: str, password: str) -> str:
-    """Generate an SVG QR code for WiFi auto-join."""
-    return _qr_svg(f"WIFI:T:WPA;S:{ssid};P:{password};;")
+def _wifi_qr_escape(value: str) -> str:
+    """Escape WIFI: QR code reserved characters per the de-facto spec.
+
+    The format is ``WIFI:T:<auth>;S:<ssid>;P:<password>;H:<hidden>;;``
+    where ``;``, ``,``, ``:``, ``\\``, and ``"`` MUST be backslash-
+    escaped inside SSID / password. Spaces and most punctuation are
+    fine bare. Without escaping, an SSID like ``Dell;Demo`` or a
+    password containing ``;`` produces a corrupt QR that phones
+    silently fail to join.
+    """
+    out = []
+    for ch in value:
+        if ch in ('\\', ';', ',', ':', '"'):
+            out.append('\\')
+        out.append(ch)
+    return ''.join(out)
+
+
+def _wifi_qr_svg(ssid: str, password: str, *, auth: str = "WPA2") -> str:
+    """Generate an SVG QR code for WiFi auto-join.
+
+    Format: ``WIFI:T:<auth>;S:<ssid>;P:<password>;H:false;;``.
+
+    ``auth`` defaults to ``WPA2``; pass ``WPA3`` only when you have
+    confirmed the target client base supports it (older Android <10
+    rejects unknown auth types). ``WPA2`` is recognized by every iOS
+    Camera, Android Camera, and modern browser, AND the access point
+    can still negotiate WPA3-SAE on actual association — the QR's
+    auth field is a hint, not a binding constraint.
+
+    SSID + password are properly escaped via :func:`_wifi_qr_escape`
+    so passwords containing ``;``, ``:``, ``\\``, ``,``, or ``"`` no
+    longer corrupt the QR payload.
+    """
+    s = _wifi_qr_escape(ssid)
+    p = _wifi_qr_escape(password)
+    return _qr_svg(f"WIFI:T:{auth};S:{s};P:{p};H:false;;")
