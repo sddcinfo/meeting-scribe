@@ -194,6 +194,58 @@ echo
 echo "[bootstrap] country=${COUNTRY_CODE} timezone=${TIMEZONE} languages=${LANG_PAIR}"
 
 # ── 3. OS packages ────────────────────────────────────────────────
+
+# Disable optional NVIDIA OEM apt repos whose signing keys have expired on
+# the freshly-imaged DGX OS / Dell-OEM cloud-init payload. Only known-
+# irrelevant repos (not required by the GPU driver, container runtime, or
+# meeting-scribe) are silently disabled here; required repos with bad keys
+# would still trip the apt-update check below and abort with a clear error
+# so the operator can refresh the key rather than discover the failure
+# halfway through `apt-get install`.
+#
+# Why this lives in bootstrap.sh (not a one-shot fix on a single box):
+# every PXE-reinstalled customer GB10 inherits the same OEM repo set; if
+# the key is already expired when the ISO was built, every fresh install
+# would block the apt step.
+disable_optional_apt_repos_with_expired_keys() {
+    local sources_dir=/etc/apt/sources.list.d
+    # Map of optional repo basename → reason. Add to this list if a new
+    # OEM repo turns out to be optional and ships with an expired key.
+    local -a optional_basenames=(ai-workbench-desktop)
+    for base in "${optional_basenames[@]}"; do
+        local f="${sources_dir}/${base}.sources"
+        if [[ -f "${f}" ]]; then
+            mv "${f}" "${f}.disabled"
+            echo "[bootstrap] disabled optional apt source: ${f##*/} (not required for meeting-scribe)"
+        fi
+    done
+}
+
+ensure_apt_clean() {
+    # Run apt-get update; if it reports a third-party repo with an
+    # expired key OR an unsigned InRelease, surface the offender and abort
+    # so the operator gets one clear remediation message instead of
+    # discovering the failure halfway through apt install.
+    local update_log
+    update_log="$(mktemp)"
+    if apt-get update -qq 2>"${update_log}"; then
+        rm -f "${update_log}"
+        return 0
+    fi
+    if grep -qE 'EXPKEYSIG|is not signed|NO_PUBKEY' "${update_log}"; then
+        echo "[bootstrap] apt-get update reported repo signing problems:" >&2
+        grep -E 'EXPKEYSIG|is not signed|NO_PUBKEY' "${update_log}" >&2 || true
+        echo "[bootstrap] resolution: refresh the offending repo's signing key, OR" >&2
+        echo "[bootstrap] add the repo's basename to disable_optional_apt_repos_with_expired_keys" >&2
+        echo "[bootstrap] in bootstrap.sh if it's not required for meeting-scribe." >&2
+        rm -f "${update_log}"
+        return 1
+    fi
+    cat "${update_log}" >&2
+    rm -f "${update_log}"
+    return 1
+}
+
 need_pkgs=()
 for pkg in ffmpeg libportaudio2 libsndfile1 docker-compose-plugin rfkill iw; do
     if ! dpkg -s "$pkg" >/dev/null 2>&1; then
@@ -202,7 +254,8 @@ for pkg in ffmpeg libportaudio2 libsndfile1 docker-compose-plugin rfkill iw; do
 done
 if [[ ${#need_pkgs[@]} -gt 0 ]]; then
     echo "[bootstrap] installing apt packages: ${need_pkgs[*]}"
-    apt-get update -qq
+    disable_optional_apt_repos_with_expired_keys
+    ensure_apt_clean || { echo "[bootstrap] aborting — fix the apt repo issues above and re-run." >&2; exit 1; }
     apt-get install -y "${need_pkgs[@]}"
 fi
 
