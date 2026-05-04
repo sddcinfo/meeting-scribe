@@ -408,3 +408,72 @@ async def _serve_dual(
                 await recovery_task
             except asyncio.CancelledError:
                 pass
+
+
+async def _serve_two_apps(
+    *,
+    tls_app_server: _NoSignalServer,
+    tls_sockets: list,
+    http_app_server: _NoSignalServer,
+    http_sockets: list,
+) -> None:
+    """v36 unified-hotspot listener orchestration (Plan §A.1).
+
+    Replaces :func:`_serve_dual`'s admin/guest split. The TLS server
+    runs the FastAPI lifespan (model loads, backend wiring); the HTTP
+    captive sub-app has ``lifespan="off"`` and starts only after the
+    TLS server's startup completes.
+
+    Single-listener model: TLS binds ``10.42.0.1:443`` only; HTTP
+    captive sub-app binds ``10.42.0.1:80`` only. No 127.0.0.1 binds —
+    local tooling that needs to reach the FastAPI app does so via
+    direct Python imports (Plan §A.1, §C.0).
+
+    The cutover from :func:`_serve_dual` → ``_serve_two_apps`` is
+    gated on hardware validation (real GB10 + AP IP available). The
+    legacy function stays in place until the cutover commit deletes
+    the dual-listener code path.
+    """
+    import signal
+
+    loop = asyncio.get_running_loop()
+
+    def _request_shutdown() -> None:
+        tls_app_server.should_exit = True
+        http_app_server.should_exit = True
+
+    def _request_config_reload() -> None:
+        from meeting_scribe import runtime_config
+
+        try:
+            runtime_config.reload_from_disk()
+            logger.info(
+                "runtime-config reloaded on SIGHUP: %s",
+                runtime_config.instance().as_dict(),
+            )
+        except Exception:
+            logger.exception("runtime-config reload failed")
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, _request_shutdown)
+    loop.add_signal_handler(signal.SIGHUP, _request_config_reload)
+
+    tls_task = asyncio.create_task(
+        tls_app_server.serve(sockets=tls_sockets),
+        name="tls-uvicorn",
+    )
+    while not tls_app_server.started:
+        if tls_task.done():
+            await tls_task
+            return
+        await asyncio.sleep(0.05)
+
+    http_task = asyncio.create_task(
+        http_app_server.serve(sockets=http_sockets),
+        name="captive-http-uvicorn",
+    )
+    try:
+        await asyncio.gather(tls_task, http_task)
+    finally:
+        tls_app_server.should_exit = True
+        http_app_server.should_exit = True
