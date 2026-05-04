@@ -68,10 +68,21 @@ cd "$SCRIPT_DIR"
 
 # Helper: run a command as the original (non-root) user, in the repo
 # directory, with their HOME and PATH so mise/pip/etc behave normally.
+# Forwards a small allowlist of env vars (no shell expansion of caller-
+# supplied values) so mise + pip can use authenticated network calls.
 as_user() {
+    local -a env_args=(
+        "HOME=${TARGET_HOME}"
+        "PATH=${TARGET_HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    )
+    # GITHUB_TOKEN/GH_TOKEN forwarded so mise's attestation API calls land
+    # in the authenticated 5000/hr bucket instead of the anonymous 60/hr
+    # one. HF_TOKEN forwarded for the meeting-scribe model-download path.
+    [[ -n "${GITHUB_TOKEN:-}" ]] && env_args+=("GITHUB_TOKEN=${GITHUB_TOKEN}")
+    [[ -n "${GH_TOKEN:-}" ]] && env_args+=("GH_TOKEN=${GH_TOKEN}")
+    [[ -n "${HF_TOKEN:-}" ]] && env_args+=("HF_TOKEN=${HF_TOKEN}")
     sudo -u "${TARGET_USER}" \
-        env "HOME=${TARGET_HOME}" \
-            "PATH=${TARGET_HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+        env "${env_args[@]}" \
             bash -lc "cd '${SCRIPT_DIR}' && $*"
 }
 
@@ -319,6 +330,40 @@ fi
 # Auto-install mise for the user if missing, then create the venv +
 # editable install. All run as TARGET_USER so file ownership is
 # correct.
+#
+# GitHub-attestation note: mise verifies python-build-standalone
+# tarballs via GitHub's attestation API. Anonymous calls share a
+# single 60/hr bucket per public-egress IP — the typical demo-room
+# WiFi NAT puts every device on the same IP, so the bucket is
+# usually exhausted by the time a fresh GB10 boots. Authenticated
+# calls get 5000/hr, plenty. We pass GITHUB_TOKEN through to the
+# user shell so mise's verification keeps working without us having
+# to disable attestation (which would weaken the supply-chain
+# guarantee on the python download).
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    echo "[bootstrap] GITHUB_TOKEN provided — mise will use authenticated GitHub API calls"
+elif [[ -n "${GH_TOKEN:-}" ]]; then
+    export GITHUB_TOKEN="${GH_TOKEN}"
+    echo "[bootstrap] using GH_TOKEN as GITHUB_TOKEN for mise GitHub-API calls"
+else
+    cat >&2 <<'EOF'
+[bootstrap] WARNING: no GITHUB_TOKEN/GH_TOKEN set.
+
+mise verifies python-build-standalone tarballs against GitHub's attestation
+API. Without a token, requests are rate-limited to 60/hr per public IP — a
+fresh GB10 on shared/NAT WiFi will usually hit the limit before mise can
+finish.
+
+Recommended: re-run with a low-privilege token, e.g.
+
+    sudo GITHUB_TOKEN=ghp_... bash bootstrap.sh
+
+A token with no scopes works (read-only public access is enough for the
+attestation API). DO NOT silently disable MISE_PYTHON_GITHUB_ATTESTATIONS —
+that drops the supply-chain check on the Python download.
+EOF
+fi
+
 echo "[bootstrap] preparing Python toolchain + venv (as ${TARGET_USER})"
 
 as_user '
@@ -331,7 +376,18 @@ as_user '
     fi
     PATH="${HOME}/.local/bin:${PATH}"
     if command -v mise >/dev/null 2>&1 && [[ -f mise.toml || -f .tool-versions ]]; then
-        mise install --yes
+        if ! mise install --yes 2>&1 | tee /tmp/mise-install.log; then
+            if grep -q "rate limit exceeded" /tmp/mise-install.log; then
+                cat >&2 <<EOF2
+[bootstrap] mise install hit GitHub API rate limit.
+[bootstrap] resolution: re-run with GITHUB_TOKEN set, e.g.
+[bootstrap]     sudo GITHUB_TOKEN=ghp_... bash bootstrap.sh
+[bootstrap] (token needs no scopes; read-only public access is enough)
+EOF2
+                exit 1
+            fi
+            exit 1
+        fi
         PYBIN="$(mise exec -- which python)"
     elif command -v python3 >/dev/null 2>&1; then
         PYBIN="$(command -v python3)"
