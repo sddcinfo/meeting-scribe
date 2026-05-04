@@ -328,40 +328,65 @@ fi
 
 # ── 6. Python + venv (as TARGET_USER) ─────────────────────────────
 # Auto-install mise for the user if missing, then create the venv +
-# editable install. All run as TARGET_USER so file ownership is
-# correct.
+# editable install. All run as TARGET_USER so file ownership is correct.
 #
-# GitHub-attestation note: mise verifies python-build-standalone
-# tarballs via GitHub's attestation API. Anonymous calls share a
-# single 60/hr bucket per public-egress IP — the typical demo-room
-# WiFi NAT puts every device on the same IP, so the bucket is
-# usually exhausted by the time a fresh GB10 boots. Authenticated
-# calls get 5000/hr, plenty. We pass GITHUB_TOKEN through to the
-# user shell so mise's verification keeps working without us having
-# to disable attestation (which would weaken the supply-chain
-# guarantee on the python download).
+# ┌─ GitHub API rate-limit handling ─────────────────────────────────┐
+# │ mise verifies python-build-standalone tarballs against GitHub's  │
+# │ attestation API. The buckets:                                    │
+# │                                                                  │
+# │   anonymous      60 req/hr    per public-egress IP (shared NAT!) │
+# │   authenticated  5000 req/hr  per token                          │
+# │                                                                  │
+# │ A fresh GB10 on demo-room NAT'd WiFi usually shares its egress   │
+# │ IP with phones / laptops / other appliances and exhausts the     │
+# │ anonymous bucket before mise gets to it.                         │
+# │                                                                  │
+# │ We do NOT disable attestation — that would drop the supply-chain │
+# │ check on the Python binary. Instead we:                          │
+# │                                                                  │
+# │   1. Skip the API call entirely when the right python is already │
+# │      installed (fast path — applies to OEM ISOs that pre-bake    │
+# │      mise + python@3.14.4).                                      │
+# │   2. Forward GITHUB_TOKEN / GH_TOKEN to mise so the call lands   │
+# │      in the 5000/hr bucket. Token can have ZERO scopes — public  │
+# │      read access is enough for the attestation endpoint.         │
+# │   3. Fail fast with a clear remediation if no token is set AND   │
+# │      the fast path doesn't apply.                                │
+# └──────────────────────────────────────────────────────────────────┘
+echo
+echo "[bootstrap] === Python toolchain (mise + venv) ==="
 if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    echo "[bootstrap] GITHUB_TOKEN provided — mise will use authenticated GitHub API calls"
+    echo "[bootstrap] GitHub auth: GITHUB_TOKEN provided (5000/hr bucket)"
 elif [[ -n "${GH_TOKEN:-}" ]]; then
     export GITHUB_TOKEN="${GH_TOKEN}"
-    echo "[bootstrap] using GH_TOKEN as GITHUB_TOKEN for mise GitHub-API calls"
+    echo "[bootstrap] GitHub auth: GH_TOKEN → GITHUB_TOKEN (5000/hr bucket)"
 else
-    cat >&2 <<'EOF'
-[bootstrap] WARNING: no GITHUB_TOKEN/GH_TOKEN set.
+    echo "[bootstrap] GitHub auth: NONE (anonymous, 60/hr per egress IP)"
+    echo "[bootstrap]   if mise install fails on rate limit, re-run with:"
+    echo "[bootstrap]     sudo GITHUB_TOKEN=ghp_... bash bootstrap.sh"
+    echo "[bootstrap]   (token needs zero scopes — public read is enough)"
+fi
 
-mise verifies python-build-standalone tarballs against GitHub's attestation
-API. Without a token, requests are rate-limited to 60/hr per public IP — a
-fresh GB10 on shared/NAT WiFi will usually hit the limit before mise can
-finish.
-
-Recommended: re-run with a low-privilege token, e.g.
-
-    sudo GITHUB_TOKEN=ghp_... bash bootstrap.sh
-
-A token with no scopes works (read-only public access is enough for the
-attestation API). DO NOT silently disable MISE_PYTHON_GITHUB_ATTESTATIONS —
-that drops the supply-chain check on the Python download.
-EOF
+# Fast path: if mise is already installed AND the .venv is already
+# wired with the lockfile-pinned python, skip the API call entirely.
+# This applies to OEM ISOs that pre-bake mise + python@3.14.4 into
+# the rootfs; the customer never hits GitHub on first boot.
+fast_path_python_ready() {
+    sudo -u "${TARGET_USER}" \
+        env "HOME=${TARGET_HOME}" \
+            "PATH=${TARGET_HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            bash -lc "
+                cd '${SCRIPT_DIR}'
+                command -v mise >/dev/null || exit 1
+                mise where python 2>/dev/null | grep -q . || exit 1
+                ${SCRIPT_DIR}/.venv/bin/python -c 'import sys; sys.exit(0 if sys.version_info >= (3,14) else 1)' 2>/dev/null
+            "
+}
+if fast_path_python_ready; then
+    echo "[bootstrap] fast path: mise + .venv already provisioned, skipping mise install"
+    PYBIN_FOR_LATER="${SCRIPT_DIR}/.venv/bin/python"
+else
+    PYBIN_FOR_LATER=""
 fi
 
 echo "[bootstrap] preparing Python toolchain + venv (as ${TARGET_USER})"
@@ -379,10 +404,22 @@ as_user '
         if ! mise install --yes 2>&1 | tee /tmp/mise-install.log; then
             if grep -q "rate limit exceeded" /tmp/mise-install.log; then
                 cat >&2 <<EOF2
-[bootstrap] mise install hit GitHub API rate limit.
-[bootstrap] resolution: re-run with GITHUB_TOKEN set, e.g.
-[bootstrap]     sudo GITHUB_TOKEN=ghp_... bash bootstrap.sh
-[bootstrap] (token needs no scopes; read-only public access is enough)
+
+[bootstrap] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[bootstrap]   GitHub API rate limit hit during mise install.
+[bootstrap]
+[bootstrap]   The anonymous bucket (60/hr per egress IP) has been
+[bootstrap]   exhausted — usually by other devices on the same WiFi.
+[bootstrap]
+[bootstrap]   Fix: re-run with a token in the env. Any GitHub PAT works,
+[bootstrap]   no scopes needed:
+[bootstrap]
+[bootstrap]       sudo GITHUB_TOKEN=ghp_... bash bootstrap.sh
+[bootstrap]
+[bootstrap]   We deliberately keep the attestation check ENABLED
+[bootstrap]   here — disabling it would drop the supply-chain guarantee
+[bootstrap]   on the Python binary download.
+[bootstrap] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF2
                 exit 1
             fi
