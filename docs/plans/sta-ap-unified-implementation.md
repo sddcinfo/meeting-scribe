@@ -170,6 +170,69 @@ non-overlapping and tracked individually in their source plans. The position-1
 invariant + canonical-generator pair (Plan 2 P0 / P1#1 / P1#2 / P2#1 / P2#2) supersedes
 Plan 1's "exactly one jump" + RETURN-vs-ACCEPT story by being a strict superset.
 
+## Progress (2026-05-04 working session)
+
+Eight commits landed on `feature/sta-ap-unified-2026-05-04`:
+
+| #  | Commit                                                                      | Phase  | Status |
+|----|-----------------------------------------------------------------------------|--------|--------|
+| 1  | docs: combined plan                                                         | docs   | ✅      |
+| 2  | csp: extract inline scripts + AudioListener Protocol                        | 1      | ✅      |
+| 3  | tls: per-device leaf-only cert + read-only SAN sanity check                 | 2      | ✅      |
+| 4  | middleware: host canon + Origin allowlist + CSP injector + cache-headers    | 3      | ✅      |
+| 5  | auth: per-boot subkey + session_id cookie + revocation hooks                | 4      | ✅      |
+| 6  | hotspot: HTTP captive sub-app + 426 method guard + 308 catch-all            | 5      | ✅      |
+| 7  | firewall: MS_* chain set + position-1 invariant + canonical generator       | 8      | ✅      |
+| 8  | helper: privileged root-owned daemon + Unix-socket client                   | 10     | ✅      |
+
+**Test counts**: 1453 unit tests pass (2 pre-existing skips, 0 regressions).
+Each phase added focused unit tests:
+
+* Phase 1: 73 audio/listener tests (existing) still pass.
+* Phase 2: 9 new cert_check tests.
+* Phase 3: 20 new security middleware tests.
+* Phase 4: 11 new cookie session/revoke tests.
+* Phase 5: 11 new captive HTTP sub-app tests.
+* Phase 8: 25 new firewall position-1/canonical-generator/restore tests.
+* Phase 10: 20 new helper daemon tests.
+
+### Pending phases — deferred to follow-up sessions
+
+| #   | Phase                                                                | Why deferred                                                                          |
+|-----|----------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| 6   | Single-listener TLS bind + scope predicate flip                      | Deletes `_detect_management_ip*`/`_serve_dual` and rewires every CLI tool that probes via 127.0.0.1 (~30 tests). Needs hardware to verify the IP_FREEBIND bind on 10.42.0.1.        |
+| 7   | Login/logout endpoints + bootstrap template                          | ~50 LOC + tests; depends on Phase 6 for the new cookie attrs to land in production.    |
+| 9   | Admission control + per-IP/MAC rate limit                            | ~150 LOC + tests; no dependencies — could land independently.                          |
+| 11  | Migrate sudo callsites to helper_client + remove sudoers grant       | Cross-cuts wifi.py + every CLI route + the systemd unit. Helper daemon is ready (Phase 10). |
+| 12  | BT control plane (`bt.py` + `cli/bt.py`)                             | Pure code, unit-testable with subprocess mocks. ~600 LOC + tests.                      |
+| 13  | BT data plane (`audio/bt_bridge.py` state machine)                   | Pure code skeleton possible; full validation needs BlueZ + paired device.              |
+| 14  | Lifespan auto-connect + `/api/admin/diag/audio`                      | Depends on Phase 13.                                                                   |
+| 15  | Admin UI BT card + WiFi STA card + endpoints + events WS             | Pure code — admin API + JS + HTML.                                                     |
+| 16  | CLI ↔ UI parity matrix (`docs/cli-ui-parity.md` + CI lint)           | Pure docs + lint script.                                                               |
+| 17  | Concurrent STA + AP `wifi.py` STA mode (Plan 2 mainline)             | Cannot validate without MT7925 radio on the GB10.                                      |
+| 18  | Trust install CLI (`cli/trust.py`)                                   | Pure code — `meeting-scribe export-cert` / `trust-install --from-pem` / `--confirm-fingerprint` / `cert-fingerprint` / `trust-uninstall`. ~250 LOC + tests. |
+
+### Hardware-gated verification list
+
+End-to-end no-egress checklist + position-1-displacement scenario need a
+real GB10 with the MT7925 radio + a hotspot client. Plan 1 §Verification +
+Plan 2 §Verification both spell out the commands; consolidated as
+`docs/plans/sta-ap-unified-verification.md` (to be written when the
+hardware-gated work begins).
+
+### Synthesis points (Plan 1 ↔ Plan 2)
+
+The single non-trivial cross-plan merge is `wifi.py`'s firewall layer.
+Resolution landed in `src/meeting_scribe/firewall.py`:
+
+* Plan 2's `MS_INPUT` / `MS_FWD` / `MS_PRE` / `MS_POST` / `MS_INPUT6` chain
+  naming + position-1 invariant + atomic combined-table restore.
+* Plan 1's interface-scoped accept rules embedded inside Plan 2's
+  `_expected_chain_rules` canonical generator.
+* `sta_iface_present` toggle in the generator switches between AP-only
+  and AP+STA isolation rules so hotspot clients have zero upstream egress
+  in either mode.
+
 ## Memory pinning
 
 This branch and plan respect the durable feedback recorded in
