@@ -32,6 +32,7 @@ def cli() -> None:
 # group), so gb10 is imported before setup.
 from meeting_scribe.cli import (
     bench,  # noqa: F401
+    bt,  # noqa: F401
     benchmark,  # noqa: F401
     config,  # noqa: F401
     demo_smoke,  # noqa: F401
