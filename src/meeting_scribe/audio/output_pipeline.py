@@ -28,9 +28,9 @@ from __future__ import annotations
 import logging
 import struct
 import time
+from typing import Protocol, runtime_checkable
 
 import numpy as np
-from fastapi import WebSocket
 
 from meeting_scribe.runtime import state
 from meeting_scribe.server_support.peer import _peer_str
@@ -39,6 +39,22 @@ from meeting_scribe.server_support.translation_demand import _norm_lang
 from meeting_scribe.ws.audio_output import _AUDIO_FORMAT_PENDING_CAP_S
 
 logger = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class AudioListener(Protocol):
+    """Protocol for any consumer of the audio fan-out.
+
+    A WebSocket already satisfies this implicitly via ``send_bytes`` +
+    ``__hash__`` (set membership) + the optional ``.client`` attribute
+    consulted by ``_peer_str``. The BT bridge's ``BTSpeakerListener``
+    implements the same shape so it can join ``state._audio_out_clients``
+    without forcing the dispatcher to special-case in-process consumers.
+    """
+
+    async def send_bytes(self, data: bytes) -> None: ...
+
+    def __hash__(self) -> int: ...
 
 
 def _build_riff_wav(audio: np.ndarray, sample_rate: int) -> bytes:
@@ -88,7 +104,7 @@ def _buffer_pending_audio(pref: ClientSession, audio: np.ndarray, source_rate: i
 
 
 async def _deliver_audio_to_listener(
-    ws: WebSocket,
+    ws: AudioListener,
     pref: ClientSession,
     audio: np.ndarray,
     source_rate: int,
@@ -221,7 +237,7 @@ async def _send_passthrough_audio(audio: np.ndarray, source_language: str) -> No
 
     wav_cache: dict = {}
     sent = 0
-    dead: list[WebSocket] = []
+    dead: list[AudioListener] = []
     for ws in recipients:
         pref = state._audio_out_prefs.get(ws)
         if pref is None:
@@ -270,7 +286,7 @@ async def _send_audio_to_listeners(
 
     wav_cache: dict = {}
     sent = 0
-    dead: list[WebSocket] = []
+    dead: list[AudioListener] = []
     for ws in list(state._audio_out_clients):
         pref = state._audio_out_prefs.get(ws)
         if pref is None:

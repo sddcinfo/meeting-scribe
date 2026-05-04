@@ -6,14 +6,9 @@
   <title>Meeting Scribe</title>
   <!-- System fonts only — no external font loads (hotspot has no internet) -->
   <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/gh-pages-redirect.js"></script>
 </head>
 <body>
-  <script>
-    // GitHub Pages serves static/ as the site root — redirect to docs
-    if (location.hostname.endsWith('github.io')) {
-      location.replace('how-it-works.html');
-    }
-  </script>
   <div class="grain-overlay" aria-hidden="true"></div>
 
   <!-- TTS stall toast — populated by scribe-app.js checkStatus when

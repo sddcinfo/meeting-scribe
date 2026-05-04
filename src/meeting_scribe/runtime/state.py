@@ -65,8 +65,8 @@ name_extractor: Any = None  # LLMNameExtractor (optional)
 current_meeting: MeetingMeta | None = None
 ws_connections: set[WebSocket] = set()
 _client_prefs: dict[WebSocket, Any] = {}  # dict[WebSocket, ClientSession]
-_audio_out_clients: set[WebSocket] = set()
-_audio_out_prefs: dict[WebSocket, Any] = {}  # dict[WebSocket, ClientSession]
+_audio_out_clients: set[Any] = set()  # set[AudioListener] — WebSocket and BTSpeakerListener
+_audio_out_prefs: dict[Any, Any] = {}  # dict[AudioListener, ClientSession]
 audio_writer: AudioWriter | AudioWriterProcess | None = None
 
 

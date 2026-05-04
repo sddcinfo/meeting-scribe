@@ -72,26 +72,6 @@
       <strong id="url-display"></strong>
     </p>
   </div>
-  <script>
-    // Set the URL to the current host
-    var url = location.protocol + '//' + location.host + '/';
-    document.getElementById('url-display').textContent = url;
-    document.getElementById('open-btn').href = url;
-
-    // Dismiss captive portal then open in real browser
-    document.getElementById('open-btn').addEventListener('click', function(e) {
-      e.preventDefault();
-      // Set cookie so next visit goes straight to guest.html
-      document.cookie = 'scribe_portal=done;path=/;max-age=86400';
-      // Tell the port-80 redirector this client is done — next iOS probe
-      // gets "Success" → blue tick → CNA closes
-      fetch('http://' + location.hostname + '/captive-dismiss', {mode:'no-cors'}).catch(function(){});
-      // Open in real Safari (window.open works from iOS CNA)
-      window.open(url, '_blank');
-      // Update the UI
-      document.querySelector('h1').textContent = 'Opening Safari...';
-      document.querySelector('p').textContent = 'You can close this window.';
-    });
-  </script>
+  <script src="/static/js/portal-dismiss.js"></script>
 </body>
 </html>
