@@ -1,0 +1,68 @@
+{
+  "_comment": "Source-of-truth manifest for static/benchmarking.html. Every numeric claim on the page is keyed here; validate_benchmarking.py cross-checks the HTML data-claim/data-suite/data-baseline attrs against this file AND against the live source files (autosre eval suites, autosre baselines, phase 6 retrospective). Update this file when the underlying numbers move.",
+  "suites": [
+    { "name": "a11y",           "num_agents": 3, "category": "a11y" },
+    { "name": "coverage",       "num_agents": 3, "category": "coverage" },
+    { "name": "dead-code",      "num_agents": 2, "category": "dead-code" },
+    { "name": "duplication",    "num_agents": 2, "category": "duplication" },
+    { "name": "i18n",           "num_agents": 3, "category": "i18n" },
+    { "name": "leakage",        "num_agents": 3, "category": "leakage" },
+    { "name": "quality",        "num_agents": 3, "category": "quality" },
+    { "name": "security",       "num_agents": 4, "category": "security" },
+    { "name": "tech-debt",      "num_agents": 2, "category": "tech-debt" },
+    { "name": "ui-consistency", "num_agents": 3, "category": "ui-consistency" }
+  ],
+  "baselines": [
+    {
+      "name": "gb10_qwen36_fp8_flashinfer",
+      "role": "production",
+      "translation_isolated_tps_p50": 51.56,
+      "translation_isolated_ttft_p50_ms": 115.5,
+      "translation_contention_tps_p50": 31.87,
+      "translation_contention_ttft_p99_ms": 194.7,
+      "coding_isolated_tps_p50": 42.53,
+      "coding_isolated_ttft_p50_ms": 269.7,
+      "coding_contention_tps_p50": 27.29,
+      "coding_contention_ttft_p99_ms": 422.2
+    }
+  ],
+  "phase6_verdicts": [
+    {
+      "config": "6.0.1 baseline",
+      "label": "FP8 + flashinfer (production reference)",
+      "verdict": "reference",
+      "reason_short": "current production envelope"
+    },
+    {
+      "config": "6.A",
+      "label": "FP8 + DFlash speculative drafter",
+      "verdict": "FAIL",
+      "reason_short": "DFlash drops flashinfer; scribe short-output workload loses the speculative win"
+    },
+    {
+      "config": "6.B",
+      "label": "RedHatAI NVFP4 + Marlin",
+      "verdict": "FAIL",
+      "reason_short": "SM121 native FP4 GEMM broken; Marlin fallback costs ~8 BLEU"
+    },
+    {
+      "config": "6.C",
+      "label": "NVFP4 + DFlash",
+      "verdict": "skipped",
+      "reason_short": "6.C eligibility rule — auto-skip after 6.B FAIL"
+    }
+  ],
+  "exit_codes": [
+    { "code": 0, "label": "clean",  "meaning": "all metrics within tolerance of the committed baseline" },
+    { "code": 1, "label": "warn",   "meaning": "soft violations — inspect, may still ship" },
+    { "code": 2, "label": "fail",   "meaning": "one or more hard violations — do not merge" }
+  ],
+  "context_window_sweep": [
+    { "window": 0,  "latency_p50_ms": 333, "latency_p95_ms": 543, "mean_prompt_tokens": 118.4 },
+    { "window": 2,  "latency_p50_ms": 351, "latency_p95_ms": 521, "mean_prompt_tokens": 182.8 },
+    { "window": 4,  "latency_p50_ms": 382, "latency_p95_ms": 535, "mean_prompt_tokens": 231.0 },
+    { "window": 6,  "latency_p50_ms": 366, "latency_p95_ms": 545, "mean_prompt_tokens": 277.3 },
+    { "window": 8,  "latency_p50_ms": 392, "latency_p95_ms": 560, "mean_prompt_tokens": 322.4 },
+    { "window": 12, "latency_p50_ms": 389, "latency_p95_ms": 565, "mean_prompt_tokens": 405.4 }
+  ]
+}

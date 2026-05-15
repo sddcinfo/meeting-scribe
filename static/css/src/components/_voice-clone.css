@@ -1,0 +1,225 @@
+/* Meeting Scribe — voice-clone demo components.
+ *
+ * Imported by static/css/src/voice-clone.css. Bespoke class names
+ * preserved (`card`, `btn-record`, `record-status`, `result-card`,
+ * `status-bar`, `badge`, etc.) because the demo's JS toggles
+ * state classes on these (.recording, .active, .done, .visible,
+ * .error, .processing) and the CSS reacts.
+ *
+ * Tokens come from the unified @theme — no raw hex/px in this file.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@layer components {
+  .voice-clone-container {
+    @apply max-w-2xl w-full;
+  }
+
+  .voice-clone-header {
+    @apply text-center mb-10;
+  }
+  .voice-clone-header h1 {
+    @apply text-2xl font-bold tracking-tight mb-2;
+  }
+  .voice-clone-header h1 span {
+    color: var(--color-primary);
+  }
+  .voice-clone-header p {
+    color: var(--color-text-dark-secondary);
+    @apply text-sm leading-relaxed;
+  }
+
+  .card {
+    background: var(--color-bg-night-card);
+    border: 1px solid var(--color-bg-night-border);
+    @apply rounded-xl p-6 mb-5;
+  }
+  .card-title {
+    color: var(--color-text-dark-muted);
+    @apply text-[0.82rem] font-semibold uppercase tracking-wider mb-4 flex items-center gap-2;
+  }
+  .card-title .step {
+    background: var(--color-primary-dim);
+    color: var(--color-primary);
+    @apply inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-[0.72rem] font-bold;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2 rounded-md text-sm font-semibold cursor-pointer;
+    border: 1px solid transparent;
+    font-family: var(--font-ui);
+    transition: all 150ms ease;
+  }
+  .btn-primary {
+    background: var(--color-primary);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: #5aa8ff;
+  }
+  .btn-primary:disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+  .btn-record {
+    background: var(--color-recording);
+    color: #fff;
+    @apply w-full;
+  }
+  .btn-record:hover {
+    background: #f87171;
+  }
+  .btn-record.recording {
+    animation: voice-clone-pulse-rec 1s ease-in-out infinite;
+  }
+  .btn-ghost {
+    background: none;
+    color: var(--color-text-dark-secondary);
+    border: 1px solid var(--color-bg-night-border);
+    font-family: var(--font-ui);
+    @apply px-4 py-2 rounded-md text-[0.82rem] cursor-pointer;
+    transition: all 150ms;
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-text-dark-muted);
+    color: var(--color-text-dark);
+  }
+
+  .record-area {
+    @apply flex flex-col items-center gap-3;
+  }
+  .record-viz {
+    background: var(--color-bg-night-raised);
+    @apply w-full h-10 rounded-md overflow-hidden relative;
+  }
+  .record-viz-bar {
+    background: linear-gradient(90deg, var(--color-primary-dim), var(--color-primary));
+    @apply h-full w-0 rounded-md;
+    transition: width 100ms;
+  }
+  .record-status {
+    color: var(--color-text-dark-muted);
+    @apply text-[0.78rem];
+    min-height: 1.2em;
+  }
+  .record-status.active {
+    color: var(--color-recording);
+  }
+  .record-status.done {
+    color: var(--color-success);
+  }
+
+  .prompt-sentence {
+    background: var(--color-bg-night-raised);
+    border: 1px solid var(--color-bg-night-border);
+    border-left: 3px solid var(--color-primary);
+    color: var(--color-text-dark);
+    @apply rounded-md px-4 py-3 mb-3 text-base leading-relaxed italic;
+  }
+  .prompt-hint {
+    color: var(--color-text-dark-muted);
+    @apply block text-xs mt-1 not-italic tracking-wide;
+  }
+
+  .text-input-area {
+    @apply flex flex-col gap-3;
+  }
+  .text-input {
+    background: var(--color-bg-night-raised);
+    color: var(--color-text-dark);
+    border: 1px solid var(--color-bg-night-border);
+    font-family: var(--font-ui);
+    @apply w-full px-3 py-2 rounded-md text-sm resize-y min-h-[60px];
+    transition: border-color 150ms;
+  }
+  .text-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+  .text-input::placeholder {
+    color: var(--color-text-dark-muted);
+  }
+
+  .lang-row {
+    @apply flex items-center gap-3;
+  }
+  .lang-row label {
+    color: var(--color-text-dark-secondary);
+    @apply text-sm whitespace-nowrap;
+  }
+  .lang-select {
+    background: var(--color-bg-night-raised);
+    color: var(--color-text-dark);
+    border: 1px solid var(--color-bg-night-border);
+    font-family: var(--font-ui);
+    @apply flex-1 px-3 py-2 rounded-md text-[0.85rem] cursor-pointer;
+  }
+
+  .result-card {
+    @apply hidden;
+  }
+  .result-card.visible {
+    @apply block;
+  }
+  .result-row {
+    border-bottom: 1px solid var(--color-bg-night-border);
+    @apply py-3;
+  }
+  .result-row:last-child {
+    border-bottom: none;
+  }
+  .result-label {
+    color: var(--color-text-dark-muted);
+    @apply text-[0.72rem] uppercase tracking-wider mb-1;
+  }
+  .result-text {
+    @apply text-base leading-relaxed;
+  }
+  .result-text.translated {
+    color: var(--color-primary);
+  }
+
+  .play-btn-row {
+    @apply flex gap-3 pt-3;
+  }
+
+  .status-bar {
+    color: var(--color-text-dark-muted);
+    @apply text-center p-2 text-[0.78rem];
+    min-height: 2em;
+  }
+  .status-bar.error {
+    color: var(--color-recording);
+  }
+  .status-bar.processing {
+    color: var(--color-primary);
+  }
+
+  .back-link {
+    color: var(--color-text-dark-muted);
+    @apply inline-flex items-center gap-1 text-[0.82rem] mb-4;
+    text-decoration: none;
+    transition: color 150ms;
+  }
+  .back-link:hover {
+    color: var(--color-text-dark-secondary);
+  }
+
+  .badge {
+    @apply inline-block px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide;
+  }
+  .badge-tts {
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    color: var(--color-primary);
+  }
+  .badge-offline {
+    background: color-mix(in srgb, var(--color-recording) 15%, transparent);
+    color: var(--color-recording);
+  }
+}
+
+@keyframes voice-clone-pulse-rec {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}

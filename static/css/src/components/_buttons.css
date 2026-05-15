@@ -1,0 +1,117 @@
+/* Meeting Scribe — universal button system.
+ *
+ * Single token-driven button vocabulary shared across every page.
+ *
+ * Vocabulary:
+ *   .btn          — shared layout / typography / motion (no fill colour)
+ *   .btn-primary  — dark solid fill, used for the single dominant CTA
+ *                   on a surface (Save, Sign in, Start Meeting, etc.)
+ *   .btn-ghost    — neutral outline, the workhorse secondary action
+ *   .btn-icon     — square icon-only variant
+ *
+ * Specific named buttons that exist for animation reasons keep their
+ * own classes: `.btn-record` (record + cancel-meeting in
+ * _record-controls.css), `.btn-listen-toggle`, `.btn-add-seat`, etc.
+ * The universal set sits underneath those.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.btn,
+.btn-primary,
+.btn-ghost,
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  padding: 0.5rem 1rem;
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) ease-out;
+}
+
+.btn:focus-visible,
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible,
+.btn-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-text-accent) 22%, transparent);
+}
+
+/* ─── Primary CTA ───────────────────────────────────────────── */
+.btn-primary {
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  border-color: var(--color-text-primary);
+}
+
+.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: color-mix(in oklab, var(--color-text-primary) 88%, white);
+  border-color: color-mix(in oklab, var(--color-text-primary) 88%, white);
+}
+
+.btn-primary:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(1px);
+}
+
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ─── Ghost / secondary ─────────────────────────────────────── */
+.btn-ghost {
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.btn-ghost:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-muted);
+}
+
+.btn-ghost:disabled,
+.btn-ghost[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* `.active-toggle` marks a ghost button as the on state of a toggle
+ * pair. Stronger border + tinted background. */
+.btn-ghost.active-toggle {
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-muted);
+}
+
+/* ─── Icon-only ─────────────────────────────────────────────── */
+.btn-icon {
+  padding: 0;
+  width: 36px;
+  min-width: 36px;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.btn-icon:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}

@@ -1,0 +1,139 @@
+{
+  "config_name": "fast_no_thinking_4096",
+  "meeting_id": "c4c913f8-1c43-4de8-99df-1bccffa87a10",
+  "elapsed_ms": 38466.231419937685,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "The meeting served as a live technical demonstration of a proprietary, AI-generated meeting transcription and translation system, highlighting its ability to handle multi-language inputs (English, Japanese, Chinese) and provide personalized audio/text feeds. The presenter showcased the 'vibe coding' methodology, using Claude Code to autonomously debug and refine the application's UI in real-time, illustrating the practical application of AI agents in software development. Key strategic takeaways include the validation of local AI frameworks combined with cloud-based model inference for optimal performance, and the potential for AI-driven development to accelerate feature delivery and bug resolution.",
+    "key_insights": [
+      {
+        "title": "Validation of AI-Generated Software and 'Vibe Coding' Methodology",
+        "description": "The presenter demonstrated a meeting system built entirely using AI coding agents, specifically leveraging 'Claude Code' as the AI framework tooling. This serves as a proof-of-concept for 'vibe coding'—where developers describe desired outcomes or errors, and AI agents autonomously write, debug, and deploy code. The presenter highlighted a real-time scenario where an auto SRE tool failed, and instead of manual debugging, they fed the error message to the AI agent, which analyzed the system state and applied fixes automatically. This suggests a significant shift in development workflows where human intervention is limited to high-level direction and verification, potentially reducing time-to-market for internal tools and prototypes.\n\nThe demonstration also revealed the hybrid architecture of the solution: while the harness and local processing occur on the device (desktop/data center), the heavy lifting is offloaded to cloud-based models (Anthropic) because local open-source models lack the necessary quality or capacity for the specific tasks. This insight is critical for understanding the infrastructure requirements for such AI-native products, balancing latency, cost, and performance.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Multi-Language Real-Time Translation and Personalization Capabilities",
+        "description": "The system successfully demonstrated real-time speech recognition and translation across English, Japanese, and Chinese, addressing a common pain point in global enterprise communications. The presenter showcased personalized 'feeds,' allowing users to filter content by language (e.g., viewing only Japanese transcripts) or switch between audio tracks and text transcripts. This personalization layer adds significant value for non-native speakers or those who prefer reading over listening. The accuracy was noted as 'pretty good,' though the presenter acknowledged trade-offs between speed and quality, particularly when three languages are spoken simultaneously, which can cause the system to cut or drop audio.\n\nThe integration of audio and visual cues (showing who is speaking) enhances the user experience, making it easier for participants to follow complex, multi-lingual discussions. This capability positions the product as a strong candidate for global teams requiring seamless collaboration without language barriers.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Operational Challenges and UI/UX Refinements",
+        "description": "Despite the successful core functionality, the demonstration exposed several UI/UX issues that required immediate AI-assisted correction. The presenter noted that the interface did not fit well on smaller screens (like an iPad in landscape mode) or when using 'reader mode,' leading to scrolling issues and misaligned elements. These issues were resolved in real-time by instructing the AI agent to fix the CSS and layout, demonstrating the agility of the development process. However, these glitches highlight the current limitations of AI-generated code in handling responsive design and edge cases without human oversight.\n\nAdditionally, there were minor issues with speaker identification accuracy, with the system occasionally misattributing speech to 'Speaker 2' instead of the actual speaker. While the presenter framed this as a balance between speed and accuracy, it indicates that further tuning is needed for production readiness, particularly in noisy or multi-speaker environments.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      }
+    ],
+    "action_items": [
+      {
+        "category": "Product Development & AI Tooling",
+        "task": "Continue refining the AI agent's ability to handle responsive design and edge cases in UI generation, specifically addressing layout issues on smaller screens and reader modes.",
+        "assignee": null,
+        "due": null
+      },
+      {
+        "category": "Product Development & AI Tooling",
+        "task": "Improve speaker identification accuracy in multi-speaker, multi-language environments to reduce misattribution errors.",
+        "assignee": null,
+        "due": null
+      },
+      {
+        "category": "Account Strategy",
+        "task": "Follow up with Mary Young regarding the late numbers from last year's demo site, as the presenter is waiting for this data to complete the comparison.",
+        "assignee": null,
+        "due": null
+      },
+      {
+        "category": "Internal Enablement",
+        "task": "Document the 'vibe coding' workflow and AI agent integration (Claude Code) for broader team adoption, highlighting the hybrid local/cloud model architecture.",
+        "assignee": null,
+        "due": null
+      }
+    ],
+    "named_entities": {
+      "companies": [
+        "Anthropic",
+        "Saki-san"
+      ],
+      "people": [
+        "Mary Young",
+        "Saki-san"
+      ],
+      "products": [
+        "Claude Code",
+        "auto SRE tool",
+        "AI BDM team"
+      ],
+      "accounts": []
+    },
+    "decisions": [],
+    "questions": [
+      "What is the status of the late numbers from last year's demo site?",
+      "How will the system handle simultaneous speech in three languages without dropping audio?"
+    ],
+    "key_quotes": [
+      {
+        "text": "Literally, all I've been doing to make all this is just I want I want this I want I want to see this Oh, this doesn't work. Just describing a problem effectively.",
+        "speaker": "Speaker 1",
+        "context": "Describing the 'vibe coding' methodology where AI agents autonomously build and fix software based on natural language descriptions."
+      },
+      {
+        "text": "The harness is local, but when you run it normally, it will connect to Anthropic online... just because those models are significantly better.",
+        "speaker": "Speaker 1",
+        "context": "Explaining the hybrid architecture of the AI tool, balancing local processing with cloud-based model inference for quality."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Voice Recognition and Interface Setup",
+        "description": "Initial testing of voice recognition, speaker identification, and interface layout on different devices.",
+        "timestamp_min": 0.0
+      },
+      {
+        "title": "Multi-Language Translation and Personalization",
+        "description": "Demonstration of real-time translation across English, Japanese, and Chinese, and personalized feed options.",
+        "timestamp_min": 1.0
+      },
+      {
+        "title": "AI-Generated Software and Vibe Coding",
+        "description": "Overview of the AI-built meeting system, the use of Claude Code, and the concept of vibe coding.",
+        "timestamp_min": 3.0
+      },
+      {
+        "title": "Real-Time Debugging and UI Fixes",
+        "description": "Live demonstration of AI agents fixing code errors and UI layout issues in real-time.",
+        "timestamp_min": 5.0
+      },
+      {
+        "title": "Hybrid AI Architecture and Model Selection",
+        "description": "Discussion on the balance between local and cloud-based AI models for optimal performance.",
+        "timestamp_min": 11.0
+      },
+      {
+        "title": "Follow-up and Administrative Items",
+        "description": "Mention of missing data from last year and coordination with Mary Young.",
+        "timestamp_min": 12.0
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 11540,
+  "n_finals": 179,
+  "response_chars": 7513,
+  "num_topics": 6,
+  "num_action_items": 4,
+  "num_decisions": 0,
+  "topic_names": [
+    "Voice Recognition and Interface Setup",
+    "Multi-Language Translation and Personalization",
+    "AI-Generated Software and Vibe Coding",
+    "Real-Time Debugging and UI Fixes",
+    "Hybrid AI Architecture and Model Selection",
+    "Follow-up and Administrative Items"
+  ],
+  "hallucinated_speakers": []
+}

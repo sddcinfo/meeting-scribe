@@ -1,0 +1,251 @@
+/* Meeting Scribe — Meeting mode: table strip + transcript grid.
+ *
+ * The live meeting view's two anchored regions:
+ *
+ *   1. `.meeting-table-strip` — the mini-room snapshot pinned at
+ *      the top of the meeting view showing seats + names + who's
+ *      currently speaking. Click → opens the room editor.
+ *
+ *   2. `.transcript-grid` — the 2/3-column transcript surface
+ *      below the strip, plus the grid scroll affordances + the
+ *      "Live" / lang-A / lang-B column headers + the seated-speaker
+ *      strip chips.
+ *
+ * The room-canvas, table objects, and seats themselves live in
+ * _room-canvas.css. The setup-footer cluster (presets, language
+ * pickers, Start Meeting CTA) lives in _room-setup-footer.css.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ── Meeting mode: table strip + transcript grid ── */
+
+.meeting-table-strip {
+  height: 300px;
+  position: relative;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 42%, color-mix(in srgb, var(--color-text-accent) 5%, transparent) 0%, transparent 70%),
+    var(--color-bg-deep);
+  border-bottom: 1px solid var(--color-border-dim);
+  overflow: hidden;
+  flex-shrink: 0;
+  padding: var(--space-md) 0;
+}
+
+.transcript-columns {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.transcript-col-headers {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--color-border-dim);
+  background: var(--color-bg-raised);
+  flex-shrink: 0;
+}
+
+.col-header {
+  padding: var(--space-xs) var(--space-md);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  border-right: 1px solid var(--color-border-dim);
+}
+
+.col-header:last-child { border-right: none; }
+
+.col-header-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.col-header-hint {
+  font-size: 0.6rem;
+  color: var(--color-text-muted);
+}
+
+/* Unified scroll area — single grid with three columns per row (Live, Language A, Language B) */
+.transcript-grid-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-bg-surface);
+}
+
+.transcript-grid-scroll::-webkit-scrollbar { width: 4px; }
+.transcript-grid-scroll::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+/* Furigana (ruby) annotation — tiny hiragana above kanji rendered by
+   CompactGridRenderer when `event.furigana_html` is present. */
+.compact-col ruby { ruby-position: over; }
+.compact-col ruby rt {
+  font-size: 0.6em;
+  color: var(--color-text-muted);
+  font-weight: normal;
+  line-height: 1;
+}
+.compact-col.has-ruby { line-height: 2.1; }
+body.hide-furigana .compact-col ruby rt { display: none; }
+
+/* Inner container preserves setup canvas proportions.
+   Uses the same aspect ratio as .room-canvas so % positions look identical.
+   Centered in the strip and scaled to fit. */
+.strip-inner {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  height: 100%;
+  margin: 0 auto;
+}
+
+/* Mini table objects in strip */
+.strip-table {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #8b7355, #6d5a42);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+/* Seats are sized for tap-targets, with a clear name affordance,
+   an obvious click-to-name hint for unnamed speakers, and a strong
+   speaking animation. A user looking at the table during a meeting
+   should (a) see who is currently talking at a glance and (b)
+   immediately know where to tap to name a speaker. */
+.strip-seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  border: 3px solid color-mix(in srgb, var(--seat-color, var(--color-border)) 50%, var(--color-border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--seat-color, var(--color-text-muted));
+  cursor: pointer;
+  transition: transform 0.25s var(--ease-out),
+              box-shadow 0.25s var(--ease-out),
+              border-color 0.25s var(--ease-out);
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.10),
+    inset 0 0 0 3px var(--color-bg-surface),
+    inset 0 0 0 4px color-mix(in srgb, var(--seat-color, var(--color-border)) 25%, transparent);
+}
+
+.strip-seat:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow:
+    0 6px 18px rgba(0,0,0,0.18),
+    inset 0 0 0 3px var(--color-bg-surface),
+    inset 0 0 0 4px var(--seat-color, var(--color-border));
+}
+
+.strip-seat.enrolled {
+  background: color-mix(in srgb, var(--seat-color, var(--color-bg-surface)) 12%, var(--color-bg-surface));
+  border-color: var(--seat-color, var(--color-border));
+}
+
+.strip-seat:not(.enrolled).detected {
+  /* Detected but unnamed — subtle pulse to invite click-to-name */
+  animation: seat-unnamed-hint 2.6s ease-in-out infinite;
+}
+
+@keyframes seat-unnamed-hint {
+  0%, 100% { box-shadow:
+    0 2px 6px rgba(0,0,0,0.10),
+    inset 0 0 0 3px var(--color-bg-surface),
+    inset 0 0 0 4px color-mix(in srgb, var(--seat-color, var(--color-border)) 25%, transparent); }
+  50% { box-shadow:
+    0 2px 6px rgba(0,0,0,0.10),
+    inset 0 0 0 3px var(--color-bg-surface),
+    inset 0 0 0 4px var(--seat-color, var(--color-border)),
+    0 0 0 6px color-mix(in srgb, var(--seat-color, transparent) 12%, transparent); }
+}
+
+.strip-seat.speaking {
+  border-color: var(--seat-color, var(--color-speaker-2));
+  border-width: 4px;
+  animation: speaker-pulse 1.6s ease-in-out infinite;
+  color: var(--seat-color, var(--color-text-primary));
+  z-index: 2;
+}
+
+@keyframes speaker-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow:
+      0 2px 8px rgba(0,0,0,0.12),
+      inset 0 0 0 3px var(--color-bg-surface),
+      inset 0 0 0 4px var(--seat-color, var(--color-speaker-2)),
+      0 0 0 6px color-mix(in srgb, var(--seat-color, var(--color-speaker-2)) 22%, transparent);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.12);
+    box-shadow:
+      0 6px 20px rgba(0,0,0,0.16),
+      inset 0 0 0 3px var(--color-bg-surface),
+      inset 0 0 0 4px var(--seat-color, var(--color-speaker-2)),
+      0 0 0 14px color-mix(in srgb, var(--seat-color, var(--color-speaker-2)) 6%, transparent);
+  }
+}
+
+.strip-seat-num {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--seat-color, var(--color-text-muted));
+  line-height: 1;
+}
+
+.strip-seat.speaking .strip-seat-num {
+  color: var(--seat-color, var(--color-speaker-2));
+}
+
+/* Name chip lives below the seat, always visible even when unnamed. */
+.strip-seat-name {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 3px 10px;
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--seat-color, var(--color-bg-raised)) 14%, var(--color-bg-surface));
+  border: 1px solid color-mix(in srgb, var(--seat-color, var(--color-border)) 40%, var(--color-border-dim));
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  pointer-events: none;
+  letter-spacing: -0.005em;
+}
+
+/* Placeholder state — "+ add name" hint for unnamed detected speakers. */
+.strip-seat:not(.enrolled) .strip-seat-name::after {
+  content: "tap to name";
+  color: var(--color-text-muted);
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+.strip-seat:not(.enrolled) .strip-seat-name {
+  border-style: dashed;
+}
+
+.strip-seat:not(.enrolled) .strip-seat-name:not(:empty)::after { content: ""; }
+

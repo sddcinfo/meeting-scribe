@@ -1,0 +1,159 @@
+/* Meeting Scribe — Bluetooth audio card.
+ *
+ * The Audio tab's Bluetooth section in the settings panel — scan
+ * row, scan-result list, per-row pair / disconnect buttons,
+ * connected-device chip.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ── Bluetooth audio card ────────────────────────────────────
+   Settings → Bluetooth audio. Driven by static/js/admin-bt-card.js
+   which polls /api/admin/bt/status every 5 s and writes status text
+   + paired-devices list into this section's DOM. The .ok / .err
+   classes are toggled by setStatus() — these CSS rules make the
+   status line visually distinct from regular help text. */
+.bt-status-line,
+.wan-status-line {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  margin: var(--space-xs) 0 var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 4px;
+  border: 1px solid var(--border-dim, var(--color-border));
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+}
+.bt-status-line.ok,
+.wan-status-line.ok {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--border-dim, var(--color-border)));
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
+  color: var(--color-text-primary);
+}
+.bt-status-line.warn,
+.wan-status-line.warn {
+  border-color: color-mix(in srgb, var(--color-warning) 50%, var(--border-dim, var(--color-border)));
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  color: var(--color-text-primary);
+}
+.bt-status-line.err,
+.wan-status-line.err {
+  border-color: color-mix(in srgb, var(--danger, #dc2626) 50%, var(--border-dim, var(--color-border)));
+  background: color-mix(in srgb, var(--danger, #dc2626) 8%, transparent);
+  color: var(--color-text-primary);
+}
+
+/* ── Scan controls + discoverable list ──────────────────────── */
+
+.bt-scan-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-xs) 0;
+}
+.bt-scan-status {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  flex: 1 1 auto;
+}
+.bt-scan-status.ok { color: var(--color-text-primary); }
+.bt-scan-status.err { color: var(--danger, #dc2626); }
+.bt-scan-empty {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) var(--space-sm);
+  font-style: italic;
+}
+.bt-scan-row .btn-ghost.bt-scan-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.bt-device.bt-scan-row .bt-scan-meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bt-pair-btn,
+.bt-connect-btn,
+.bt-forget-btn {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+.bt-pair-btn.paired {
+  color: var(--color-success);
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+.bt-forget-btn {
+  color: var(--danger, var(--color-text-secondary));
+  border-color: color-mix(in srgb, var(--danger, var(--color-text-secondary)) 40%, var(--color-border));
+}
+.bt-forget-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger, var(--color-text-secondary)) 10%, transparent);
+}
+
+.bt-paired-meta,
+.bt-device-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+.bt-paired-meta {
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.bt-device-actions {
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.settings-bt-list {
+  list-style: none;
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.settings-bt-list:empty::before {
+  content: "No known devices.";
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.bt-device {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-dim, var(--color-border));
+  border-radius: 4px;
+  background: var(--color-bg-raised);
+}
+@media (max-width: 640px) {
+  .bt-device {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .bt-device-actions {
+    flex-wrap: wrap;
+  }
+}
+.bt-device .bt-name {
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+.bt-device .bt-mac {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono, monospace);
+}
+

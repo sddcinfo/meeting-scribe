@@ -1,0 +1,18 @@
+/* Meeting Scribe — setup wizard entry (compiled to dist/setup.css).
+ *
+ * The wizard HTML is generated server-side in Python f-strings
+ * (src/meeting_scribe/routes/setup.py and guest_auth.py both serve
+ * HTML referencing /static/css/setup.css). Tailwind scans those .py
+ * files as plain text — class names in the f-strings get picked up.
+ *
+ * The wizard shares the admin SPA's unified @theme palette.
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_setup.css";
+
+@source "../../../src/meeting_scribe/routes/setup.py";
+@source "../../../src/meeting_scribe/routes/guest_auth.py";
+@source "../../js/setup-wizard.js";

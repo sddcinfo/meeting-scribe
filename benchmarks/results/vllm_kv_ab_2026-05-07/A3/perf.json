@@ -1,0 +1,101 @@
+{
+  "timestamp": "20260507T154201",
+  "config": {
+    "duration_seconds": 60,
+    "warmup_seconds": 15,
+    "translation_concurrency": 1,
+    "translation_rps": 2.0,
+    "coding_concurrency": 2,
+    "saturate_slots": false,
+    "saturate_concurrency": 16,
+    "run_proxy_check": true,
+    "vllm_url": "http://localhost:8010",
+    "proxy_url": "http://localhost:8011",
+    "model_id": "Qwen/Qwen3.6-35B-A3B-FP8"
+  },
+  "environment": {
+    "hostname": "promaxgb10-f426",
+    "platform": "Linux-6.17.0-1014-nvidia-aarch64-with-glibc2.39",
+    "python": "3.14.4",
+    "model_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "vllm_image": "sha256:bf05c8a0d56f7ed2fe279e0c0c876dd2bb813dd34702d975fa6ab640860ce825",
+    "vllm_args": "serve Qwen/Qwen3.6-35B-A3B-FP8 --tensor-parallel-size=1 --max-model-len=262144 --gpu-memory-utilization=0.7 --kv-cache-dtype=auto --host=0.0.0.0 --max-num-seqs=2 --max-num-batched-tokens=4096 --quantization=fp8 --attention-backend=flashinfer --enable-auto-tool-choice --tool-call-parser=qwen3_coder --reasoning-parser=qwen3 --enable-prefix-caching --enable-chunked-prefill --load-format=fastsafetensors --scheduling-policy=priority --port=8010",
+    "autosre_sha": "c57d5b0",
+    "gpu": "NVIDIA GB10",
+    "recipe_hashes": {
+      "autosre/backends/recipes/qwen3.6-35b-a3b-fp8.yaml": "f647822cd5b120176fd654a97b9b52cade958c9a04630abc8c5b041c0e791e42"
+    }
+  },
+  "phases": [
+    {
+      "workload": "translation",
+      "phase": "isolated",
+      "samples": 185,
+      "ttft_p50_ms": 113.7,
+      "ttft_p95_ms": 117.5,
+      "ttft_p99_ms": 120.0,
+      "tps_p50": 52.12,
+      "tps_p95": 54.2,
+      "tps_agg": 33.67,
+      "errors": 0,
+      "wall_seconds": 60.17
+    },
+    {
+      "workload": "coding",
+      "phase": "isolated",
+      "samples": 23,
+      "ttft_p50_ms": 270.5,
+      "ttft_p95_ms": 862.9,
+      "ttft_p99_ms": 1055.2,
+      "tps_p50": 42.92,
+      "tps_p95": 53.64,
+      "tps_agg": 70.33,
+      "errors": 0,
+      "wall_seconds": 72.34
+    },
+    {
+      "workload": "translation",
+      "phase": "contention",
+      "samples": 120,
+      "ttft_p50_ms": 157.4,
+      "ttft_p95_ms": 219.5,
+      "ttft_p99_ms": 224.6,
+      "tps_p50": 42.79,
+      "tps_p95": 44.63,
+      "tps_agg": 18.68,
+      "errors": 0,
+      "wall_seconds": 69.59
+    },
+    {
+      "workload": "coding",
+      "phase": "contention",
+      "samples": 11,
+      "ttft_p50_ms": 629.5,
+      "ttft_p95_ms": 3357.4,
+      "ttft_p99_ms": 3725.6,
+      "tps_p50": 27.37,
+      "tps_p95": 32.88,
+      "tps_agg": 36.14,
+      "errors": 0,
+      "wall_seconds": 69.59
+    }
+  ],
+  "scheduler": {
+    "preemptions_delta": 117,
+    "kv_cache_pct_peak": 0.008,
+    "requests_running_peak": 2.0,
+    "requests_waiting_peak": 0.0,
+    "queue_time_avg_ms": 184.1,
+    "prefix_cache_hit_pct": 44.7
+  },
+  "proxy_sanity": {
+    "ok": true,
+    "message_start": true,
+    "content_delta_count": 3,
+    "message_stop": true,
+    "upstream_error": null,
+    "elapsed_ms": 4652.2,
+    "idle_gap_seconds": 0.0,
+    "note": ""
+  }
+}

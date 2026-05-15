@@ -1,0 +1,13 @@
+/* Meeting Scribe — guest entry (compiled to dist/guest.css).
+ *
+ * Linked by static/guest.html — the live-transcript page seen by
+ * hotspot guests. Scans the guest HTML + guest-app.js.
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_guest.css";
+
+@source "../../guest.html";
+@source "../../js/guest-app.js";

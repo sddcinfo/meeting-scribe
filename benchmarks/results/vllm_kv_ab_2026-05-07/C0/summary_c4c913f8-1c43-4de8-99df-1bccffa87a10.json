@@ -1,0 +1,120 @@
+{
+  "config_name": "C0",
+  "meeting_id": "c4c913f8-1c43-4de8-99df-1bccffa87a10",
+  "elapsed_ms": 109725.73018295225,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "This session functioned as a technical demonstration of a newly engineered multilingual meeting intelligence system, validating real-time voice recognition, speaker attribution, and dynamic language-filtered transcription feeds. The presenter successfully utilized an AI coding agent (Claude Code) to diagnose and resolve UI/UX issues in real-time, illustrating a practical 'vibe coding' workflow where natural language prompts directly drive code generation and interface iteration. Strategically, the demo highlights a hybrid local-cloud AI architecture that balances on-premise data handling with cloud-based model performance, positioning the team to accelerate development cycles while maintaining control over sensitive meeting data. The session concludes with a minor administrative follow-up regarding missing historical performance metrics for a demo site.",
+    "key_insights": [
+      {
+        "title": "Multilingual Real-Time Meeting Intelligence & Accessibility",
+        "description": "The demonstration validated a core capability: simultaneous voice recognition and speaker attribution across English, Japanese, Chinese, Arabic, and Portuguese. The system dynamically generates language-filtered feeds (e.g., Japanese-only transcripts) and synchronized audio tracks accessible via headphones, directly addressing comprehension barriers in global cross-functional meetings. This functionality moves beyond basic transcription by offering contextual, multi-modal engagement, which is critical for organizations operating across APAC and EMEA regions.\n\nThe strategic implication is a significant reduction in translation latency and meeting fatigue. By allowing participants to isolate specific language tracks or switch to audio-only modes, the platform enables faster, more inclusive decision-making in linguistically diverse environments. This capability positions the product as a direct solution to global collaboration bottlenecks, particularly for teams managing distributed engineering or sales operations.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Agent-Driven Development & 'Vibe Coding' Workflows",
+        "description": "A major focus of the session was showcasing how AI coding agents can autonomously build and iterate on software. The presenter used Claude Code to diagnose and resolve UI/UX issues in real-time—such as screen fitting, CSS adjustments, and scrolling behavior—simply by describing the problem in natural language. This 'vibe coding' approach drastically reduces the feedback loop between design intent and implementation. By running multiple agent sessions simultaneously (debugging, feature addition, UI refinement), the team demonstrated a scalable development paradigm that could compress sprint timelines and lower the barrier for non-traditional developers to contribute to product iteration.\n\nThis workflow signals a shift in engineering velocity. Instead of manual debugging and iterative pull requests, developers can act as product managers directing autonomous agents. The strategic takeaway is that internal tooling and AI harnesses can be leveraged to accelerate MVP development and rapid prototyping, freeing senior engineers to focus on architecture and complex system integration rather than routine UI fixes.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Hybrid Local-Cloud AI Architecture Strategy",
+        "description": "The presenter explicitly outlined a hybrid architecture: the AI framework and harness run locally on edge hardware (referred to as 'GB Ten'), ensuring data residency and local processing capabilities, while the session actively routes to Anthropic’s cloud API for superior model performance. This design acknowledges the current hardware limitations of running state-of-the-art large language models locally, while preserving the security and compliance benefits of on-premise deployment.\n\nThe strategic implication is a pragmatic roadmap for enterprise AI adoption. By leveraging local infrastructure for sensitive workloads, voice processing, and orchestration, while tapping into cloud compute for high-fidelity inference, the team aligns with modern zero-trust and data sovereignty requirements. This architecture mitigates vendor lock-in risks and provides a clear path to scale AI capabilities without compromising on data privacy or network latency.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      }
+    ],
+    "action_items": [],
+    "named_entities": {
+      "companies": [
+        "Anthropic",
+        "AI BDM team"
+      ],
+      "people": [
+        "Saki-san",
+        "Mary Young"
+      ],
+      "products": [
+        "Claude Code",
+        "GPT",
+        "auto SRE tool",
+        "AI framework/tooling/harness",
+        "GB Ten"
+      ],
+      "accounts": []
+    },
+    "decisions": [],
+    "questions": [
+      "Status of last year's demo site performance numbers; follow-up initiated by Mary Young but response pending."
+    ],
+    "key_quotes": [
+      {
+        "text": "Literally, all I've been doing to make all this is just I want I want this I want I want to see this Oh, this doesn't work. Just describing a problem effectively.",
+        "speaker": "Speaker 1",
+        "context": "Describes the efficiency of using AI coding agents to build and iterate on the meeting system through natural language prompts rather than manual coding."
+      },
+      {
+        "text": "So whilst this is running locally on this box, this particular session that I'm doing is connecting to Anthropic online... just because those models are significantly better.",
+        "speaker": "Speaker 1",
+        "context": "Explains the hybrid local-cloud architecture, balancing local data handling with cloud-based model performance for superior accuracy."
+      },
+      {
+        "text": "It's really to showcase what is possible from Local AI, so you know, in in your own data centers or on your desktop, you know, what are the things that you can do...",
+        "speaker": "Speaker 1",
+        "context": "Frames the second part of the demo around demonstrating practical enterprise applications of on-premise and desktop AI deployments."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Voice Recognition & Speaker Identification Demo",
+        "description": "Initial testing of voice recognition, speaker attribution, and real-time meeting feed generation.",
+        "timestamp_min": 0.0
+      },
+      {
+        "title": "Multilingual Feed & Language Filtering",
+        "description": "Demonstration of language-specific transcript feeds, audio track routing via headphones, and cross-lingual comprehension benefits.",
+        "timestamp_min": 1.0
+      },
+      {
+        "title": "Local AI & AI Coding Agent Introduction",
+        "description": "Transition to showcasing local AI capabilities and the use of AI framework tooling to build the meeting system.",
+        "timestamp_min": 3.4
+      },
+      {
+        "title": "Real-Time Agent Debugging & UI Fixes",
+        "description": "Live demonstration of an AI agent diagnosing errors, adjusting CSS, and resolving screen-fitting issues via natural language prompts.",
+        "timestamp_min": 5.7
+      },
+      {
+        "title": "Hybrid Local-Cloud Architecture Explanation",
+        "description": "Clarification of the system's architecture, explaining the split between local harness execution and cloud API routing for model performance.",
+        "timestamp_min": 11.5
+      },
+      {
+        "title": "Wrap-up & Missing Data Reference",
+        "description": "Session concludes with a mention of pending historical demo site metrics and administrative follow-up.",
+        "timestamp_min": 12.7
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 11540,
+  "n_finals": 179,
+  "response_chars": 7143,
+  "num_topics": 6,
+  "num_action_items": 0,
+  "num_decisions": 0,
+  "topic_names": [
+    "Voice Recognition & Speaker Identification Demo",
+    "Multilingual Feed & Language Filtering",
+    "Local AI & AI Coding Agent Introduction",
+    "Real-Time Agent Debugging & UI Fixes",
+    "Hybrid Local-Cloud Architecture Explanation",
+    "Wrap-up & Missing Data Reference"
+  ],
+  "hallucinated_speakers": []
+}

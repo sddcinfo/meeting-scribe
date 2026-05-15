@@ -1,0 +1,253 @@
+/* Meeting Scribe — Speaker modal + speaker bar.
+ *
+ * Two related surfaces:
+ *
+ *   1. `.modal-card.speaker-modal` and its contents — the click-a-
+ *      speaker → "Speaker N · X segments" detail modal. Owns the
+ *      modal header (dot + name + rename row + stats + close
+ *      button), the body (list of `.speaker-segment` rows with
+ *      left-pane source / right-pane translation + play button),
+ *      and the empty state when a speaker has zero segments yet.
+ *
+ *   2. `.speaker-bar` — the slim strip rendered above the live
+ *      transcript during recording, showing the detected-speaker
+ *      chips. The chip pills themselves live in _speaker-chip.css;
+ *      this file owns only the bar container.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ── Speaker modal ── */
+
+.modal-card.speaker-modal {
+  width: min(94vw, 920px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.speaker-modal-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border-dim);
+  background: linear-gradient(180deg, var(--color-bg-surface) 0%, transparent 100%);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.speaker-modal-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.speaker-modal-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.speaker-rename-btn {
+  font-size: 0.7rem !important;
+  padding: 2px 8px !important;
+  color: var(--color-text-muted) !important;
+  border: 1px dashed var(--color-border) !important;
+  border-radius: 4px;
+  margin-left: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.speaker-rename-btn:hover {
+  color: var(--color-text-accent) !important;
+  border-color: var(--color-text-accent) !important;
+}
+
+.speaker-rename-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.speaker-rename-input {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 2px solid var(--color-text-accent);
+  border-radius: 6px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  outline: none;
+  width: 200px;
+}
+
+.speaker-rename-input:focus {
+  box-shadow: 0 0 0 3px rgba(139, 105, 20, 0.15);
+}
+
+.speaker-modal-stats {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: var(--space-md);
+}
+
+.speaker-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--color-bg-raised);
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast);
+}
+
+.speaker-modal-close:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.speaker-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg) var(--space-xl);
+  min-height: 200px;
+}
+
+.speaker-segment {
+  padding: var(--space-md) var(--space-sm);
+  border-bottom: 1px solid var(--color-border-dim);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-lg);
+  transition: background var(--duration-fast);
+  border-radius: 6px;
+}
+
+.speaker-segment:hover {
+  background: color-mix(in srgb, var(--color-text-accent) 4%, transparent);
+}
+.speaker-segment:last-child { border-bottom: none; }
+.speaker-segment.playing {
+  background: color-mix(in srgb, var(--color-text-accent) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--color-text-accent);
+}
+
+.speaker-seg-left {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.speaker-seg-left > div { min-width: 0; flex: 1; }
+
+.speaker-seg-right {
+  min-width: 0;
+  border-left: 1px dashed var(--color-border-dim);
+  padding-left: var(--space-md);
+}
+
+.speaker-seg-play {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all var(--duration-fast);
+}
+
+.speaker-seg-play:hover {
+  background: var(--color-text-accent);
+  color: var(--color-bg-surface);
+  border-color: var(--color-text-accent);
+  transform: scale(1.08);
+}
+
+.speaker-segment.playing .speaker-seg-play {
+  background: var(--color-text-accent);
+  color: var(--color-bg-surface);
+  border-color: var(--color-text-accent);
+}
+
+.speaker-seg-time {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.speaker-seg-time .seg-lang {
+  font-size: 0.58rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--color-bg-raised);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.speaker-seg-text {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--color-text-primary);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.speaker-seg-translation {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.speaker-modal-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.speaker-modal-empty h4 {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  margin: 0 0 var(--space-sm);
+  font-weight: 600;
+}
+
+/* ── Speaker bar (shown during recording) ── */
+
+.speaker-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-xl);
+  border-bottom: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+  overflow-x: auto;
+}

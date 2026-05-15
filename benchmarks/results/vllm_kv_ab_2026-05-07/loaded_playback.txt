@@ -1,0 +1,17 @@
+[1] Firing sustained translation load (concurrency=8, 240 reqs ~ 3min) ...
+    load PID=2311006
+[2] Firing long-meeting summary regen ...
+[3] Letting load engage (5s) ...
+[4] Playback first-byte under load (3 samples):
+  attempt=1 first_byte=0.053s code=200 size=1453
+  attempt=2 first_byte=0.054s code=200 size=1453
+  attempt=3 first_byte=0.238s code=200 size=1453
+[5] Waiting for load + summary to finish ...
+    load done
+  summary regen: elapsed=126.5s topics=7 err=None
+    summary done
+
+=== gate check ===
+playback first-byte under load (max of 3): 0.238s
+gate: < 1.500s
+PASS

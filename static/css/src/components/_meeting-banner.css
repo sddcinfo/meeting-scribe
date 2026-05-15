@@ -1,0 +1,121 @@
+/* Meeting Scribe — Meeting-return + reconnecting banner.
+ *
+ * The pill-shaped sticky banner that drops down under the admin
+ * header when:
+ *   * a meeting is running on the server and this tab is NOT on
+ *     the meeting view (``.meeting-banner.return`` — amber), OR
+ *   * the live recorder's WS is reconnecting
+ *     (``.meeting-banner.reconnecting`` — red).
+ *
+ * Pattern modelled on .tts-toast so transitions + tokens stay
+ * consistent.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.meeting-banner {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  z-index: 210;  /* below the modal overlay (300) */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  padding: 8px 14px;
+  border-radius: 0 0 10px 10px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: #b45309;  /* amber default — overridden by .reconnecting */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  max-width: 92vw;
+  transition: transform 0.3s var(--ease-out),
+              opacity 0.3s var(--ease-out),
+              background 0.2s var(--ease-out);
+}
+
+.meeting-banner.visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.meeting-banner.return {
+  background: #b45309;  /* amber — meeting is running elsewhere */
+}
+
+.meeting-banner.reconnecting {
+  background: var(--color-recording, #dc2626);  /* red — active connection issue */
+}
+
+/* Informational tone for admin notifications that aren't actionable —
+   benign "we noticed something" pills (mic auto-rebound, mic
+   temporarily disconnected, etc.). Cool slate, plain text, no pulse
+   on the dot. The amber `.return` colour was screaming "warning" for
+   events that are not actually problems. */
+.meeting-banner.info {
+  background: #475569;  /* slate — informational, non-alarming */
+}
+.meeting-banner.info .meeting-banner-dot {
+  animation: none;
+  opacity: 0.7;
+}
+
+.meeting-banner-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+  animation: meeting-banner-pulse 1.6s ease-in-out infinite;
+}
+
+.meeting-banner-label {
+  /* Selectable so operators can copy the warning text into a bug
+   * report (mic node names, error details). Same intent as docs/styling.md
+   * rule 3 for modal bodies: every diagnostic surface must be copyable. */
+  user-select: text;
+  -webkit-user-select: text;
+  letter-spacing: 0.01em;
+  /* Long mic node names / error tracebacks need to wrap rather than
+   * overflow the banner. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.meeting-banner-btn {
+  appearance: none;
+  border: 0;
+  background: #fff;
+  /* `color: inherit` would pull the banner's `color: #fff` down,
+     leaving white text on the white button (admin-notifications
+     "Dismiss" was unreadable for that reason). Pin the button to
+     a dark text color so the label always reads against the white
+     pill regardless of the banner state (amber return / red
+     reconnecting / future variants). */
+  color: var(--color-text-primary, #1a1a1e);
+  font: inherit;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: filter var(--duration-fast, 0.15s) var(--ease-out);
+}
+
+.meeting-banner-btn:hover {
+  filter: brightness(0.95);
+}
+
+.meeting-banner-btn:active {
+  filter: brightness(0.88);
+}
+
+@keyframes meeting-banner-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.25); opacity: 0.65; }
+}

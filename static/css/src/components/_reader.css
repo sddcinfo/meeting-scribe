@@ -1,0 +1,268 @@
+/* Meeting Scribe — reader view components.
+ *
+ * Imported by static/css/src/reader.css. The reader is the bilingual
+ * split-pane transcript display seen by hotspot guests on iPads,
+ * iPhones, and via the Electron overlay (which loads /reader in a
+ * frameless always-on-top window). Layout adapts:
+ *   - Phones (<768px): stack vertically (pane-a top, pane-b bottom)
+ *   - iPad landscape (820-1400 × ≤1100): tighter padding
+ *   - Desktop (≥1200px): bigger text, more padding
+ *   - Monolingual meetings: pane-b collapses
+ *
+ * JS toggles:
+ *   .dot.idle on the recording indicator
+ *   body.monolingual to collapse pane-b
+ *
+ * Text-size buttons (A+ / A-) set `--text-scale` on <html>; segment
+ * text consumes it via calc(…).
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@layer base {
+  /* Reader uses iOS safe-area insets so home-indicator + notch don't
+   * clip pane content. The variables live at :root so JS can read
+   * computed values when needed. */
+  :root {
+    --safe-top:    env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left:   env(safe-area-inset-left, 0px);
+    --safe-right:  env(safe-area-inset-right, 0px);
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+@layer components {
+  .root {
+    @apply flex flex-col;
+    height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .bar {
+    background: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border);
+    @apply flex items-center gap-3 flex-shrink-0;
+    padding: 0.35rem 1rem;
+    padding-left: calc(1rem + var(--safe-left));
+    padding-right: calc(1rem + var(--safe-right));
+  }
+  .bar .dot {
+    background: var(--color-recording);
+    @apply w-2 h-2 rounded-full flex-shrink-0;
+    animation: reader-pulse 2s ease-in-out infinite;
+  }
+  .bar .dot.idle {
+    background: var(--color-info-dim);
+    animation: none;
+  }
+  .bar .title {
+    color: var(--color-text-muted);
+    @apply text-[0.7rem] font-semibold uppercase tracking-wider;
+  }
+  .bar .lang-label {
+    color: var(--color-text-muted);
+    @apply ml-auto text-[0.65rem];
+  }
+  .bar .dir-btn {
+    background: var(--color-bg-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    font-family: var(--font-ui);
+    @apply text-[0.65rem] px-2 py-0.5 rounded-md leading-none whitespace-nowrap cursor-pointer;
+  }
+
+  .waiting {
+    color: var(--color-text-muted);
+    @apply flex-1 flex items-center justify-center text-xl;
+  }
+  .waiting .dots::after {
+    content: "";
+    animation: reader-dots 1.5s steps(4, end) infinite;
+  }
+
+  .split {
+    @apply flex-1 flex overflow-hidden;
+  }
+  .pane {
+    @apply flex-1 flex flex-col overflow-hidden;
+  }
+  .pane-a {
+    border-right: 1px solid var(--color-border);
+  }
+
+  .pane-label {
+    background: var(--color-bg-deep);
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    @apply flex-shrink-0 text-[0.6rem] font-bold uppercase tracking-wider;
+    padding: 0.25rem 1.25rem;
+  }
+  .pane-a .pane-label {
+    color: var(--color-speaker-2);
+    padding-left: calc(1.25rem + var(--safe-left));
+  }
+  .pane-b .pane-label {
+    color: var(--color-speaker-1);
+    padding-right: calc(1.25rem + var(--safe-right));
+  }
+
+  .pane-scroll {
+    @apply flex-1 overflow-y-auto flex flex-col gap-2;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem 1.25rem;
+    scroll-behavior: smooth;
+  }
+  .pane-a .pane-scroll {
+    padding-left: calc(1.25rem + var(--safe-left));
+  }
+  .pane-b .pane-scroll {
+    padding-right: calc(1.25rem + var(--safe-right));
+  }
+
+  .seg {
+    animation: reader-fade-up 0.2s ease;
+  }
+  .seg.no-anim {
+    animation: none;
+  }
+  .seg-text {
+    font-size: calc(clamp(1.5rem, 2.8vw, 2.4rem) * var(--text-scale, 1));
+    line-height: 1.4;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    word-break: break-word;
+  }
+  .seg-text.ja {
+    font-family: var(--font-ja);
+    font-size: calc(clamp(1.4rem, 2.6vw, 2.2rem) * var(--text-scale, 1));
+  }
+
+  .live {
+    color: var(--color-text-secondary);
+    @apply text-[0.95rem] italic flex-shrink-0;
+    min-height: 1.4em;
+  }
+  .live:empty {
+    @apply hidden;
+  }
+
+  /* Monolingual meeting: collapse the translation pane. */
+  body.monolingual .pane-b {
+    @apply hidden;
+  }
+  body.monolingual .pane-a {
+    border-right: none;
+  }
+  body.monolingual .pane-a .pane-label {
+    text-align: left;
+  }
+}
+
+@keyframes reader-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+@keyframes reader-dots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+}
+
+@keyframes reader-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Desktop (1200px+): bigger text, more padding */
+@media (min-width: 1200px) {
+  .pane-scroll {
+    padding: 1.5rem 2.5rem;
+    gap: 0.75rem;
+  }
+  .seg-text {
+    font-size: clamp(2rem, 2.2vw, 3rem);
+    line-height: 1.45;
+  }
+  .seg-text.ja {
+    font-size: clamp(1.8rem, 2vw, 2.8rem);
+  }
+  .pane-label {
+    padding: 0.35rem 2.5rem;
+    font-size: 0.65rem;
+  }
+}
+
+/* iPad landscape (9.7"–13"): tighter rhythm */
+@media (orientation: landscape) and (min-width: 820px) and (max-width: 1400px) and (max-height: 1100px) {
+  .bar {
+    padding: 0.5rem 1rem;
+    padding-left: calc(1rem + var(--safe-left));
+    padding-right: calc(1rem + var(--safe-right));
+    min-height: 2.25rem;
+  }
+  .bar .title { font-size: 0.8rem; }
+  .bar .lang-label { font-size: 0.75rem; }
+  .bar .dir-btn { font-size: 0.75rem; padding: 0.3rem 0.65rem; }
+  .pane-label {
+    padding: 0.15rem 1.25rem;
+    font-size: 0.55rem;
+  }
+  .pane-scroll {
+    padding: 0.4rem 1.1rem;
+    gap: 0.35rem;
+  }
+  .seg-text {
+    font-size: clamp(1.15rem, 1.9vw, 1.75rem);
+    line-height: 1.3;
+  }
+  .seg-text.ja {
+    font-size: clamp(1.1rem, 1.8vw, 1.65rem);
+  }
+  .waiting { font-size: 1rem; }
+}
+
+/* Phones: stack vertically */
+@media (max-width: 768px) {
+  .split {
+    flex-direction: column;
+  }
+  .pane-a {
+    border-right: none;
+    border-bottom: 2px solid var(--color-border);
+  }
+  .pane-scroll {
+    padding: 0.5rem 0.8rem;
+    gap: 0.4rem;
+  }
+  .pane-a .pane-scroll {
+    padding-left: calc(0.8rem + var(--safe-left));
+  }
+  .pane-b .pane-scroll {
+    padding-right: calc(0.8rem + var(--safe-right));
+  }
+  .seg-text {
+    font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+    line-height: 1.35;
+  }
+  .seg-text.ja {
+    font-size: clamp(1.05rem, 4.2vw, 1.4rem);
+  }
+  .pane-label {
+    font-size: 0.55rem;
+    padding: 0.2rem 0.8rem;
+  }
+  /* Monolingual: drop the border-bottom on phones too. */
+  body.monolingual .pane-a {
+    border-bottom: none;
+  }
+}

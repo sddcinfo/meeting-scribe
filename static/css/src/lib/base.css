@@ -1,0 +1,60 @@
+/* Meeting Scribe — Tailwind v4 base layer.
+ *
+ * Imported by every page-level entry (app.css, reader.css, guest.css,
+ * portal.css, setup.css, how-it-works.css, demo.css, voice-clone.css).
+ * Pulls in:
+ *   1. tailwindcss core (preflight, theme, utility generator)
+ *   2. The unified design tokens via tokens.css's @theme block
+ *   3. The shared universal `*, *::before, *::after` reset.
+ *
+ * Per-page entries layer their own @source directives on top so the
+ * generated CSS only contains classes that page actually uses.
+ *
+ * The @source directives below are SHARED scans — universal across
+ * every entry that imports this file. Per-entry @source declarations
+ * narrow scope further; Tailwind unions the @source set across all
+ * imports for the compilation that owns the entry. This is the
+ * minimum needed so the @theme tokens (and any utilities used in
+ * shared `_state.css` / component partials) get emitted.
+ */
+
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Universal scans. Each entry adds its page-specific HTML/JS file on
+ * top via its own @source line. Test code is excluded — Tailwind
+ * would otherwise scan the entire pytest tree. Paths are relative to
+ * THIS file (static/css/src/lib/base.css), so up four levels lands at
+ * the repo root. */
+@source not "../../../../tests/";
+@source not "../../../../.venv/";
+@source not "../../../../node_modules/";
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-ui);
+    color: var(--color-text-primary);
+    background: var(--color-bg-deep);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Selection highlight matches the warm gilt accent for any page
+   * that opts into the ink-blue/highlight palette (wizard, accents). */
+  ::selection {
+    background: var(--color-highlight-bg);
+    color: var(--color-ink);
+  }
+}

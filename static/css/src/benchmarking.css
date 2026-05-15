@@ -1,0 +1,19 @@
+/* Meeting Scribe — benchmarking doc entry (compiled to dist/benchmarking.css).
+ *
+ * Linked by static/benchmarking.html (the editorial benchmarking +
+ * quality page, also published to GitHub Pages alongside how-it-works).
+ *
+ * Imports the shared editorial chrome (nav-bar, hero, sections, stages,
+ * flows, lifecycles, resource tables, glossary, scroll-reveal, footer)
+ * plus the benchmarking-page-specific content components (suite cards,
+ * verdict rows, exit-code pills).
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_editorial.css";
+@import "./components/_benchmarking.css";
+
+@source "../../benchmarking.html";
+@source "../../js/how-it-works.js";

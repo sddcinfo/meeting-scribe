@@ -1,0 +1,380 @@
+/* Meeting Scribe — room-setup footer cluster.
+ *
+ * Covers everything below the room-canvas:
+ *   .setup-footer       (vertical stack — toolbar above, body below)
+ *   .setup-toolbar      (presets, add-table, +seat, clear, language)
+ *   .setup-body         (audio card + start CTA, side by side)
+ *   .setup-start-cta    (Start Meeting + hint + warming banner)
+ *   .setup-hint         (caption under the Start button)
+ *   .setup-audio-routing-card / -header / -grid / -toggle / -refresh
+ *   .setup-audio-help / .setup-audio-status / .ok / .err
+ *   .btn-add-seat + hover + .add-table-group / .add-table-group-label
+ *   .seat-count-input
+ *   .btn-start-meeting + hover + disabled
+ *   .language-selector / .lang-select / .lang-pair-sep / .mono variant
+ *   .preset-selector / .preset-btn / .preset-btn.active / hover
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ── Setup footer ── */
+/*
+ * Two-row layout:
+ *
+ *   .setup-footer
+ *     ├── .setup-toolbar    (presets, add-table, +seat, clear, language)
+ *     └── .setup-body
+ *           ├── .setup-audio-routing-card  (Meeting audio fields)
+ *           └── .setup-start-cta           (Start Meeting + hint stack)
+ *
+ * The CTA aside gets its own 240 px column on desktop; on tablet/phone
+ * it stacks below the audio card via the 900 px media query.
+ */
+
+.setup-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+}
+
+.setup-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  row-gap: var(--space-sm);
+}
+
+.setup-body {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.setup-start-cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--space-sm);
+  flex: 0 0 240px;
+  min-width: 200px;
+}
+
+.setup-start-cta .btn-start-meeting {
+  width: 100%;
+  justify-content: center;
+}
+
+.setup-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  margin: 0;
+  text-align: center;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .setup-start-cta {
+    flex-basis: 100%;
+  }
+}
+
+/* The Meeting Audio panel sits inside the .setup-footer alongside the
+   preset buttons, layout actions, and Start Meeting button. Every
+   other footer item is borderless and chrome-free, so we drop the
+   card's border + background to match. The internal grid + label
+   typography stays unchanged so the field structure is still legible
+   as a discrete section. */
+.setup-audio-routing-card {
+  flex: 1 1 720px;
+  max-width: 980px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.setup-audio-routing-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.setup-audio-routing-header h3 {
+  margin: 0 0 2px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--color-text-primary);
+  letter-spacing: 0;
+}
+
+.setup-audio-routing-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1.2fr) minmax(170px, 1fr);
+  gap: 8px 10px;
+  align-items: end;
+}
+
+.setup-audio-routing-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.setup-audio-routing-grid select {
+  width: 100%;
+}
+
+.setup-audio-routing-grid input[type="number"] {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+
+.setup-audio-toggle {
+  flex-direction: row !important;
+  align-items: center !important;
+  min-height: 32px;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.setup-audio-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.setup-audio-help,
+.setup-audio-status {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+/* `.ok` status used to render in green --color-success, which read like a
+ * loud "alert: success!" badge. These are tertiary info lines
+ * ("Capturing from <device>", listener counts, etc.) — keep them
+ * muted so the screen has one focal point per surface. */
+.setup-audio-status.ok {
+  color: var(--color-text-muted);
+}
+
+.setup-audio-status.err {
+  color: var(--color-recording);
+}
+
+.setup-audio-refresh {
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .setup-audio-routing-card {
+    flex-basis: 100%;
+  }
+
+  .setup-audio-routing-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .setup-audio-routing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Toolbar buttons (Table+, +Seat, Clear) ── */
+
+.btn-add-seat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.btn-add-seat:hover {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-raised);
+}
+
+/* Add-table-group clusters the table button with the seat-count picker so
+   users can pick "table with N seats" and create both in one click. */
+.add-table-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-table-group .btn-add-seat {
+  padding-right: 10px;
+}
+
+.seat-count-input {
+  width: 48px;
+  padding: 6px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.seat-count-input:focus {
+  outline: none;
+  border-color: var(--color-text-accent);
+}
+
+.add-table-group-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+}
+
+/* ── Start Meeting button ── */
+
+.btn-start-meeting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 24px;
+  border: 1px solid var(--color-text-primary);
+  border-radius: 8px;
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  min-height: 36px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.btn-start-meeting:hover:not(:disabled) {
+  background: var(--color-text-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-start-meeting:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Language selector ── */
+
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* `.lang-select` keeps its own typography + minimum width but inherits
+ * border/background/chevron from the universal `select` rule in
+ * _form-controls.css. Padding-right is set so the inline chevron lands
+ * clear of the text. */
+.lang-select {
+  padding: 6px 2rem 6px 12px;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  min-width: 11ch;
+}
+
+.lang-select:hover {
+  border-color: var(--color-text-muted);
+}
+
+.lang-select option[disabled] {
+  color: var(--color-text-muted);
+}
+
+.lang-pair-sep {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+/* Single-language meeting: collapse the divider + the disabled second
+   picker so the control reads as one dropdown rather than a pair with
+   a missing half. Matches the minimal utilitarian feel of the rest of
+   the setup footer — no animation, just clean presence/absence. */
+.language-selector.mono .lang-pair-sep,
+.language-selector.mono #lang-b-select {
+  display: none;
+}
+
+/* ── Preset selector ── */
+
+.preset-selector {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.preset-btn {
+  width: 36px;
+  height: 32px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast);
+}
+
+.preset-btn.active {
+  border-color: var(--color-text-accent);
+  color: var(--color-text-accent);
+  background: color-mix(in srgb, var(--color-text-accent) 8%, var(--color-bg-surface));
+}
+
+.preset-btn:hover:not(.active) {
+  border-color: var(--color-text-muted);
+  background: var(--color-bg-raised);
+}

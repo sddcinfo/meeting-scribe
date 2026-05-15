@@ -1,0 +1,49 @@
+{
+  "_comment": "Numeric-correctness manifest for static/hardware-scaling.html. Every spec value on the page has a data-claim attribute that resolves to a dotted path in this JSON. validate_hardware_scaling.py confirms the rendered text matches the value here (after unit normalisation). Update this file when the underlying NVIDIA / Dell / Lenovo / CoreWeave numbers move; the page text follows.",
+  "tiers": {
+    "spark": {
+      "name":                       "Dell Pro Max with GB10 / GB10",
+      "gpu_count":                  1,
+      "fast_memory_gb":             128,
+      "memory_bandwidth_gbs":       273,
+      "fp4_pflops_sparse":          1,
+      "power_watts":                240,
+      "form_factor_mm":             "150 × 150 × 50.5 mm",
+      "interconnect_short":         "200 Gbps ConnectX-7 (×2 max)",
+      "cpu_short":                  "20-core Arm (Grace)"
+    },
+    "b200": {
+      "name":                       "HGX B200 (8-GPU air-cooled)",
+      "gpu_count":                  8,
+      "fast_memory_gb":             1440,
+      "memory_bandwidth_tbs":       64,
+      "fp4_pflops_sparse":          144,
+      "fp8_pflops_sparse":          72,
+      "nvlink_tbs_aggregate":       14.4,
+      "power_kw":                   14.3,
+      "form_factor_u":              "10U air-cooled",
+      "cpu_short":                  "2× Xeon Platinum 8570 (112 cores)"
+    },
+    "nvl72": {
+      "name":                       "GB200 NVL72 (rack-scale AI factory)",
+      "gpu_count":                  72,
+      "hbm_tb":                     13.4,
+      "total_fast_memory_tb":       30.4,
+      "memory_bandwidth_tbs":       576,
+      "fp4_pflops_sparse":          1440,
+      "fp8_pflops_sparse":          720,
+      "nvlink_tbs_aggregate":       130,
+      "power_kw":                   120,
+      "form_factor_label":          "Full rack, liquid-cooled",
+      "grace_cpu_count":            36
+    }
+  },
+  "ratios": {
+    "b200_over_spark_gpu":          8,
+    "b200_over_spark_fp4":          144,
+    "b200_over_spark_power":        60,
+    "nvl72_over_spark_gpu":         72,
+    "nvl72_over_spark_fp4":         1440,
+    "nvl72_over_spark_power":       500
+  }
+}

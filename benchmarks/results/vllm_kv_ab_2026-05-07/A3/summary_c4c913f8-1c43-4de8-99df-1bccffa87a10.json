@@ -1,0 +1,113 @@
+{
+  "config_name": "A3",
+  "meeting_id": "c4c913f8-1c43-4de8-99df-1bccffa87a10",
+  "elapsed_ms": 110420.02364201471,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "A 14-minute technical demonstration showcased a new multi-language meeting transcription and translation system, highlighting real-time voice recognition, speaker identification, and customizable language feeds across English, Japanese, Chinese, Arabic, and Portuguese. The presenter then transitioned to a live demo of local AI development, using Anthropic's Claude Code agent to autonomously debug an auto SRE tool and iteratively refine the system's UI/UX through natural language prompting. The session underscored the practical viability of AI-driven development workflows and hybrid local-cloud model architectures, while also touching on internal team coordination and pending data requests.",
+    "key_insights": [
+      {
+        "title": "AI-Driven Development & Autonomous Debugging",
+        "description": "The presenter demonstrated a live workflow where Claude Code autonomously identified and resolved errors in an auto SRE tool. By simply feeding error logs and natural language prompts, the agent analyzed the system state, applied fixes, and iterated on UI/UX adjustments such as CSS layout corrections for iPad and mobile devices. This highlights a significant shift toward prompt-driven development where human oversight is reduced to problem definition rather than manual coding.\n\nThe iterative nature of the demo—describing a problem, waiting for the agent to figure it out, and verifying the output—demonstrates a new operational paradigm. It reduces development cycle time and lowers the barrier for non-traditional developers to ship functional features, provided the underlying AI framework tooling is properly configured and monitored.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Hybrid Local-Cloud AI Architecture",
+        "description": "The meeting system leverages a hybrid approach: the development harness and initial processing run locally on edge hardware (referred to as K B ten), but heavy lifting connects to Anthropic online for superior accuracy. The presenter explicitly noted that while open-source models are improving, they currently lack the performance to run effectively on the target edge hardware, making cloud integration necessary for production-grade quality.\n\nThis architecture balances data privacy and latency (via local execution) with the need for state-of-the-art language processing. It suggests a strategic direction for future AI deployments where sensitive or real-time workloads stay on-premise or on-device, while complex reasoning and translation tasks are routed to cloud-based models.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Multi-Language Real-Time Processing Capabilities",
+        "description": "The demo validated real-time transcription and translation across five languages, featuring speaker diarization, language-specific transcript filtering, and synchronized audio tracks via headphones. The presenter acknowledged accuracy trade-offs with speed, particularly when handling three or more languages simultaneously, but confirmed the system's practical utility for cross-functional global teams.\n\nThe ability to isolate specific language feeds (e.g., Japanese-only transcript view) and switch between visual transcript and audio-only modes addresses a critical pain point in multinational operations. This capability positions the tool as a viable solution for reducing language barriers in executive and technical meetings, though continuous model tuning will be required to maintain accuracy as language complexity increases.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      }
+    ],
+    "action_items": [],
+    "named_entities": {
+      "companies": [
+        "Anthropic"
+      ],
+      "people": [
+        "Saki-san",
+        "Mary Young"
+      ],
+      "products": [
+        "Claude Code",
+        "auto SRE tool",
+        "K B ten",
+        "iPad",
+        "Anthropic online",
+        "CSS",
+        "AI framework/tooling harness"
+      ],
+      "accounts": []
+    },
+    "decisions": [],
+    "questions": [],
+    "key_quotes": [
+      {
+        "text": "Literally, all I've been doing to make all this is just I want I want this I want I want to see this Oh, this doesn't work. Just describing a problem effectively.",
+        "speaker": "Speaker 1",
+        "context": "Describing the prompt-driven development workflow using Claude Code to build and fix the meeting system."
+      },
+      {
+        "text": "The harness is local, but when you run it normally, it will connect to Anthropic online, which is what it's actually doing here.",
+        "speaker": "Speaker 1",
+        "context": "Explaining the hybrid local-cloud architecture powering the AI coding agent."
+      },
+      {
+        "text": "Accuracy. Is that we want it to work, and we want it to get, you know, the. Communication across.",
+        "speaker": "Speaker 1",
+        "context": "Discussing the balance between processing speed and transcription accuracy in multi-language meetings."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Multi-Language Transcription & Voice Recognition Demo",
+        "description": "Presentation of real-time voice recognition, speaker identification, and language-specific transcript filtering across English, Japanese, Chinese, Arabic, and Portuguese.",
+        "timestamp_min": 0.0
+      },
+      {
+        "title": "Local AI & Framework Tooling Introduction",
+        "description": "Overview of the AI development harness and transition to demonstrating local AI capabilities on edge hardware.",
+        "timestamp_min": 3.4
+      },
+      {
+        "title": "Live AI Coding Agent Debugging",
+        "description": "Real-time demonstration of Claude Code autonomously diagnosing and fixing errors in an auto SRE tool using error logs and natural language prompts.",
+        "timestamp_min": 5.8
+      },
+      {
+        "title": "UI/UX Iteration & Model Architecture",
+        "description": "AI agent applying CSS fixes for responsive design across devices, alongside explanation of hybrid local-cloud model routing.",
+        "timestamp_min": 9.4
+      },
+      {
+        "title": "Wrap-up & Internal Coordination",
+        "description": "Closing remarks, references to internal team members (Saki-san, Mary Young), and mention of pending historical data requests.",
+        "timestamp_min": 12.7
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 11540,
+  "n_finals": 179,
+  "response_chars": 5824,
+  "num_topics": 5,
+  "num_action_items": 0,
+  "num_decisions": 0,
+  "topic_names": [
+    "Multi-Language Transcription & Voice Recognition Demo",
+    "Local AI & Framework Tooling Introduction",
+    "Live AI Coding Agent Debugging",
+    "UI/UX Iteration & Model Architecture",
+    "Wrap-up & Internal Coordination"
+  ],
+  "hallucinated_speakers": []
+}

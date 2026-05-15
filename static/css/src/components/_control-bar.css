@@ -1,0 +1,103 @@
+/* Meeting Scribe — Control bar + .btn-ghost.
+ *
+ * The .control-bar is the thin strip below the header that hosts
+ * .timer, the ASR/Translate language picker, and various .btn-ghost
+ * toggle affordances. .btn-ghost is the "transparent button with a
+ * border on hover" pattern used heavily across the admin SPA.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.control-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 6px var(--space-xl);
+  border-bottom: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: var(--space-xs);
+}
+
+.control-row-primary,
+.control-row-secondary {
+  justify-content: flex-start;
+}
+
+.control-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.timer {
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-ghost {
+  padding: 4px 9px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* ── Listen-toggle, TTS mute, listen language ── */
+
+.tts-mute-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all var(--duration-fast);
+}
+.tts-mute-label:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-raised);
+}
+.tts-mute-label input { display: none; }
+.tts-mute-label:has(input:checked) { color: var(--color-recording); }
+.tts-mute-label:has(input:checked) svg { opacity: 0.5; }
+
+.btn-listen-toggle { display: flex; align-items: center; gap: 4px; }
+.btn-listen-toggle.active {
+  color: var(--color-text-accent);
+  border-color: var(--color-text-accent);
+  background: color-mix(in srgb, var(--color-text-accent) 8%, transparent);
+}
+.btn-listen-toggle svg { flex-shrink: 0; }
+
+.listen-lang-select {
+  padding: 3px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  cursor: pointer;
+}

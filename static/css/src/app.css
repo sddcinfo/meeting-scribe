@@ -1,0 +1,72 @@
+/* Meeting Scribe — admin SPA entry (compiled to dist/app.css).
+ *
+ * Linked by static/index.html. Scans the admin HTML + every JS file
+ * that participates in the SPA (the scribe/ module tree + the classic
+ * sibling scripts that publish to window.*).
+ */
+
+@import "./lib/base.css";
+@import "./components/_state.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_settings-tabs.css";
+@import "./components/_record-controls.css";
+@import "./components/_audio-meter.css";
+@import "./components/_room-setup-footer.css";
+@import "./components/_room-canvas.css";
+@import "./components/_speaker-modal.css";
+@import "./components/_speaker-timeline.css";
+@import "./components/_landing.css";
+@import "./components/_finalize-modal.css";
+@import "./components/_v2-summary.css";
+@import "./components/_qa-panel.css";
+@import "./components/_meeting-summary-bar.css";
+@import "./components/_metrics-dashboard.css";
+@import "./components/_one-on-one.css";
+@import "./components/_view-only.css";
+@import "./components/_audio-player.css";
+@import "./components/_modal-shell.css";
+@import "./components/_wifi-qr.css";
+@import "./components/_settings-panel.css";
+@import "./components/_bt-card.css";
+@import "./components/_speakerphone.css";
+@import "./components/_terminal-access.css";
+@import "./components/_meeting-mode.css";
+@import "./components/_transcript-shell.css";
+@import "./components/_popout.css";
+@import "./components/_kiosk.css";
+@import "./components/_backend-pills.css";
+@import "./components/_speaker-chip.css";
+@import "./components/_toast.css";
+@import "./components/_meetings-panel.css";
+@import "./components/_modal.css";
+@import "./components/_header.css";
+@import "./components/_meeting-banner.css";
+@import "./components/_control-bar.css";
+@import "./components/_audio-pop.css";
+@import "./components/_wan-card.css";
+@import "./components/_audio-device-volumes.css";
+@import "./components/_meeting-device-volumes.css";
+@import "./components/_popout-layout.css";
+@import "./components/_slide-viewer.css";
+@import "./components/_terminal-panel.css";
+@import "./components/_diagnostics-panel.css";
+@import "./components/_finalize-toast.css";
+@import "./components/_responsive.css";
+@import "./components/_body-admin.css";
+
+@source "../../index.html";
+@source "../../js/scribe/";
+@source "../../js/popout-layout.js";
+@source "../../js/popout-layout-presets.js";
+@source "../../js/popout-layout-storage.js";
+@source "../../js/popout-layout-resizer.js";
+@source "../../js/popout-panel-registry.js";
+@source "../../js/popout-layout-render.js";
+@source "../../js/diagnostics-panel.js";
+@source "../../js/admin-audio-card.js";
+@source "../../js/admin-bt-card.js";
+@source "../../js/terminal-panel.js";
+@source "../../js/slide-viewer.js";
+@source "../../js/meeting-reconcile.js";
+@source "../../js/segment-store.js";

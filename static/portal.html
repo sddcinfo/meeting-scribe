@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Scribe — Connected</title>
+  <!-- Captive-portal "you're connected" landing page. Served at `/` to
+       any AP client without a meeting in progress AND to LAN clients
+       who signed in as guest. The strict `style-src 'self'` CSP keeps
+       the inline-style block out; the stylesheet is the unified
+       Tailwind build. -->
+  <link rel="stylesheet" href="/static/css/dist/portal.css?v=c6133356c239">
+</head>
+<body class="flex min-h-screen items-center justify-center p-6 font-ui bg-bg-deep text-text-primary">
+  <div class="bg-bg-surface rounded-2xl p-8 max-w-sm w-full text-center shadow-[var(--shadow-card)]">
+    <div class="mx-auto mb-4 w-12 h-12 rounded-full bg-success-soft inline-flex items-center justify-center text-success">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h1 class="text-xl font-semibold mb-2">Connected to Meeting Scribe</h1>
+    <p class="text-sm text-text-secondary leading-relaxed mb-5">
+      You're on the meeting WiFi network. Open your browser to view the live transcript.
+    </p>
+    <a class="inline-block bg-text-primary text-white px-7 py-3 rounded-xl no-underline text-sm font-semibold transition-opacity duration-150 active:opacity-80" id="open-btn" href="/">Open Meeting Scribe</a>
+    <p class="text-xs text-text-muted mt-4 leading-relaxed" id="hint">
+      If the button doesn't work, open your browser and go to:<br>
+      <strong id="url-display"></strong>
+    </p>
+  </div>
+  <script src="/static/js/portal-dismiss.js"></script>
+</body>
+</html>

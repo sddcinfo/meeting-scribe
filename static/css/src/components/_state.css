@@ -1,0 +1,305 @@
+/* Meeting Scribe — body-state cascade layer.
+ *
+ * Every ancestor-state cascade rule lives HERE — never in feature CSS.
+ * Selectors like
+ *   ``body.recording .header-icon-btn``
+ *   ``body.popout-view .modal-overlay``
+ *   ``body.lang-mode-a-only .qa-bubble-b``
+ * fan a single state class on ``<body>`` out into many descendants.
+ * Tailwind's ``data-[recording]:`` variant only matches the element's
+ * own attribute, not an ancestor — so these cascades stay as CSS
+ * rules that consume Tailwind tokens via ``@apply``. One auditable
+ * file.
+ *
+ * Both selector forms — ``body.<state>`` (class) and
+ * ``body[data-<state>]`` (attribute) — are honoured because different
+ * JS callsites use different toggles. New rules must include both.
+ *
+ * No feature CSS may add new ``body.<state>`` rules — they land here,
+ * full stop.
+ *
+ * Imported by static/css/src/app.css (only the admin SPA + how-it-works
+ * use these cascades; reader/guest/portal/setup/demo don't have body
+ * state toggles).
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@layer components {
+  /* ─────────────────────────────────────────────────────────────
+   * RECORDING — meeting is live, mic is open. Disable most header
+   * icons (operator should focus on the meeting). The btn-record
+   * label flips to "Stop". The pulse-core/pulse-ring animation
+   * lives at the keyframes level below.
+   * ───────────────────────────────────────────────────────────── */
+  body.recording .header-icon-btn,
+  body[data-recording] .header-icon-btn {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  body.recording #btn-diagnostics,
+  body.recording #btn-stats,
+  body.recording #btn-settings,
+  body[data-recording] #btn-diagnostics,
+  body[data-recording] #btn-stats,
+  body[data-recording] #btn-settings {
+    @apply opacity-100 cursor-pointer;
+  }
+
+  body.recording .pulse-core,
+  body[data-recording] .pulse-core {
+    background: var(--color-recording);
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.3);
+  }
+
+  body.recording .pulse-ring,
+  body[data-recording] .pulse-ring {
+    border-color: var(--color-recording);
+    opacity: 1;
+    animation: pulse-expand 2s var(--ease-out) infinite;
+  }
+
+  body.recording .meter-bar,
+  body[data-recording] .meter-bar {
+    background: var(--color-recording);
+  }
+
+  body.recording .btn-record-label::after,
+  body[data-recording] .btn-record-label::after {
+    content: "Stop";
+  }
+
+  /* Recording-state colour swap on the primary CTA + its inner icon.
+   * Base button presentation lives in _record-controls.css; this
+   * file owns the recording-state overlay. */
+  body.recording .btn-record,
+  body[data-recording] .btn-record {
+    border-color: var(--color-recording);
+    background: var(--color-recording-bg);
+  }
+
+  body.recording .btn-record-icon,
+  body[data-recording] .btn-record-icon {
+    background: var(--color-recording);
+    border-radius: 2px;
+  }
+
+  /* Cancel is reachable during any active meeting — including a tab
+   * that's currently in view-only mode after a reload (recorder
+   * ownership migrated to a sibling tab). Operators rely on Cancel to
+   * discard a test meeting without saving; hiding it the moment a
+   * tab drops ownership leaves no escape hatch on the visible UI. */
+  body:not(.recording):not(.meeting-active) .btn-cancel-meeting,
+  body:not([data-recording]):not(.meeting-active) .btn-cancel-meeting {
+    display: none;
+  }
+
+  /* The Record/Stop label flips via ::after content. The "Stop" arm is
+   * declared above for the recording state; this is the resting state. */
+  body:not(.recording) .btn-record-label::after,
+  body:not([data-recording]) .btn-record-label::after {
+    content: "Record";
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * POPOUT-VIEW — admin SPA opened in a chromeless popout window.
+   * Hides every chrome surface (header, panels, modals, control
+   * bar) so the popout shows only the transcript columns.
+   * ───────────────────────────────────────────────────────────── */
+  body.popout-view #main-header,
+  body.popout-view .meetings-panel,
+  body.popout-view .meetings-backdrop,
+  body.popout-view .settings-panel,
+  body.popout-view .settings-backdrop,
+  body.popout-view .modal-overlay,
+  body.popout-view .meeting-table-strip,
+  body.popout-view .speaker-timeline,
+  body.popout-view .meeting-summary-panel,
+  body.popout-view .metrics-dashboard,
+  body.popout-view .control-bar,
+  body.popout-view .room-setup,
+  body.popout-view .landing-mode,
+  body.popout-view #player-bar,
+  body[data-popout-view] #main-header,
+  body[data-popout-view] .meetings-panel,
+  body[data-popout-view] .meetings-backdrop,
+  body[data-popout-view] .settings-panel,
+  body[data-popout-view] .settings-backdrop,
+  body[data-popout-view] .modal-overlay,
+  body[data-popout-view] .meeting-table-strip,
+  body[data-popout-view] .speaker-timeline,
+  body[data-popout-view] .meeting-summary-panel,
+  body[data-popout-view] .metrics-dashboard,
+  body[data-popout-view] .control-bar,
+  body[data-popout-view] .room-setup,
+  body[data-popout-view] .landing-mode,
+  body[data-popout-view] #player-bar {
+    @apply hidden;
+  }
+
+  body.popout-view .admin-slide-bar,
+  body[data-popout-view] .admin-slide-bar {
+    display: none !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * LANG-MODE — admin language filter. show-only-a / show-only-b
+   * narrow the transcript to one language; lang-mode-a-only /
+   * lang-mode-b-only narrow the slide thumbnails to one language.
+   * ───────────────────────────────────────────────────────────── */
+  body.show-only-a .col-header:first-child,
+  body.show-only-a .col-header:nth-child(3),
+  body.show-only-a .compact-col-b,
+  body.show-only-b .col-header:first-child,
+  body.show-only-b .col-header:nth-child(2),
+  body.show-only-b .compact-col-a,
+  body[data-lang-mode="a-only"] .col-header:first-child,
+  body[data-lang-mode="a-only"] .col-header:nth-child(3),
+  body[data-lang-mode="a-only"] .compact-col-b,
+  body[data-lang-mode="b-only"] .col-header:first-child,
+  body[data-lang-mode="b-only"] .col-header:nth-child(2),
+  body[data-lang-mode="b-only"] .compact-col-a {
+    @apply hidden;
+  }
+
+  body.show-only-a .transcript-col-headers,
+  body.show-only-a .compact-columns,
+  body.show-only-b .transcript-col-headers,
+  body.show-only-b .compact-columns,
+  body[data-lang-mode="a-only"] .transcript-col-headers,
+  body[data-lang-mode="a-only"] .compact-columns,
+  body[data-lang-mode="b-only"] .transcript-col-headers,
+  body[data-lang-mode="b-only"] .compact-columns {
+    grid-template-columns: 1fr;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * HAS-PLAYER — meeting playback bar is showing. Reserve space at
+   * the bottom of main so the bar doesn't overlap content.
+   * ───────────────────────────────────────────────────────────── */
+  body.has-player main,
+  body[data-has-player] main {
+    @apply pb-12;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * HIDE-FURIGANA / HIDE-LIVE / HIDE-TABLE — visibility toggles
+   * for furigana ruby annotations on JA text, the live transcript
+   * "head" of the column, and the in-meeting table preview.
+   * ───────────────────────────────────────────────────────────── */
+  body.hide-furigana .compact-col ruby rt,
+  body[data-hide-furigana] .compact-col ruby rt {
+    @apply hidden;
+  }
+
+  body.hide-live .col-header:first-child,
+  body[data-hide-live] .col-header:first-child {
+    @apply hidden;
+  }
+
+  body.hide-live .transcript-col-headers,
+  body[data-hide-live] .transcript-col-headers {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body.hide-table .meeting-table-strip,
+  body[data-hide-table] .meeting-table-strip {
+    display: none !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * VIEW-TERMINAL-HOST-ACTIVE — admin opened the terminal panel
+   * into the slide host area. Slide bar hides; terminal takes over.
+   * ───────────────────────────────────────────────────────────── */
+  body.view-terminal-host-active .admin-slide-bar,
+  body[data-view-terminal-host-active] .admin-slide-bar {
+    @apply hidden;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * KIOSK — body has data-role="kiosk" (server-side injected on
+   * the /kiosk view). Hide admin operator chrome and reveal the
+   * full-screen idle splash whenever no meeting is recording. The
+   * popout layout itself stays mounted underneath so the transition
+   * "meeting starts" is a fade, not a remount.
+   * ───────────────────────────────────────────────────────────── */
+  body[data-role="kiosk"] .header-icon-btn,
+  body[data-role="kiosk"] #control-bar,
+  body[data-role="kiosk"] .takeover-bar,
+  body[data-role="kiosk"] #settings-slide-over,
+  body[data-role="kiosk"] .modal-overlay,
+  /* Operator-facing alerts belong on the laptop admin, not the
+   * passive HDMI mirror. Hide every banner / toast / notification
+   * surface so the kiosk stays clean during a meeting:
+   *   .meeting-banner       reconnect / return / lifecycle banners
+   *   #tts-toast            stalled TTS warnings
+   *   #admin-notification-banner   mic-disconnected etc.
+   * The same elements are still styled normally in the admin SPA. */
+  body[data-role="kiosk"] .meeting-banner,
+  body[data-role="kiosk"] #tts-toast,
+  body[data-role="kiosk"] #admin-notification-banner,
+  /* Admin chrome that bleeds through the splash if the
+   * ``body.popout-view`` cascade doesn't fire fast enough on the
+   * kiosk page: the main top navbar (light background, paints as a
+   * solid white horizontal bar across the top of the splash), the
+   * grain noise overlay (z-index 9999, harmless but irrelevant on
+   * the kiosk), and every other top-level surface that has its own
+   * fixed/absolute positioning. Hide them unconditionally under
+   * data-role="kiosk" so the splash is the only visible chrome. */
+  body[data-role="kiosk"] #main-header,
+  body[data-role="kiosk"] .grain-overlay,
+  body[data-role="kiosk"] .meetings-panel,
+  body[data-role="kiosk"] .meetings-backdrop,
+  body[data-role="kiosk"] .settings-panel,
+  body[data-role="kiosk"] .settings-backdrop,
+  body[data-role="kiosk"] #player-bar,
+  body[data-role="kiosk"] .speaker-timeline,
+  body[data-role="kiosk"] .meeting-summary-panel,
+  body[data-role="kiosk"] .metrics-dashboard,
+  body[data-role="kiosk"] .room-setup,
+  body[data-role="kiosk"] .landing-mode,
+  body[data-role="kiosk"] .meeting-table-strip,
+  /* THE white rectangle covering the Dell logo: ``.popout-header``
+   * is created at runtime by ``_legacy.js`` when ``?popout=view`` is
+   * detected. Its background is ``--color-bg-surface`` (white) and
+   * it has min-height 36px - perfect rectangle over the splash's
+   * logo area. The kiosk has its own splash header chrome so the
+   * popout one is pure noise here. */
+  body[data-role="kiosk"] .popout-header {
+    display: none !important;
+  }
+
+  /* Nuclear: when the splash is showing (no meeting recording), hide
+   * EVERY direct body child except the splash itself. The popout
+   * header / takeover bar / main content / hidden inputs are all
+   * irrelevant on the idle screen and only generate visible chrome
+   * artifacts (the persistent white rectangle the user kept seeing).
+   * Once a meeting starts and the splash hides via the data-recording
+   * cascade, the rest of the body comes back. */
+  body[data-role="kiosk"]:not([data-recording]):not(.recording) > *:not(.kiosk-idle-splash) {
+    display: none !important;
+  }
+
+  /* Splash visible by default in kiosk role; hidden once a meeting
+   * is recording (the cascade keys off both class and data-attr to
+   * cover both JS toggle styles). */
+  body[data-role="kiosk"] .kiosk-idle-splash {
+    display: flex;
+  }
+
+  body[data-role="kiosk"][data-recording] .kiosk-idle-splash,
+  body[data-role="kiosk"].recording .kiosk-idle-splash {
+    display: none;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Keyframes used by the body-state cascades above. Kept here so
+   * the animation + the rule that triggers it stay co-located.
+   * ───────────────────────────────────────────────────────────── */
+}
+
+@keyframes pulse-expand {
+  0%   { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}

@@ -1,0 +1,39 @@
+{
+  "node": "alsa_input.usb-Dell_Inc._Dell_SP325_Speakerphone_0000000000000000-00.pro-input-0",
+  "duration_s": 4.0,
+  "captured_at": "20260513T124043",
+  "results": [
+    {
+      "rate_requested": 16000,
+      "out_path": "reports/speakerphone-quality/sp-capture-16000-20260513T124043.wav",
+      "elapsed_wall_s": 4.01,
+      "rate_actual": 16000,
+      "duration_s": 3.987,
+      "frames": 63800,
+      "rms": 0,
+      "rms_dbfs": -Infinity,
+      "peak": 1,
+      "peak_dbfs": -90.31,
+      "silence_ratio": 1.0,
+      "silent_windows": 79,
+      "total_windows": 79,
+      "dropouts_20ms": 145
+    },
+    {
+      "rate_requested": 48000,
+      "out_path": "reports/speakerphone-quality/sp-capture-48000-20260513T124043.wav",
+      "elapsed_wall_s": 4.01,
+      "rate_actual": 48000,
+      "duration_s": 3.989,
+      "frames": 191488,
+      "rms": 0,
+      "rms_dbfs": -Infinity,
+      "peak": 1,
+      "peak_dbfs": -90.31,
+      "silence_ratio": 1.0,
+      "silent_windows": 79,
+      "total_windows": 79,
+      "dropouts_20ms": 0
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+/* Meeting Scribe — reader entry (compiled to dist/reader.css).
+ *
+ * Linked by static/reader.html (and via the Electron overlay app
+ * which loads /reader). Scans the reader HTML + reader-app.js.
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_reader.css";
+
+@source "../../reader.html";
+@source "../../js/reader-app.js";

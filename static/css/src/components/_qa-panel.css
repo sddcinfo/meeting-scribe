@@ -1,0 +1,154 @@
+/* Meeting Scribe — Q&A panel.
+ *
+ * The streaming chat-style ask-the-meeting panel mounted inside the
+ * finalize-summary modal. Owns the chat-bubble layout, the
+ * suggestions chip row, the streaming token-cursor indicator, the
+ * citation footnotes, and the input row at the bottom.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ Q&A PANEL ═══════════ */
+
+.summary-qa {
+  border-top: 1px solid var(--color-border-dim);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  max-height: 280px;
+}
+
+.qa-messages {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.qa-messages:empty {
+  display: none;
+}
+
+.qa-messages:empty + .qa-input-row {
+  border-top: none;
+}
+
+.qa-msg {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  padding: 8px 14px;
+  border-radius: 12px;
+  max-width: 85%;
+  word-break: break-word;
+  white-space: pre-wrap;
+  animation: qa-msg-in 0.25s var(--ease-out);
+}
+
+@keyframes qa-msg-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.qa-msg-user {
+  align-self: flex-end;
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  border-bottom-right-radius: 4px;
+}
+
+.qa-msg-assistant {
+  align-self: flex-start;
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-dim);
+  border-bottom-left-radius: 4px;
+}
+
+.qa-msg-error {
+  color: var(--color-recording);
+  border-color: rgba(220, 38, 38, 0.2);
+  background: var(--color-recording-bg);
+}
+
+.qa-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--color-border-dim);
+  background: var(--color-bg-deep);
+  flex-shrink: 0;
+}
+
+.qa-input-row input {
+  flex: 1;
+  font-size: 0.78rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.qa-input-row input:focus {
+  border-color: var(--color-text-accent);
+}
+
+.qa-input-row input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.qa-send-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--color-text-accent);
+  background: var(--color-text-accent);
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.qa-send-btn:hover {
+  opacity: 0.88;
+}
+
+.qa-send-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── Responsive adjustments for Q&A + entities ── */
+
+@media (max-width: 768px) {
+  .entity-group {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .entity-label {
+    width: auto;
+  }
+  .insight-body {
+    padding-left: 0;
+  }
+  .insight-speakers {
+    padding-left: 0;
+  }
+  .summary-qa {
+    max-height: 220px;
+  }
+  .qa-msg {
+    max-width: 92%;
+  }
+}
+

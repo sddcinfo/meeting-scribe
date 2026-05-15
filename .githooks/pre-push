@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# meeting-scribe pre-push hook.
+#
+# Default ("light") mode runs the same lanes that block CI on PR merge:
+# lint + smoke (unit pytest, node JS) + security. Browser tests +
+# saved-meeting live regression are heavy (each ~50s, browser also pulls
+# Chromium) so they are gated behind ``CI_LOCAL_FULL=1`` — set it on the
+# push command before a release / after a frontend or audio-pipeline change:
+#
+#   CI_LOCAL_FULL=1 git push
+#
+# CI is still the fail-safe — see ``.github/workflows/tests.yml``.
+#
+# Enable once per clone (also enables pre-commit):
+#   git config core.hooksPath .githooks
+#
+# Bypass in an emergency:
+#   git push --no-verify
+# (don't make a habit of it — CI will still gate the PR).
+
+set -u
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# Skip the heavy lanes when the user is pushing a tag or deleting a branch.
+# We only care about gating real code-changing pushes.
+read_args="$(cat)"
+if [ -z "$read_args" ]; then
+  exit 0
+fi
+
+# Prefer the project venv when it exists so local security checks audit the
+# repository dependency tree, not unrelated packages installed into the user's
+# global/mise interpreter. CI has no venv here and falls back to python3.
+if [ -n "${CI_LOCAL_PY:-}" ]; then
+  PY="$CI_LOCAL_PY"
+elif [ -x ".venv/bin/python" ]; then
+  PY=".venv/bin/python"
+else
+  PY="python3"
+fi
+
+echo "pre-push: running CI parity (light: lint + smoke + security) — set CI_LOCAL_FULL=1 to include browser-smoke + saved-meeting regression, or --no-verify if you must"
+exec "$PY" scripts/ci_local.py

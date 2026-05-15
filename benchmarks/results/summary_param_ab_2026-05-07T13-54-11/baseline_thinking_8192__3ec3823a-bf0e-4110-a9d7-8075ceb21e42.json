@@ -1,0 +1,184 @@
+{
+  "config_name": "baseline_thinking_8192",
+  "meeting_id": "3ec3823a-bf0e-4110-a9d7-8075ceb21e42",
+  "elapsed_ms": 148611.06476199348,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "The meeting served as a technical deep-dive and live demonstration of a locally hosted AI inference stack running on consumer-grade hardware with 128GB of unified memory. The presenter detailed the architecture, workload prioritization, and model selection process, highlighting the use of Qwen 3.5 (35B MoE) for core intelligence, alongside Qwen 3 variants for ASR and TTS. Key outcomes include validation of the hardware's capability to handle real-time transcription and coding tasks concurrently, benchmarking insights favoring Qwen over Whisper for multilingual use cases, and a clear articulation of the forward-deployed engineering team's mandate to replicate this technical agility for customer engagements. Strategically, this underscores a shift toward lightweight, on-prem/local AI deployments that bypass cloud dependency while maintaining high concurrency and low latency.",
+    "key_insights": [
+      {
+        "title": "Local Inference Architecture & Hardware Viability",
+        "description": "The presenter demonstrated a highly optimized local AI stack capable of running real-time transcription, translation, and coding tasks concurrently on a single machine equipped with 128GB of unified memory. The architecture leverages a Mixture of Experts (MoE) model—specifically Qwen 3.5 (35B parameters, with only 3B active per inference)—to drastically reduce VRAM requirements and maximize tokens-per-second throughput. By prioritizing real-time audio queues over batch processing tasks like code generation, the system maintains sub-second latency for speech-to-text while allowing non-critical workloads to queue without perceptible delay.\n\nThis configuration demonstrates that modern hardware with high-bandwidth unified memory can effectively replace or augment cloud-based inference for latency-sensitive applications. The presenter emphasized that memory capacity alone is insufficient; memory bandwidth is the critical bottleneck when comparing unified memory architectures to data-center GPUs like the H100. While H100s offer terabit-per-second bandwidth, the 128GB unified pool eliminates data transfer bottlenecks for models that fit entirely in RAM, making local deployment both viable and cost-effective for specific use cases.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Multilingual Model Benchmarking & Selection Rationale",
+        "description": "A significant portion of the discussion centered on the rigorous benchmarking process used to select the underlying language and speech models. The presenter explicitly moved away from Whisper models after discovering their limitations in multilingual contexts, opting instead for the Qwen family (Qwen 3 for ASR at 1.7B parameters, Qwen 3 for TTS, and Qwen 3.5 for core intelligence). This decision was driven by quality and cross-lingual accuracy rather than cost or ease of deployment. The presenter noted that while Whisper performs adequately for English, it falls short in multilingual environments, which is a critical gap for global customer deployments.\n\nThe benchmarking suite developed by the presenter tested multiple open-weight models to identify the optimal balance between parameter count, active parameters, and quantization level. The team settled on INT4 quantization, reducing the model from its native FP16 training precision without sacrificing meaningful quality. This approach allows the 35B parameter model to run efficiently on the target hardware while maintaining the accuracy required for professional transcription and translation workflows.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Forward-Deployed Engineering Mandate & Customer Enablement",
+        "description": "The technical demonstration was contextualized within a broader organizational initiative: building out a forward-deployed engineering team under Brendan, with Dave Star leading the new role. The presenter emphasized that this team’s mandate is to bring deep technical AI literacy directly to customer engagements, moving beyond traditional sales cycles to hands-on, technologist-led deployments. The ability to rapidly prototype, benchmark, and deploy local AI stacks on-site is positioned as a core competency for this team, enabling them to speak the language of technical stakeholders rather than relying on generic sales narratives.\n\nThis shift reflects a strategic recognition that enterprise AI adoption requires trusted technical partners who can navigate hardware constraints, model selection, and integration challenges in real time. By equipping the forward-deployed team with reproducible local AI environments, the organization aims to accelerate deal cycles, reduce dependency on cloud infrastructure for initial proofs-of-concept, and establish a competitive moat through technical agility and on-prem deployment expertise.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      }
+    ],
+    "action_items": [
+      {
+        "category": "Team Structure & Roles",
+        "task": "Formalize the forward-deployed engineering team structure under Brendan and Dave Star, defining scope, customer engagement protocols, and technical deployment standards for local AI stacks.",
+        "assignee": "Dave Star",
+        "due": null
+      },
+      {
+        "category": "Technical Enablement",
+        "task": "Document and package the Qwen-based local AI inference stack (including quantization pipelines, concurrency settings, and benchmarking results) into a repeatable demo kit for customer-facing technical engagements.",
+        "assignee": "Speaker 1",
+        "due": null
+      },
+      {
+        "category": "Tooling & Architecture",
+        "task": "Review the recently leaked Claude Code architecture and assess implications for our internal development harness, interface customization, and potential migration paths if open-source alternatives become more viable.",
+        "assignee": "Speaker 1",
+        "due": null
+      },
+      {
+        "category": "Customer Strategy",
+        "task": "Identify 3-5 target accounts suitable for local AI deployment pilots, focusing on multilingual transcription and real-time translation use cases where cloud latency or data residency is a concern.",
+        "assignee": "Brendan",
+        "due": null
+      }
+    ],
+    "named_entities": {
+      "companies": [
+        "Claude (Anthropic)",
+        "Wicker"
+      ],
+      "people": [
+        "Brendan",
+        "Dave Star",
+        "Speaker 1"
+      ],
+      "products": [
+        "Qwen 3.5",
+        "Qwen 3",
+        "Qwen 3 TTS",
+        "Whisper",
+        "Claude Code",
+        "Agent Swarm Vibe Code",
+        "H100",
+        "Mac hardware (128GB unified memory)"
+      ],
+      "accounts": []
+    },
+    "decisions": [
+      "Switched from Whisper to Qwen models for multilingual ASR and TTS due to superior cross-lingual quality benchmarks.",
+      "Prioritized real-time audio transcription queues over batch coding tasks to maintain sub-second latency for customer-facing features.",
+      "Adopted INT4 quantization for the 35B parameter model to fit within 128GB unified memory without significant quality loss.",
+      "Established forward-deployed engineering as a core organizational function under Brendan and Dave Star to lead technical customer engagements."
+    ],
+    "questions": [
+      "How will the local inference stack scale when handling concurrent enterprise-level transcription workloads across multiple simultaneous sessions?",
+      "What is the long-term maintenance strategy for open-weight model updates, quantization pipelines, and hardware compatibility as new chip generations release?",
+      "How will the forward-deployed engineering team measure success, ROI, and technical adoption metrics for customer-facing local AI deployments?",
+      "What are the security, compliance, and data governance implications of running proprietary customer workloads on local, air-gapped hardware versus cloud endpoints?"
+    ],
+    "key_quotes": [
+      {
+        "text": "The most important metric is: Can you load it into VRAM? If you can't load in the GPU RAM, then your inference will be just speed-wise.",
+        "speaker": "Speaker 1",
+        "context": "Explaining the primary hardware constraint for local AI deployment and why memory capacity and bandwidth dictate model selection."
+      },
+      {
+        "text": "This is exactly what the team I... Be doing. It's going into a customer, understanding what they... Standing like being a technologist.",
+        "speaker": "Speaker 1",
+        "context": "Defining the mandate for the forward-deployed engineering team and emphasizing the shift from sales-led to technologist-led customer engagements."
+      },
+      {
+        "text": "You win three versus. Yeah, good question. Benchmarking. So I think it's actually here... The reason is just quality, basically.",
+        "speaker": "Speaker 1",
+        "context": "Justifying the decision to benchmark and select Qwen over Whisper, highlighting that model quality and multilingual accuracy drove the technical choice."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Local AI Resource Allocation & Concurrency",
+        "description": "Discussion of GPU usage patterns, batch processing, high concurrency scaling, and real-time prioritization of transcription over coding tasks.",
+        "timestamp_min": 0.0
+      },
+      {
+        "title": "Hardware Architecture & Memory Constraints",
+        "description": "Analysis of the 128GB unified memory system, VRAM limitations, and comparison to data-center GPUs like the H100.",
+        "timestamp_min": 1.0
+      },
+      {
+        "title": "Model Stack Overview & MoE Architecture",
+        "description": "Explanation of Qwen 3.5 (35B parameters), Mixture of Experts design, active vs total parameters, and quantization from FP16 to INT4.",
+        "timestamp_min": 3.0
+      },
+      {
+        "title": "Claude Code Harness & Open Source Dynamics",
+        "description": "Discussion of the Claude Code interface, recent source code leak, and implications for tooling and backend flexibility.",
+        "timestamp_min": 5.0
+      },
+      {
+        "title": "ASR/TTS Components & Model Selection",
+        "description": "Breakdown of Qwen 3 (1.7B) for speech recognition, Qwen 3 TTS, and voice cloning capabilities in transcription.",
+        "timestamp_min": 7.0
+      },
+      {
+        "title": "Memory Bandwidth vs. Capacity",
+        "description": "Technical comparison of unified memory bandwidth against HBM3, explaining why bandwidth dictates tokens-per-second throughput.",
+        "timestamp_min": 9.0
+      },
+      {
+        "title": "Quantization & Precision Trade-offs",
+        "description": "Deep dive into reducing floating-point precision without losing model quality, and the impact on inference speed.",
+        "timestamp_min": 11.0
+      },
+      {
+        "title": "Multilingual Benchmarking & Whisper vs. Qwen",
+        "description": "Presentation of benchmarking results, limitations of Whisper in multilingual contexts, and rationale for Qwen adoption.",
+        "timestamp_min": 12.0
+      },
+      {
+        "title": "Forward-Deployed Engineering & Customer Enablement",
+        "description": "Strategic discussion on building technical AI literacy for customer engagements and moving beyond traditional sales cycles.",
+        "timestamp_min": 14.0
+      },
+      {
+        "title": "Team Structure & Next Steps",
+        "description": "Clarification of roles under Brendan and Dave Star, and alignment on forward-deployed engineering responsibilities.",
+        "timestamp_min": 15.0
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 21550,
+  "n_finals": 452,
+  "response_chars": 10666,
+  "num_topics": 10,
+  "num_action_items": 4,
+  "num_decisions": 4,
+  "topic_names": [
+    "Local AI Resource Allocation & Concurrency",
+    "Hardware Architecture & Memory Constraints",
+    "Model Stack Overview & MoE Architecture",
+    "Claude Code Harness & Open Source Dynamics",
+    "ASR/TTS Components & Model Selection",
+    "Memory Bandwidth vs. Capacity",
+    "Quantization & Precision Trade-offs",
+    "Multilingual Benchmarking & Whisper vs. Qwen",
+    "Forward-Deployed Engineering & Customer Enablement",
+    "Team Structure & Next Steps"
+  ],
+  "hallucinated_speakers": [
+    "Brendan",
+    "Dave Star"
+  ]
+}

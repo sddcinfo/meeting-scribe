@@ -1,0 +1,329 @@
+# meeting-scribe GB10 model stack
+#
+# Translation uses the shared autosre vLLM model on port 8010
+# (Qwen/Qwen3.6-35B-A3B-FP8, managed by `autosre start`).
+# This compose only manages ASR, diarization, and TTS.
+#
+# Memory budget (single GB10, 128GB):
+#   Shared translation model (Qwen3.6-35B-A3B-FP8, port 8010):
+#                                                   ~35GB weights + KV
+#                                                   (managed by autosre)
+#   ASR (Qwen3-ASR-1.7B):                         ~12GB
+#   Diarization (pyannote):                        ~4GB
+#   TTS (Qwen3-TTS-0.6B, one replica):             ~3-4GB
+#   Total steady state varies with vLLM allocation; see
+#   benchmarks/README.md for measured production envelopes.
+#
+# Port allocation (host networking):
+#   8001 — Diarization (pyannote.audio)
+#   8002 — TTS (faster-qwen3-tts, Qwen3-TTS-12Hz-0.6B-Base)
+#   8003 — ASR (vLLM, Qwen3-ASR-1.7B)
+#   8010 — Shared model: translation + coding (autosre, not in this compose)
+#
+# Offline mode:
+#   All containers set HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1 so they
+#   NEVER phone home to HuggingFace. Models must be pre-cached in
+#   $HF_CACHE_DIR (default /data/huggingface) via `meeting-scribe gb10 pull-models`.
+#
+# Usage:
+#   autosre start --scribe    # Starts everything (shared model + containers + UI)
+#   docker compose -f docker-compose.gb10.yml up -d  # Containers only
+
+services:
+  # Speaker Diarization — pyannote.audio 4.0.4 / speaker-diarization-community-1
+  # (production since 2026-04-28).  community-1 emits a single-speaker
+  # exclusive timeline alongside the standard segmentation; the
+  # exclusive output drives primary-speaker assignment in
+  # speaker_attach.py while the standard output carries embeddings for
+  # cross-chunk merging and detects cross-talk.  See
+  # plans/stateful-marinating-whistle.md (Track C) for the bench result
+  # that promoted community-1 to production.
+  pyannote-diarize:
+    image: pyannote-diarize:latest
+    build:
+      context: containers/pyannote
+    container_name: scribe-diarization
+    network_mode: host
+    # Hard memory cap. 2026-04-30 OOM RCA: with no caps, runaway model
+    # loading or KV-cache ballooning can push the host into a global
+    # OOM that kills meeting-scribe instead of the offending container.
+    # 6g covers the 4 GB pyannote model + diarization buffers + a slice
+    # of the shm tmpfs. Override via env if a future model needs more.
+    mem_limit: ${SCRIBE_DIARIZE_MEM_LIMIT:-6g}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 16g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - DIARIZE_PORT=8001
+      - DIARIZE_MAX_SPEAKERS=4
+      # Pinned to community-1 explicitly.  The container's server.py
+      # defaults to community-1 too — this restates the choice for
+      # operators reading the compose file.  Override at run time only
+      # to roll back to a previous pipeline (no production reason to do
+      # so today; see MODEL_SELECTION.md decision log).
+      - DIARIZE_PIPELINE_ID=${DIARIZE_PIPELINE_ID:-pyannote/speaker-diarization-community-1}
+      - DIARIZE_PIPELINE_REVISION=${DIARIZE_PIPELINE_REVISION:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_HUB_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
+      # expandable_segments:True (2026-05-11): reduces fragmentation on the
+      # rolling-window diarize buffer, which was hitting cudaErrorMemoryAllocation
+      # → CUBLAS_STATUS_INTERNAL_ERROR under co-tenant pressure from the autosre
+      # 35B vLLM. vLLM 0.20.1 auto-disables expandable_segments around its own
+      # cumem pool (vllm#40812) so flipping it here is safe for non-vLLM tenants.
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  # Interpretation Audio TTS — Qwen3-TTS.
+  # Production uses one resident TTS endpoint on 8002. 2026-05-09 live
+  # testing showed that two resident TTS models can push the GB10 stack into
+  # CUDA-OOM territory when ASR + translation + diarization are also loaded.
+  qwen3-tts:
+    image: scribe-tts:latest
+    build:
+      context: containers/tts
+    container_name: scribe-tts
+    network_mode: host
+    # See pyannote-diarize above for the OOM-cap rationale. 4g covers the
+    # Qwen3-TTS model, CUDA graph buffers, and a TTS-burst slice of shm.
+    mem_limit: ${SCRIBE_TTS_MEM_LIMIT:-4g}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 16g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - TTS_PORT=8002
+      # Use the Base variant (not CustomVoice) — the 0.6B CustomVoice
+      # weights ship with a broken `generate_custom_voice` path that raises
+      # `does not support create_voice_clone_prompt` on every named-speaker
+      # request, so every TTS synthesis returns 500. Base has no named
+      # speakers but the container falls through to reference-audio
+      # synthesis using default_voice.wav (or any cached enrolled voice),
+      # which works.
+      - TTS_MODEL=${TTS_MODEL:-Qwen/Qwen3-TTS-12Hz-0.6B-Base}
+      # GB10 probe 2026-05-09: faster-qwen3-tts loads cleanly on the
+      # pinned PyTorch 2.11/CUDA image and passed the saved-meeting live
+      # stack regression with 0 TTS errors. Keep one replica by default;
+      # two resident TTS models can CUDA-OOM this stack.
+      - TTS_BACKEND=${TTS_BACKEND:-faster}
+      - TTS_SERVER_SYNTH_TIMEOUT_S=${TTS_SERVER_SYNTH_TIMEOUT_S:-12}
+      - TTS_MAX_AUDIO_S=${TTS_MAX_AUDIO_S:-12}
+      - TTS_MAX_AUDIO_BASE_S=${TTS_MAX_AUDIO_BASE_S:-1.5}
+      - TTS_MAX_AUDIO_PER_CHAR_S=${TTS_MAX_AUDIO_PER_CHAR_S:-0.22}
+      - TTS_EXIT_ON_FATAL=${TTS_EXIT_ON_FATAL:-1}
+      - TTS_FASTER_XVEC_ONLY=${TTS_FASTER_XVEC_ONLY:-1}
+      - TTS_FASTER_NON_STREAMING_MODE=${TTS_FASTER_NON_STREAMING_MODE:-0}
+      # See pyannote-diarize for the rationale on expandable_segments:True.
+      # TTS allocates variable-length voice-clone reference buffers + per-utterance
+      # output tensors — the same fragmentation pattern that benefits from
+      # expandable segments on the rolling-window diarize buffer.
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:True
+      - HF_HUB_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
+    restart: unless-stopped
+    # Tell autoheal NOT to monitor this container. The TTS container does
+    # synchronous PyTorch CUDA work that holds the Python GIL during
+    # synthesis bursts, which makes /health take >5 s to respond. Autoheal
+    # interpreted those slow probes as "unhealthy" and force-restarted the
+    # container every 5–10 minutes mid-meeting, killing TTS the moment a
+    # listener actually started consuming audio. We rely on Docker's own
+    # `restart: unless-stopped` for genuine crashes; autoheal can stay
+    # responsible for diarize / asr where the workload is stateless and
+    # /health is never blocked.
+    labels:
+      - "autoheal=false"
+    healthcheck:
+      # Generous timeouts to ride out CUDA-busy moments. The healthcheck
+      # exists only to surface "container is genuinely dead" — it must
+      # never fire while the model is just slow.
+      test: ["CMD", "curl", "-f", "--max-time", "25", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 6
+      start_period: 180s
+
+  # ASR — Qwen3-ASR-1.7B via vLLM
+  vllm-asr:
+    image: ${SCRIBE_VLLM_IMAGE:-scribe-vllm-asr:latest}
+    build:
+      context: containers/vllm-asr
+    container_name: scribe-asr
+    entrypoint: []
+    command:
+      - /bin/bash
+      - -c
+      - >
+        vllm serve Qwen/Qwen3-ASR-1.7B
+        --host 0.0.0.0
+        --port 8003
+        --tensor-parallel-size 1
+        --max-model-len 4096
+        --gpu-memory-utilization 0.10
+        --max-num-seqs 4
+        --enforce-eager
+        --load-format fastsafetensors
+    network_mode: host
+    # See pyannote-diarize above for the OOM-cap rationale. 18g covers
+    # the ~12 GB Qwen3-ASR-1.7B model footprint + KV cache for the
+    # 4-slot, 4096-token max + ASR shm slice. Override via env if a
+    # future ASR model bump exceeds this.
+    mem_limit: ${SCRIBE_ASR_MEM_LIMIT:-18g}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 16g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - NVIDIA_DISABLE_REQUIRE=1
+      - HF_HUB_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # OnlyOffice DocumentServer (removed 2026-04-17). The popout slide
+  # viewer now uses the meeting-scribe-rendered 300 DPI PNGs directly —
+  # no iframe, no second toolbar, no "Download failed" overlay. The
+  # PNG path covers the same fidelity needs without the chrome OnlyOffice
+  # imposed. Backend container can be removed entirely.
+
+  # ---------------------------------------------------------------------
+  # 2026-Q2 model-challenger bench sidecars (plans/stateful-marinating-whistle.md)
+  # All gated behind `profiles: [bench]` (or [bench-scratch] for the
+  # community-1 SM_121 smoke check) so they never auto-start with the
+  # production stack.  Bring up explicitly with:
+  #   docker compose --profile bench up -d <service>
+  # Production services on 8001/8002/8003 stay untouched.
+  # ---------------------------------------------------------------------
+
+  # Track A — Cohere Transcribe (Apache 2.0, 2026-03-26).
+  cohere-transcribe:
+    profiles: ["bench"]
+    image: cohere-transcribe:bench
+    build:
+      context: containers/cohere-transcribe
+      args:
+        COHERE_REVISION: ${COHERE_REVISION:-}
+    container_name: scribe-bench-cohere-transcribe
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 8g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - ASR_PORT=8013
+      - COHERE_MODEL_ID=${COHERE_MODEL_ID:-CohereLabs/cohere-transcribe-03-2026}
+      - COHERE_REVISION=${COHERE_REVISION:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
+    restart: "no"  # Bench-only; do not auto-restart.
+    labels:
+      - "autoheal=false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8013/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # Track B — Fun-CosyVoice3.5 (Apache 2.0, Tongyi 2026-03-02).
+  # Port 8024.
+  funcosyvoice:
+    profiles: ["bench"]
+    image: funcosyvoice:bench
+    build:
+      context: containers/funcosyvoice
+      args:
+        COSY_REVISION: ${COSY_REVISION:-}
+    container_name: scribe-bench-funcosyvoice
+    network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 8g
+    ulimits:
+      memlock: -1
+    volumes:
+      - ${HF_CACHE_DIR:-/data/huggingface}:/root/.cache/huggingface
+    environment:
+      - TTS_PORT=8024
+      - COSY_MODEL_ID=${COSY_MODEL_ID:-FunAudioLLM/CosyVoice3.5}
+      - COSY_REVISION=${COSY_REVISION:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512,expandable_segments:False
+    restart: "no"
+    labels:
+      - "autoheal=false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--max-time", "25", "http://localhost:8024/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 240s
+
+  # (Track C bench sidecars removed 2026-04-28 — production
+  # pyannote-diarize on 8001 IS community-1 now, so the parallel bench
+  # sidecars are redundant.  Keep the cohere-transcribe / funcosyvoice
+  # bench sidecars above for the open ASR / TTS challenger work that
+  # has not yet promoted.)
+
+  # Auto-heal: restarts any container Docker marks unhealthy.
+  # Combined with CUDA health checks in diarize/TTS, a GPU-broken
+  # container gets restarted within ~45s automatically.
+  autoheal:
+    image: willfarrell/autoheal
+    container_name: scribe-autoheal
+    restart: unless-stopped
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+      - AUTOHEAL_INTERVAL=15
+      - AUTOHEAL_START_PERIOD=300
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

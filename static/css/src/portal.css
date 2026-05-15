@@ -1,0 +1,13 @@
+/* Meeting Scribe — captive-portal entry (compiled to dist/portal.css).
+ *
+ * Linked by static/portal.html — the "you're connected" page shown to
+ * hotspot clients who land at `/` without a meeting in progress.
+ * Smallest of the entries; uses the unified @theme palette.
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+
+@source "../../portal.html";
+@source "../../js/portal-dismiss.js";

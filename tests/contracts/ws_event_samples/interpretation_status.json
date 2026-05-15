@@ -1,0 +1,14 @@
+{
+  "type": "interpretation_status",
+  "enabled": true,
+  "pause_flush_ms": 1500,
+  "idle_drain_ms": 5000,
+  "room_sink_mode": "consecutive",
+  "mic_muted": false,
+  "listener_counts": {
+    "room_sink": {"total": 1, "active": 1, "muted": 0},
+    "web_browser": {"total": 2, "active": 2, "muted": 0},
+    "admin_monitor": {"total": 1, "active": 1, "muted": 0},
+    "bt_headset": {"total": 1, "active": 1, "muted": 0}
+  }
+}

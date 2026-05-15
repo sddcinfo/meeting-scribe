@@ -1,0 +1,31 @@
+2026-05-11T12:29:18+09:00
+phase: pre-baseline
+diarize_cuda_errors_cumulative: 24
+tts_cuda_errors_cumulative: 4
+
+container statuses:
+scribe-tts Up 2 hours (healthy)
+scribe-diarization Up About an hour (healthy)
+scribe-asr Up 2 hours (healthy)
+scribe-autoheal Up 2 hours (healthy)
+autosre-vllm-local Up 2 hours
+
+gpu top:
+GPU 0  SM   0%  memIO   0%  VRAM 61.2G/121.6G (50%)  power 11W  temp 43°C  throttle none
+
+ROLE           CONTAINER                  PID   SM%     VRAM  CMD
+────────────────────────────────────────────────────────────────────────────────────────────────
+translate      autosre-vllm-local        5816    0%    52.4G  VLLM::EngineCore
+asr            scribe-asr               41824    0%     5.7G  VLLM::EngineCore
+tts-1          scribe-tts               67900    0%     2.8G  python server.py
+diarize        scribe-diarization      118351    0%     301M  python -m uvicorn server:app --host 0…
+host           -                         3265    0%       0M  /usr/bin/gnome-shell
+host           -                         2650    0%       0M  /usr/lib/xorg/Xorg vt1 -displayfd 3 -…
+
+ENGINE               MODEL                        RUN WAIT   KV%   tok/s    TTFT   TPOT  MFU%
+────────────────────────────────────────────────────────────────────────────────────────────────
+autosre-translate    Qwen/Qwen3.6-35B-A3B-FP8       0    0   0.0       —   250ms      —     —
+scribe-asr           Qwen/Qwen3-ASR-1.7B            0    0   0.0       —   250ms      —     —
+
+vllm config (live, from ps):
+/usr/bin/python3 /usr/local/bin/vllm serve Qwen/Qwen3.6-35B-A3B-FP8 --tensor-parallel-size=1 --max-model-len=262144 --gpu-memory-utilization=0.7 --kv-cache-dtype=fp8 --host=0.0.0.0 --max-num-seqs=4 --max-num-batched-tokens=4096 --quantization=fp8 --attention-backend=flashinfer --enable-auto-tool-choice --tool-call-parser=qwen3_coder --reasoning-parser=qwen3 --enable-prefix-caching --enable-chunked-prefill --load-format=fastsafetensors --scheduling-policy=priority --port=8010

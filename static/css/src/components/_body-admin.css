@@ -1,0 +1,17 @@
+/* Meeting Scribe — admin SPA body baseline.
+ *
+ * The shared `@layer base` body rules in `lib/base.css` cover every
+ * page (admin SPA + reader + guest + setup + portal + how-it-works).
+ * The admin SPA additionally needs:
+ *   * `overflow: hidden` — the meeting view owns its own scrollable
+ *     panes; the body must never produce a global scrollbar.
+ *   * `min-height: 100vh` — the popout layout splits at the body
+ *     level and needs a guaranteed viewport floor.
+ */
+
+@reference "tailwindcss";
+
+body {
+  overflow: hidden;
+  min-height: 100vh;
+}

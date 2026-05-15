@@ -1,0 +1,139 @@
+/* Meeting Scribe — WAN card (admin Settings → Network).
+ *
+ * Forms + lists for managing wired and Wi-Fi WAN profiles. Mirrors
+ * the Bluetooth card idiom (`.bt-scan-row`, `.settings-bt-row`) so
+ * the two settings sections share visual rhythm.
+ *
+ * Status pills (`.wan-add-status.ok` / `.err` / `.warn`) reuse the
+ * help-line type with colour modifiers so the operator sees at a
+ * glance whether the last action succeeded.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.wan-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin: var(--space-xs) 0;
+}
+.wan-add-row .wan-ssid-input,
+.wan-add-row .wan-pskref-input {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+}
+.wan-add-row .wan-add-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.wan-wired-line,
+.wan-wifi-line {
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 4px;
+  background: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  word-break: break-word;
+}
+
+.wan-portal-link {
+  font-size: 0.78rem;
+  margin: var(--space-xs) 0 0;
+}
+.wan-portal-link a {
+  color: var(--accent, #3b82f6);
+  word-break: break-all;
+}
+
+.wan-add-status.ok,
+.wan-scan-status.ok,
+.wan-action-status.ok {
+  color: var(--color-success);
+}
+.wan-add-status.warn,
+.wan-scan-status.warn,
+.wan-action-status.warn {
+  color: var(--color-warning);
+}
+.wan-add-status.err,
+.wan-scan-status.err,
+.wan-action-status.err {
+  color: var(--danger, #dc2626);
+}
+
+.wan-profiles-list .settings-bt-row,
+.wan-scan-results .settings-bt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-dim, var(--color-border));
+  border-radius: 4px;
+  background: var(--color-bg-raised);
+}
+.wan-profiles-list .settings-bt-row > div,
+.wan-scan-results .settings-bt-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wan-profiles-list .settings-bt-row > div + div,
+.wan-scan-results .settings-bt-row > div + div {
+  flex: 0 0 auto;
+  flex-direction: row;
+  gap: var(--space-xs);
+}
+.wan-profiles-list .btn-ghost,
+.wan-scan-results .btn-ghost {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
+#wan-card > .settings-field > button.wan-up-btn,
+#wan-card > .settings-field > button.wan-down-btn {
+  margin-right: var(--space-sm);
+}
+
+/* Band radio group sits between the SSID/PSK row and the Add buttons.
+ * Egress-mode radio group mirrors the same idiom, just stacked
+ * vertically so the longer "block / gateway / captive" labels don't
+ * wrap. */
+.wan-band-row,
+.wan-egress-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+  margin: var(--space-xs) 0 var(--space-sm);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+.wan-egress-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+.wan-band-row label,
+.wan-egress-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.wan-band-row input[type="radio"],
+.wan-egress-row input[type="radio"] {
+  accent-color: var(--accent, #3b82f6);
+}
+.wan-egress-source {
+  font-style: italic;
+  margin: 0;
+}

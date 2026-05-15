@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover lets the page extend behind the iOS browser
+       chrome so env(safe-area-inset-*) picks up the correct insets;
+       without this, iPhone content gets clipped by the home indicator
+       / bottom toolbar.  See `static/TESTING_VIEWPORTS.md` for the
+       canonical device list this page is QA'd against. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Benchmarking &amp; Quality | Meeting Scribe</title>
+  <!-- System fonts only. No external font loads (hotspot has no internet). -->
+  <!-- Cache-bust ?v= on each artifact is rewritten by
+       scripts/build_css.py from static/css/dist/manifest.json. -->
+  <link rel="stylesheet" href="../static/css/dist/benchmarking.css?v=3a4a81b2357f">
+</head>
+<body data-lang="both">
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <nav class="nav-bar">
+    <a href="../how-it-works/" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      <span class="nav-logo-text">Meeting Scribe</span>
+    </a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn active" data-lang="both">Both</button>
+        <button class="lang-btn" data-lang="ja">JA</button>
+      </div>
+      <a href="../how-it-works/" class="nav-link">
+        <span class="lang-en">How It Works</span><span class="lang-ja">仕組み</span>
+      </a>
+      <a href="../benchmarking/" class="nav-link" aria-current="page">
+        <span class="lang-en">Benchmarking</span><span class="lang-ja">評価</span>
+      </a>
+      <a href="../hardware-scaling/" class="nav-link">
+        <span class="lang-en">Hardware Scaling</span><span class="lang-ja">スケーリング</span>
+      </a>
+      <a href="https://github.com/sddcinfo/meeting-scribe" class="nav-link" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- ═══ HERO ═══ -->
+    <section class="hero">
+      <div class="hero-pulse">
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-core"></div>
+      </div>
+      <div class="bi-inline">
+        <h1 class="hero-title lang-en">Benchmarking &amp; Quality</h1>
+        <h1 class="hero-title lang-ja">評価と品質</h1>
+      </div>
+      <div class="bi hero-bi">
+        <p class="hero-subtitle lang-en">
+          Every change clears the gate. Quality is measured in BLEU against a redacted production corpus. Performance is measured against committed baselines with tolerance-gated exit codes. Ten declarative eval suites turn things like a11y, security, and tech-debt into structured findings instead of reviewer opinions.
+        </p>
+        <p class="hero-subtitle lang-ja">
+          すべての変更はゲートを通過します。品質はリダクトされた本番コーパスに対する BLEU で測定します。性能はコミット済みベースラインとの許容差を見るエグジットコードで測定します。10 種類の宣言的な評価スイートが、アクセシビリティ・セキュリティ・技術的負債といった項目を、レビュアーの意見ではなく構造化された所見として扱います。
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ 01 · THE THREE GATES ═══ -->
+    <section class="section pipeline-overview" id="gates">
+      <div class="bi-inline">
+        <div class="section-label lang-en">01 · The Three Gates</div>
+        <div class="section-label lang-ja">01 · 三つのゲート</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Three independent checks, every change.</h2>
+        <h2 class="section-title lang-ja">変更ごとに三つの独立した検査。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Each gate measures a different thing and can fail independently. The CI pre-push hook runs the full set in under two minutes. An opt-in long-run suite extends to live ASR / translation / TTS regression against saved meetings.</p>
+        <p class="section-desc lang-ja">各ゲートは異なる対象を測定し、独立して失敗します。プッシュ前の CI フックは 2 分以内に全セットを走らせます。オプトインの長時間スイートは、保存済み会議に対するライブ ASR ／翻訳／ TTS の回帰検査まで拡張します。</p>
+      </div>
+
+      <div class="pipeline-track" style="margin-top:var(--space-lg);">
+        <div class="pipeline-line"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="quality"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Quality gate</span><span class="pipeline-node-label lang-ja">品質ゲート</span></div><div class="pipeline-node-sub">BLEU · WER · MOS · slide regression</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="perf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12l3-3 4 4 8-8"/><path d="M14 5h7v7"/><path d="M3 21h18"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Performance gate</span><span class="pipeline-node-label lang-ja">性能ゲート</span></div><div class="pipeline-node-sub">TTFT · TPS · isolation vs contention</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="refinement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">Refinement gate</span><span class="pipeline-node-label lang-ja">リファインメントゲート</span></div><div class="pipeline-node-sub">context-window sweep · on-p99</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 02 · QUALITY GATE ═══ -->
+    <section class="section stage" data-stage="quality" id="quality-gate">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">2</div>
+          <div class="bi-inline">
+            <h3 class="stage-title lang-en">Quality · translation, transcription, voice.</h3>
+            <h3 class="stage-title lang-ja">品質・翻訳、文字起こし、音声。</h3>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">A 500-record redacted production corpus pins BLEU scores per direction. Today, the FP8+flashinfer baseline reads <strong>JA→EN <span class="metric-inline" data-claim="phase6_baseline_bleu_jaen">75.89</span></strong> and <strong>EN→JA <span class="metric-inline" data-claim="phase6_baseline_bleu_enja">82.30</span></strong>. ASR is gated on word error rate against a Japanese meeting corpus. TTS quality is gated by mean opinion score plus a concurrent-load test.</p>
+            <p class="lang-ja">500 件のリダクト済み本番コーパスで方向別の BLEU を固定します。本番の FP8+flashinfer ベースラインは今日、<strong>JA→EN <span class="metric-inline" data-claim="phase6_baseline_bleu_jaen">75.89</span></strong>、<strong>EN→JA <span class="metric-inline" data-claim="phase6_baseline_bleu_enja">82.30</span></strong> です。ASR は日本語会議コーパスに対する単語誤り率で判定し、TTS 品質は平均オピニオンスコア（MOS）と同時負荷テストで判定します。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">Slide translation has its own regression. The Phase 4a fixture deck translates through four directions, and the gate fails on any parse failure, ID-coverage gap, or run-count mismatch. Live-meeting translation runs a 72-pair JA↔EN burst suite that replays the exact request shape that triggered a cuBLAS crash in April 2026. That proves the hardening covered the failure mode.</p>
+            <p class="lang-ja">スライド翻訳には独自の回帰検査があります。Phase 4a のフィクスチャ・デッキを 4 方向で翻訳し、パース失敗・ID 欠落・ラン数の不一致のいずれかでゲートが失敗します。ライブ会議翻訳には、2026 年 4 月の cuBLAS クラッシュを引き起こした正確なリクエスト形状を再実行する 72 組の JA↔EN バーストスイートがあり、補強が当該障害モードをカバーしたことを実証します。</p>
+          </div>
+          <div class="flow">
+            <span class="flow-node">production corpus</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node">BLEU per direction</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node">ASR WER</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node">TTS MOS</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node">slide regression</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node">cuBLAS burst</span>
+          </div>
+          <div class="callout">
+            <div class="callout-title">
+              <span class="lang-en">Why a redacted corpus matters</span><span class="lang-ja">リダクト済みコーパスの意義</span>
+            </div>
+            <div class="bi">
+              <span class="lang-en">Real production utterances catch failure modes that synthetic benchmarks miss: interrupted speech, mixed-script names, three-way code-switching in the same sentence. Redaction removes proper nouns and sensitive content but keeps the linguistic shape that makes the BLEU score load-bearing.</span>
+              <span class="lang-ja">実際の本番発話は、合成ベンチマークでは捕捉できない障害モード（途切れ発話、混合表記の固有名詞、同一文での三言語コードスイッチ）を捕まえます。リダクションは固有名詞や機微な内容を除去しつつ、BLEU スコアを意味あるものにする言語的形状は保ちます。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 03 · PERFORMANCE GATE ═══ -->
+    <section class="section stage" data-stage="perf" id="perf-gate">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">3</div>
+          <div class="bi-inline">
+            <h3 class="stage-title lang-en">Performance · three exit codes, one verdict.</h3>
+            <h3 class="stage-title lang-ja">性能・三つの終了コードと一つの判定。</h3>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">The <code>autosre perf</code> harness runs two workloads against the same vLLM instance: translation (priority preempts) and coding (priority preempted). It runs them in an isolation phase and a contention phase, compares numbers against a committed JSON baseline, and exits with one of three codes. Exit code 2 is what blocks a merge.</p>
+            <p class="lang-ja">autosre perf ハーネスは、同一の vLLM インスタンス上で翻訳（優先プリエンプト側）とコーディング（プリエンプト対象側）の 2 ワークロードを動かします。隔離フェーズと競合フェーズで実行し、コミット済み JSON ベースラインと比較し、3 つの終了コードのいずれかで終了します。マージをブロックするのはエグジットコード 2 です。</p>
+          </div>
+          <div class="bi">
+            <p class="lang-en">The contention phase is the one that matters for live coexistence. Translation TTFT p99 sits at <span class="metric-inline" data-claim="baseline_translation_contention_ttft_p99">194.7 ms</span> against a roughly 400 ms live-path SLO. Coding TPS p50 in contention is <span class="metric-inline" data-claim="baseline_coding_contention_tps_p50">27.29 tok/s</span>, well above the priority-preempt floor.</p>
+            <p class="lang-ja">ライブ共存で意味を持つのは競合フェーズです。翻訳の TTFT p99 は、約 400 ms のライブ経路 SLO に対し <span class="metric-inline" data-claim="baseline_translation_contention_ttft_p99">194.7 ms</span> に収まっています。競合下のコーディング TPS p50 は <span class="metric-inline" data-claim="baseline_coding_contention_tps_p50">27.29 tok/s</span> で、優先プリエンプト下限を大きく上回ります。</p>
+          </div>
+          <div class="lifecycle">
+            <span class="exitcode-pill" data-code="0"><span class="exitcode-num">0</span><span class="lang-en">clean</span><span class="lang-ja">クリーン</span></span>
+            <span class="lifecycle-arrow">→</span>
+            <span class="exitcode-pill" data-code="1"><span class="exitcode-num">1</span><span class="lang-en">warn</span><span class="lang-ja">警告</span></span>
+            <span class="lifecycle-arrow">→</span>
+            <span class="exitcode-pill" data-code="2"><span class="exitcode-num">2</span><span class="lang-en">fail</span><span class="lang-ja">失敗</span></span>
+          </div>
+          <div class="bi">
+            <p class="lang-en">The current production baseline lives at <code>repos/auto-sre/benchmarks/baselines/gb10_qwen36_fp8_flashinfer.json</code>. Every recipe edit, container image swap, and proxy-code change has to re-clear it before it can ship.</p>
+            <p class="lang-ja">現行の本番ベースラインは <code>repos/auto-sre/benchmarks/baselines/gb10_qwen36_fp8_flashinfer.json</code> にあります。レシピ編集、コンテナイメージ差し替え、プロキシ・コード変更は、いずれも出荷前にこれを再度クリアする必要があります。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 04 · REFINEMENT GATE ═══ -->
+    <section class="section stage" data-stage="refinement" id="refinement-gate">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">4</div>
+          <div class="bi-inline">
+            <h3 class="stage-title lang-en">Refinement · the second-pass latency budget.</h3>
+            <h3 class="stage-title lang-ja">リファインメント・二次パスのレイテンシ予算。</h3>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="bi">
+            <p class="lang-en">Refinement re-translates each finalised utterance with N prior segments as context. That costs latency but improves accuracy on pronouns and references. The sweep below shows the tradeoff against 107 finalised utterances of a real meeting. The gate that ships sits at <strong>window 4</strong>: the biggest accuracy lift without crossing the 400 ms p50 SLO.</p>
+            <p class="lang-ja">リファインメントは、確定済みの各発話を前の N 個のセグメントを文脈として再翻訳します。代名詞や指示語の精度は上がりますが、レイテンシのコストが乗ります。下のスイープは実会議の 107 件の確定発話に対してこのトレードオフを示しています。出荷ゲートは <strong>ウィンドウ 4</strong>。p50 SLO 400 ms を超えずに最大の精度向上が得られる点です。</p>
+          </div>
+          <div class="resource-table-wrap">
+            <table class="resource-table">
+              <thead>
+                <tr>
+                  <th><span class="lang-en">Window</span><span class="lang-ja">ウィンドウ</span></th>
+                  <th><span class="lang-en">Latency p50</span><span class="lang-ja">レイテンシ p50</span></th>
+                  <th><span class="lang-en">Latency p95</span><span class="lang-ja">レイテンシ p95</span></th>
+                  <th><span class="lang-en">Mean prompt tokens</span><span class="lang-ja">平均プロンプトトークン</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>0</td><td><span class="mv" data-claim="sweep_window_0_p50">333 ms</span></td><td><span class="mv">543 ms</span></td><td><span class="mv">118.4</span></td></tr>
+                <tr><td>2</td><td><span class="mv">351 ms</span></td><td><span class="mv">521 ms</span></td><td><span class="mv">182.8</span></td></tr>
+                <tr><td>4</td><td><span class="mv" data-claim="sweep_window_4_p50">382 ms</span></td><td><span class="mv">535 ms</span></td><td><span class="mv">231.0</span></td></tr>
+                <tr><td>6</td><td><span class="mv">366 ms</span></td><td><span class="mv">545 ms</span></td><td><span class="mv">277.3</span></td></tr>
+                <tr><td>8</td><td><span class="mv">392 ms</span></td><td><span class="mv">560 ms</span></td><td><span class="mv">322.4</span></td></tr>
+                <tr><td>12</td><td><span class="mv" data-claim="sweep_window_12_p50">389 ms</span></td><td><span class="mv">565 ms</span></td><td><span class="mv">405.4</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 05 · EVAL SUITES ═══ -->
+    <section class="section" id="suites">
+      <div class="bi-inline">
+        <div class="section-label lang-en">05 · The Eval Suites</div>
+        <div class="section-label lang-ja">05 · 評価スイート</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Ten declarative suites, one YAML each.</h2>
+        <h2 class="section-title lang-ja">10種の宣言的スイート、1つのYAMLにつき1つ。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Each suite is pure data: agent count, roles, prompts, target globs. Findings are structured (category + severity + file + reason) instead of free-text reviews. Suites live at <code>repos/auto-sre/autosre/eval/suites/*.yaml</code>. Adding a new one is one file.</p>
+        <p class="section-desc lang-ja">各スイートは純粋なデータです。エージェント数、役割、プロンプト、対象 glob。所見は自由記述のレビューではなく構造化されたもの（カテゴリ＋深刻度＋ファイル＋理由）です。スイートは <code>repos/auto-sre/autosre/eval/suites/*.yaml</code> にあり、追加は 1 ファイル書くだけです。</p>
+      </div>
+
+      <div class="suite-grid reveal">
+        <div class="suite-card" data-suite="a11y" data-agents="3">
+          <div class="suite-name"><span>a11y</span><span class="suite-agents" data-agents-display>×3</span></div>
+          <div class="suite-desc"><span class="lang-en">Accessibility scan: contrast, ARIA, keyboard-only flows.</span><span class="lang-ja">アクセシビリティ：コントラスト、ARIA、キーボード操作。</span></div>
+        </div>
+        <div class="suite-card" data-suite="coverage" data-agents="3">
+          <div class="suite-name"><span>coverage</span><span class="suite-agents" data-agents-display>×3</span></div>
+          <div class="suite-desc"><span class="lang-en">Test-coverage gaps: untested code paths and assertion strength.</span><span class="lang-ja">テストカバレッジの欠落：未検証パスと検証強度。</span></div>
+        </div>
+        <div class="suite-card" data-suite="dead-code" data-agents="2">
+          <div class="suite-name"><span>dead-code</span><span class="suite-agents" data-agents-display>×2</span></div>
+          <div class="suite-desc"><span class="lang-en">Unreachable code, orphan exports, never-imported modules.</span><span class="lang-ja">到達不能コード、孤立エクスポート、未インポートのモジュール。</span></div>
+        </div>
+        <div class="suite-card" data-suite="duplication" data-agents="2">
+          <div class="suite-name"><span>duplication</span><span class="suite-agents" data-agents-display>×2</span></div>
+          <div class="suite-desc"><span class="lang-en">Copy-pasted logic that should be extracted into a shared helper.</span><span class="lang-ja">共有ヘルパーに抽出すべきコピー貼り付けロジック。</span></div>
+        </div>
+        <div class="suite-card" data-suite="i18n" data-agents="3">
+          <div class="suite-name"><span>i18n</span><span class="suite-agents" data-agents-display>×3</span></div>
+          <div class="suite-desc"><span class="lang-en">Untranslated strings, hard-coded language paths, locale traps.</span><span class="lang-ja">未翻訳文字列、ハードコードされた言語経路、ロケールの罠。</span></div>
+        </div>
+        <div class="suite-card" data-suite="leakage" data-agents="3">
+          <div class="suite-name"><span>leakage</span><span class="suite-agents" data-agents-display>×3</span></div>
+          <div class="suite-desc"><span class="lang-en">Secrets / PII / credentials in code, configs, or logs.</span><span class="lang-ja">コード・設定・ログ中の秘匿情報・PII・認証情報。</span></div>
+        </div>
+        <div class="suite-card" data-suite="quality" data-agents="3">
+          <div class="suite-name"><span>quality</span><span class="suite-agents" data-agents-display>×3</span></div>
+          <div class="suite-desc"><span class="lang-en">General code-quality readings: clarity, naming, structural fit.</span><span class="lang-ja">一般的なコード品質：明瞭性、命名、構造的適合性。</span></div>
+        </div>
+        <div class="suite-card" data-suite="security" data-agents="4">
+          <div class="suite-name"><span>security</span><span class="suite-agents" data-agents-display>×4</span></div>
+          <div class="suite-desc"><span class="lang-en">Injection vectors, auth gaps, unvalidated input, supply-chain.</span><span class="lang-ja">注入経路、認証の欠落、未検証入力、サプライチェーン。</span></div>
+        </div>
+        <div class="suite-card" data-suite="tech-debt" data-agents="2">
+          <div class="suite-name"><span>tech-debt</span><span class="suite-agents" data-agents-display>×2</span></div>
+          <div class="suite-desc"><span class="lang-en">TODOs, workarounds, deprecation timelines, refactor opportunities.</span><span class="lang-ja">TODO、暫定対応、非推奨スケジュール、リファクタリング候補。</span></div>
+        </div>
+        <div class="suite-card" data-suite="ui-consistency" data-agents="3">
+          <div class="suite-name"><span>ui-consistency</span><span class="suite-agents" data-agents-display>×3</span></div>
+          <div class="suite-desc"><span class="lang-en">Design-token drift, mixed spacing/colour values, inconsistent states.</span><span class="lang-ja">デザイントークンのドリフト、間隔・色の混在、状態の不整合。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 06 · DRIFT WATCHLIST ═══ -->
+    <section class="section" id="drift">
+      <div class="bi-inline">
+        <div class="section-label lang-en">06 · Drift Watchlist</div>
+        <div class="section-label lang-ja">06 · ドリフト監視</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Pinned models, watched for upstream change.</h2>
+        <h2 class="section-title lang-ja">ピン留めされたモデルを上流の変化に対して監視。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Every model the live stack depends on is pinned by exact revision. A drift checker (<code>scripts/bench/check_model_drift.py</code>) walks <code>scripts/bench/watchlist.yaml</code>, queries Hugging Face for newer sibling releases, and probes a closed-source watchlist for the moment a previously-announced model flips to open weights.</p>
+        <p class="section-desc lang-ja">ライブスタックが依存する全モデルは厳密なリビジョンでピン留めされています。ドリフトチェッカー（<code>scripts/bench/check_model_drift.py</code>）は <code>scripts/bench/watchlist.yaml</code> を走査し、Hugging Faceで新しい兄弟リリースを照会するほか、クローズドソースの監視対象が公開重みに切り替わる瞬間を探知します。</p>
+      </div>
+
+      <div class="callout reveal">
+        <div class="callout-title">
+          <span class="lang-en">What's on the watchlist today</span><span class="lang-ja">本日の監視対象</span>
+        </div>
+        <div class="bi">
+          <span class="lang-en">Production: <code>Qwen3.6-35B-A3B-FP8</code> (translation), <code>Qwen3-ASR-1.7B</code> (ASR), <code>Qwen3-TTS-12Hz-0.6B-Base</code> (TTS), <code>pyannote/speaker-diarization-community-1</code>. Closed-source watch: a hypothetical <code>FunAudioLLM/Fun-CosyVoice3.5-0.5B</code>, Boson's <code>higgs-audio-v3</code>, an open Qwen3.6-Omni. The checker probes each speculative HF repo id and flips to "now open" the moment a weights file appears.</span>
+          <span class="lang-ja">本番：<code>Qwen3.6-35B-A3B-FP8</code>（翻訳）、<code>Qwen3-ASR-1.7B</code>（ASR）、<code>Qwen3-TTS-12Hz-0.6B-Base</code>（TTS）、<code>pyannote/speaker-diarization-community-1</code>。クローズドソース監視：仮想的な <code>FunAudioLLM/Fun-CosyVoice3.5-0.5B</code>、Boson の <code>higgs-audio-v3</code>、公開版 Qwen3.6-Omni。チェッカーは各想定 HF リポジトリ ID を探り、重みファイルが現れた瞬間に「公開済み」へ反転します。</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 07 · PHASE 6 CASE STUDY ═══ -->
+    <section class="section" id="phase6">
+      <div class="bi-inline">
+        <div class="section-label lang-en">07 · Case Study · Phase 6</div>
+        <div class="section-label lang-ja">07 · ケーススタディ・Phase 6</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Two candidates, two clean fails, no promotion.</h2>
+        <h2 class="section-title lang-ja">二つの候補、二つの明確な失敗、昇格なし。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">In April 2026 we ran a structured campaign to evaluate two upgrade paths off the FP8+flashinfer baseline. Speculative decoding via DFlash, and a native NVFP4 quantisation. Neither cleared the three-tier gate. The retrospective at <code>reports/phase6/decision_gate_2026-04-25.md</code> captures the root causes and the exact upstream-bug triggers that would re-open each path. This is what the gate process produces when it works.</p>
+        <p class="section-desc lang-ja">2026 年 4 月、FP8+flashinfer ベースラインから外れる 2 つのアップグレード経路を評価する構造化キャンペーンを実施しました。DFlash による投機的デコーディングと、ネイティブ NVFP4 量子化です。いずれも三段階ゲートを通過できませんでした。レトロスペクティブ <code>reports/phase6/decision_gate_2026-04-25.md</code> に根本原因と、各経路を再オープンする上流バグの正確なトリガーが記録されています。これがゲート・プロセスがうまく機能したときの姿です。</p>
+      </div>
+
+      <div class="reveal" style="margin-top:var(--space-lg);">
+        <div class="verdict-row" data-config="6.0.1 baseline" data-verdict="reference">
+          <span class="verdict-config">6.0.1</span>
+          <span class="verdict-reason"><span class="lang-en">FP8 + flashinfer (production reference). Current envelope.</span><span class="lang-ja">FP8 + flashinfer（本番リファレンス）。現行のエンベロープ。</span></span>
+          <span class="verdict-stamp">reference</span>
+        </div>
+        <div class="verdict-row" data-config="6.A" data-verdict="FAIL">
+          <span class="verdict-config">6.A</span>
+          <span class="verdict-reason"><span class="lang-en">FP8 + DFlash drafter. Short scribe outputs make the speculative overhead dominate. +213% contention TTFT, on-p99 +51.8%.</span><span class="lang-ja">FP8 + DFlash ドラフター。scribe の短い出力では投機オーバーヘッドが支配的になります。競合 TTFT +213%、on-p99 +51.8%。</span></span>
+          <span class="verdict-stamp">FAIL</span>
+        </div>
+        <div class="verdict-row" data-config="6.B" data-verdict="FAIL">
+          <span class="verdict-config">6.B</span>
+          <span class="verdict-reason"><span class="lang-en">RedHatAI NVFP4 + Marlin. SM121 native FP4 GEMM is broken. Marlin fallback runs but costs about 8 BLEU in both directions.</span><span class="lang-ja">RedHatAI NVFP4 + Marlin。SM121 のネイティブ FP4 GEMM が破損しています。Marlin フォールバックは動作しますが、両方向で約 8 BLEU のコスト。</span></span>
+          <span class="verdict-stamp">FAIL</span>
+        </div>
+        <div class="verdict-row" data-config="6.C" data-verdict="skipped">
+          <span class="verdict-config">6.C</span>
+          <span class="verdict-reason"><span class="lang-en">NVFP4 + DFlash. Auto-skipped per the 6.C eligibility rule once 6.B failed quality.</span><span class="lang-ja">NVFP4 + DFlash。6.B が品質で失敗した時点で、6.C の適格性ルールに基づき自動スキップ。</span></span>
+          <span class="verdict-stamp">skipped</span>
+        </div>
+      </div>
+
+      <div class="callout reveal" style="margin-top:var(--space-md);">
+        <div class="callout-title">
+          <span class="lang-en">When to retry</span><span class="lang-ja">再試行のタイミング</span>
+        </div>
+        <div class="bi">
+          <span class="lang-en">Each failed candidate has a concrete upstream trigger that would unblock a retry. DFlash needs a vLLM patch that lets flashinfer cover non-causal drafter attention. That is unlikely soon, since block diffusion is inherently non-causal. NVFP4 needs an SM121 native FP4 kernel fix in CUTLASS / vLLM that makes <code>flashinfer_mm_fp4</code> stop returning <code>Error Internal</code>. The recipes are committed and ready to retry the moment those land.</span>
+          <span class="lang-ja">失敗した各候補には、再試行を解禁する具体的な上流トリガーがあります。DFlash は、flashinfer が非因果ドラフター・アテンションをカバーできるようにする vLLM パッチが必要です。ブロック拡散は本質的に非因果なので、近い将来は難しいでしょう。NVFP4 は、<code>flashinfer_mm_fp4</code> が <code>Error Internal</code> を返さなくなるよう、CUTLASS ／ vLLM での SM121 ネイティブ FP4 カーネル修正が必要です。レシピはコミット済みで、修正が降りた瞬間に再試行できます。</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="page-footer">
+      <a href="https://github.com/sddcinfo/meeting-scribe" class="footer-cta" target="_blank" rel="noopener">
+        <span class="lang-en">View on GitHub</span>
+        <span class="lang-ja">GitHubで見る</span>
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <div class="footer-attr">Meeting Scribe · benchmarking and quality, all done in code</div>
+    </footer>
+
+    <!-- ═══ TERMINOLOGY ═══ -->
+    <section class="glossary" id="glossary">
+      <div class="section-inner">
+        <header class="glossary-header">
+          <div>
+            <div class="glossary-eyebrow"><span class="lang-en">08 · Reference</span><span class="lang-ja">08 · 参考</span></div>
+            <h2><span class="lang-en">Terminology</span><span class="lang-ja">用語集</span></h2>
+          </div>
+          <p class="glossary-lede">
+            <span class="lang-en">Every acronym used above, in one place. The dotted underlines in the body link here.</span>
+            <span class="lang-ja">本文で使われている略語を一箇所にまとめています。本文中の点線下線はこのセクションへのリンクです。</span>
+          </p>
+        </header>
+        <dl class="glossary-grid">
+          <div class="glossary-item" id="gloss-bleu">
+            <dt>BLEU</dt>
+            <dd><span class="lang-en">Bilingual Evaluation Understudy. A precision score for translations against one or more reference translations. Higher is better.</span><span class="lang-ja">機械翻訳の自動評価指標。1つ以上の参照翻訳に対する精度スコア。値が高いほど良い。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-wer">
+            <dt>WER</dt>
+            <dd><span class="lang-en">Word Error Rate. The standard ASR accuracy metric: substitutions + deletions + insertions divided by reference length. Lower is better.</span><span class="lang-ja">単語誤り率。ASR 精度の標準指標。置換・削除・挿入の合計を参照長で割る。値が低いほど良い。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-mos">
+            <dt>MOS</dt>
+            <dd><span class="lang-en">Mean Opinion Score. Subjective quality rating for synthesised speech, usually on a 1–5 scale.</span><span class="lang-ja">平均オピニオンスコア。合成音声の主観品質評定、通常1〜5段階。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-ttft">
+            <dt>TTFT</dt>
+            <dd><span class="lang-en">Time To First Token. Milliseconds from request arrival to the first output token. The latency a user perceives before anything shows up.</span><span class="lang-ja">最初のトークンが返るまでの時間（ms）。ユーザーが「何か返ってきた」と感じるまでのレイテンシ。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-tps">
+            <dt>TPS</dt>
+            <dd><span class="lang-en">Tokens Per Second. The steady-state generation throughput once TTFT has elapsed. Reported per-request (p50, p95) and aggregate.</span><span class="lang-ja">毎秒トークン数。TTFT 後の定常生成スループット。リクエスト単位（p50、p95）と集約で計測。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-percentile">
+            <dt>p50 / p95 / p99</dt>
+            <dd><span class="lang-en">Percentiles of a metric distribution. p99 is the slow tail, the metric we care about for SLO compliance.</span><span class="lang-ja">指標分布のパーセンタイル。p99 はテイル。SLO 遵守で最も重要な数値。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-baseline">
+            <dt>Baseline</dt>
+            <dd><span class="lang-en">A committed JSON snapshot of expected performance under a fixed configuration. New runs compare to this; tolerances decide pass/warn/fail.</span><span class="lang-ja">固定構成下での期待性能のコミット済みJSONスナップショット。新規実行はこれと比較し、許容差で合格／警告／失敗を判定。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-contention">
+            <dt>Contention</dt>
+            <dd><span class="lang-en">A measurement phase where the translation and coding workloads run concurrently against the same vLLM instance. The realistic live-coexistence scenario.</span><span class="lang-ja">翻訳とコーディングのワークロードを同一 vLLM インスタンス上で同時実行する計測フェーズ。現実的なライブ共存シナリオ。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-isolation">
+            <dt>Isolation</dt>
+            <dd><span class="lang-en">A measurement phase where a single workload runs alone. The "best case" reference against which contention numbers are compared.</span><span class="lang-ja">単一ワークロードのみを実行する計測フェーズ。競合数値と比較される「最良ケース」のリファレンス。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-priority">
+            <dt>Priority preempt</dt>
+            <dd><span class="lang-en">vLLM scheduling that lets a higher-priority request evict a running lower-priority one. Translation (priority −10) preempts coding (priority +10) when slots saturate.</span><span class="lang-ja">高優先度リクエストが実行中の低優先度リクエストを退避させるvLLMスケジューリング。スロット飽和時、翻訳（優先度−10）がコーディング（優先度+10）をプリエンプトする。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-gate">
+            <dt>Gate</dt>
+            <dd><span class="lang-en">A merge-blocking check. Three gates here: quality (BLEU / WER / MOS), performance (TTFT / TPS vs baseline), refinement (on-p99 latency).</span><span class="lang-ja">マージをブロックする検査。ここでは3つ：品質（BLEU / WER / MOS）、性能（TTFT / TPSのベースライン比較）、リファインメント（on-p99レイテンシ）。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-drift">
+            <dt>Drift</dt>
+            <dd><span class="lang-en">When committed artifacts (CSS, baselines, model pins) diverge from what their sources would now produce. The CI gate trips on drift.</span><span class="lang-ja">コミット済みアーティファクト（CSS、ベースライン、モデルピン）が、ソースが今生成するものと乖離した状態。CIゲートはドリフトで失敗する。</span></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="../static/js/how-it-works.js?v=20260421a"></script>
+</body>
+</html>

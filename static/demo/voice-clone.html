@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Clone Demo — Meeting Scribe</title>
+  <link rel="stylesheet" href="/static/css/dist/voice-clone.css?v=e3ca5e83d999">
+  </head>
+<body class="font-ui bg-bg-night text-text-night min-h-screen flex flex-col items-center px-4 py-8">
+  <div class="voice-clone-container">
+    <a href="/demo" class="back-link">&larr; Back to Demos</a>
+
+    <header class="voice-clone-header">
+      <h1>Voice <span>Clone</span> Demo</h1>
+      <p>Record your voice, type or speak a sentence, choose a target language, and hear yourself speak it — in real time, with your own voice.</p>
+      <div class="mt-3">
+        <span class="badge badge-tts" id="badge-tts">Checking TTS...</span>
+      </div>
+    </header>
+
+    <!-- Step 1: Record voice reference -->
+    <div class="card">
+      <div class="card-title"><span class="step">1</span> Record Your Voice (5 seconds)</div>
+      <div class="prompt-sentence" id="prompt-sentence">
+        "The birch canoe slid on the smooth planks. Glue the sheet to the dark blue background."
+        <span class="prompt-hint">Read this sentence out loud at a natural pace — it's phonetically balanced for best cloning quality.</span>
+      </div>
+      <div class="record-area">
+        <div class="record-viz"><div class="record-viz-bar" id="rec-bar"></div></div>
+        <button class="btn btn-record" id="btn-record">Tap to Record 5 seconds</button>
+        <div class="record-status" id="rec-status"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Enter text -->
+    <div class="card">
+      <div class="card-title"><span class="step">2</span> Text to Translate</div>
+      <div class="text-input-area">
+        <textarea class="text-input" id="input-text" placeholder="Type a sentence, or leave empty to transcribe your recording..." rows="2"></textarea>
+        <div class="lang-row">
+          <label>Translate to:</label>
+          <select class="lang-select" id="target-lang"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Translate & Speak -->
+    <div class="card">
+      <div class="card-title"><span class="step">3</span> Translate &amp; Speak</div>
+      <button class="btn btn-primary w-full" id="btn-translate" disabled>
+        Translate &amp; Speak in Your Voice
+      </button>
+      <div class="status-bar" id="status"></div>
+    </div>
+
+    <!-- Result -->
+    <div class="card result-card" id="result-card">
+      <div class="card-title">Result</div>
+      <div class="result-row">
+        <div class="result-label">Original (<span id="res-src-lang">—</span>)</div>
+        <div class="result-text" id="res-original">—</div>
+      </div>
+      <div class="result-row">
+        <div class="result-label">Translated (<span id="res-tgt-lang">—</span>)</div>
+        <div class="result-text translated" id="res-translated">—</div>
+      </div>
+      <div class="play-btn-row">
+        <button class="btn-ghost" id="btn-play-result" disabled>Play Result</button>
+        <button class="btn-ghost" id="btn-play-original" disabled>Play Original Recording</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = '';
+
+// State
+let voiceAudioPCM = null;   // Int16Array (16kHz s16le)
+let resultAudioPCM = null;  // Int16Array (24kHz s16le)
+let resultSampleRate = 24000;
+let isRecording = false;
+
+// Elements
+const btnRecord = document.getElementById('btn-record');
+const recBar = document.getElementById('rec-bar');
+const recStatus = document.getElementById('rec-status');
+const inputText = document.getElementById('input-text');
+const targetLang = document.getElementById('target-lang');
+const btnTranslate = document.getElementById('btn-translate');
+const statusEl = document.getElementById('status');
+const resultCard = document.getElementById('result-card');
+const badgeTTS = document.getElementById('badge-tts');
+
+// Init: fetch languages and check TTS status
+async function init() {
+  try {
+    const [langResp, statusResp] = await Promise.all([
+      fetch(`${API}/api/languages`),
+      fetch(`${API}/api/status`)
+    ]);
+    const langData = await langResp.json();
+    const statusData = await statusResp.json();
+
+    // Populate language dropdown
+    (langData.languages || []).forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.code;
+      opt.textContent = `${l.native_name || l.name} (${l.code})`;
+      targetLang.appendChild(opt);
+    });
+    // Default to English
+    targetLang.value = 'en';
+
+    // Check TTS availability
+    if (statusData.backends?.tts) {
+      badgeTTS.textContent = 'TTS Available';
+      badgeTTS.className = 'badge badge-tts';
+    } else {
+      badgeTTS.textContent = 'TTS Offline';
+      badgeTTS.className = 'badge badge-offline';
+    }
+  } catch (e) {
+    badgeTTS.textContent = 'Server Unreachable';
+    badgeTTS.className = 'badge badge-offline';
+  }
+}
+init();
+
+// Recording
+let recStream = null;
+let recCtx = null;
+let recProc = null;
+let recChunks = [];
+let recStartTime = 0;
+let recRafId = null;
+const MIN_DURATION = 3;     // hard minimum — need enough audio for TTS to clone
+const TARGET_DURATION = 5;  // suggested length — the prompt sentence takes ~5s
+
+async function startRecording() {
+  recChunks = [];
+  recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  recCtx = new AudioContext();
+  if (recCtx.state === 'suspended') await recCtx.resume();
+  const src = recCtx.createMediaStreamSource(recStream);
+  recProc = recCtx.createScriptProcessor(4096, 1, 1);
+  recStartTime = Date.now();
+  isRecording = true;
+
+  recProc.onaudioprocess = (e) => {
+    recChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  };
+  src.connect(recProc);
+  recProc.connect(recCtx.destination);
+
+  btnRecord.classList.add('recording');
+  recStatus.className = 'record-status active';
+
+  // Drive the timer/visuals off rAF rather than the audio callback so the
+  // countdown keeps updating even between audio chunks.
+  const tick = () => {
+    if (!isRecording) return;
+    const elapsed = (Date.now() - recStartTime) / 1000;
+    const pct = Math.min(100, (elapsed / TARGET_DURATION) * 100);
+    recBar.style.width = pct + '%';
+
+    if (elapsed < MIN_DURATION) {
+      const remaining = Math.max(0, MIN_DURATION - elapsed);
+      recStatus.textContent = `Recording... keep going for ${remaining.toFixed(1)}s more (minimum)`;
+      btnRecord.textContent = `Recording ${elapsed.toFixed(1)}s...`;
+      btnRecord.disabled = true;
+    } else {
+      recStatus.textContent = `Recording ${elapsed.toFixed(1)}s — tap Stop when you're done (longer is better, up to ~10s)`;
+      btnRecord.textContent = 'Stop Recording';
+      btnRecord.disabled = false;
+    }
+    recRafId = requestAnimationFrame(tick);
+  };
+  recRafId = requestAnimationFrame(tick);
+}
+
+async function stopRecording() {
+  if (!isRecording) return;
+  const elapsed = (Date.now() - recStartTime) / 1000;
+  if (elapsed < MIN_DURATION) return; // button should already be disabled, belt-and-braces
+  isRecording = false;
+
+  if (recRafId != null) { cancelAnimationFrame(recRafId); recRafId = null; }
+  recProc?.disconnect();
+  recStream?.getTracks().forEach(t => t.stop());
+
+  // Combine and resample to 16kHz
+  const total = recChunks.reduce((s, c) => s + c.length, 0);
+  const full = new Float32Array(total);
+  let offset = 0;
+  for (const c of recChunks) { full.set(c, offset); offset += c.length; }
+
+  const srcRate = recCtx?.sampleRate || 48000;
+  const ratio = srcRate / 16000;
+  const outLen = Math.floor(total / ratio);
+  const resampled = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    resampled[i] = full[Math.min(Math.floor(i * ratio), total - 1)];
+  }
+
+  // Convert to s16le
+  voiceAudioPCM = new Int16Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const v = Math.max(-1, Math.min(1, resampled[i]));
+    voiceAudioPCM[i] = v < 0 ? v * 32768 : v * 32767;
+  }
+
+  await recCtx?.close();
+  recCtx = null;
+
+  const durationSec = outLen / 16000;
+  recBar.style.width = Math.min(100, (durationSec / TARGET_DURATION) * 100) + '%';
+  recStatus.textContent = `Recorded ${durationSec.toFixed(1)}s of voice reference`;
+  recStatus.className = 'record-status done';
+  btnRecord.textContent = 'Re-record';
+  btnRecord.disabled = false;
+  btnRecord.classList.remove('recording');
+  btnTranslate.disabled = false;
+}
+
+// Tap to toggle record state (start → stop)
+btnRecord.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (isRecording) stopRecording();
+  else startRecording();
+});
+
+// Translate & Speak
+btnTranslate.addEventListener('click', async () => {
+  if (!voiceAudioPCM) {
+    statusEl.textContent = 'Please record your voice first';
+    statusEl.className = 'status-bar error';
+    return;
+  }
+
+  btnTranslate.disabled = true;
+  statusEl.textContent = 'Processing... (ASR, Translation, TTS)';
+  statusEl.className = 'status-bar processing';
+  resultCard.classList.remove('visible');
+
+  try {
+    // Encode voice audio as base64
+    const audioBytes = new Uint8Array(voiceAudioPCM.buffer);
+    let binary = '';
+    for (let i = 0; i < audioBytes.length; i++) {
+      binary += String.fromCharCode(audioBytes[i]);
+    }
+    const audioB64 = btoa(binary);
+
+    const resp = await fetch(`${API}/api/demo/voice-clone`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio_b64: audioB64,
+        text: inputText.value.trim(),
+        target_language: targetLang.value,
+      })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data.error || 'Request failed');
+    }
+
+    // Display results
+    document.getElementById('res-original').textContent = data.original_text || '—';
+    document.getElementById('res-translated').textContent = data.translated_text || '—';
+    document.getElementById('res-src-lang').textContent = (data.source_language || '').toUpperCase();
+    document.getElementById('res-tgt-lang').textContent = (data.target_language || '').toUpperCase();
+    resultCard.classList.add('visible');
+    resultSampleRate = data.sample_rate || 24000;
+
+    // Decode result audio
+    if (data.audio_b64) {
+      const raw = atob(data.audio_b64);
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      resultAudioPCM = new Int16Array(bytes.buffer);
+      document.getElementById('btn-play-result').disabled = false;
+      statusEl.textContent = 'Done! Click Play Result to hear your voice-cloned translation.';
+      statusEl.className = 'status-bar';
+
+      // Auto-play result
+      playPCM(resultAudioPCM, resultSampleRate);
+    } else {
+      resultAudioPCM = null;
+      document.getElementById('btn-play-result').disabled = true;
+      statusEl.textContent = 'Translation complete (TTS not available for audio output)';
+      statusEl.className = 'status-bar';
+    }
+
+    document.getElementById('btn-play-original').disabled = !voiceAudioPCM;
+  } catch (e) {
+    statusEl.textContent = `Error: ${e.message}`;
+    statusEl.className = 'status-bar error';
+  } finally {
+    btnTranslate.disabled = false;
+  }
+});
+
+// Audio playback using Web Audio API
+async function playPCM(pcm, sampleRate) {
+  const ctx = new AudioContext();
+  if (ctx.state === 'suspended') await ctx.resume();
+  const buf = ctx.createBuffer(1, pcm.length, sampleRate);
+  const channel = buf.getChannelData(0);
+  for (let i = 0; i < pcm.length; i++) {
+    channel[i] = pcm[i] / 32768;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buf;
+  source.connect(ctx.destination);
+  source.onended = () => ctx.close();
+  source.start();
+}
+
+document.getElementById('btn-play-result')?.addEventListener('click', () => {
+  if (resultAudioPCM) playPCM(resultAudioPCM, resultSampleRate);
+});
+
+document.getElementById('btn-play-original')?.addEventListener('click', () => {
+  if (voiceAudioPCM) playPCM(voiceAudioPCM, 16000);
+});
+</script>
+</body>
+</html>

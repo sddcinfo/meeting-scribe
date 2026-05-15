@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Scribe</title>
+  <!-- System fonts only — no external font loads (hotspot has no internet) -->
+  <!-- Tailwind-built output: unified @theme tokens (under
+       static/css/src/lib/tokens.css), body-state cascades, every
+       component partial. -->
+  <link rel="stylesheet" href="/static/css/dist/app.css?v=bd1ffd2c74cd">
+</head>
+<body>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- TTS stall toast: populated by the /api/status poll loop when
+       tts.health transitions to stalled or an unhandled crash lands in
+       /api/status.crash. Hidden by default. -->
+  <div id="tts-toast" class="tts-toast" aria-live="polite"></div>
+
+  <!-- HDMI kiosk idle splash. Visible only when body[data-role="kiosk"]
+       AND no meeting is recording (cascade in components/_state.css).
+       Populated by scribe/features/kiosk-splash.js with the live
+       appliance PIN ("1618") in display-size numerals. Hidden in the
+       admin / popout / reader / portal contexts since the body has
+       no data-role attribute there.
+
+       Visual: Dell AI Factory theming (deep navy gradient + subtle
+       neural-net dot grid) with the Dell wordmark, big meeting PIN,
+       and a "Powered by NVIDIA GB10" tagline. Mirrors the Dell Pro
+       Max with GB10 product framing. -->
+  <section
+    class="kiosk-idle-splash"
+    id="kiosk-idle-splash"
+    aria-live="polite"
+    data-kiosk-only
+  >
+    <div class="kiosk-idle-splash-bg" aria-hidden="true"></div>
+    <div class="kiosk-idle-splash-grid" aria-hidden="true"></div>
+    <header class="kiosk-idle-splash-header">
+      <!-- Dell wordmark: plain heading. Earlier attempts (img src=svg,
+           inline SVG with text, inline SVG with paths, span-per-letter)
+           all hit the same chromium-snap-wayland rendering quirk that
+           painted a stubborn white rectangle behind the letters - none
+           of my CSS could clear it. The plain h1 sidesteps the entire
+           class of issue: just text, no per-letter spans, no SVG. -->
+      <h1 class="kiosk-idle-splash-brand">Dell</h1>
+      <span class="kiosk-idle-splash-eyebrow">AI Factory · Meeting Scribe</span>
+    </header>
+    <div class="kiosk-idle-splash-pin-block">
+      <div class="kiosk-idle-splash-pin-label">Meeting ID</div>
+      <div
+        class="kiosk-idle-splash-pin-value"
+        id="kiosk-idle-splash-pin"
+      >----</div>
+    </div>
+    <footer class="kiosk-idle-splash-tagline">
+      Powered by Dell Pro Max with GB10 · Real-time multilingual transcription
+    </footer>
+  </section>
+
+  <header id="main-header">
+    <div class="header-left">
+      <button class="header-icon-btn" id="btn-home" title="Home" aria-label="Home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+      </button>
+      <button class="hamburger" id="btn-hamburger" title="Meetings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+    <div class="header-right">
+      <span class="header-subtitle" id="status-line">Initializing...</span>
+      <div class="header-meeting-controls" id="header-meeting-controls" aria-label="Meeting controls">
+        <button id="btn-record" class="btn-record" aria-label="Stop recording">
+          <span class="btn-record-icon"></span>
+          <span class="btn-record-label"></span>
+        </button>
+        <button id="btn-cancel-meeting" class="btn-cancel-meeting" title="Cancel meeting: discard all data">Cancel</button>
+      </div>
+      <!-- Audio routing popover trigger. Only shows during an active
+           meeting (gated by body.meeting-active in CSS). One button
+           replaces the inline strip of GB10 TTS / sinks / langs /
+           mute switches / Vol — the cluster has 11+ widgets and was
+           dominating the control bar. -->
+      <div class="audio-routing-trigger" id="audio-routing-trigger">
+        <button
+          type="button"
+          id="btn-audio-routing"
+          class="audio-routing-btn"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-controls="meeting-interpretation-controls"
+          title="Audio routing: GB10 TTS · admin / room sinks · mutes · volumes"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9v6h4l5 4V5L7 9H3z"/>
+            <path d="M15.5 8.5a4 4 0 0 1 0 7"/>
+            <path d="M18.5 5.5a8 8 0 0 1 0 13"/>
+          </svg>
+          <span class="audio-routing-btn-label">Audio</span>
+        </button>
+      </div>
+      <div class="header-qr" id="header-qr"></div>
+      <div class="backend-pills" id="backend-pills"></div>
+      <div class="audio-meter" id="audio-meter">
+        <div class="meter-bar" id="meter-bar"></div>
+      </div>
+      <div class="header-stats" id="header-stats">
+        <button
+          class="header-icon-btn"
+          id="btn-stats"
+          title="Live stats"
+          aria-label="Open live stats"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="stats-popover"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19V5"/>
+            <path d="M8 19v-7"/>
+            <path d="M13 19V8"/>
+            <path d="M18 19v-4"/>
+            <path d="M3 19h18"/>
+          </svg>
+          <span class="header-badge-dot" id="stats-health-dot" aria-hidden="true"></span>
+        </button>
+        <div class="stats-popover" id="stats-popover" hidden>
+          <div class="stats-popover-row"><span>Segments</span><strong id="stat-segs">0</strong></div>
+          <div class="stats-popover-row"><span>WebSocket</span><strong id="stat-ws">0</strong></div>
+          <div class="stats-popover-row"><span>Audio chunks</span><strong id="stat-chunks">0</strong></div>
+          <div class="stats-popover-row"><span>Mic level</span><strong id="stat-mic">0%</strong></div>
+          <div class="stats-popover-row"><span>TTS queue</span><strong id="stat-tts-queue">0/0</strong></div>
+          <div class="stats-popover-row"><span>TTS busy</span><strong id="stat-tts-busy">0/0</strong></div>
+          <div class="stats-popover-row"><span>TTS lag p95</span><strong id="stat-tts-lag">-</strong></div>
+          <div class="stats-popover-row"><span>TTS drops</span><strong id="stat-tts-drops">0</strong></div>
+        </div>
+      </div>
+      <button
+        class="header-icon-btn"
+        id="btn-diagnostics"
+        title="Diagnostics: system health and logs"
+        aria-label="Open diagnostics"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="diagnostics-panel"
+      >
+        <!-- Heart-pulse: signals "system health". The dot anchored to
+             top-right turns red when /api/status reports a crash or any
+             backend with consecutive_failures > 0, so the icon itself
+             flags trouble without needing to open the panel. -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h4l2-6 4 12 2-6h6"/>
+        </svg>
+        <span class="header-badge-dot" id="diag-health-dot" aria-hidden="true"></span>
+      </button>
+      <!-- How It Works: always reachable from the admin SPA, including
+           mid-meeting. Opens in a new tab so a click during a live
+           session never disrupts the meeting state. The /how-it-works/
+           route is in middlewares._EDITORIAL_PUBLIC_PATHS so it bypasses
+           the captive-portal auth gate. -->
+      <a
+        class="header-icon-btn"
+        id="btn-how-it-works"
+        href="/how-it-works/"
+        target="_blank"
+        rel="noopener"
+        title="How It Works: pipeline, hardware, benchmarking"
+        aria-label="Open How It Works docs in a new tab"
+      >
+        <!-- Open book glyph: signals "documentation / explainer". -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 4h7a3 3 0 0 1 3 3v13"/>
+          <path d="M22 4h-7a3 3 0 0 0-3 3v13"/>
+          <path d="M2 4v15h8"/>
+          <path d="M22 4v15h-8"/>
+        </svg>
+      </a>
+      <button
+        class="header-icon-btn"
+        id="btn-settings"
+        title="Settings"
+        aria-label="Open settings"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="settings-panel"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Meetings panel (slide-over, toggled by hamburger) -->
+  <div class="meetings-panel" id="meetings-panel">
+    <div class="meetings-header">
+      <h3>Meetings</h3>
+      <button id="btn-new-meeting" class="btn-ghost">+ New</button>
+    </div>
+    <!-- Tab switcher: All keeps strict chronological order; Favorites shows
+         only starred meetings so favoriting doesn't reorder the timeline. -->
+    <div class="meetings-tabs" role="tablist" aria-label="Meeting filter">
+      <button class="meetings-tab active" data-tab="all" role="tab" aria-selected="true">All</button>
+      <button class="meetings-tab" data-tab="favorites" role="tab" aria-selected="false">★ Favorites</button>
+    </div>
+    <div class="meetings-list" id="meetings-list"></div>
+  </div>
+  <div class="meetings-backdrop" id="meetings-backdrop"></div>
+
+  <!-- Settings panel (slide-over from the right, toggled by gear icon) -->
+  <div
+    class="settings-panel"
+    id="settings-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="settings-panel-title"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="settings-header">
+      <h3 id="settings-panel-title">Settings</h3>
+      <button
+        id="btn-settings-close"
+        class="btn-ghost"
+        title="Close settings"
+        aria-label="Close settings"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="settings-shell">
+      <nav
+        class="settings-tabs-nav"
+        role="tablist"
+        aria-label="Settings sections"
+        id="settings-tabs-nav"
+      >
+        <button
+          type="button"
+          class="settings-tab is-active"
+          role="tab"
+          data-tab="network"
+          id="settings-tab-network"
+          aria-selected="true"
+          aria-controls="settings-pane-network"
+        >Network</button>
+        <button
+          type="button"
+          class="settings-tab"
+          role="tab"
+          data-tab="audio"
+          id="settings-tab-audio"
+          aria-selected="false"
+          aria-controls="settings-pane-audio"
+          tabindex="-1"
+        >Audio</button>
+        <button
+          type="button"
+          class="settings-tab"
+          role="tab"
+          data-tab="display"
+          id="settings-tab-display"
+          aria-selected="false"
+          aria-controls="settings-pane-display"
+          tabindex="-1"
+        >Display</button>
+        <button
+          type="button"
+          class="settings-tab"
+          role="tab"
+          data-tab="credentials"
+          id="settings-tab-credentials"
+          aria-selected="false"
+          aria-controls="settings-pane-credentials"
+          tabindex="-1"
+        >Credentials</button>
+        <button
+          type="button"
+          class="settings-tab"
+          role="tab"
+          data-tab="hardware"
+          id="settings-tab-hardware"
+          aria-selected="false"
+          aria-controls="settings-pane-hardware"
+          tabindex="-1"
+        >Hardware</button>
+      </nav>
+      <div class="settings-tabs-panes">
+      <section
+        class="settings-tab-pane is-active"
+        role="tabpanel"
+        id="settings-pane-network"
+        aria-labelledby="settings-tab-network"
+        data-tab="network"
+      >
+      <section class="settings-section">
+        <h4>WiFi Hotspot</h4>
+        <div class="settings-field">
+          <label for="setting-wifi-mode">Mode</label>
+          <select id="setting-wifi-mode">
+            <option value="">Loading…</option>
+          </select>
+          <p class="settings-field-help">
+            Off = no AP. Meeting = rotating SSID + captive portal for guests.
+            Admin = fixed SSID, admin UI reachable over WiFi (no portal).
+          </p>
+          <p class="settings-field-live" id="wifi-live-status"></p>
+        </div>
+        <div class="settings-field" id="admin-ssid-group">
+          <label for="setting-admin-ssid">Admin SSID</label>
+          <input type="text" id="setting-admin-ssid" maxlength="32" placeholder="Dell Admin">
+          <p class="settings-field-help">
+            Fixed SSID for admin mode. 1-32 printable ASCII characters.
+          </p>
+        </div>
+        <div class="settings-field" id="admin-password-group">
+          <label for="setting-admin-password">Admin password</label>
+          <div class="settings-admin-pw-row">
+            <input type="password" id="setting-admin-password" minlength="8" maxlength="63"
+                   placeholder="Leave blank to keep current">
+            <button type="button" id="btn-toggle-admin-pw" class="btn-icon" title="Show/hide password">Show</button>
+          </div>
+          <p class="settings-field-help">
+            8-63 character WPA3 passphrase. Leave blank to keep the
+            current password; the saved value isn't shown here for
+            security. To recover the appliance <em>admin login</em>
+            password (different from this AP passphrase), use the
+            Credentials tab.
+          </p>
+        </div>
+        <div class="settings-field">
+          <label for="setting-wifi-regdomain">Regulatory domain</label>
+          <select id="setting-wifi-regdomain" aria-describedby="setting-wifi-regdomain-help">
+            <option value="">Loading…</option>
+          </select>
+          <p id="setting-wifi-regdomain-help" class="settings-field-help">
+            Country the WiFi radio should transmit under. Affects 5 GHz channel
+            availability and TX power caps. Applied to the hotspot and saved
+            for future boots.
+          </p>
+          <p class="settings-field-live" id="regdomain-live"></p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="wan-card">
+        <h4>Upstream WAN</h4>
+        <p class="wan-status-line">Loading…</p>
+        <div class="settings-field">
+          <label>Egress mode</label>
+          <div class="wan-egress-row" role="radiogroup" aria-label="Egress mode">
+            <label><input type="radio" name="wan-egress-mode" value="block"> Block (zero-egress; meeting privacy)</label>
+            <label><input type="radio" name="wan-egress-mode" value="gateway"> Gateway (open pass-through)</label>
+            <label><input type="radio" name="wan-egress-mode" value="captive"> Captive (admin auth required, recommended)</label>
+          </div>
+          <p class="wan-egress-source settings-field-help">source: loading…</p>
+        </div>
+
+        <div class="settings-field">
+          <label>Wired (enP7s7)</label>
+          <p class="wan-wired-line settings-field-help">(no data)</p>
+        </div>
+        <div class="settings-field">
+          <label>WiFi STA (wlan_sta)</label>
+          <p class="wan-wifi-line settings-field-help">(no data)</p>
+          <p class="wan-portal-link"></p>
+        </div>
+
+        <div class="settings-field">
+          <label>Available networks</label>
+          <div class="bt-scan-row">
+            <button type="button" class="btn-ghost wan-scan-btn">Scan</button>
+            <span class="wan-scan-status"></span>
+          </div>
+          <ul class="wan-scan-results settings-bt-list" aria-live="polite"></ul>
+          <p class="settings-field-help">
+            Click <em>Use</em> on a network to pre-fill the Add form.
+            Per-BSSID rows are consolidated; the supplicant roams across
+            APs of the same SSID automatically.
+          </p>
+        </div>
+
+        <div class="settings-field">
+          <label>Add a profile</label>
+          <div class="wan-add-row">
+            <input type="text" class="wan-ssid-input" placeholder="SSID" maxlength="32">
+            <input type="text" class="wan-pskref-input" placeholder="PSK_REF (SCREAMING_SNAKE)">
+          </div>
+          <div class="wan-band-row" role="radiogroup" aria-label="Band preference">
+            <label><input type="radio" name="wan-band" value="auto" checked> Auto</label>
+            <label><input type="radio" name="wan-band" value="bg"> 2.4 GHz only</label>
+            <label><input type="radio" name="wan-band" value="a"> 5 GHz only</label>
+          </div>
+          <div class="wan-add-row">
+            <button type="button" class="btn-ghost wan-add-btn">Add profile</button>
+            <button type="button" class="btn-primary wan-add-and-connect-btn">Add &amp; connect</button>
+          </div>
+          <p class="wan-add-status settings-field-help"></p>
+        </div>
+
+        <div class="settings-field">
+          <label>Saved profiles</label>
+          <ul class="wan-profiles-list settings-bt-list" aria-live="polite"></ul>
+          <p class="settings-field-help">
+            Profile id is a full uuid4. PSKs are referenced by name
+            from the age-encrypted credentials store, never stored here.
+          </p>
+        </div>
+
+        <div class="settings-field">
+          <button type="button" class="btn-ghost wan-up-btn">Bring up active WAN</button>
+          <button type="button" class="btn-ghost wan-down-btn">Tear down WAN</button>
+          <p class="wan-action-status settings-field-help"></p>
+        </div>
+      </section>
+      </section>
+
+      <section
+        class="settings-tab-pane"
+        role="tabpanel"
+        id="settings-pane-audio"
+        aria-labelledby="settings-tab-audio"
+        data-tab="audio"
+        hidden
+      >
+      <section class="settings-section">
+        <h4>Voice output</h4>
+        <div class="settings-field">
+          <label for="setting-tts-voice-mode">Default voice</label>
+          <select id="setting-tts-voice-mode" aria-describedby="setting-tts-voice-mode-help">
+            <option value="">Loading…</option>
+          </select>
+          <p id="setting-tts-voice-mode-help" class="settings-field-help">
+            Studio voice uses Qwen3-TTS's built-in studio-quality speakers
+            (fastest, commercial-safe, one curated voice per language).
+            Participant voice clones each meeting speaker's own voice from
+            the live audio (more personal, adds ~0.8 s per segment).
+            Listeners can still override per session.
+          </p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="audio-routing-card" data-mode="settings">
+        <h4>Audio routing</h4>
+        <p class="audio-routing-status">Loading…</p>
+        <div class="settings-field">
+          <label for="audio-mic-select">Meeting microphone</label>
+          <select id="audio-mic-select" class="audio-routing-select" aria-describedby="audio-mic-help">
+            <option value="">Browser microphone (admin tab)</option>
+          </select>
+          <p id="audio-mic-help" class="settings-field-help">
+            Source feeding ASR. Pick a USB or BT device when scribe is running on a meeting-room
+            speakerphone (e.g. Poly Sync 20-M, Jabra Speak); leave on browser mic if the admin
+            tab itself is the speaker.
+          </p>
+          <label class="settings-toggle-row">
+            <input type="checkbox" class="audio-mic-active-toggle">
+            <span class="audio-mic-active-label">Use selected microphone (replaces browser mic)</span>
+          </label>
+          <p class="audio-mic-active-status"></p>
+        </div>
+        <div class="settings-field">
+          <label for="audio-admin-sink-select">Admin TTS playback</label>
+          <select id="audio-admin-sink-select" class="audio-routing-select" aria-describedby="audio-admin-sink-help">
+            <option value="">Default sink (whatever PipeWire picks)</option>
+          </select>
+          <p id="audio-admin-sink-help" class="settings-field-help">
+            Headset or private monitor for the admin. Keep this on one translated language.
+          </p>
+          <label for="audio-admin-language-select">Admin TTS language</label>
+          <select id="audio-admin-language-select" class="audio-routing-select" aria-describedby="audio-admin-language-help">
+            <option value="en">English</option>
+          </select>
+          <p id="audio-admin-language-help" class="settings-field-help">
+            The admin/headset feed only speaks this target language.
+          </p>
+          <label for="audio-room-sink-select">In-room TTS playback</label>
+          <select id="audio-room-sink-select" class="audio-routing-select" aria-describedby="audio-room-sink-help">
+            <option value="">No in-room speaker</option>
+          </select>
+          <p id="audio-room-sink-help" class="settings-field-help">
+            Speakerphone output for people in the room, usually the same Poly used as the active
+            server mic so hardware echo cancellation can protect the capture path.
+          </p>
+          <label for="audio-room-language-select">In-room TTS language</label>
+          <select id="audio-room-language-select" class="audio-routing-select" aria-describedby="audio-room-language-help">
+            <option value="all">All translated languages</option>
+          </select>
+          <p id="audio-room-language-help" class="settings-field-help">
+            Use all for bidirectional room interpretation, or pick one language for a one-way room feed.
+          </p>
+        </div>
+        <div class="settings-field audio-routing-actions">
+          <button type="button" class="btn-ghost audio-refresh-btn">Refresh devices</button>
+          <span class="audio-refresh-status"></span>
+        </div>
+        <div class="settings-field audio-device-volumes-field">
+          <label>Device volume</label>
+          <p class="settings-field-help">
+            Adjusts the live PipeWire / WirePlumber volume on the device itself
+            (e.g. the Poly Sync 20-M speaker + mic gain). Persists in
+            WirePlumber's own state, not in scribe settings.
+          </p>
+          <div class="audio-device-volumes" aria-live="polite"></div>
+        </div>
+        <div class="settings-field interpretation-controls">
+          <label class="settings-toggle-row">
+            <input type="checkbox" class="interpretation-enabled-toggle">
+            <span>Bidirectional room interpretation</span>
+          </label>
+          <p class="settings-field-help">
+            Holds translated room-speaker output until a pause, while browser and
+            headset listeners continue receiving real-time audio.
+          </p>
+          <div class="interpretation-grid">
+            <label>
+              <span>Pause flush (seconds)</span>
+              <input type="number" class="interpretation-pause-sec" min="0.1" max="60" step="0.1">
+            </label>
+            <label>
+              <span>Idle drain (seconds)</span>
+              <input type="number" class="interpretation-idle-sec" min="0.1" max="60" step="0.1">
+            </label>
+          </div>
+          <p class="interpretation-status"></p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="bt-card">
+        <h4>Bluetooth audio</h4>
+        <p class="bt-status-line">Loading…</p>
+        <div class="settings-field">
+          <label class="settings-toggle-row">
+            <input type="checkbox" class="bt-mic-toggle">
+            <span>Use BT mic for speech input (HFP)</span>
+          </label>
+          <p class="bt-mic-status"></p>
+          <p class="settings-field-help">
+            When on, audio capture switches to the connected BT
+            headset's microphone (HFP profile). Toggle off to fall
+            back to the built-in mic.
+          </p>
+        </div>
+        <div class="settings-field">
+          <label>Paired devices</label>
+          <ul class="bt-devices-list settings-bt-list" aria-live="polite"></ul>
+        </div>
+        <div class="settings-field">
+          <label>Pair a new device</label>
+          <p class="settings-field-help">
+            Put the headset in pairing mode (its blink/button), then
+            click <em>Scan</em>. The GB10 scans for ~10 s and lists
+            nearby discoverable devices, then click <em>Pair</em>
+            next to the one you want.
+          </p>
+          <div class="bt-scan-row">
+            <button type="button" class="btn-ghost bt-scan-btn">Scan</button>
+            <span class="bt-scan-status"></span>
+          </div>
+          <ul class="bt-scan-results settings-bt-list" aria-live="polite"></ul>
+        </div>
+      </section>
+      </section>
+
+      <section
+        class="settings-tab-pane"
+        role="tabpanel"
+        id="settings-pane-display"
+        aria-labelledby="settings-tab-display"
+        data-tab="display"
+        hidden
+      >
+      <!-- HDMI kiosk display configuration. Wired by
+           static/js/scribe/features/hdmi-settings-panel.js. The
+           backend reads/writes the same hdmi_* keys via
+           /api/admin/settings; the kiosk-runtime applies changes
+           via wlr-randr within ~1 s of a save. -->
+      <section class="settings-section settings-section-hdmi">
+        <h4>HDMI Display</h4>
+        <div class="settings-field">
+          <div class="hdmi-status-block" id="hdmi-status-block" aria-live="polite">
+            <span class="hdmi-status-indicator" id="hdmi-status-indicator">Status: loading</span>
+            <button
+              type="button"
+              class="btn-secondary"
+              id="btn-hdmi-refresh"
+              title="Re-probe the connector via wlr-randr"
+            >Refresh</button>
+          </div>
+        </div>
+        <div class="settings-field">
+          <label for="setting-hdmi-enabled">Kiosk enabled</label>
+          <input type="checkbox" id="setting-hdmi-enabled" />
+          <p class="settings-field-help">
+            When on, plugging an HDMI cable starts the kiosk
+            automatically. Turn off to keep the screen dark even with
+            a cable connected.
+          </p>
+        </div>
+        <div class="settings-field">
+          <label for="setting-hdmi-mode">Resolution</label>
+          <select id="setting-hdmi-mode">
+            <option value="auto">Auto (EDID preferred)</option>
+          </select>
+          <p class="settings-field-help">
+            Mode IDs come from wlr-randr; the list refreshes when you
+            hit Refresh above.
+          </p>
+        </div>
+        <div class="settings-field">
+          <label for="setting-hdmi-rotation">Rotation</label>
+          <select id="setting-hdmi-rotation">
+            <option value="0">0&deg; (normal)</option>
+            <option value="90">90&deg; clockwise</option>
+            <option value="180">180&deg;</option>
+            <option value="270">270&deg; clockwise</option>
+          </select>
+        </div>
+        <div class="settings-field">
+          <label for="setting-hdmi-idle-sleep">Sleep after (minutes; 0 = never)</label>
+          <input
+            type="number"
+            id="setting-hdmi-idle-sleep"
+            min="0"
+            max="240"
+            step="1"
+            value="0"
+          />
+          <p class="settings-field-help">
+            Idle minutes before wlr-randr DPMS-offs the panel. The
+            screen wakes again on the next WebSocket activity.
+          </p>
+        </div>
+        <div class="settings-field">
+          <button type="button" class="btn-primary" id="btn-hdmi-apply">Apply</button>
+          <span class="settings-field-status" id="hdmi-apply-status" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h4>Timezone</h4>
+        <div class="settings-field">
+          <label for="setting-timezone">Timezone</label>
+          <select id="setting-timezone" aria-describedby="setting-timezone-help">
+            <option value="">Loading…</option>
+          </select>
+          <p id="setting-timezone-help" class="settings-field-help">
+            IANA timezone for displaying meeting timestamps. Leave blank to
+            use the server's local time.
+          </p>
+        </div>
+      </section>
+
+      <section class="settings-section settings-section-terminal">
+        <h4>Terminal access</h4>
+        <div class="settings-field">
+          <label for="setting-term-font-size">Font size</label>
+          <div class="term-font-row">
+            <button type="button" class="btn-icon" id="btn-term-font-dec" title="Decrease">A−</button>
+            <input
+              type="range"
+              id="setting-term-font-size"
+              min="9"
+              max="26"
+              step="1"
+              value="13"
+              aria-describedby="setting-term-font-size-help"
+            >
+            <button type="button" class="btn-icon" id="btn-term-font-inc" title="Increase">A+</button>
+            <span class="term-font-value" id="term-font-value">13px</span>
+          </div>
+          <p id="setting-term-font-size-help" class="settings-field-help">
+            Ctrl + / Ctrl − inside the terminal does the same thing.
+            Ctrl 0 resets.
+          </p>
+        </div>
+      </section>
+      </section>
+
+      <section
+        class="settings-tab-pane"
+        role="tabpanel"
+        id="settings-pane-credentials"
+        aria-labelledby="settings-tab-credentials"
+        data-tab="credentials"
+        hidden
+      >
+        <section class="settings-section" id="device-card">
+          <h4>Device</h4>
+          <div class="settings-field">
+            <label>Device pin</label>
+            <p class="device-pin-line settings-field-help">Loading…</p>
+            <p class="settings-field-help">
+              4-digit pin baked into the SSID and used as the guest PIN.
+              Combined with <code>DellMeetingAdmin</code> it yields the
+              admin login password.
+            </p>
+          </div>
+          <div class="settings-field">
+            <label>Appliance ID</label>
+            <p class="device-id-line settings-field-help">Loading…</p>
+            <p class="settings-field-help">
+              16-hex stable identifier, written to certs/appliance-id.
+              Used by mDNS + TLS cert subject. Full id shown for fleet
+              correlation (never truncated).
+            </p>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h4>Admin login</h4>
+          <div class="cred-row">
+            <div class="cred-label">Password</div>
+            <div
+              class="cred-value-mono"
+              id="cred-admin-pw"
+              data-hidden="1"
+              aria-label="Admin login password (hidden)"
+            >••••••••••••••</div>
+            <div class="cred-actions">
+              <button
+                type="button"
+                id="btn-cred-admin-reveal"
+                class="cred-reveal-btn"
+                aria-pressed="false"
+              >Show</button>
+              <button
+                type="button"
+                id="btn-cred-admin-copy"
+                class="cred-copy-btn"
+                title="Copy admin password"
+              >Copy</button>
+            </div>
+          </div>
+          <p class="settings-field-help">
+            Use this password to sign in at <code>/auth</code>. Deterministic
+            from the appliance ID. Resetting the device changes it.
+          </p>
+        </section>
+
+        <section class="settings-section">
+          <h4>Guest PIN</h4>
+          <div class="cred-row">
+            <div class="cred-label">PIN</div>
+            <div
+              class="cred-value-mono"
+              id="cred-guest-pin"
+              aria-label="Guest PIN"
+            >––––</div>
+            <div class="cred-actions">
+              <button
+                type="button"
+                id="btn-cred-pin-copy"
+                class="cred-copy-btn"
+                title="Copy guest PIN"
+              >Copy</button>
+            </div>
+          </div>
+          <p class="settings-field-help">
+            Same 4 digits as the last block of the Admin hotspot SSID.
+            Public; tell guests directly or have them read it off the
+            WiFi name.
+          </p>
+        </section>
+
+        <p
+          class="cred-status"
+          id="cred-status"
+          role="status"
+          aria-live="polite"
+        ></p>
+      </section>
+      </section>
+
+      <!-- ── Tab: Hardware ──────────────────────────────────────
+           USB-speakerphone integration. Lists connected SP325s,
+           lets the operator remap Phone/Teams/Phone-Mute buttons,
+           pick LED patterns for each system-state, and edit the
+           default meeting profile that the Teams button uses from
+           idle. Read-only rows for Vol+/Vol−/sys-mute are shown
+           so users see the full button surface without confusing
+           OS-handled keys with daemon-configurable ones. -->
+      <section
+        class="settings-tab-pane"
+        role="tabpanel"
+        id="settings-pane-hardware"
+        aria-labelledby="settings-tab-hardware"
+        data-tab="hardware"
+        hidden
+      >
+        <section class="settings-section" id="speakerphone-card">
+          <h4>USB Speakerphone</h4>
+          <p class="settings-field-help" id="speakerphone-summary">
+            Loading…
+          </p>
+
+          <div class="speakerphone-devices" id="speakerphone-devices"></div>
+
+          <h5>Button mapping</h5>
+          <div class="speakerphone-mapping-table" id="speakerphone-buttons">
+            <!-- Rows rendered by admin-speakerphone-card.js. Each row:
+                 label · short-press select · long-press select · last-press. -->
+          </div>
+
+          <h5>Handled by OS (read-only)</h5>
+          <ul class="speakerphone-os-list" id="speakerphone-os-buttons">
+            <!-- Vol+/Vol-/sys-mute rows; the daemon does not open
+                 /dev/input/event3 so these always flow through
+                 PipeWire + media-key agent. -->
+          </ul>
+
+          <h5>System status (LED state machine)</h5>
+          <p class="settings-field-help" id="speakerphone-led-active">
+            Current LED state: <span data-led-state>idle_ready</span>
+            · pattern <span data-led-pattern>off</span>
+          </p>
+          <div class="speakerphone-led-table" id="speakerphone-led-states">
+            <!-- One row per state (error / backend_unready / mic_muted /
+                 recording / idle_ready) with enabled + pattern controls
+                 + preview. Rendered by admin-speakerphone-card.js. -->
+          </div>
+
+          <h5>Default meeting profile</h5>
+          <div class="settings-field">
+            <label for="speakerphone-profile-name">Name</label>
+            <input
+              type="text"
+              id="speakerphone-profile-name"
+              data-profile-field="name"
+              maxlength="64"
+            />
+          </div>
+          <div class="settings-field">
+            <label for="speakerphone-profile-langs">Languages</label>
+            <select
+              id="speakerphone-profile-langs"
+              data-profile-field="languages"
+              multiple
+              size="4"
+            ></select>
+            <p class="settings-field-help">
+              Pick one or two languages. Phone-button cycles the
+              direction across these (e.g. EN → JA → Both).
+            </p>
+          </div>
+          <div class="settings-field">
+            <label for="speakerphone-profile-room">Room TTS direction</label>
+            <select
+              id="speakerphone-profile-room"
+              data-profile-field="room_tts_language"
+            ></select>
+          </div>
+          <div class="settings-field">
+            <label for="speakerphone-profile-interp">
+              Interpretation enabled
+            </label>
+            <input
+              type="checkbox"
+              id="speakerphone-profile-interp"
+              data-profile-field="interpretation_enabled"
+            />
+          </div>
+
+          <h5>Long-press threshold</h5>
+          <div class="settings-field">
+            <label for="speakerphone-long-press">Threshold (ms)</label>
+            <input
+              type="number"
+              id="speakerphone-long-press"
+              data-mapping-field="long_press_ms"
+              min="200"
+              max="5000"
+              step="50"
+            />
+            <p class="settings-field-help">
+              Press &amp; hold the Phone button this long for a long-press;
+              shorter presses dispatch as short-press. Default 1000 ms.
+            </p>
+          </div>
+
+          <!-- ── Button-press audio feedback ───────────────────
+               Plays a short spoken cue ("Volume up", "Mic muted")
+               through the SP325 speaker when a button is pressed.
+               Backend supports per-label custom phrasing via the
+               mapping JSON sidecar, but the UI keeps just the three
+               controls operators actually need.
+          -->
+          <h5>Button feedback</h5>
+          <div class="settings-field">
+            <label for="speakerphone-feedback-enabled">
+              <input
+                type="checkbox"
+                id="speakerphone-feedback-enabled"
+                data-feedback-field="enabled"
+              />
+              Speak button names when pressed
+            </label>
+            <p class="settings-field-help">
+              The speakerphone announces "Volume up", "Mic muted",
+              etc. when a button is pressed. Server-enforced;
+              toggling takes effect on the very next press.
+            </p>
+          </div>
+          <div class="settings-field">
+            <label for="speakerphone-feedback-language">Language</label>
+            <select
+              id="speakerphone-feedback-language"
+              data-feedback-field="language"
+            ></select>
+          </div>
+          <div class="speakerphone-feedback-test-row">
+            <button
+              type="button"
+              class="btn-ghost"
+              id="speakerphone-feedback-test"
+            >Test feedback</button>
+            <span class="settings-field-help">
+              Plays a sample in the selected language. Works even
+              when feedback is disabled (for previewing).
+            </span>
+          </div>
+          <div
+            class="speakerphone-feedback-overrides"
+            id="speakerphone-feedback-overrides"
+            hidden
+          >
+            <!-- One row per canonical label_id with: label,
+                 spoken text (per current language), Test button.
+                 Rendered by admin-speakerphone-card.js. Test
+                 sends the unsaved text inline via the preview
+                 endpoint so operators can audition before save. -->
+          </div>
+
+          <div class="speakerphone-actions">
+            <button
+              type="button"
+              class="btn-ghost"
+              id="speakerphone-led-test"
+            >Test LEDs</button>
+            <button
+              type="button"
+              class="btn-ghost"
+              id="speakerphone-reset"
+            >Reset to defaults</button>
+            <span
+              class="speakerphone-status"
+              id="speakerphone-status"
+              role="status"
+              aria-live="polite"
+            ></span>
+          </div>
+        </section>
+      </section>
+
+      </div>
+    </div>
+    <div class="settings-footer">
+      <div class="settings-status" id="settings-status" role="status" aria-live="polite"></div>
+      <button id="btn-settings-save" class="btn-primary">Save</button>
+    </div>
+  </div>
+  <div class="settings-backdrop" id="settings-backdrop"></div>
+
+  <!-- Diagnostics panel — first-class system health + log viewer.
+       Slide-over from the right (wider than settings). All content is
+       admin-gated server-side; if the user isn't authorized, the panel
+       prompts them to authorize via Settings → Terminal access. -->
+  <div
+    class="diagnostics-panel"
+    id="diagnostics-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="diagnostics-panel-title"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    <div class="diag-header">
+      <h3 id="diagnostics-panel-title">Diagnostics</h3>
+      <div class="diag-header-tabs" role="tablist">
+        <button class="diag-tab active" data-tab="health" role="tab" aria-selected="true">Health</button>
+        <button class="diag-tab" data-tab="issues" role="tab" aria-selected="false">Issues <span class="diag-tab-badge" id="diag-issues-badge"></span></button>
+        <button class="diag-tab" data-tab="server-log" role="tab" aria-selected="false">Server log</button>
+        <button class="diag-tab" data-tab="meeting-log" role="tab" aria-selected="false">Meeting terminal log</button>
+      </div>
+      <button id="btn-diagnostics-close" class="btn-ghost" title="Close diagnostics" aria-label="Close diagnostics">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Forbidden banner: shown when /api/diag/* returns 403. -->
+    <div class="diag-forbidden" id="diag-forbidden" hidden>
+      <div class="diag-forbidden-body">
+        <strong>Authorize this browser to view diagnostics</strong>
+        <p>Diagnostics surfaces server logs and process state, so it's restricted to admin browsers. Open <em>Settings → Terminal access</em> and click <em>Authorize this browser</em>, then reopen Diagnostics.</p>
+        <button class="btn-primary-inline" id="diag-go-authorize">Open Settings</button>
+      </div>
+    </div>
+
+    <div class="diag-body" id="diag-body">
+
+      <!-- ── Tab: Health ────────────────────────────────────────── -->
+      <section class="diag-tab-panel active" data-tab-panel="health">
+        <div class="diag-crash-banner" id="diag-crash-banner" hidden>
+          <strong>Unhandled crash detected.</strong>
+          <span id="diag-crash-detail"></span>
+        </div>
+
+        <h4 class="diag-section-title">Backends</h4>
+        <div class="diag-card-grid" id="diag-backends-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+
+        <h4 class="diag-section-title">System resources</h4>
+        <div class="diag-card-grid" id="diag-system-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+
+        <h4 class="diag-section-title">GPU</h4>
+        <div class="diag-gpu-error" id="diag-gpu-error" hidden></div>
+        <div class="diag-card-grid" id="diag-gpu-card-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+        <div class="diag-gpu-subhead">Processes</div>
+        <table class="diag-gpu-table">
+          <thead><tr>
+            <th>Role</th><th>Container</th><th>PID</th><th>SM</th><th>VRAM</th>
+          </tr></thead>
+          <tbody id="diag-gpu-process-tbody">
+            <tr><td colspan="5" class="diag-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+        <div class="diag-gpu-subhead">vLLM engines</div>
+        <table class="diag-gpu-table">
+          <thead><tr>
+            <th>Engine</th><th>Model</th><th>Run</th><th>Wait</th><th>KV</th>
+            <th>tok/s</th><th>TTFT p50</th><th>TPOT p50</th><th>MFU</th>
+          </tr></thead>
+          <tbody id="diag-gpu-engine-tbody">
+            <tr><td colspan="9" class="diag-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+
+        <h4 class="diag-section-title">Containers</h4>
+        <div class="diag-card-grid" id="diag-containers-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+
+        <h4 class="diag-section-title">Event loop</h4>
+        <div class="diag-card-grid" id="diag-loop-grid">
+          <div class="diag-empty">Loading…</div>
+        </div>
+      </section>
+
+      <!-- ── Tab: Issues ────────────────────────────────────────── -->
+      <section class="diag-tab-panel" data-tab-panel="issues">
+        <div class="diag-toolbar">
+          <label>
+            Min level
+            <select id="diag-issues-level">
+              <option value="WARNING" selected>Warning</option>
+              <option value="ERROR">Error</option>
+              <option value="CRITICAL">Critical</option>
+            </select>
+          </label>
+          <label>
+            Component
+            <input type="text" id="diag-issues-component" placeholder="e.g. translation, slides, tts" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-issues-autorefresh" checked>
+            <span>Auto-refresh</span>
+          </label>
+          <button class="btn-ghost-inline" id="diag-issues-refresh">Refresh</button>
+          <button class="btn-ghost-inline" id="diag-issues-clear">Clear view</button>
+        </div>
+        <div class="diag-issues-list" id="diag-issues-list"></div>
+      </section>
+
+      <!-- ── Tab: Server log ────────────────────────────────────── -->
+      <section class="diag-tab-panel" data-tab-panel="server-log">
+        <div class="diag-toolbar">
+          <label>
+            Min level
+            <select id="diag-srvlog-level">
+              <option value="">All</option>
+              <option value="INFO">Info</option>
+              <option value="WARNING">Warning</option>
+              <option value="ERROR">Error</option>
+            </select>
+          </label>
+          <label>
+            Search
+            <input type="text" id="diag-srvlog-search" placeholder="substring filter" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-srvlog-live" checked>
+            <span>Live tail</span>
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-srvlog-autoscroll" checked>
+            <span>Autoscroll</span>
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-srvlog-wrap">
+            <span>Wrap lines</span>
+          </label>
+          <a class="btn-ghost-inline" id="diag-srvlog-download" href="/api/diag/log/server?lines=5000" download="server.log">Download</a>
+        </div>
+        <div class="diag-log-viewer" id="diag-srvlog-viewer" data-wrap="false"></div>
+      </section>
+
+      <!-- ── Tab: Meeting terminal log ─────────────────────────── -->
+      <section class="diag-tab-panel" data-tab-panel="meeting-log">
+        <p class="diag-tab-help">Terminal output captured by autosre during a meeting (per-meeting tmux scrollback).</p>
+        <div class="diag-toolbar">
+          <label>
+            Meeting
+            <select id="diag-mtglog-select">
+              <option value="">Loading meetings…</option>
+            </select>
+          </label>
+          <label class="diag-toolbar-toggle">
+            <input type="checkbox" id="diag-mtglog-wrap">
+            <span>Wrap lines</span>
+          </label>
+          <button class="btn-ghost-inline" id="diag-mtglog-refresh">Refresh</button>
+        </div>
+        <div class="diag-log-viewer" id="diag-mtglog-viewer" data-wrap="false">
+          <div class="diag-empty">Select a meeting to view its terminal log.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="diagnostics-backdrop" id="diagnostics-backdrop"></div>
+
+  <main>
+    <!-- ═══ SETUP MODE ═══ -->
+    <div id="room-setup" class="room-setup">
+      <div class="room-canvas" id="room-canvas"></div>
+      <div class="setup-footer">
+        <div class="setup-toolbar">
+        <div class="preset-selector" id="preset-selector">
+          <button class="preset-btn" data-preset="boardroom" data-default-seats="8" title="Boardroom · 8 seats">
+            <svg width="18" height="12" viewBox="0 0 18 12"><ellipse cx="9" cy="6" rx="8" ry="5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="round" data-default-seats="6" title="Round · 6 seats">
+            <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="square" data-default-seats="4" title="Square · 4 seats">
+            <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn active" data-preset="rectangle" data-default-seats="2" title="Rectangle · 2 seats">
+            <svg width="18" height="12" viewBox="0 0 18 12"><rect x="1" y="1" width="16" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="classroom" data-default-seats="8" title="Classroom · 8 seats">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="1" y="1" width="14" height="2" rx="1" fill="currentColor" opacity="0.3"/><circle cx="4" cy="7" r="1.5" fill="currentColor"/><circle cx="8" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="u_shape" data-default-seats="10" title="U-Shape · 10 seats">
+            <svg width="14" height="12" viewBox="0 0 14 12"><path d="M2 2v8h10V2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="pods" data-default-seats="12" title="Pods · 12 seats">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="1" y="1" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/><rect x="10" y="1" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/><rect x="1" y="7" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/><rect x="10" y="7" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="0.8"/></svg>
+          </button>
+          <button class="preset-btn" data-preset="freeform" data-default-seats="4" title="Free-form · 4 seats">
+            <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="3" cy="4" r="1.5" fill="currentColor"/><circle cx="10" cy="3" r="1.5" fill="currentColor"/><circle cx="6" cy="9" r="1.5" fill="currentColor"/><circle cx="11" cy="11" r="1.5" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="add-table-group">
+          <button id="btn-add-table" class="btn-add-seat" title="Add a table with the chosen number of seats around it">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M12 10v4M10 12h4"/></svg>
+            Table +
+          </button>
+          <input type="number" id="seat-count-input" class="seat-count-input" min="1" max="20" value="2" title="Number of seats to place around the new table" aria-label="Seats">
+          <span class="add-table-group-label">seats</span>
+        </div>
+        <button id="btn-add-seat" class="btn-add-seat" title="Add a single seat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Seat
+        </button>
+        <button id="btn-clear-layout" class="btn-add-seat" title="Clear the layout back to empty">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Clear
+        </button>
+        <div class="language-selector" id="language-selector" role="group" aria-label="Meeting languages">
+          <select id="lang-a-select" class="lang-select" aria-label="First meeting language">
+            <!-- Populated by JS from /api/languages -->
+          </select>
+          <span class="lang-pair-sep" aria-hidden="true">↔</span>
+          <select id="lang-b-select" class="lang-select" aria-label="Second meeting language">
+            <!-- Populated by JS from /api/languages. The setup screen is
+                 always bilingual — single-language meetings live behind
+                 the "Quick start English" button on the homepage. -->
+          </select>
+        </div>
+        </div><!-- /.setup-toolbar -->
+        <div class="setup-body">
+        <section class="setup-audio-routing-card" id="setup-audio-routing-card" data-mode="setup" aria-label="Meeting audio routing">
+          <div class="setup-audio-routing-header">
+            <div>
+              <h3>Meeting audio</h3>
+              <p class="audio-routing-status">Loading…</p>
+              <p class="setup-audio-hint field-help">Settings apply when you click Start.</p>
+            </div>
+            <button type="button" class="audio-refresh-btn setup-audio-refresh" title="Refresh audio devices">
+              Refresh
+            </button>
+          </div>
+          <div class="setup-audio-routing-grid">
+            <label>
+              <span>Microphone</span>
+              <select class="audio-routing-select audio-mic-select" aria-describedby="setup-audio-mic-help">
+                <option value="">Browser microphone</option>
+              </select>
+            </label>
+            <label>
+              <span>In-room TTS speaker</span>
+              <select class="audio-routing-select audio-room-sink-select" aria-describedby="setup-audio-room-help">
+                <option value="">No in-room speaker</option>
+              </select>
+            </label>
+            <label>
+              <span>Admin TTS output</span>
+              <select class="audio-routing-select audio-admin-sink-select" aria-describedby="setup-audio-admin-help">
+                <option value="">No server-side admin output</option>
+              </select>
+            </label>
+            <label>
+              <span>Admin TTS language</span>
+              <select class="audio-routing-select audio-admin-language-select">
+                <option value="en">English</option>
+              </select>
+            </label>
+            <label class="setup-audio-toggle">
+              <input type="checkbox" class="audio-mic-active-toggle">
+              <span>Use selected mic for ASR</span>
+            </label>
+            <label>
+              <span>Room TTS language</span>
+              <select class="audio-routing-select audio-room-language-select">
+                <option value="all">All translated languages</option>
+              </select>
+            </label>
+            <label>
+              <span>Default voice</span>
+              <select class="audio-routing-select audio-voice-mode-select" aria-describedby="setup-audio-voice-mode-help">
+                <option value="">Loading…</option>
+              </select>
+            </label>
+            <label class="setup-audio-toggle">
+              <input type="checkbox" class="interpretation-enabled-toggle">
+              <span>Hold room speaker until pause</span>
+            </label>
+            <label>
+              <span>Pause before TTS</span>
+              <input type="number" class="interpretation-pause-sec" min="0.5" max="10" step="0.1" value="2.0">
+            </label>
+            <label>
+              <span>Idle drain</span>
+              <input type="number" class="interpretation-idle-sec" min="1" max="30" step="0.5" value="5.0">
+            </label>
+          </div>
+          <p id="setup-audio-mic-help" class="setup-audio-help">
+            Choose the Poly mic here before starting the meeting. Room TTS output is allowed only when it matches the active server mic.
+          </p>
+          <p id="setup-audio-voice-mode-help" class="setup-audio-help">
+            Studio voice: Qwen3-TTS's built-in voices (fast, commercial-safe).
+            Participant voice: clones each speaker's own voice from live audio (~0.8 s slower per segment). Changes here update the global default.
+          </p>
+          <p id="setup-audio-room-help" class="setup-audio-help"></p>
+          <p id="setup-audio-admin-help" class="setup-audio-help"></p>
+          <p class="audio-mic-active-status setup-audio-status"></p>
+          <p class="audio-refresh-status setup-audio-status"></p>
+          <p class="interpretation-status setup-audio-status"></p>
+          <div class="audio-device-volumes setup-audio-volumes" aria-live="polite"></div>
+        </section>
+        <aside class="setup-start-cta">
+          <button id="btn-start-meeting" class="btn-start-meeting">
+            Start Meeting
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>
+          <p class="setup-hint" id="setup-hint">Enroll each speaker's voice to begin</p>
+          <!-- Backends-warming banner: only visible while ASR/translate are
+               still cold-starting after a server restart. The /api/status
+               poll loop flips its visibility + disables the Start button
+               so the operator sees "wait" instead of clicking through to
+               a 503 modal. -->
+          <div id="backends-warming-banner" class="backends-warming-banner" style="display:none">
+            <span class="backends-warming-icon">◐</span>
+            <span class="backends-warming-text">Backends warming up…</span>
+            <span class="backends-warming-detail" id="backends-warming-detail"></span>
+          </div>
+        </aside>
+        </div><!-- /.setup-body -->
+      </div>
+    </div>
+
+    <!-- ═══ MEETING MODE ═══ -->
+    <div id="meeting-mode" style="display:none">
+      <!-- Inline Phase B finalize banner. Sits above the transcript when
+           the operator opens a meeting that is still finalizing in the
+           background OR whose finalize failed and is awaiting Reprocess
+           / Dismiss. Hydrated from /api/meetings/{id}.phase_b_progress
+           and updated live via the background_finalize_progress WS event. -->
+      <div class="meeting-detail-finalize-banner" id="meeting-detail-finalize-banner" style="display:none" role="status" aria-live="polite">
+        <div class="meeting-detail-finalize-row">
+          <span class="meeting-detail-finalize-label">Finalizing...</span>
+          <span class="meeting-detail-finalize-eta"></span>
+          <span class="meeting-detail-finalize-step"></span>
+        </div>
+        <div class="meeting-detail-finalize-bar"><div class="meeting-detail-finalize-fill"></div></div>
+        <div class="meeting-detail-finalize-actions"></div>
+      </div>
+
+      <!-- Meeting summary bar — past-meeting review only, slim header that opens the finalization modal -->
+      <div class="meeting-summary-panel" id="meeting-summary-panel" style="display:none"></div>
+
+      <!-- Compact table + speakers strip -->
+      <div class="meeting-table-strip" id="meeting-table-strip"></div>
+
+      <!-- Admin "translation + terminal" view: when the Terminal button
+           is toggled on, the lazy-loaded terminal-panel.js docks its
+           root inside this host. Mirrors the slide-bar's layout role
+           — same drag-resize feel, same place above the transcript.
+           Hidden via inline style + body.view-terminal-host-active
+           cascade in _state.css. -->
+      <div id="admin-terminal-host" class="admin-terminal-host" style="display:none"></div>
+
+      <!-- Speaker timeline (meeting review) -->
+      <div class="speaker-timeline" id="speaker-timeline" style="display:none">
+        <div class="speaker-timeline-lanes" id="speaker-timeline-lanes"></div>
+        <div class="speaker-timeline-cursor" id="speaker-timeline-cursor"></div>
+        <div class="speaker-timeline-times" id="speaker-timeline-times"></div>
+      </div>
+
+      <!-- Real-time metrics dashboard (split-view alongside transcript) -->
+      <div class="metrics-dashboard" id="metrics-dashboard" style="display:none">
+        <div class="metrics-panel-header">
+          <span class="metrics-panel-title">Performance</span>
+          <span class="metrics-panel-badge" id="mc-status">LIVE</span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-card-label">ASR</div>
+            <div class="metric-card-value" id="mc-asr">—</div>
+            <div class="metric-card-sub" id="mc-asr-sub"></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Translation</div>
+            <div class="metric-card-value" id="mc-trans">—</div>
+            <div class="metric-card-sub" id="mc-trans-sub"></div>
+          </div>
+          <div class="metric-card metric-card-wide">
+            <div class="metric-card-label">GPU VRAM</div>
+            <div class="metric-bar-container">
+              <div class="metric-bar" id="mc-vram-bar" style="width:0%"></div>
+            </div>
+            <div class="metric-card-value" id="mc-vram">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Audio</div>
+            <div class="metric-card-value" id="mc-audio">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Connections</div>
+            <div class="metric-card-value" id="mc-health">—</div>
+          </div>
+          <div class="metric-card metric-card-wide">
+            <div class="metric-card-label">Backends</div>
+            <div class="metric-card-value metric-backends" id="mc-backends">—</div>
+          </div>
+          <!-- W5: Reliability tiles. Surfaces the signals that today's
+               2026-04-30 ASR cascade incident hid behind log scraping —
+               operators can SEE degradation building before it kills a
+               meeting. -->
+          <div class="metric-card">
+            <div class="metric-card-label">ASR RTT p95</div>
+            <div class="metric-card-value" id="mc-asr-rtt-p95">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Watchdog (1m)</div>
+            <div class="metric-card-value" id="mc-watchdog-fires">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">Time Since Final</div>
+            <div class="metric-card-value" id="mc-since-final">—</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-card-label">GPU Free</div>
+            <div class="metric-card-value" id="mc-gpu-free">—</div>
+          </div>
+        </div>
+        <div class="backend-detail-panel" id="backend-detail-panel"></div>
+        <div class="backend-detail-panel" id="system-resources-panel"></div>
+      </div>
+
+      <!-- View-only takeover bar — visible only when ``body.view-only``
+           is set (see CSS). When the operator lands on the live
+           meeting from a tab that doesn't hold the per-tab recorder
+           ownership token (after a hard reload, after a new tab opens,
+           after a fresh sign-in post-restart), the live meeting still
+           shows but the control-bar is hidden. This bar exposes an
+           explicit takeover path so the operator isn't stuck staring
+           at "Viewing &lt;mid&gt; (read-only)". Hidden in popout mode. -->
+      <div class="takeover-bar" id="takeover-bar">
+        <span class="takeover-bar-label">Read-only view. Recorder ownership is on another tab.</span>
+        <button id="btn-takeover-recording" class="btn-takeover-recording" type="button" title="Take over the active recording. The other tab will become a viewer.">Take over recording</button>
+      </div>
+
+      <!-- Control bar -->
+      <div class="control-bar" id="control-bar">
+        <div class="control-row control-row-primary">
+          <div class="control-meta">
+            <span class="timer" id="timer">00:00</span>
+            <span class="segment-count" id="segment-count">0 segments</span>
+          </div>
+          <!-- Audio routing popover.
+               Anchored to #btn-audio-routing in the header. Holds every
+               TTS/device-routing control. The legacy class/id surface is
+               preserved verbatim (.meeting-interpretation-enabled-toggle,
+               .meeting-admin-sink-select, …) so the existing event
+               handlers in _legacy.js + admin-audio-card.js continue to
+               read / write the same elements they always have. Only the
+               visual scaffold changed. -->
+          <div class="audio-pop meeting-interpretation-controls" id="meeting-interpretation-controls" data-audio-pop="1" role="dialog" aria-labelledby="audio-pop-title" aria-modal="false" aria-label="Interpretation audio routing" hidden>
+            <div class="audio-pop-head">
+              <h2 class="audio-pop-title" id="audio-pop-title">Audio</h2>
+              <button type="button" class="audio-pop-close" id="audio-pop-close" aria-label="Close audio panel">&times;</button>
+            </div>
+
+            <!-- SP325 mic-mode status chip + manual re-apply. Visibility-
+                 only: a green dot + percentage means the mic is in
+                 wideband mode (Japanese consonants intact); amber/red
+                 means the SP325 silently regressed to narrowband and
+                 ASR accuracy will suffer. Polled from
+                 /api/admin/speakerphone/wideband-status every 60 s.
+                 The button POSTs to wideband-apply to re-run the
+                 vendor HID config sequence on demand. -->
+            <div class="audio-pop-wideband" id="audio-pop-wideband">
+              <div class="audio-pop-wideband-line">
+                <span class="audio-pop-wideband-dot" id="wideband-dot" aria-hidden="true"></span>
+                <span class="audio-pop-wideband-label">Mic mode</span>
+                <span class="audio-pop-wideband-value" id="wideband-value">checking…</span>
+              </div>
+              <button type="button" class="audio-pop-wideband-apply" id="wideband-apply-btn"
+                title="Re-run the SP325 wideband HID command sequence (restores wideband mic mode without a Windows trip)">
+                Re-apply
+              </button>
+            </div>
+
+            <!-- Voice mode: studio (Qwen3 built-in) vs cloned
+                 (participant's own voice). Mirrors the room-setup and
+                 settings-panel selects so operators can change voice
+                 without leaving the active meeting. Persisted via the
+                 same /api/admin/audio/interpretation endpoint. -->
+            <div class="audio-pop-section audio-pop-section-voice">
+              <div class="audio-pop-section-label">Voice</div>
+              <div class="audio-pop-voice-row">
+                <select class="audio-pop-voice-mode meeting-voice-mode-select" title="Studio: Qwen3-TTS built-in voices (fast). Participant: clones each speaker's own voice from live audio (~0.8s slower per segment).">
+                  <option value="">Loading…</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Master TTS engine switch + meeting-wide mic pause.
+                 ``Pause mic`` is the privacy hatch operators reach for
+                 first when something interrupts a meeting — surfacing it
+                 at the top of the panel beats burying it next to the
+                 device list. -->
+            <div class="audio-pop-master">
+              <label class="audio-pop-switch meeting-room-tts-toggle" title="Hold room-speaker translated audio until a pause. Browser + BT listeners always get real-time TTS regardless of this toggle.">
+                <input type="checkbox" class="meeting-interpretation-enabled-toggle">
+                <span class="audio-pop-switch-label">
+                  <span class="audio-pop-switch-name">Room speaker</span>
+                  <span class="audio-pop-switch-hint">Hold output until pause (room-sink only)</span>
+                </span>
+                <span class="audio-pop-switch-track" aria-hidden="true"><span class="audio-pop-switch-knob"></span></span>
+              </label>
+              <button type="button" class="audio-pop-mic btn-ghost interpretation-mute-mic" title="Pause the microphone: no audio is recorded or transcribed while paused">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="3" width="6" height="11" rx="3"/>
+                  <path d="M5 11a7 7 0 0 0 14 0"/>
+                  <path d="M12 18v3"/>
+                </svg>
+                <span>Pause mic</span>
+              </button>
+            </div>
+
+            <!-- Per-device rows. The legacy admin-sink + admin-lang +
+                 interpretation-mute-room pair drives the "Room
+                 speaker" row; the bluetooth listener inventory below
+                 is rendered into .audio-pop-bt-list by JS. -->
+            <div class="audio-pop-section">
+              <div class="audio-pop-section-label">Room speaker</div>
+              <div class="audio-pop-device" data-device-role="room">
+                <div class="audio-pop-device-head">
+                  <span class="audio-pop-device-dot" aria-hidden="true"></span>
+                  <select class="audio-pop-device-sink meeting-room-sink-select" title="Pick the GB10-attached output (USB speakerphone, Poly, line-out…)">
+                    <option value="">No room speaker</option>
+                  </select>
+                  <button type="button" class="audio-pop-mute btn-ghost interpretation-mute-room" title="Mute the room speaker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <line x1="23" y1="9" x2="17" y2="15"/>
+                      <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="audio-pop-device-foot">
+                  <label class="audio-pop-lang-label">Speaks</label>
+                  <select class="audio-pop-device-lang meeting-room-lang-select" title="What this device should speak">
+                    <option value="all">Dual</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin headset / personal output. Same wiring as before,
+                 visually demoted to a single row in the device list. -->
+            <div class="audio-pop-section">
+              <div class="audio-pop-section-label">Admin headset</div>
+              <div class="audio-pop-device" data-device-role="admin">
+                <div class="audio-pop-device-head">
+                  <span class="audio-pop-device-dot" aria-hidden="true"></span>
+                  <select class="audio-pop-device-sink meeting-admin-sink-select" title="Admin / personal headset output">
+                    <option value="">Admin default</option>
+                  </select>
+                  <button type="button" class="audio-pop-mute btn-ghost interpretation-mute-bt" title="Mute admin headset / BT clients">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <line x1="23" y1="9" x2="17" y2="15"/>
+                      <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="audio-pop-device-foot">
+                  <label class="audio-pop-lang-label">Speaks</label>
+                  <select class="audio-pop-device-lang meeting-admin-lang-select" title="Admin headset target language">
+                    <option value="en">English</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Browser listeners — collective row, no per-listener
+                 device picker. Mute kills delivery for every guest /
+                 BT-paired phone tuned into /listen. -->
+            <div class="audio-pop-section audio-pop-section-web">
+              <div class="audio-pop-section-label">Web listeners</div>
+              <div class="audio-pop-device" data-device-role="web">
+                <div class="audio-pop-device-head">
+                  <span class="audio-pop-device-dot" aria-hidden="true"></span>
+                  <div class="audio-pop-device-name">
+                    <span class="audio-pop-device-name-text">Guests on this meeting</span>
+                    <span class="audio-pop-device-name-meta interpretation-status" id="audio-pop-web-status" aria-live="polite">-</span>
+                  </div>
+                  <button type="button" class="audio-pop-mute btn-ghost interpretation-mute-web" title="Mute browser interpretation listeners">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                      <line x1="23" y1="9" x2="17" y2="15"/>
+                      <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Device-level volume mixer (Poly + USB + BT). Stays as a
+                 collapsible sub-panel since it's a tertiary control. -->
+            <div class="audio-pop-section">
+              <details class="audio-pop-volumes meeting-device-volumes-popover" data-open="false">
+                <summary class="audio-pop-volumes-summary meeting-device-volumes-toggle" aria-expanded="false" aria-controls="meeting-device-volumes-panel">
+                  Device volumes
+                </summary>
+                <div class="audio-pop-volumes-body meeting-device-volumes-panel" id="meeting-device-volumes-panel" role="region" aria-label="Per-device output volume">
+                  <div class="audio-device-volumes" aria-live="polite"></div>
+                </div>
+              </details>
+            </div>
+
+            <!-- Aggregated status line — drives both the live status
+                 readout the legacy code already populates and a
+                 single-source-of-truth indicator inside the popover. -->
+            <div class="audio-pop-foot">
+              <span class="meeting-interpretation-status interpretation-status" aria-live="polite">-</span>
+            </div>
+          </div>
+          <label class="tts-mute-label" title="Mute TTS audio">
+            <input type="checkbox" id="tts-mute">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+          </label>
+          <button id="btn-listen" class="btn-ghost btn-listen-toggle" title="Listen to real-time interpreted audio in this browser">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+            </svg>
+            Browser
+          </button>
+          <select id="listen-lang" class="listen-lang-select" style="display:none" title="Interpretation language">
+          </select>
+          <select id="listen-mode" class="listen-lang-select" style="display:none" title="Interpretation mode">
+            <option value="translation">Translation only</option>
+            <option value="full">Full (pass-through + translation)</option>
+          </select>
+        </div>
+        <div class="control-row control-row-secondary">
+          <button id="btn-metrics" class="btn-ghost" title="Toggle metrics dashboard">Metrics</button>
+          <button id="btn-one-on-one" class="btn-ghost" title="1:1 conversation mode">1:1</button>
+          <button id="btn-col-a" class="btn-ghost" title="Show only Language A" style="display:none"></button>
+          <button id="btn-col-b" class="btn-ghost" title="Show only Language B" style="display:none"></button>
+          <button id="btn-toggle-live" class="btn-ghost" title="Open pop-out translation view">Pop-out</button>
+          <button id="btn-toggle-table" class="btn-ghost" title="Toggle virtual table">Table</button>
+          <button id="btn-toggle-terminal" class="btn-ghost" title="Show terminal above the transcript (admin debug view)">Terminal</button>
+          <button id="btn-scroll-dir" class="btn-ghost" title="Toggle transcript order (newest first / oldest first)">↑ Newest first</button>
+          <button id="btn-clear" class="btn-ghost" title="Clear transcript">Clear</button>
+        </div>
+      </div>
+
+      <!-- Admin slide controls — visible only when a deck is loaded
+           for the current meeting. Admin = operator's driving console
+           for the popout demo, so the slide preview is the primary
+           signal here. Layout: slides on the left, speaker notes on
+           the right, draggable splitter between them, height resize
+           handle on the bottom edge. Upload PPTX is NOT here on
+           purpose — decks are uploaded via the popout's Slides
+           button (or POST /slides/upload from the API), so the admin
+           bar reclaims that space for content. Both ratios persist
+           in localStorage. -->
+      <div id="admin-slide-bar" class="admin-slide-bar" style="display:none">
+        <div class="admin-slide-main">
+          <div class="admin-slide-pane admin-slide-pane-slides">
+            <div class="admin-slide-thumbs">
+              <figure class="admin-slide-thumb-wrap">
+                <figcaption class="admin-slide-thumb-caption" id="admin-slide-thumb-orig-cap">Source</figcaption>
+                <img id="admin-slide-thumb" alt="Current slide (original)">
+              </figure>
+              <figure class="admin-slide-thumb-wrap">
+                <figcaption class="admin-slide-thumb-caption" id="admin-slide-thumb-trans-cap">Translated</figcaption>
+                <img id="admin-slide-thumb-translated" alt="Current slide (translated)">
+                <div class="admin-slide-thumb-status" id="admin-slide-thumb-trans-status">Translating…</div>
+              </figure>
+            </div>
+            <div class="admin-slide-controls">
+              <button id="admin-slide-prev" class="btn-ghost" title="Previous slide (←)">◀</button>
+              <span id="admin-slide-label">0 / 0</span>
+              <button id="admin-slide-next" class="btn-ghost" title="Next slide (→)">▶</button>
+            </div>
+          </div>
+          <div id="admin-slide-splitter" class="admin-slide-splitter"
+               title="Drag to resize slides ↔ notes · double-click to reset"
+               role="separator" aria-orientation="vertical" aria-label="Resize slides vs notes">
+            <div class="admin-slide-splitter-grip"></div>
+          </div>
+          <div id="admin-slide-notes" class="admin-slide-pane admin-slide-pane-notes" aria-live="polite">
+            <div class="admin-slide-notes-label">Speaker notes</div>
+            <div class="admin-slide-notes-body" id="admin-slide-notes-body">No notes for this slide.</div>
+          </div>
+        </div>
+        <div id="admin-slide-resize" class="admin-slide-resize"
+             title="Drag to resize bar height · double-click to reset"
+             role="separator" aria-orientation="horizontal" aria-label="Resize slide preview height">
+          <div class="admin-slide-resize-grip"></div>
+        </div>
+      </div>
+
+      <!-- Transcript columns (unified grid for row alignment) -->
+      <div class="transcript-columns">
+        <!-- Column headers hidden — compact view is now the default -->
+        <div class="transcript-col-headers" style="display:none">
+          <div class="col-header">
+            <span class="col-header-label">Live</span>
+            <span class="col-header-hint">All languages</span>
+          </div>
+          <div class="col-header">
+            <span class="col-header-label" id="col-lang-a-label">Language A</span>
+            <span class="col-header-hint" id="col-lang-a-hint">original + translated</span>
+          </div>
+          <div class="col-header">
+            <span class="col-header-label" id="col-lang-b-label">Language B</span>
+            <span class="col-header-hint" id="col-lang-b-hint">original + translated</span>
+          </div>
+        </div>
+        <div class="transcript-grid-scroll" id="transcript-grid"></div>
+      </div>
+
+      <!-- 1:1 Conversation Mode (hidden by default) -->
+      <div class="one-on-one-container" id="one-on-one-container" style="display:none">
+        <div class="one-on-one-pane one-on-one-left">
+          <div class="one-on-one-header">
+            <span class="one-on-one-speaker" id="oo-speaker-left">Speaker A</span>
+            <button class="btn-ghost one-on-one-swap" id="oo-swap" title="Swap speakers">&#8644;</button>
+          </div>
+          <div class="one-on-one-scroll" id="oo-left"></div>
+        </div>
+        <div class="one-on-one-divider"></div>
+        <div class="one-on-one-pane one-on-one-right">
+          <div class="one-on-one-header">
+            <span class="one-on-one-speaker" id="oo-speaker-right">Speaker B</span>
+          </div>
+          <div class="one-on-one-scroll" id="oo-right"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LANDING PAGE ═══ -->
+    <div id="landing-mode" class="landing-mode" style="display:none">
+      <div class="landing-scroll">
+        <div class="landing-hero">
+          <div class="landing-hero-badge">Real-time multilingual transcription</div>
+          <h2>Your meetings, <br>understood in every language</h2>
+          <p>Meeting Scribe captures live audio, transcribes in real time, and translates between any pair of 10 supported languages, all running locally on your hardware.</p>
+          <div class="landing-cta-row">
+            <button class="landing-cta" id="landing-start-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              Start a Meeting
+            </button>
+            <!-- Quick-start shortcut: skips the room-setup screen entirely
+                 and fires a monolingual English meeting. For the common
+                 "I just want to record a solo session in English" case,
+                 this is one click instead of five. -->
+            <button class="landing-cta-quick" id="landing-quick-english-btn" title="Skip setup and start a single-language English meeting">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Quick start English
+            </button>
+          </div>
+        </div>
+
+        <div class="landing-steps">
+          <div class="landing-step">
+            <div class="landing-step-num">1</div>
+            <div>
+              <h3>Set up the room</h3>
+              <p>Choose a table layout and add seats for each participant. Optionally enroll speakers by recording a short voice sample so the system can identify who is speaking.</p>
+            </div>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">2</div>
+            <div>
+              <h3>Start the meeting</h3>
+              <p>Hit "Start Meeting" and speak normally. Audio is captured from your device microphone and the live transcript shows each utterance in its original language with the translation shown alongside.</p>
+            </div>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">3</div>
+            <div>
+              <h3>Speak in any supported language</h3>
+              <p>The system automatically detects the spoken language. Each utterance is transcribed in its original language and translated to the paired language in real time. Speaker identification labels who said what.</p>
+            </div>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">4</div>
+            <div>
+              <h3>Review when finished</h3>
+              <p>When you stop the meeting, an AI summary is generated with topics, decisions, action items, and speaker participation stats. Download the transcript as Markdown, plain text, or a ZIP archive.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-features">
+          <h3>Capabilities</h3>
+          <div class="landing-features-grid">
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+              </div>
+              <strong>Live Transcription</strong>
+              <p>Speech-to-text with sub-second latency</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <strong>Real-time Translation</strong>
+              <p>Any pair of 10 languages, bidirectional</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <strong>Speaker Identification</strong>
+              <p>Knows who said what via voice diarization</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <strong>AI Meeting Summary</strong>
+              <p>Topics, decisions, and action items</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <strong>Fully Local</strong>
+              <p>All processing on-device, nothing leaves your network</p>
+            </div>
+            <div class="landing-feature">
+              <div class="landing-feature-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              </div>
+              <strong>Interpretation Audio</strong>
+              <p>Near-real-time translated audio track streamed to hotspot guests in their chosen language</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-footer-note">
+          <a href="/how-it-works" class="landing-tech-link">Technical architecture &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW MODE (past meeting) ═══ -->
+    <div id="view-mode" style="display:none">
+      <div class="transcript-columns">
+        <div class="transcript-col">
+          <div class="col-header"><span class="col-header-label">Transcript</span></div>
+          <div class="col-scroll" id="view-scroll">
+            <div class="transcript-empty" id="view-empty">
+              <p>Select a meeting from the sidebar</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Audio player bar (bottom of screen for past meeting review) -->
+  <div class="player-bar" id="player-bar" style="display:none">
+    <button class="player-play" id="player-play">▶</button>
+    <span class="player-time" id="player-current">00:00</span>
+    <input type="range" class="player-scrub" id="player-scrub" min="0" max="100" value="0" step="0.1">
+    <span class="player-time" id="player-duration">00:00</span>
+    <select class="player-speed" id="player-speed">
+      <option value="1">1x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
+  </div>
+
+  <!-- Modal overlay -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none">
+    <div class="modal-card" id="modal-card"></div>
+  </div>
+
+  <!-- Room editor overlay — used mid-meeting and in review mode -->
+  <div class="room-editor-overlay" id="room-editor-overlay" style="display:none">
+    <div class="room-editor-header">
+      <div class="room-editor-title">
+        <span id="room-editor-title-text">Edit Room Layout</span>
+        <span class="room-editor-mode-badge" id="room-editor-mode-badge"></span>
+      </div>
+      <div class="room-editor-actions">
+        <button class="preset-btn" data-preset="boardroom" title="Boardroom">
+          <svg width="18" height="12" viewBox="0 0 18 12"><ellipse cx="9" cy="6" rx="8" ry="5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="preset-btn" data-preset="round" title="Round">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="preset-btn" data-preset="rectangle" title="Rectangle">
+          <svg width="18" height="12" viewBox="0 0 18 12"><rect x="1" y="1" width="16" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button id="room-editor-add-table" class="btn-add-seat" title="Add table">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M12 10v4M10 12h4"/></svg>
+          Table
+        </button>
+        <button id="room-editor-add-seat" class="btn-add-seat" title="Add seat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Seat
+        </button>
+        <button id="room-editor-close" class="btn-ghost" title="Close editor">Done</button>
+      </div>
+    </div>
+    <div class="room-editor-body">
+      <div class="room-editor-canvas" id="room-editor-canvas"></div>
+      <div class="room-editor-sidebar" id="room-editor-sidebar" style="display:none">
+        <div class="sidebar-title">Detected Voices</div>
+        <div class="sidebar-sub">Drag a voice onto a seat to assign it</div>
+        <div class="cluster-chips" id="cluster-chips"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popout layout modules — classic scripts loaded before the
+       admin SPA module so the panel registry is populated by the time
+       scribe/index.js boots. -->
+  <script src="/static/js/popout-layout.js"></script>
+  <script src="/static/js/popout-layout-presets.js"></script>
+  <script src="/static/js/popout-layout-storage.js"></script>
+  <script src="/static/js/popout-layout-resizer.js"></script>
+  <script src="/static/js/popout-panel-registry.js"></script>
+  <script src="/static/js/popout-layout-render.js"></script>
+
+  <!-- Diagnostics view: native UI for system health + log inspection.
+       Loaded before the admin SPA module so the open/close hook is
+       bound by the time the header buttons start firing click events. -->
+  <script src="/static/js/diagnostics-panel.js"></script>
+
+  <!-- Bluetooth audio card. The script bails early if `#bt-card` isn't
+       in the DOM, so loading is safe on pages that don't expose the
+       admin settings panel. Wires the BT controls inside Settings →
+       Bluetooth audio to /api/admin/bt/* (cookie-auth + Origin gate). -->
+  <script src="/static/js/admin-audio-card.js"></script>
+  <script src="/static/js/admin-bt-card.js"></script>
+  <script src="/static/js/admin-speakerphone-card.js"></script>
+  <script src="/static/js/admin-wan-card.js"></script>
+
+  <script type="module" src="/static/js/scribe/index.js"></script>
+</body>
+</html>

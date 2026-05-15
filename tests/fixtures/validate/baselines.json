@@ -1,0 +1,31 @@
+{
+  "_comment": "Per-hardware-class baselines for `meeting-scribe validate --full`. Override any threshold via env vars (e.g. SCRIBE_VALIDATE_ASR_P95_MS=500). Captured 2026-04-28 on the GB10 dev box; refresh after any model bump.",
+  "schema_version": 1,
+  "captured_at": "2026-04-28",
+  "gb10": {
+    "asr": {
+      "p95_ms": 600,
+      "max_wer": 0.30,
+      "model_revision": "Qwen/Qwen3-ASR-1.7B"
+    },
+    "translate": {
+      "p95_ms": 3000,
+      "min_bleu": 15.0,
+      "model_revision": "Qwen/Qwen3.6-35B-A3B-FP8"
+    },
+    "diarize": {
+      "p95_ms": 5000
+    },
+    "tts": {
+      "_baseline_note": "Measured 2026-04-28 first-call ~1933ms; warm calls ≪ that. Threshold leaves headroom for cold start + light contention.",
+      "p95_ttfa_ms": 2500,
+      "max_5xx_rate": 0.05
+    },
+    "furigana": {
+      "must_contain": "<ruby>"
+    },
+    "e2e_lag": {
+      "p95_utterance_to_audio_ms": 8000
+    }
+  }
+}

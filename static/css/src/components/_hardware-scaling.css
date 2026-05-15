@@ -1,0 +1,237 @@
+/* Meeting Scribe — hardware-scaling page-specific components.
+   Shared editorial chrome lives in ./_editorial.css. This file holds
+   only the hardware-scaling-page-specific content components: the
+   tier badges, the citation marker, and the sources block. */
+
+/* ═══════════ PRODUCT IMAGE ═══════════
+   A small framed product photo at the top of each tier card, so the
+   reader gets a visual scale cue (desk box → 10U server → full rack)
+   alongside the numeric specs. Images are stored under
+   static/images/hardware/ and ship bundled with the site (the
+   appliance has no internet, so hot-linking is not an option). */
+
+.product-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 auto var(--space-lg);
+  max-width: 420px;
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 8px;
+}
+
+.product-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Wider variant for panoramic / cinematic shots (e.g. the GB300 NVL72
+   deployment hero is 3840 × 2160). max-width grows to fill more of
+   the card width without shrinking the image down to a thin strip. */
+.product-image-wide {
+  max-width: 640px;
+}
+
+/* Two-up vertical stack: a hero rack shot above an engineering-detail
+   tray shot, sharing a frame so the Tier 3 card carries both the AI-
+   factory atmospherics and the Grace+Blackwell internals at scale. */
+.product-image-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 640px;
+  margin: 0 auto var(--space-lg);
+}
+
+.product-image-stack .product-image {
+  margin: 0;
+  max-width: 100%;
+}
+
+.product-image-stack .product-image img {
+  max-height: 320px;
+}
+
+@media (max-width: 768px) {
+  .product-image-stack .product-image img {
+    max-height: 220px;
+  }
+}
+
+.product-image-caption {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.product-image-caption strong {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .product-image {
+    max-width: 100%;
+    padding: var(--space-sm);
+  }
+  .product-image img {
+    max-height: 220px;
+  }
+}
+
+/* ═══════════ TIER BADGE ═══════════
+   A small label that rides on the stage-card title, identifying
+   which tier (desk / rack / factory) the card describes. */
+
+.tier-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  margin-left: var(--space-sm);
+  border-radius: 3px;
+  background: var(--tier-bg, var(--color-bg-raised));
+  color: var(--tier-fg, var(--color-text-muted));
+  border: 1px solid var(--tier-border, var(--color-border-dim));
+  vertical-align: middle;
+}
+
+.tier-badge[data-tier="desk"]    { --tier-bg: color-mix(in srgb, var(--color-speaker-1) 12%, var(--color-bg-raised)); --tier-fg: var(--color-speaker-1); --tier-border: color-mix(in srgb, var(--color-speaker-1) 30%, var(--color-border-dim)); }
+.tier-badge[data-tier="rack"]    { --tier-bg: color-mix(in srgb, var(--color-speaker-2) 12%, var(--color-bg-raised)); --tier-fg: var(--color-speaker-2); --tier-border: color-mix(in srgb, var(--color-speaker-2) 30%, var(--color-border-dim)); }
+.tier-badge[data-tier="factory"] { --tier-bg: color-mix(in srgb, var(--color-speaker-3) 12%, var(--color-bg-raised)); --tier-fg: var(--color-speaker-3); --tier-border: color-mix(in srgb, var(--color-speaker-3) 30%, var(--color-border-dim)); }
+
+/* ═══════════ CITATION MARKER ═══════════
+   A small superscript marker rendered on every numeric spec value;
+   tooltips out the source id. The HTML keeps the cite as a
+   data-cite attribute and the visual marker is a static dagger
+   so the page stays scannable. */
+
+.cite-marker {
+  display: inline-block;
+  margin-left: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--color-text-accent);
+  vertical-align: super;
+  line-height: 1;
+  cursor: help;
+}
+
+/* ═══════════ SOURCES BLOCK ═══════════
+   Dense list at the page bottom, one row per cited URL. */
+
+.sources-block {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 8px;
+}
+
+.sources-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+}
+
+.sources-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-sm) var(--space-xl);
+}
+
+.sources-list li {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  padding-left: var(--space-md);
+  border-left: 2px solid var(--color-border-dim);
+}
+
+.sources-list .source-id {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-accent);
+  margin-right: 6px;
+}
+
+.sources-list a {
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--color-border);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.sources-list a:hover {
+  color: var(--color-text-accent);
+  border-bottom-color: var(--color-text-accent);
+}
+
+/* ═══════════ SCALING RATIO STRIP ═══════════
+   Three columns of "1× → 144× → 1,440×"-style ratios under the
+   comparison table, rendered as a compact horizontal strip. */
+
+.ratio-strip {
+  margin-top: var(--space-md);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 6px;
+}
+
+.ratio-cell {
+  text-align: center;
+}
+
+.ratio-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.ratio-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.ratio-value .ratio-multiplier {
+  color: var(--color-text-accent);
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+
+@media (max-width: 768px) {
+  .sources-list {
+    grid-template-columns: 1fr;
+  }
+  .ratio-strip {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+}

@@ -1,0 +1,234 @@
+/* Meeting Scribe — unified design tokens for Tailwind v4.
+ *
+ * Single source of truth for every page (admin SPA, reader, guest,
+ * portal, setup wizard, how-it-works doc, demo). One unified
+ * @theme — the wizard and portal pages share the same palette as
+ * the admin SPA.
+ *
+ * Every token here becomes BOTH a CSS custom property (via Tailwind's
+ * --color-X / --font-X / --spacing-X / --radius-X conventions) AND a
+ * utility class (e.g. `bg-bg-deep`, `text-ink-blue`, `p-xl`).
+ *
+ * Naming policy:
+ *   --color-*    palette + semantic surface/text/state tokens
+ *   --font-*     font stacks (system-fonts only — no external loads)
+ *   --text-*     font sizes
+ *   --spacing-*  layout spacing
+ *   --radius-*   border-radius
+ *   --ease-*     transition timing functions
+ *
+ * No raw hex/px outside this file. New components consume tokens via
+ * Tailwind utilities or `@apply` in static/css/src/components/*.css.
+ *
+ * Imported by static/css/src/lib/base.css, which is imported by every
+ * page-level entry (app.css, reader.css, guest.css, etc.).
+ */
+
+@theme {
+  /* ─────────────────────────────────────────────────────────────
+   * Surfaces — neutral / paper / dark
+   * The admin SPA's bg-deep / bg-surface / bg-raised palette is the
+   * default. Paper-* tokens are the setup wizard's warm surface
+   * variants. Dark-* tokens come from the demo pages.
+   * ───────────────────────────────────────────────────────────── */
+  --color-bg-deep:        #f8f7f4;
+  --color-bg-surface:     #ffffff;
+  --color-bg-raised:      #f2f1ee;
+  --color-bg-hover:       #eceae6;
+  --color-border:         #d8d6d0;
+  --color-border-dim:     #e8e6e2;
+
+  --color-paper:          #f5f1e8;
+  --color-paper-deep:     #ede7d8;
+  --color-rule:           #d8cfb6;
+  --color-rule-soft:      #e8dfc7;
+
+  /* Dark surfaces (demo pages). Kept in the unified theme so future
+     dark-variant utilities resolve through the same token system. */
+  --color-bg-dark:        #0f0f0f;
+  --color-bg-dark-surface:#1a1a1a;
+  --color-bg-dark-border: #2a2a2a;
+  --color-bg-night:       #0f1117;
+  --color-bg-night-card:  #181b24;
+  --color-bg-night-raised:#1e2230;
+  --color-bg-night-border:#2a2e3d;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Text — primary/secondary/muted + accent + dark variants
+   * ───────────────────────────────────────────────────────────── */
+  --color-text-primary:   #1a1a1e;
+  --color-text-secondary: #4a4a52;
+  --color-text-muted:     #8a8a94;
+  --color-text-accent:    #8b6914;
+
+  /* Wizard ink palette — text colours used by the setup wizard. */
+  --color-ink:            #1a1a1f;
+  --color-ink-soft:       #4a4a52;
+  --color-ink-faint:      #7a756a;
+
+  /* Demo + dark text variants */
+  --color-text-dark:           #f0efe8;
+  --color-text-dark-secondary: #9ca3b8;
+  --color-text-dark-muted:     #5f6580;
+  --color-text-night:          #e8eaf0;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Accent + status colors
+   * The admin SPA uses speaker-1..4 as a warm distinct palette;
+   * recording / success / warning / info follow the standard
+   * traffic-light vocabulary. ink-blue / highlight / accent-* are
+   * the setup wizard's editorial accents.
+   * ───────────────────────────────────────────────────────────── */
+  --color-speaker-1:      #c45d20;
+  --color-speaker-2:      #1a6fb5;
+  --color-speaker-3:      #2a8540;
+  --color-speaker-4:      #9b2d7b;
+
+  --color-recording:      #dc2626;
+  --color-recording-bg:   #fef2f2;
+  --color-success:        #16a34a;
+  --color-success-soft:   #22c55e20;
+  --color-warning:        #ca8a04;
+  --color-info:           #6b7280;
+  --color-info-dim:       #ccc;
+
+  --color-ink-blue:       #1b3a5b;
+  --color-ink-blue-hot:   #2b5d8f;
+  --color-ink-blue-soft:  #e9eef4;
+  --color-highlight:      #c89b3c;
+  --color-highlight-bg:   #fcf4e0;
+
+  /* Demo / interactive accents */
+  --color-primary:        #4a9eff;
+  --color-primary-dim:    #2d5f99;
+  --color-accent-gold:    #e8c547;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Dell Pro Max kiosk theme — HDMI idle splash + kiosk surfaces.
+   * Inspired by the Dell Pro Max product line visual language: near-
+   * black base, dramatic Dell-blue radial lighting, electric-cyan
+   * highlights. All values are local; no external assets / fonts.
+   * Consumed by ``components/_kiosk.css``.
+   * ───────────────────────────────────────────────────────────── */
+  --color-kiosk-ink:           #04060c;
+  --color-kiosk-ink-mid:       #050a18;
+  --color-kiosk-ink-rise:      #060f24;
+  --color-kiosk-dell-blue:     #0085c3;
+  --color-kiosk-dell-blue-dim: #006497;
+  --color-kiosk-cyan:          #00bfd8;
+  --color-kiosk-cyan-pale:     #6dd1ff;
+  --color-kiosk-ice:           #cfe9ff;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Admin SPA semantic aliases — same surfaces, different names
+   * for the cases where a component wants to mean "the accent
+   * colour" / "a subtle border" / "a surface hover" without
+   * picking a foreground or background slot.
+   *
+   * `--color-accent` aliases `--color-text-accent`.
+   * `--color-border-subtle` is a hair fainter than `--color-border-dim`,
+   *   used by settings cards + diagnostic pills.
+   * `--color-surface-hover` is the row-hover background used by
+   *   meetings-list + speaker-modal — equal to `--color-bg-hover`
+   *   but named so the call-site reads as "hover on a surface"
+   *   rather than "raised surface".
+   * ───────────────────────────────────────────────────────────── */
+  --color-accent:         #8b6914;
+  --color-border-subtle:  #e3e0d9;
+  --color-surface-hover:  #eceae6;
+
+  /* Card + terminal palettes are defined LOCALLY (scoped to
+   * `.terminal-panel` + `.term-access-card`) in their respective
+   * component CSS files. They use the same `--color-card-*` /
+   * `--color-term-*` namespace for consistency but the values
+   * are component-owned, not theme-global. See
+   * `static/css/src/components/_terminal-panel.css` and
+   * `static/css/src/components/_terminal-access.css`.
+   */
+
+  /* ─────────────────────────────────────────────────────────────
+   * Typography — system-fonts only (no external font loads; the
+   * appliance ships from a captive AP with no internet by design).
+   * ───────────────────────────────────────────────────────────── */
+  --font-ui:      'DM Sans', -apple-system, BlinkMacSystemFont,
+                  'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-ja:      'Noto Sans JP', 'Hiragino Kaku Gothic ProN',
+                  'Noto Sans CJK JP', 'Yu Gothic', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono',
+                  'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
+  --font-display: 'Iowan Old Style', 'Charter', 'Cambria',
+                  'Hoefler Text', Georgia, 'Times New Roman', serif;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Font sizes — Tailwind's defaults are kept; only add explicit
+   * named sizes when a page calls for one outside the default scale.
+   * ───────────────────────────────────────────────────────────── */
+
+  /* ─────────────────────────────────────────────────────────────
+   * Spacing — keep Tailwind v4's 0.25rem base (so p-4, gap-6 resolve
+   * to 1rem / 1.5rem). DO NOT define named-size
+   * --spacing-xs/sm/md/lg/xl/2xl/3xl tokens here: in v4 those names
+   * collide with the container scale used by max-w-{name}, and
+   * defining e.g. --spacing-xl=2.5rem makes max-w-xl resolve to 40px
+   * instead of the default --container-xl: 36rem. Tailwind's built-in
+   * --container-{name} scale handles max-w utilities directly; any
+   * place that needs a named spacing value uses the numeric scale
+   * (e.g. p-10 = 2.5rem) instead.
+   * ───────────────────────────────────────────────────────────── */
+
+  /* ─────────────────────────────────────────────────────────────
+   * Radius — Tailwind's defaults (sm 0.125, md 0.375, lg 0.5,
+   * xl 0.75, 2xl 1, 3xl 1.5 rem) cover most needs. The named
+   * `paper-*` values below match the wizard's chunkier feel.
+   * ───────────────────────────────────────────────────────────── */
+  --radius-paper-sm: 4px;
+  --radius-paper-md: 10px;
+  --radius-paper-lg: 18px;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Motion — easing + durations.
+   * ───────────────────────────────────────────────────────────── */
+  --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-wizard-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --default-transition-duration: 150ms;
+  --duration-fast: 150ms;
+  --duration-med:  300ms;
+  --duration-slow: 640ms;
+
+  /* ─────────────────────────────────────────────────────────────
+   * Shadows — soft warmth for the wizard, subtle ink for admin.
+   * ───────────────────────────────────────────────────────────── */
+  --shadow-soft: 0 1px 0 rgba(26, 26, 31, 0.04),
+                 0 24px 60px -36px rgba(27, 58, 91, 0.30);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-thin: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+ * Named spacing + radius tokens — DEFINED OUTSIDE @theme on purpose.
+ *
+ * `--space-{xs,sm,md,lg,xl,3xl}` collide with Tailwind v4's container
+ * scale when placed inside @theme as `--spacing-{name}` — `max-w-xl`
+ * starts resolving to `2.5rem` instead of the default `--container-xl:
+ * 36rem`. Keeping them as plain `:root` custom properties lets
+ * components use `var(--space-md)` as before WITHOUT generating
+ * utility classes that fight the container defaults.
+ *
+ * `--radius-sm` / `--radius-xs` are the small named radii used by
+ * diagnostics-panel + a couple of pill primitives. Tailwind v4 has
+ * built-in defaults but doesn't always expose them as custom props at
+ * the cascade root; declaring them explicitly here makes the
+ * `var()` resolution deterministic.
+ * ───────────────────────────────────────────────────────────────── */
+:root {
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-3xl: 4rem;
+
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+}

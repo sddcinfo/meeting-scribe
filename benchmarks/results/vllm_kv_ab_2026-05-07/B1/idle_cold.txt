@@ -1,0 +1,27 @@
+=== B1 cold-idle snapshot ===
+2026-05-07T14:22:56+09:00
+--- free -h ---
+               total        used        free      shared  buff/cache   available
+Mem:           121Gi       106Gi       1.4Gi       4.8Gi        19Gi        15Gi
+Swap:           15Gi       2.4Gi        13Gi
+--- /proc/swaps ---
+Filename				Type		Size		Used		Priority
+/swap.img                               file		16777212	2526484		-2
+--- /proc/meminfo (selected) ---
+MemTotal:       127535960 kB
+MemAvailable:   15792136 kB
+Cached:         19690764 kB
+SwapTotal:      16777212 kB
+SwapFree:       14250728 kB
+AnonPages:      14339576 kB
+--- nvidia-smi ---
+utilization.gpu [%], memory.used [MiB]
+0 %, [N/A]
+--- docker stats ---
+NAME                 MEM USAGE / LIMIT
+autosre-vllm-local   8.08GiB / 80GiB
+scribe-tts           2.021GiB / 4GiB
+scribe-tts-2         339.3MiB / 4GiB
+scribe-diarization   735.1MiB / 6GiB
+scribe-asr           8.505GiB / 18GiB
+scribe-autoheal      2.949MiB / 121.6GiB

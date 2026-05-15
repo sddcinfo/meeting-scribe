@@ -1,0 +1,50 @@
+{"corpus_id": "enzh_greet_1", "source_lang": "en", "target_lang": "zh", "source_text": "Welcome to today's meeting. Let's start with introductions."}
+{"corpus_id": "enzh_bus_1", "source_lang": "en", "target_lang": "zh", "source_text": "We exceeded our quarterly targets by twelve percent."}
+{"corpus_id": "enzh_tech_1", "source_lang": "en", "target_lang": "zh", "source_text": "The database migration is scheduled for Saturday night."}
+{"corpus_id": "enzh_convo_1", "source_lang": "en", "target_lang": "zh", "source_text": "Could you repeat that? I didn't catch the last part."}
+{"corpus_id": "enzh_complex_1", "source_lang": "en", "target_lang": "zh", "source_text": "To minimize downtime we should coordinate the rollout across teams before Friday."}
+{"corpus_id": "zhen_greet_1", "source_lang": "zh", "target_lang": "en", "source_text": "欢迎大家参加今天的会议,我们先来做个自我介绍。"}
+{"corpus_id": "zhen_bus_1", "source_lang": "zh", "target_lang": "en", "source_text": "本季度我们的销售额超过了目标百分之十二。"}
+{"corpus_id": "zhen_tech_1", "source_lang": "zh", "target_lang": "en", "source_text": "数据库的迁移安排在周六晚上进行。"}
+{"corpus_id": "zhen_convo_1", "source_lang": "zh", "target_lang": "en", "source_text": "你能再说一遍吗?我没有听清最后一部分。"}
+{"corpus_id": "zhen_complex_1", "source_lang": "zh", "target_lang": "en", "source_text": "为了尽量减少停机时间,我们应该在周五之前协调好各个团队的上线节奏。"}
+{"corpus_id": "enko_greet_1", "source_lang": "en", "target_lang": "ko", "source_text": "Welcome to today's meeting. Let's start with introductions."}
+{"corpus_id": "enko_bus_1", "source_lang": "en", "target_lang": "ko", "source_text": "We exceeded our quarterly targets by twelve percent."}
+{"corpus_id": "enko_tech_1", "source_lang": "en", "target_lang": "ko", "source_text": "The database migration is scheduled for Saturday night."}
+{"corpus_id": "enko_convo_1", "source_lang": "en", "target_lang": "ko", "source_text": "Could you repeat that? I didn't catch the last part."}
+{"corpus_id": "enko_complex_1", "source_lang": "en", "target_lang": "ko", "source_text": "To minimize downtime we should coordinate the rollout across teams before Friday."}
+{"corpus_id": "koen_greet_1", "source_lang": "ko", "target_lang": "en", "source_text": "오늘 회의에 오신 것을 환영합니다. 먼저 간단한 자기소개부터 시작하겠습니다."}
+{"corpus_id": "koen_bus_1", "source_lang": "ko", "target_lang": "en", "source_text": "이번 분기에 우리는 목표를 12퍼센트 초과 달성했습니다."}
+{"corpus_id": "koen_tech_1", "source_lang": "ko", "target_lang": "en", "source_text": "데이터베이스 마이그레이션은 토요일 밤에 진행할 예정입니다."}
+{"corpus_id": "koen_convo_1", "source_lang": "ko", "target_lang": "en", "source_text": "다시 한 번 말씀해 주시겠어요? 마지막 부분을 못 들었습니다."}
+{"corpus_id": "koen_complex_1", "source_lang": "ko", "target_lang": "en", "source_text": "가동 중단을 최소화하기 위해 금요일 전에 팀 간 배포 일정을 조율해야 합니다."}
+{"corpus_id": "enfr_greet_1", "source_lang": "en", "target_lang": "fr", "source_text": "Welcome to today's meeting. Let's start with introductions."}
+{"corpus_id": "enfr_bus_1", "source_lang": "en", "target_lang": "fr", "source_text": "We exceeded our quarterly targets by twelve percent."}
+{"corpus_id": "enfr_tech_1", "source_lang": "en", "target_lang": "fr", "source_text": "The database migration is scheduled for Saturday night."}
+{"corpus_id": "enfr_convo_1", "source_lang": "en", "target_lang": "fr", "source_text": "Could you repeat that? I didn't catch the last part."}
+{"corpus_id": "enfr_complex_1", "source_lang": "en", "target_lang": "fr", "source_text": "To minimize downtime we should coordinate the rollout across teams before Friday."}
+{"corpus_id": "fren_greet_1", "source_lang": "fr", "target_lang": "en", "source_text": "Bienvenue à la réunion d'aujourd'hui. Commençons par les présentations."}
+{"corpus_id": "fren_bus_1", "source_lang": "fr", "target_lang": "en", "source_text": "Nous avons dépassé nos objectifs trimestriels de douze pour cent."}
+{"corpus_id": "fren_tech_1", "source_lang": "fr", "target_lang": "en", "source_text": "La migration de la base de données est prévue pour samedi soir."}
+{"corpus_id": "fren_convo_1", "source_lang": "fr", "target_lang": "en", "source_text": "Pouvez-vous répéter ? Je n'ai pas saisi la dernière partie."}
+{"corpus_id": "fren_complex_1", "source_lang": "fr", "target_lang": "en", "source_text": "Pour minimiser l'interruption de service, nous devrions coordonner le déploiement entre les équipes avant vendredi."}
+{"corpus_id": "enes_greet_1", "source_lang": "en", "target_lang": "es", "source_text": "Welcome to today's meeting. Let's start with introductions."}
+{"corpus_id": "enes_bus_1", "source_lang": "en", "target_lang": "es", "source_text": "We exceeded our quarterly targets by twelve percent."}
+{"corpus_id": "enes_tech_1", "source_lang": "en", "target_lang": "es", "source_text": "The database migration is scheduled for Saturday night."}
+{"corpus_id": "enes_convo_1", "source_lang": "en", "target_lang": "es", "source_text": "Could you repeat that? I didn't catch the last part."}
+{"corpus_id": "enes_complex_1", "source_lang": "en", "target_lang": "es", "source_text": "To minimize downtime we should coordinate the rollout across teams before Friday."}
+{"corpus_id": "esen_greet_1", "source_lang": "es", "target_lang": "en", "source_text": "Bienvenidos a la reunión de hoy. Empecemos con las presentaciones."}
+{"corpus_id": "esen_bus_1", "source_lang": "es", "target_lang": "en", "source_text": "Hemos superado nuestros objetivos trimestrales en un doce por ciento."}
+{"corpus_id": "esen_tech_1", "source_lang": "es", "target_lang": "en", "source_text": "La migración de la base de datos está programada para el sábado por la noche."}
+{"corpus_id": "esen_convo_1", "source_lang": "es", "target_lang": "en", "source_text": "¿Podría repetirlo? No entendí la última parte."}
+{"corpus_id": "esen_complex_1", "source_lang": "es", "target_lang": "en", "source_text": "Para minimizar el tiempo de inactividad, deberíamos coordinar el despliegue entre equipos antes del viernes."}
+{"corpus_id": "ende_greet_1", "source_lang": "en", "target_lang": "de", "source_text": "Welcome to today's meeting. Let's start with introductions."}
+{"corpus_id": "ende_bus_1", "source_lang": "en", "target_lang": "de", "source_text": "We exceeded our quarterly targets by twelve percent."}
+{"corpus_id": "ende_tech_1", "source_lang": "en", "target_lang": "de", "source_text": "The database migration is scheduled for Saturday night."}
+{"corpus_id": "ende_convo_1", "source_lang": "en", "target_lang": "de", "source_text": "Could you repeat that? I didn't catch the last part."}
+{"corpus_id": "ende_complex_1", "source_lang": "en", "target_lang": "de", "source_text": "To minimize downtime we should coordinate the rollout across teams before Friday."}
+{"corpus_id": "deen_greet_1", "source_lang": "de", "target_lang": "en", "source_text": "Willkommen zum heutigen Meeting. Fangen wir mit den Vorstellungen an."}
+{"corpus_id": "deen_bus_1", "source_lang": "de", "target_lang": "en", "source_text": "Wir haben unsere Quartalsziele um zwölf Prozent übertroffen."}
+{"corpus_id": "deen_tech_1", "source_lang": "de", "target_lang": "en", "source_text": "Die Datenbankmigration ist für Samstagabend geplant."}
+{"corpus_id": "deen_convo_1", "source_lang": "de", "target_lang": "en", "source_text": "Könnten Sie das wiederholen? Ich habe den letzten Teil nicht verstanden."}
+{"corpus_id": "deen_complex_1", "source_lang": "de", "target_lang": "en", "source_text": "Um Ausfallzeiten zu minimieren, sollten wir den Rollout vor Freitag teamübergreifend abstimmen."}

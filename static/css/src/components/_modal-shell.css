@@ -1,0 +1,157 @@
+/* Meeting Scribe — Shared modal chrome.
+ *
+ * Holds the feature-specific modal variants that don't have their
+ * own partial yet — the meeting-actions tool list, the "Can't start
+ * meeting" backends-not-ready modal, and shared meeting-tool row
+ * primitives. Core modal primitives (.modal-overlay, .modal-card,
+ * confirm/input/btn) live in _modal.css; the speaker modal lives
+ * in _speaker-modal.css; the finalize modal lives in
+ * _finalize-modal.css.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ MODALS ═══════════ */
+
+/* Meeting actions modal — list of admin-tasks with descriptions */
+.meeting-tool-list { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0; }
+.meeting-tool-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-surface);
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+.meeting-tool-item:hover { border-color: var(--color-text-secondary); }
+.meeting-tool-item.meeting-tool-danger { border-color: rgba(220, 38, 38, 0.25); }
+.meeting-tool-item.meeting-tool-danger:hover { border-color: var(--color-recording); background: var(--color-recording-bg); }
+.meeting-tool-text { flex: 1; min-width: 0; }
+.meeting-tool-title { font-weight: 600; font-size: 0.88rem; margin-bottom: 0.25rem; }
+.meeting-tool-desc { font-size: 0.78rem; color: var(--color-text-secondary); line-height: 1.45; }
+.meeting-tool-desc code {
+  background: var(--color-bg-raised);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 0.92em;
+}
+.meeting-tool-meta {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.meeting-tools {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0.5;
+  transition: all var(--duration-fast);
+  flex-shrink: 0;
+}
+.meeting-item:hover .meeting-tools { opacity: 0.85; }
+.meeting-tools:hover { opacity: 1 !important; background: var(--color-bg-raised); color: var(--color-text-primary); }
+
+/* "Can't start meeting" — backends-not-ready modal */
+.modal-card.backends-not-ready {
+  width: min(92vw, 440px);
+  display: flex;
+  flex-direction: column;
+}
+
+.backends-not-ready-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl) var(--space-md);
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.backends-not-ready-header h2 {
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.backends-not-ready-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.backends-not-ready-body {
+  padding: var(--space-lg) var(--space-xl);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.backends-not-ready-message {
+  margin: 0 0 var(--space-md);
+}
+
+.backends-not-ready-list {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 6px;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.backends-not-ready-list-item {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: baseline;
+}
+
+.backends-not-ready-list-item .backend-name {
+  color: var(--color-text-accent);
+  font-weight: 600;
+  min-width: 72px;
+}
+
+.backends-not-ready-list-item .backend-detail {
+  color: var(--color-text-muted);
+  flex: 1;
+  word-break: break-word;
+}
+
+.backends-not-ready-hint {
+  margin: var(--space-md) 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.backends-not-ready-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-md) var(--space-xl) var(--space-lg);
+  border-top: 1px solid var(--color-border-dim);
+}
+
+

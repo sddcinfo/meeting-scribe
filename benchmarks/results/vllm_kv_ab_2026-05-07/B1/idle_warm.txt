@@ -1,0 +1,39 @@
+=== sample 1 2026-05-07T14:37:19+09:00 ===
+               total        used        free      shared  buff/cache   available
+Mem:           121Gi        82Gi        25Gi       115Mi        15Gi        39Gi
+Swap:           15Gi       755Mi        15Gi
+Filename				Type		Size		Used		Priority
+/swap.img                               file		16777212	773216		-2
+MemTotal:       127535960 kB
+MemAvailable:   41435616 kB
+Cached:         15356412 kB
+SwapFree:       16003996 kB
+AnonPages:       8131016 kB
+NAME                 MEM USAGE / LIMIT
+autosre-vllm-local   8.121GiB / 80GiB
+=== sample 2 2026-05-07T14:37:30+09:00 ===
+               total        used        free      shared  buff/cache   available
+Mem:           121Gi        82Gi        25Gi       115Mi        15Gi        39Gi
+Swap:           15Gi       755Mi        15Gi
+Filename				Type		Size		Used		Priority
+/swap.img                               file		16777212	773212		-2
+MemTotal:       127535960 kB
+MemAvailable:   41445404 kB
+Cached:         15356416 kB
+SwapFree:       16004000 kB
+AnonPages:       8133000 kB
+NAME                 MEM USAGE / LIMIT
+autosre-vllm-local   8.121GiB / 80GiB
+=== sample 3 2026-05-07T14:37:41+09:00 ===
+               total        used        free      shared  buff/cache   available
+Mem:           121Gi        82Gi        25Gi       115Mi        15Gi        39Gi
+Swap:           15Gi       755Mi        15Gi
+Filename				Type		Size		Used		Priority
+/swap.img                               file		16777212	773208		-2
+MemTotal:       127535960 kB
+MemAvailable:   41463080 kB
+Cached:         15356416 kB
+SwapFree:       16004004 kB
+AnonPages:       8120640 kB
+NAME                 MEM USAGE / LIMIT
+autosre-vllm-local   8.121GiB / 80GiB

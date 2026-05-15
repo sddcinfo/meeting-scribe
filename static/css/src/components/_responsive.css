@@ -1,0 +1,65 @@
+/* Meeting Scribe — admin SPA responsive overrides.
+ *
+ * Cross-component breakpoint adjustments for the live admin view.
+ * Component-internal responsive rules live alongside their component
+ * (`_control-bar.css`, `_header.css`, etc.). This file holds rules
+ * that span MULTIPLE components — chiefly the meeting control bar
+ * adjustments and the segment grid collapse below 768 px.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@media (max-width: 768px) {
+  .segment-row { grid-template-columns: 1fr; }
+  .seg-divider, .col-divider, .col-translation { display: none; }
+  .transcript-header { grid-template-columns: 1fr; }
+  header { padding: var(--space-sm) var(--space-md); }
+  .header-right { gap: var(--space-sm); }
+  .header-subtitle { max-width: 96px; }
+  .backend-pills { display: none; }
+  .seg-original, .seg-translation { padding: var(--space-sm) var(--space-md); }
+  .pill-detail { display: none; }
+  .audio-meter { width: 60px; }
+}
+
+@media (max-width: 980px) {
+  .backend-pills { display: none; }
+  .header-subtitle { max-width: min(34vw, 260px); }
+  .control-bar {
+    gap: 5px;
+    padding-inline: var(--space-md);
+  }
+  .meeting-interpretation-controls {
+    flex: 1 1 100%;
+  }
+  .meeting-admin-sink-select,
+  .meeting-room-sink-select {
+    width: min(42vw, 280px);
+  }
+  .meeting-admin-lang-select,
+  .meeting-room-lang-select {
+    width: 104px;
+    flex-basis: 104px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-qr,
+  .audio-meter {
+    display: none;
+  }
+  .header-meeting-controls {
+    gap: 3px;
+  }
+  .header-subtitle { max-width: 120px; }
+  .meeting-admin-sink-select,
+  .meeting-room-sink-select {
+    width: min(100%, 260px);
+  }
+  .meeting-admin-lang-select,
+  .meeting-room-lang-select {
+    width: 104px;
+    flex-basis: 104px;
+  }
+}

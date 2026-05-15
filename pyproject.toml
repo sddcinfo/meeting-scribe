@@ -1,0 +1,298 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meeting-scribe"
+version = "2.0.0"
+description = "Real-time multilingual meeting transcription, translation, speaker diarization, and near-real-time interpretation audio for hotspot guests"
+requires-python = ">=3.14"
+authors = [{ name = "Brad Lay" }]
+license = { text = "MIT" }
+dependencies = [
+    # Server
+    "fastapi==0.136.1",
+    "uvicorn[standard]==0.46.0",
+    # multipart parsing — FastAPI's UploadFile / Form handling delegates
+    # to this and asserts at request time if it's missing. The slides
+    # upload route would 500 with an unhelpful "must be installed" error
+    # on a fresh install otherwise. Pinned alongside fastapi so the
+    # parser version matches what fastapi was tested against.
+    "python-multipart>=0.0.20",
+
+    # Core audio/ML
+    "numpy==2.4.4",
+    "torch==2.11.0",
+    "torchaudio==2.11.0",
+    "soundfile==0.13.1",
+    # fMP4/AAC encoder for MSE streaming to hotspot guests. Bundles
+    # ffmpeg libs — no system ffmpeg required. See backends/mse_encoder.py.
+    "av==17.0.0",
+
+    # ASR runs entirely in the vLLM Qwen3-ASR container; the Python venv
+    # stays transformers-free and makes OpenAI-compatible HTTP calls.
+
+    # HuggingFace CLI — `meeting-scribe gb10 pull-models` shells out to
+    # `huggingface-cli download` to pre-populate /data/huggingface before
+    # the offline-mode containers start. Without this declared dependency,
+    # customer installs silently no-op the pre-pull and the containers
+    # crash-loop with LocalEntryNotFoundError.
+    "huggingface_hub[cli]>=0.36.0",
+
+    # HTTP client (vLLM translation, TTS)
+    "httpx==0.28.1",
+
+    # QR code generation: dropped 2026-05-13 (Phase 7) after the
+    # open-SSID hotspot made "scan to join" redundant; the 4-digit
+    # appliance PIN replaces every QR surface in the UI.
+
+    # Slide translation (text extraction + reinsertion, runs in worker container)
+    "python-pptx>=1.0.0",
+
+    # Utilities
+    "click==8.3.3",
+    "pydantic==2.13.4",
+    "pyyaml==6.0.3",
+    "pykakasi==2.3.0",
+
+    # USB speakerphone listener (Dell SP325 / SP3022).
+    # ``python-evdev`` reads telephony button events from /dev/input/event*;
+    # ``pyudev`` watches input/hidraw subsystem add/remove for hot-plug.
+    # Both are pure-Python wheels with C extensions but no system deps
+    # beyond libudev (present on every modern Linux GB10 image).
+    "evdev==1.9.2",
+    "pyudev==0.24.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.3",
+    "pytest-asyncio==1.3.0",
+    "pytest-playwright>=0.6.2",
+    # Parallel pytest — `-n auto` cuts the smoke job from ~3:30 to ~1:30
+    # on the 4-core GitHub runner. Tests that depend on the test_server
+    # fixture stay correct because the fixture is session-scoped and
+    # xdist gives each worker its own session.
+    "pytest-xdist>=3.6.0",
+    "websockets==16.0",
+    "ruff==0.15.12",
+    # Lockfile management — `pip-compile` regenerates requirements.lock
+    # from pyproject.toml; `pip-sync` (the destructive sibling that
+    # bootstrap.sh uses) lives in the same package. Adding here so the
+    # dev/customer venvs both have it available without a side install.
+    "pip-tools>=7.5.0",
+    # CVE scanner used by the security CI lane (.github/workflows/tests.yml)
+    # and by scripts/ci_local.py for local pre-push parity.
+    "pip-audit>=2.7.0",
+    # Coverage tooling — `scripts/run_coverage_gate.py` runs the unit
+    # suite under coverage and fails if the percentage drops below the
+    # baseline pinned in `.ci/coverage-floor`. Pre-push parity for the
+    # CI lane added in the same Phase 3 PR.
+    "pytest-cov>=5.0.0",
+]
+# Optional: higher-accuracy slide language detection. Adds ~170 MB but
+# materially improves classification of short/mixed-language slide text.
+# Without it, the script-aware fallback in slides/convert.py is used.
+slide-lang = [
+    "lingua-language-detector>=2.2.0",
+]
+# Optional: translation-benchmark scoring (sacreBLEU + COMET).  Used by
+# benchmarks/translation_benchmark.py --score-only for Phase 3 of the
+# Qwen3.6-FP8 migration.  COMET downloads a ~500 MB model on first
+# invocation, so this is kept out of the default dev install.
+bench = [
+    "sacrebleu>=2.4.0",
+    "unbabel-comet>=2.2.0",
+    # Used by the 2026-Q2 ASR/TTS challenger bench
+    # (plans/stateful-marinating-whistle.md) to pull public-domain
+    # JA/EN test corpora (Fleurs, CommonVoice mirrors, LibriSpeech).
+    "datasets>=2.20.0",
+    "jiwer>=3.0.0",
+]
+
+[project.scripts]
+meeting-scribe = "meeting_scribe.cli:main"
+
+[tool.meeting-scribe]
+# Imports the CLI entrypoint asserts before exec'ing the server. If any
+# of these fails to import, `meeting-scribe start` exits 78 (EX_CONFIG)
+# BEFORE any uvicorn socket bind — preventing the "port answers but app
+# is broken" window seen on 2026-05-01 when python-multipart was silently
+# missing from the customer venv. Add a name here when a new transitive
+# becomes load-bearing for a request path; the lockfile already pins the
+# version, this list pins the import-time presence.
+required-imports = [
+    "python_multipart",  # FastAPI form/UploadFile handling — slide upload route
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "huggingface_hub",
+    "yaml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meeting_scribe"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "E501",    # line too long (handled by formatter)
+    "E402",    # module-level imports not at top (intentional lazy imports in server.py)
+    "SIM105",  # contextlib.suppress vs try/except/pass (style preference)
+    "SIM108",  # ternary vs if/else (style preference)
+    "SIM118",  # key in dict vs dict.keys() (when .keys() is clearer)
+    "RUF002",  # ambiguous unicode in docstrings (× is multiplication, deliberate)
+    "RUF003",  # ambiguous unicode in comments (same reason)
+    "RUF005",  # list concatenation vs unpacking (readability)
+    "RUF006",  # asyncio.create_task reference (fire-and-forget is intentional)
+    "B007",    # unused loop control variable (often _, sometimes named for clarity)
+    "B011",    # assert False (tests use this pattern deliberately)
+    "B017",    # blind Exception assert (tests use this pattern deliberately)
+    "B023",    # function loop variable binding (closures are intentional here)
+    "B905",    # zip() without strict= (Python 3.10 backward compat legacy)
+]
+
+# Characters legitimately used in our strings (Japanese punctuation, math
+# symbols, em-dashes, and the Cyrillic → Latin transliteration table in
+# speaker/name_llm.py).  Listed explicitly so RUF001 still catches genuine
+# typos in everything else.
+allowed-confusables = [
+    "？",  # FULLWIDTH QUESTION MARK — Japanese punctuation
+    "×",   # MULTIPLICATION SIGN — used in formatted output
+    "–",   # EN DASH — typography in reports/prints
+    "а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и",  # Cyrillic source chars
+    "й", "к", "л", "м", "н", "о", "п", "р", "с", "т",  # for the _CYRILLIC_TO_LATIN
+    "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь",  # transliteration dict in
+    "э", "ю", "я",                                      # speaker/name_llm.py
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "E741",   # ambiguous variable name `l` (test loop idiom)
+    "F841",   # unused variable (test setup convenience)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["meeting_scribe"]
+
+[tool.mypy]
+# Each docker image under containers/ ships a standalone server.py.
+# Those files are built into their own images, not imported by the
+# meeting_scribe package, so mypy's "duplicate module" collision
+# (same module name at different paths) is a false alarm — exclude
+# them from the top-level crawl. Explicit `sddc typecheck containers/
+# <name>` still works if needed since mypy resolves the single
+# matching path.
+exclude = [
+    "^containers/",
+    "^repos/",
+    "^\\.venv/",
+    "^benchmarks/__pycache__/",
+]
+# benchmarks/ lacks an __init__.py so mypy resolves _fixture.py both
+# as the bare module "_fixture" and as "benchmarks._fixture" under
+# the parent package. explicit_package_bases + namespace_packages
+# tells mypy to treat the repo root as the single package base,
+# giving every file exactly one canonical module name.
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+# Third-party deps without type stubs. Ignoring their imports keeps
+# the scanner focused on first-party type hygiene.
+module = [
+    "yaml",
+    "yaml.*",
+    "speechbrain.*",
+    "comet",
+    "comet.*",
+    "lingua",
+    "lingua.*",
+    "faster_whisper",
+    "faster_whisper.*",
+    "soundfile",
+    "soundfile.*",
+    "torchaudio",
+    "torchaudio.*",
+    "scipy.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Benchmark harnesses and validation scripts import each other as
+# sibling modules. They're run under `PYTHONPATH=. python3` from the
+# repo root, so each one's de-facto canonical name is the bare file
+# name (no package prefix). Ignore these as a set rather than
+# polluting the benchmark scripts with __init__.py plumbing that
+# the docs explicitly avoid.
+module = [
+    "validate_meeting",
+    "translation_benchmark",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# Default: skip integration tests (they need a running server)
+# Run integration tests explicitly: pytest -m integration
+addopts = "-m 'not integration and not browser'"
+markers = [
+    "integration: requires running server (uses isolated test server on port 9080)",
+    "system: full-stack system tests (requires autosre start)",
+    "gb10: requires GB10 hardware with vLLM backends",
+    "slow: long-running tests (>30s)",
+    "browser: Playwright browser tests (run: playwright install chromium)",
+    "manual: human-only checks tracked in tests/manual/README.md (never auto-run)",
+    # Plan §1.6a — lockfile drift check. Runs `pip-compile` against the
+    # committed pyproject.toml and asserts byte-equality with
+    # `requirements.lock`. Excluded from the default selection because
+    # it requires `pip-tools` to be installed in the venv.
+    "lockfile_sync: lockfile is byte-equal to a fresh pip-compile",
+    "demo_smoke: real e2e demo gate (start meeting + upload PPTX + ASR + translate)",
+    "qemu_kvm: requires qemu-kvm (real ISO smoke-test, ~45 min)",
+    "qemu_tcg: requires qemu-system-* (cross-arch ISO smoke-test in CI, ~2 hr)",
+    "real_gb10: requires a real GB10 host reachable on the LAN",
+]
+
+# ── Coverage configuration ─────────────────────────────────────────
+#
+# The coverage lane runs only the cheap unit suite (no integration,
+# no browser, no requires_gpu) so the gate stays under a minute on
+# the GB10 dev box and the GitHub runner. The percentage threshold
+# is read from `.ci/coverage-floor` by `scripts/run_coverage_gate.py`
+# rather than being hard-coded here, because we want the gate to
+# ratchet manually in PRs (raise the floor when a phase materially
+# adds coverage) without modifying pyproject.toml every time.
+
+[tool.coverage.run]
+source = ["src/meeting_scribe"]
+branch = true
+parallel = false
+# Ignore the entry-point shim and CLI argv plumbing — both are exercised
+# end-to-end by integration/browser tests, which the unit-coverage lane
+# deliberately skips. Keeping them in the report would falsely depress
+# the unit-coverage percentage.
+omit = [
+    "src/meeting_scribe/__main__.py",
+    "src/meeting_scribe/cli/*",
+]
+
+[tool.coverage.report]
+# Show missing line numbers so a failure prints actionable diffs.
+show_missing = true
+skip_covered = false
+# Pragma comments to mark intentionally untested branches (defensive
+# code paths, debug-only code) — keeps the coverage report honest.
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

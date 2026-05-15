@@ -1,0 +1,84 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - "static/how-it-works.html"
+      - "static/benchmarking.html"
+      - "static/hardware-scaling.html"
+      - "static/css/dist/how-it-works.css"
+      - "static/css/dist/benchmarking.css"
+      - "static/css/dist/hardware-scaling.css"
+      - "static/js/how-it-works.js"
+      - "static/data/**/*.json"
+      - "static/images/hardware/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+# Only the public marketing surface ships to GitHub Pages — the admin app
+# (``index.html``), captive portal, guest, and reader pages reference
+# ``/static/...`` absolute paths that only work when served from the
+# meeting-scribe FastAPI server (mounted at ``/static``). Publishing them
+# to Pages produced a wall of 404s that broke the live demo.
+#
+# The three editorial pages (how-it-works, benchmarking,
+# hardware-scaling) share a trailing-slash canonical URL convention.
+# We publish each as ``<slug>/index.html`` and copy the static assets
+# under ``static/`` so the in-HTML ``../static/...`` relative paths
+# resolve identically to the FastAPI side.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Curate _site/ for Pages
+        run: |
+          set -euo pipefail
+
+          # Editorial pages → <slug>/index.html (canonical URL form)
+          mkdir -p _site/how-it-works _site/benchmarking _site/hardware-scaling
+          cp static/how-it-works.html     _site/how-it-works/index.html
+          cp static/benchmarking.html     _site/benchmarking/index.html
+          cp static/hardware-scaling.html _site/hardware-scaling/index.html
+
+          # Static assets — preserve the same relative-path shape that
+          # the FastAPI ``/static/...`` mount produces, so the in-HTML
+          # ``../static/...`` refs resolve against the published URLs.
+          mkdir -p _site/static/css/dist _site/static/js _site/static/data _site/static/images/hardware
+          cp static/css/dist/how-it-works.css      _site/static/css/dist/how-it-works.css
+          cp static/css/dist/benchmarking.css      _site/static/css/dist/benchmarking.css
+          cp static/css/dist/hardware-scaling.css  _site/static/css/dist/hardware-scaling.css
+          cp static/js/how-it-works.js             _site/static/js/how-it-works.js
+          cp static/data/*.json                    _site/static/data/ 2>/dev/null || true
+          cp static/images/hardware/*.png static/images/hardware/*.jpg \
+                                                   _site/static/images/hardware/ 2>/dev/null || true
+
+          # Landing page at the Pages root → redirect to how-it-works.
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <meta charset="utf-8">
+          <title>Meeting Scribe</title>
+          <meta http-equiv="refresh" content="0; url=how-it-works/">
+          <link rel="canonical" href="how-it-works/">
+          <p>Redirecting to <a href="how-it-works/">Meeting Scribe — How It Works</a>.</p>
+          HTML
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site/
+      - id: deployment
+        uses: actions/deploy-pages@v5

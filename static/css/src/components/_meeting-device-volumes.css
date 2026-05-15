@@ -1,0 +1,89 @@
+/* Meeting Scribe — mid-meeting device-volume popover.
+ *
+ * The compact volume mixer that opens from the Audio popover's "Vol"
+ * button during a meeting. Reuses the .audio-device-volumes row
+ * markup defined in _audio-device-volumes.css; this file just owns
+ * the popover-shell positioning + the slider-width override.
+ *
+ * Plus the small `.interpretation-grid` + `.interpretation-status`
+ * helpers used by the settings-panel interpretation block, and the
+ * `.bt-mic-status` / `.settings-toggle-row` chrome shared across
+ * the settings tabs.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.meeting-device-volumes-popover {
+  position: relative;
+  display: inline-flex;
+}
+.meeting-device-volumes-toggle {
+  font-size: 0.75rem;
+  padding: 2px var(--space-xs);
+}
+.meeting-device-volumes-popover[data-open="true"] .meeting-device-volumes-toggle {
+  background: var(--surface-2, rgba(255, 255, 255, 0.08));
+}
+.meeting-device-volumes-panel {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  right: 0;
+  min-width: 18rem;
+  max-width: 24rem;
+  padding: var(--space-sm);
+  background: var(--surface-1, var(--bg, #1f1f1f));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  z-index: 50;
+}
+.meeting-device-volumes-panel .audio-device-volumes {
+  margin-top: 0;
+}
+.meeting-device-volumes-panel .audio-device-volume-row input[type="range"] {
+  width: 8rem;
+}
+
+.interpretation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+.interpretation-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.interpretation-grid span {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+.interpretation-status {
+  font-size: 0.72rem;
+  margin: 0;
+  color: var(--color-text-secondary);
+  min-height: 1em;
+}
+.interpretation-status.ok { color: var(--color-success); }
+.interpretation-status.err { color: var(--danger, var(--color-text-secondary)); }
+
+.bt-mic-status {
+  font-size: 0.72rem;
+  margin: var(--space-xs) 0 0;
+  color: var(--color-text-secondary);
+  min-height: 1em;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  padding: var(--space-xs) 0;
+}
+.settings-toggle-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}

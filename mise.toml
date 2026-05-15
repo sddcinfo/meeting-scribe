@@ -1,0 +1,26 @@
+# meeting-scribe pins Python here so a fresh GB10 can bootstrap end-to-end
+# without a separate "go install Python 3.14 first" step. The bootstrap will
+# install mise itself if it's missing, then resolve this file.
+#
+# Customer devices only need Python — no node (zero build step), no age, no
+# extra dev tooling.
+
+[tools]
+python = "3.14.4"
+# Tailwind v4 standalone CLI is pinned in scripts/tailwind_versions.json
+# (sha256-per-platform, repo-committed). install via:
+#   python3 scripts/install_tailwind.py
+# Not in this [tools] block because mise has no Tailwind plugin and the
+# install script does explicit hash verification we don't want to delegate.
+
+# Project venv auto-activation. With this set, `cd` into the repo (or any
+# subdir) puts ``.venv/bin`` at the front of PATH, so `meeting-scribe`,
+# `pip`, `python`, and any other console-script wrapper resolve to the
+# canonical project install — the same one ``meeting-scribe.service``
+# uses. Without this, an editable install in mise's *global* site-packages
+# can shadow the venv copy in the user shell, and the two diverge silently
+# when one side is rebuilt and the other isn't (the wrapper-truncation
+# incident on 2026-05-07). create=false because bootstrap.sh provisions
+# the venv; mise's role is activation, not creation.
+[env]
+_.python.venv = { path = ".venv", create = false }

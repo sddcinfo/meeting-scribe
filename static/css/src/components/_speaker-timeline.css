@@ -1,0 +1,110 @@
+/* Meeting Scribe — Speaker timeline.
+ *
+ * The horizontal speaker-activity timeline rendered above the
+ * transcript view in review mode (replayed meetings) and as a
+ * compact strip in the meeting-mode header. Each speaker gets a
+ * lane; each utterance is a coloured `.speaker-timeline-block`
+ * positioned along the lane track. Clicking a block seeks the
+ * audio player.
+ *
+ * Body-state cascades for `body.metrics-split .speaker-timeline`
+ * and `body.popout-view .speaker-timeline` live in _state.css.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.speaker-timeline {
+  position: relative;
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-xl);
+  user-select: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.speaker-timeline-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.speaker-timeline-lane {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  gap: 0;
+  position: relative;
+}
+
+.speaker-timeline-lane-label {
+  width: 70px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.speaker-timeline-lane-track {
+  flex: 1;
+  height: 14px;
+  position: relative;
+  background: var(--color-bg-raised);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.speaker-timeline-block {
+  position: absolute;
+  top: 1px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0.85;
+  transition: opacity var(--duration-fast);
+  cursor: pointer;
+  min-width: 2px;
+}
+
+.speaker-timeline-block:hover {
+  opacity: 1;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+}
+
+/* Active timeline block — matches the transcript .playing highlight */
+.speaker-timeline-block.playing {
+  opacity: 1;
+  box-shadow:
+    0 0 0 1.5px rgba(255, 255, 255, 0.9),
+    0 0 12px 2px rgba(255, 255, 255, 0.35);
+  z-index: 3;
+}
+
+.speaker-timeline-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-text-accent);
+  pointer-events: none;
+  z-index: 5;
+  left: 70px;
+  display: none;
+}
+
+.speaker-timeline-times {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 70px;
+  margin-top: 2px;
+}
+
+.speaker-timeline-times span {
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+}

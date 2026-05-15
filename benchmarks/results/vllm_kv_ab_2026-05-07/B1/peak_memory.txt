@@ -1,0 +1,7 @@
+=== sample 1 2026-05-07T14:31:48+09:00 ===
+               total        used        free      shared  buff/cache   available
+Mem:           121Gi        82Gi        26Gi       115Mi        15Gi        39Gi
+Swap:           15Gi       758Mi        15Gi
+MemAvailable:   41534752 kB
+SwapFree:       16000064 kB
+AnonPages:       8108584 kB

@@ -1,0 +1,34 @@
+== sequential probes ==
+  asr: {'n': 15, 'min': 103.0, 'p50': 105.8, 'p95': 132.3, 'p99': 132.3, 'max': 132.3, 'mean': 109.1}
+  translate ja→en: {'n': 15, 'min': 212.2, 'p50': 295.6, 'p95': 339.6, 'p99': 339.6, 'max': 339.6, 'mean': 281.4}
+  translate en→ja: {'n': 15, 'min': 172.1, 'p50': 216.6, 'p95': 322.5, 'p99': 322.5, 'max': 322.5, 'mean': 236.1}
+Traceback (most recent call last):
+  File "/home/bradlay/sddcinfo/repos/meeting-scribe/benchmarks/perf_baseline.py", line 407, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/home/bradlay/.local/share/mise/installs/python/3.14.3/lib/python3.14/asyncio/runners.py", line 204, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/home/bradlay/.local/share/mise/installs/python/3.14.3/lib/python3.14/asyncio/runners.py", line 127, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/bradlay/.local/share/mise/installs/python/3.14.3/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/bradlay/sddcinfo/repos/meeting-scribe/benchmarks/perf_baseline.py", line 295, in main
+    results["diarize_sequential"] = await sequential_probe(
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+        "diarize", probe_diarize, args.sequential_iters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/bradlay/sddcinfo/repos/meeting-scribe/benchmarks/perf_baseline.py", line 220, in sequential_probe
+    ms = await coroutine_factory(c)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bradlay/sddcinfo/repos/meeting-scribe/benchmarks/perf_baseline.py", line 158, in probe_diarize
+    r.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/home/bradlay/sddcinfo/repos/meeting-scribe/.venv/lib/python3.14/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'http://localhost:8001/v1/diarize'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500

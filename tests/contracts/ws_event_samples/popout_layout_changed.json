@@ -1,0 +1,7 @@
+{
+  "type": "popout_layout_changed",
+  "layout": {
+    "panels": ["transcript", "slides"]
+  },
+  "source_tab_id": "tab-abc123"
+}

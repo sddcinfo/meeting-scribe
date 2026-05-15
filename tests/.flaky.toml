@@ -1,0 +1,23 @@
+# Flaky-test quarantine registry.
+#
+# Maintained by the developer (single-person repo — no bot PR needed).
+# `scripts/check_flaky.py` aggregates GitHub Actions JUnit XML across
+# the last 50 runs and suggests new entries; the developer commits.
+#
+# Each entry's behavior:
+#   - In the smoke lane (PR gate): pytest_skip
+#   - In the nightly full lane:    pytest_xfail(strict=False) — runs but
+#                                   doesn't break the lane, and surfaces
+#                                   in separate JUnit reporting
+#
+# Each entry MUST set added_at + assignee + reason. The check
+# `scripts/check_flaky_age.py` warns when an entry passes 14 days
+# without a fix and aborts pre-push at 21 days for tag commits.
+#
+# Sample (do not commit; uncomment as needed):
+# [["tests/browser/test_some_thing.py::test_specific_case"]]
+# added_at = "2026-04-29"
+# assignee = "brad"
+# reason = "intermittent timing race; investigate keep-alive"
+
+[entries]

@@ -1,0 +1,12 @@
+GPU 0  SM   0%  memIO   0%  VRAM 89.8G/121.6G (74%)  power 11W  temp 44°C  throttle none
+
+ROLE           CONTAINER                  PID   SM%     VRAM  CMD
+────────────────────────────────────────────────────────────────────────────────────────────────
+translate      autosre-vllm-local      298521    0%    81.0G  VLLM::EngineCore
+asr            scribe-asr               41824    0%     5.7G  VLLM::EngineCore
+tts-1          scribe-tts              301125    0%     2.8G  python server.py
+diarize        scribe-diarization      323358    0%     254M  python -m uvicorn server:app --host 0…
+host           -                         3265    0%       0M  /usr/bin/gnome-shell
+host           -                         2650    0%       0M  /usr/lib/xorg/Xorg vt1 -displayfd 3 -…
+
+ENGINE               MODEL                        RUN WAIT   KV%   tok/s    TTFT   TPOT  MFU%

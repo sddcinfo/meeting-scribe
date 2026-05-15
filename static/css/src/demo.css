@@ -1,0 +1,11 @@
+/* Meeting Scribe — demo index entry (compiled to dist/demo.css).
+ *
+ * Linked by static/demo/index.html — the demo gallery / landing card
+ * grid. Uses the dark-surface tokens from the unified @theme.
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+
+@source "../../demo/index.html";

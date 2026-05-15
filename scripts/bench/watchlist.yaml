@@ -1,0 +1,49 @@
+# scripts/bench/check_model_drift.py reads this watchlist.
+#
+# `models[]`: HF model ids we depend on.  The drift checker queries
+# the family glob on HF Hub and flags any sibling tagged release that
+# is newer than the pinned `id`.
+#
+# `closed_source_watchlist[]`: HF model ids that have been ANNOUNCED
+# but not yet open-sourced.  The checker probes whether a weights file
+# (`*.safetensors`, `*.bin`) is now available on the repo — that's the
+# "open weights have shipped" signal.  See
+# `reports/2026-Q2-bench/2026-Q2-RETROSPECTIVE.md` for the watch
+# rationale per entry.
+
+models:
+  - id: pyannote/speaker-diarization-community-1
+    family: pyannote/speaker-diarization-*
+    role: production_diarization
+
+  - id: Qwen/Qwen3-ASR-1.7B
+    family: Qwen/Qwen3-ASR-*
+    role: production_asr
+
+  - id: Qwen/Qwen3.6-35B-A3B-FP8
+    family: Qwen/Qwen3.6-*-FP8
+    role: production_translation
+
+  - id: Qwen/Qwen3-TTS-12Hz-0.6B-Base
+    family: Qwen/Qwen3-TTS-*
+    role: production_tts
+
+closed_source_watchlist:
+  # Probe the *speculative* HF repo id where 3.5 open weights would
+  # land if/when they ship.  404 today (= still closed) is expected;
+  # the watcher flips to "newly open" when this id starts returning a
+  # weights-bearing repo.  3.0 already exists at
+  # FunAudioLLM/Fun-CosyVoice3-0.5B-2512 — we are NOT watching that;
+  # we want the next-gen 3.5 specifically.
+  - id: FunAudioLLM/Fun-CosyVoice3.5-0.5B
+    note: "Watch for 3.5 open-weights release; tracked per RETROSPECTIVE Track B"
+
+  # Boson's V2.5 lives at bosonai/higgs-audio-v2.5-generation-1B-base;
+  # we are watching for V3 (streaming TTS, Q2 2026 per their roadmap).
+  - id: bosonai/higgs-audio-v3-generation-base
+    note: "Watch for V3 streaming TTS; expected Q2 2026 per Boson roadmap"
+
+  # No open Qwen3.6-Omni today.  The watcher flips when Qwen ships an
+  # open Omni in the 3.6+ generation under any of these speculative ids.
+  - id: Qwen/Qwen3.6-Omni-30B-A3B
+    note: "Item #8 — re-evaluate translation stack when an open Omni in 3.6+ ships"

@@ -1,0 +1,138 @@
+/* Meeting Scribe — slide viewer.
+ *
+ * The bilingual slide preview surface used inside both the popout
+ * window and the admin SPA's "Translate + slides" presets. Driven
+ * by `static/js/slide-viewer.js`.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.slide-viewer {
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--border, #e8e6e1);
+  background: var(--bg-dim, #f0efe8);
+}
+
+.sv-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+}
+
+.sv-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-accent, #1a6fb5);
+  border: 1px dashed var(--border, #e8e6e1);
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--surface, #fff);
+  transition: border-color 0.15s;
+}
+
+.sv-upload-btn:hover,
+.sv-upload.sv-drag .sv-upload-btn {
+  border-color: var(--text-accent, #1a6fb5);
+  background: var(--bg, #faf9f6);
+}
+
+.sv-progress {
+  padding: 0.5rem 1rem;
+  font-size: 0.7rem;
+  color: var(--text-dim, #6a6a72);
+  text-align: center;
+  font-style: italic;
+}
+
+.sv-slides {
+  display: flex;
+  gap: 2px;
+  max-height: 50vh;
+  overflow: hidden;
+}
+
+.sv-pane {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #1a1a1e;
+  min-height: 120px;
+}
+
+.sv-img {
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  transition: opacity 0.2s;
+}
+
+.sv-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9a9aa2;
+  font-size: 0.8rem;
+  font-style: italic;
+  background: #1a1a1e;
+}
+
+.sv-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.3rem 1rem;
+  background: var(--surface, #fff);
+  border-top: 1px solid var(--border, #e8e6e1);
+}
+
+.sv-nav-btn {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border, #e8e6e1);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--text, #1a1a1e);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sv-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sv-nav-btn:hover:not(:disabled) {
+  background: var(--bg, #faf9f6);
+}
+
+.sv-nav-label {
+  font-size: 0.7rem;
+  color: var(--text-dim, #6a6a72);
+  font-weight: 600;
+  min-width: 4rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .sv-slides {
+    flex-direction: column;
+    max-height: 40vh;
+  }
+  .sv-pane {
+    min-height: 80px;
+  }
+  .sv-img {
+    max-height: 20vh;
+  }
+}

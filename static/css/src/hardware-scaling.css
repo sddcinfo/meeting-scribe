@@ -1,0 +1,21 @@
+/* Meeting Scribe — hardware-scaling doc entry (compiled to dist/hardware-scaling.css).
+ *
+ * Linked by static/hardware-scaling.html (the editorial GB10 → HGX
+ * B200 → GB200 NVL72 scaling page, also published to GitHub Pages
+ * alongside how-it-works).
+ *
+ * Imports the shared editorial chrome (nav-bar, hero, sections,
+ * stages, flows, lifecycles, resource tables, glossary, scroll-
+ * reveal, footer) plus the hardware-scaling-page-specific content
+ * components (tier badges, citation markers, sources block, ratio
+ * strip).
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_editorial.css";
+@import "./components/_hardware-scaling.css";
+
+@source "../../hardware-scaling.html";
+@source "../../js/how-it-works.js";

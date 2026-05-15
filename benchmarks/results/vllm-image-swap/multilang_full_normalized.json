@@ -1,0 +1,5138 @@
+{
+  "url": "http://localhost:8003",
+  "model": "Qwen/Qwen3-ASR-1.7B",
+  "overall": {
+    "samples": 710,
+    "metric": "cer",
+    "p50_error": 0.04,
+    "p95_error": 0.2857142857142857,
+    "p50_total_ms": 945.1510354992934,
+    "p95_total_ms": 1921.0382723773364
+  },
+  "per_language": {
+    "ar": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.1111111111111111,
+      "p95_error": 0.44025974025974024,
+      "p50_total_ms": 1128.8731184904464,
+      "p95_total_ms": 1772.782843731693
+    },
+    "cmn": {
+      "samples": 30,
+      "metric": "cer",
+      "p50_error": 0.010416666666666666,
+      "p95_error": 0.4,
+      "p50_total_ms": 695.8943360077683,
+      "p95_total_ms": 926.5615712036379
+    },
+    "de": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.0,
+      "p95_error": 0.2,
+      "p50_total_ms": 990.5568990216125,
+      "p95_total_ms": 1398.4903390548425
+    },
+    "en": {
+      "samples": 100,
+      "metric": "wer",
+      "p50_error": 0.035098522167487683,
+      "p95_error": 0.18988095238095234,
+      "p50_total_ms": 664.5871969813015,
+      "p95_total_ms": 1019.7361285245279
+    },
+    "es": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.0,
+      "p95_error": 0.07196078431372548,
+      "p50_total_ms": 725.2238104993012,
+      "p95_total_ms": 1758.7183425173862
+    },
+    "fr": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.04257246376811594,
+      "p95_error": 0.15193498452012383,
+      "p50_total_ms": 1019.7654649673495,
+      "p95_total_ms": 2012.0675294136163
+    },
+    "hi": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.08514492753623187,
+      "p95_error": 0.434375,
+      "p50_total_ms": 2112.6392765145283,
+      "p95_total_ms": 4136.247424301109
+    },
+    "id": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.0,
+      "p95_error": 0.25,
+      "p50_total_ms": 772.7607015112881,
+      "p95_total_ms": 1824.0939472481841
+    },
+    "it": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.0,
+      "p95_error": 0.06666666666666667,
+      "p50_total_ms": 1032.3212160146795,
+      "p95_total_ms": 1258.6598797672195
+    },
+    "ja": {
+      "samples": 100,
+      "metric": "cer",
+      "p50_error": 0.033078184800437394,
+      "p95_error": 0.20503705419175544,
+      "p50_total_ms": 838.8874345109798,
+      "p95_total_ms": 1550.2900942403357
+    },
+    "ko": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.0,
+      "p95_error": 0.30625,
+      "p50_total_ms": 1049.3686014960986,
+      "p95_total_ms": 1428.8862293877173
+    },
+    "nl": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.05555555555555555,
+      "p95_error": 0.28,
+      "p50_total_ms": 1073.5350420000032,
+      "p95_total_ms": 1708.7874542921782
+    },
+    "pl": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.17391304347826086,
+      "p95_error": 0.53125,
+      "p50_total_ms": 1230.7680419762619,
+      "p95_total_ms": 1607.3805250314763
+    },
+    "pt": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.018824771287825476,
+      "p95_error": 0.23088235294117646,
+      "p50_total_ms": 1252.1503354946617,
+      "p95_total_ms": 2723.7099601567024
+    },
+    "ru": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.0,
+      "p95_error": 0.4,
+      "p50_total_ms": 990.5781905108597,
+      "p95_total_ms": 1748.5379718593322
+    },
+    "th": {
+      "samples": 30,
+      "metric": "cer",
+      "p50_error": 0.05337532299741602,
+      "p95_error": 0.17171404682274247,
+      "p50_total_ms": 1508.196451002732,
+      "p95_total_ms": 3034.732695450657
+    },
+    "tr": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.10263157894736842,
+      "p95_error": 0.5225,
+      "p50_total_ms": 972.2460659686476,
+      "p95_total_ms": 1522.6412272953894
+    },
+    "uk": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.18898809523809523,
+      "p95_error": 0.8425770308123248,
+      "p50_total_ms": 1351.7831315111835,
+      "p95_total_ms": 2332.490591428359
+    },
+    "vi": {
+      "samples": 30,
+      "metric": "wer",
+      "p50_error": 0.018518518518518517,
+      "p95_error": 0.16876923076923078,
+      "p50_total_ms": 881.2374779954553,
+      "p95_total_ms": 1381.1177583469544
+    }
+  },
+  "per_sample": [
+    {
+      "id": "fleurs_ja_jp_000",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 615.7499480177648
+    },
+    {
+      "id": "fleurs_ja_jp_001",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.030303030303030304,
+      "total_ms": 1205.1641269936226
+    },
+    {
+      "id": "fleurs_ja_jp_002",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1478.7998350220732
+    },
+    {
+      "id": "fleurs_ja_jp_003",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1001.5476750559174
+    },
+    {
+      "id": "fleurs_ja_jp_004",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 858.2626989809796
+    },
+    {
+      "id": "fleurs_ja_jp_005",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 507.9949070350267
+    },
+    {
+      "id": "fleurs_ja_jp_006",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.024390243902439025,
+      "total_ms": 705.0763549632393
+    },
+    {
+      "id": "fleurs_ja_jp_007",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.03488372093023256,
+      "total_ms": 1482.1155599784106
+    },
+    {
+      "id": "fleurs_ja_jp_008",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0196078431372549,
+      "total_ms": 1576.5603870386258
+    },
+    {
+      "id": "fleurs_ja_jp_009",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07407407407407407,
+      "total_ms": 617.1119049540721
+    },
+    {
+      "id": "fleurs_ja_jp_010",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.031746031746031744,
+      "total_ms": 1279.5527609996498
+    },
+    {
+      "id": "fleurs_ja_jp_011",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.05128205128205128,
+      "total_ms": 857.911848986987
+    },
+    {
+      "id": "fleurs_ja_jp_012",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 554.9061030033045
+    },
+    {
+      "id": "fleurs_ja_jp_013",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.015873015873015872,
+      "total_ms": 1239.8764730314724
+    },
+    {
+      "id": "fleurs_ja_jp_014",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0967741935483871,
+      "total_ms": 574.7155100107193
+    },
+    {
+      "id": "fleurs_ja_jp_015",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0196078431372549,
+      "total_ms": 1557.5547580374405
+    },
+    {
+      "id": "fleurs_ja_jp_016",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 859.4018710427918
+    },
+    {
+      "id": "fleurs_ja_jp_017",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.23404255319148937,
+      "total_ms": 882.6113889808767
+    },
+    {
+      "id": "fleurs_ja_jp_018",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.018518518518518517,
+      "total_ms": 885.2816229918972
+    },
+    {
+      "id": "fleurs_ja_jp_019",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 865.9885060042143
+    },
+    {
+      "id": "fleurs_ja_jp_020",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 639.8760930169374
+    },
+    {
+      "id": "fleurs_ja_jp_021",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 708.3994239801541
+    },
+    {
+      "id": "fleurs_ja_jp_022",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.03225806451612903,
+      "total_ms": 597.172656969633
+    },
+    {
+      "id": "fleurs_ja_jp_023",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 617.2593139926903
+    },
+    {
+      "id": "fleurs_ja_jp_024",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.04,
+      "total_ms": 862.8670359612443
+    },
+    {
+      "id": "fleurs_ja_jp_025",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.034482758620689655,
+      "total_ms": 1039.3107219715603
+    },
+    {
+      "id": "fleurs_ja_jp_026",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 749.3488370091654
+    },
+    {
+      "id": "fleurs_ja_jp_027",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 599.1258649737574
+    },
+    {
+      "id": "fleurs_ja_jp_028",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.175,
+      "total_ms": 836.6508510080166
+    },
+    {
+      "id": "fleurs_ja_jp_029",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07317073170731707,
+      "total_ms": 777.9847750207409
+    },
+    {
+      "id": "fleurs_ja_jp_030",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.125,
+      "total_ms": 817.213686008472
+    },
+    {
+      "id": "fleurs_ja_jp_031",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1179.1923719574697
+    },
+    {
+      "id": "fleurs_ja_jp_032",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07317073170731707,
+      "total_ms": 859.2564779683016
+    },
+    {
+      "id": "fleurs_ja_jp_033",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1000.5367580452003
+    },
+    {
+      "id": "fleurs_ja_jp_034",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.08139534883720931,
+      "total_ms": 1427.945211995393
+    },
+    {
+      "id": "fleurs_ja_jp_035",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 555.87545002345
+    },
+    {
+      "id": "fleurs_ja_jp_036",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 752.6125769945793
+    },
+    {
+      "id": "fleurs_ja_jp_037",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.03389830508474576,
+      "total_ms": 927.771857008338
+    },
+    {
+      "id": "fleurs_ja_jp_038",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 640.078252996318
+    },
+    {
+      "id": "fleurs_ja_jp_039",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 636.5236779674888
+    },
+    {
+      "id": "fleurs_ja_jp_040",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.20588235294117646,
+      "total_ms": 579.0793039486744
+    },
+    {
+      "id": "fleurs_ja_jp_041",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 1024.0661320276558
+    },
+    {
+      "id": "fleurs_ja_jp_042",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1081.577531003859
+    },
+    {
+      "id": "fleurs_ja_jp_043",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.046153846153846156,
+      "total_ms": 1196.7638339847326
+    },
+    {
+      "id": "fleurs_ja_jp_044",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.018518518518518517,
+      "total_ms": 1015.2238240116276
+    },
+    {
+      "id": "fleurs_ja_jp_045",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.05454545454545454,
+      "total_ms": 1687.2958859894425
+    },
+    {
+      "id": "fleurs_ja_jp_046",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 639.6635950077325
+    },
+    {
+      "id": "fleurs_ja_jp_047",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.2833333333333333,
+      "total_ms": 949.9109699972905
+    },
+    {
+      "id": "fleurs_ja_jp_048",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 618.6360220308416
+    },
+    {
+      "id": "fleurs_ja_jp_049",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1086.0147969797254
+    },
+    {
+      "id": "fleurs_ja_jp_050",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.024390243902439025,
+      "total_ms": 688.3732299902476
+    },
+    {
+      "id": "fleurs_ja_jp_051",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 467.4767429823987
+    },
+    {
+      "id": "fleurs_ja_jp_052",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.02127659574468085,
+      "total_ms": 772.0335189951584
+    },
+    {
+      "id": "fleurs_ja_jp_053",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.10638297872340426,
+      "total_ms": 1424.3751000030898
+    },
+    {
+      "id": "fleurs_ja_jp_054",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.049019607843137254,
+      "total_ms": 1553.1615370418876
+    },
+    {
+      "id": "fleurs_ja_jp_055",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 465.0429249741137
+    },
+    {
+      "id": "fleurs_ja_jp_056",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 818.6171620036475
+    },
+    {
+      "id": "fleurs_ja_jp_057",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 1.4615384615384615,
+      "total_ms": 738.146007002797
+    },
+    {
+      "id": "fleurs_ja_jp_058",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 863.8296310091391
+    },
+    {
+      "id": "fleurs_ja_jp_059",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0641025641025641,
+      "total_ms": 1158.4566559758969
+    },
+    {
+      "id": "fleurs_ja_jp_060",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1092.1673810225911
+    },
+    {
+      "id": "fleurs_ja_jp_061",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.03389830508474576,
+      "total_ms": 905.5801669601351
+    },
+    {
+      "id": "fleurs_ja_jp_062",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 839.5718540414236
+    },
+    {
+      "id": "fleurs_ja_jp_063",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 511.0616700258106
+    },
+    {
+      "id": "fleurs_ja_jp_064",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 576.9807340111583
+    },
+    {
+      "id": "fleurs_ja_jp_065",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.11627906976744186,
+      "total_ms": 1413.8079680269584
+    },
+    {
+      "id": "fleurs_ja_jp_066",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.05714285714285714,
+      "total_ms": 1152.308166027069
+    },
+    {
+      "id": "fleurs_ja_jp_067",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 645.502672996372
+    },
+    {
+      "id": "fleurs_ja_jp_068",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07894736842105263,
+      "total_ms": 598.8995269872248
+    },
+    {
+      "id": "fleurs_ja_jp_069",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 578.1945150229149
+    },
+    {
+      "id": "fleurs_ja_jp_070",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.11320754716981132,
+      "total_ms": 1079.3712809681892
+    },
+    {
+      "id": "fleurs_ja_jp_071",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.034482758620689655,
+      "total_ms": 1059.9918109946884
+    },
+    {
+      "id": "fleurs_ja_jp_072",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.1346153846153846,
+      "total_ms": 931.464302004315
+    },
+    {
+      "id": "fleurs_ja_jp_073",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.02564102564102564,
+      "total_ms": 728.0067329993472
+    },
+    {
+      "id": "fleurs_ja_jp_074",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.09375,
+      "total_ms": 578.694997006096
+    },
+    {
+      "id": "fleurs_ja_jp_075",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 1129.0221040253527
+    },
+    {
+      "id": "fleurs_ja_jp_076",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.015873015873015872,
+      "total_ms": 1246.2922069826163
+    },
+    {
+      "id": "fleurs_ja_jp_077",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 710.9181999694556
+    },
+    {
+      "id": "fleurs_ja_jp_078",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0625,
+      "total_ms": 1016.5188039536588
+    },
+    {
+      "id": "fleurs_ja_jp_079",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 647.3174010170624
+    },
+    {
+      "id": "fleurs_ja_jp_080",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.02857142857142857,
+      "total_ms": 670.9761680103838
+    },
+    {
+      "id": "fleurs_ja_jp_081",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.034482758620689655,
+      "total_ms": 1046.641387976706
+    },
+    {
+      "id": "fleurs_ja_jp_082",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.10256410256410256,
+      "total_ms": 881.6139900009148
+    },
+    {
+      "id": "fleurs_ja_jp_083",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 641.3543050293811
+    },
+    {
+      "id": "fleurs_ja_jp_084",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.02127659574468085,
+      "total_ms": 752.7612319681793
+    },
+    {
+      "id": "fleurs_ja_jp_085",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.09433962264150944,
+      "total_ms": 1063.5561600211076
+    },
+    {
+      "id": "fleurs_ja_jp_086",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 512.8999960143119
+    },
+    {
+      "id": "fleurs_ja_jp_087",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 1014.535196009092
+    },
+    {
+      "id": "fleurs_ja_jp_088",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 466.3104169885628
+    },
+    {
+      "id": "fleurs_ja_jp_089",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.29411764705882354,
+      "total_ms": 598.7454609712586
+    },
+    {
+      "id": "fleurs_ja_jp_090",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.06382978723404255,
+      "total_ms": 1495.7326810108498
+    },
+    {
+      "id": "fleurs_ja_jp_091",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 597.1058389986865
+    },
+    {
+      "id": "fleurs_ja_jp_092",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 1240.2533820131794
+    },
+    {
+      "id": "fleurs_ja_jp_093",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 620.2812600531615
+    },
+    {
+      "id": "fleurs_ja_jp_094",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 551.8609199789353
+    },
+    {
+      "id": "fleurs_ja_jp_095",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.023255813953488372,
+      "total_ms": 838.203014980536
+    },
+    {
+      "id": "fleurs_ja_jp_096",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.03571428571428571,
+      "total_ms": 555.9720729943365
+    },
+    {
+      "id": "fleurs_ja_jp_097",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 708.6923339520581
+    },
+    {
+      "id": "fleurs_ja_jp_098",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.1889763779527559,
+      "total_ms": 2366.197615978308
+    },
+    {
+      "id": "fleurs_ja_jp_099",
+      "language": "ja",
+      "metric": "cer",
+      "error_rate": 0.09302325581395349,
+      "total_ms": 798.3356379554607
+    },
+    {
+      "id": "fleurs_en_us_000",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09523809523809523,
+      "total_ms": 663.9016419649124
+    },
+    {
+      "id": "fleurs_en_us_001",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 505.27310196775943
+    },
+    {
+      "id": "fleurs_en_us_002",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 513.7240629992448
+    },
+    {
+      "id": "fleurs_en_us_003",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 549.678478972055
+    },
+    {
+      "id": "fleurs_en_us_004",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 571.8694649985991
+    },
+    {
+      "id": "fleurs_en_us_005",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 640.7172129838727
+    },
+    {
+      "id": "fleurs_en_us_006",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 601.2559669907205
+    },
+    {
+      "id": "fleurs_en_us_007",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.22727272727272727,
+      "total_ms": 665.2727519976906
+    },
+    {
+      "id": "fleurs_en_us_008",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.08,
+      "total_ms": 991.5497740148567
+    },
+    {
+      "id": "fleurs_en_us_009",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.08,
+      "total_ms": 993.8620399916545
+    },
+    {
+      "id": "fleurs_en_us_010",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 511.3725980045274
+    },
+    {
+      "id": "fleurs_en_us_011",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 618.9969180268236
+    },
+    {
+      "id": "fleurs_en_us_012",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 444.30239201756194
+    },
+    {
+      "id": "fleurs_en_us_013",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 730.1960209733807
+    },
+    {
+      "id": "fleurs_en_us_014",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 885.6132520013489
+    },
+    {
+      "id": "fleurs_en_us_015",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.125,
+      "total_ms": 579.4573510065675
+    },
+    {
+      "id": "fleurs_en_us_016",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 531.3120380160399
+    },
+    {
+      "id": "fleurs_en_us_017",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 572.2349540446885
+    },
+    {
+      "id": "fleurs_en_us_018",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 598.3639549813233
+    },
+    {
+      "id": "fleurs_en_us_019",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 620.6317559699528
+    },
+    {
+      "id": "fleurs_en_us_020",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 440.0639749947004
+    },
+    {
+      "id": "fleurs_en_us_021",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 512.715642049443
+    },
+    {
+      "id": "fleurs_en_us_022",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 624.6695159934461
+    },
+    {
+      "id": "fleurs_en_us_023",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 572.0818970003165
+    },
+    {
+      "id": "fleurs_en_us_024",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 711.8948910501786
+    },
+    {
+      "id": "fleurs_en_us_025",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.47619047619047616,
+      "total_ms": 1020.9815399721265
+    },
+    {
+      "id": "fleurs_en_us_026",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 638.4647880331613
+    },
+    {
+      "id": "fleurs_en_us_027",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 551.7874320503324
+    },
+    {
+      "id": "fleurs_en_us_028",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 772.5692300009541
+    },
+    {
+      "id": "fleurs_en_us_029",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 598.6952200182714
+    },
+    {
+      "id": "fleurs_en_us_030",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 838.2186139933765
+    },
+    {
+      "id": "fleurs_en_us_031",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 750.3668690333143
+    },
+    {
+      "id": "fleurs_en_us_032",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 686.6265489952639
+    },
+    {
+      "id": "fleurs_en_us_033",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 665.4663360095583
+    },
+    {
+      "id": "fleurs_en_us_034",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.038461538461538464,
+      "total_ms": 834.0867569786496
+    },
+    {
+      "id": "fleurs_en_us_035",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.19047619047619047,
+      "total_ms": 993.1964839925058
+    },
+    {
+      "id": "fleurs_en_us_036",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 865.595267037861
+    },
+    {
+      "id": "fleurs_en_us_037",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 659.7813860280439
+    },
+    {
+      "id": "fleurs_en_us_038",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.10344827586206896,
+      "total_ms": 857.7590439817868
+    },
+    {
+      "id": "fleurs_en_us_039",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 961.9883580016904
+    },
+    {
+      "id": "fleurs_en_us_040",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 468.060712039005
+    },
+    {
+      "id": "fleurs_en_us_041",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 701.1078229988925
+    },
+    {
+      "id": "fleurs_en_us_042",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 795.3105210326612
+    },
+    {
+      "id": "fleurs_en_us_043",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 770.2210439601913
+    },
+    {
+      "id": "fleurs_en_us_044",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 946.4122640201822
+    },
+    {
+      "id": "fleurs_en_us_045",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 638.1321459775791
+    },
+    {
+      "id": "fleurs_en_us_046",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.034482758620689655,
+      "total_ms": 884.925904974807
+    },
+    {
+      "id": "fleurs_en_us_047",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 590.0481449789368
+    },
+    {
+      "id": "fleurs_en_us_048",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 513.7463660212234
+    },
+    {
+      "id": "fleurs_en_us_049",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 572.5369229912758
+    },
+    {
+      "id": "fleurs_en_us_050",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 511.3354770001024
+    },
+    {
+      "id": "fleurs_en_us_051",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.021739130434782608,
+      "total_ms": 1273.6729380558245
+    },
+    {
+      "id": "fleurs_en_us_052",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 792.1011639991775
+    },
+    {
+      "id": "fleurs_en_us_053",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.17391304347826086,
+      "total_ms": 747.0564069808461
+    },
+    {
+      "id": "fleurs_en_us_054",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.17857142857142858,
+      "total_ms": 945.9619409753941
+    },
+    {
+      "id": "fleurs_en_us_055",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 571.9555440009572
+    },
+    {
+      "id": "fleurs_en_us_056",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 506.5034090075642
+    },
+    {
+      "id": "fleurs_en_us_057",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 984.0774540207349
+    },
+    {
+      "id": "fleurs_en_us_058",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.17391304347826086,
+      "total_ms": 771.6990979970433
+    },
+    {
+      "id": "fleurs_en_us_059",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 595.5806150450371
+    },
+    {
+      "id": "fleurs_en_us_060",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.15,
+      "total_ms": 655.9657210018486
+    },
+    {
+      "id": "fleurs_en_us_061",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 503.5375900333747
+    },
+    {
+      "id": "fleurs_en_us_062",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.08823529411764706,
+      "total_ms": 976.4587510144338
+    },
+    {
+      "id": "fleurs_en_us_063",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.061224489795918366,
+      "total_ms": 1621.5029889717698
+    },
+    {
+      "id": "fleurs_en_us_064",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 705.7205130113289
+    },
+    {
+      "id": "fleurs_en_us_065",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 707.875432970468
+    },
+    {
+      "id": "fleurs_en_us_066",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 996.0733110201545
+    },
+    {
+      "id": "fleurs_en_us_067",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 464.09202204085886
+    },
+    {
+      "id": "fleurs_en_us_068",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 684.5213559572585
+    },
+    {
+      "id": "fleurs_en_us_069",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 755.2592229912989
+    },
+    {
+      "id": "fleurs_en_us_070",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 485.80934200435877
+    },
+    {
+      "id": "fleurs_en_us_071",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.043478260869565216,
+      "total_ms": 1256.4053310197778
+    },
+    {
+      "id": "fleurs_en_us_072",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 504.3056400027126
+    },
+    {
+      "id": "fleurs_en_us_073",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.043478260869565216,
+      "total_ms": 772.5884440005757
+    },
+    {
+      "id": "fleurs_en_us_074",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 793.0915349861607
+    },
+    {
+      "id": "fleurs_en_us_075",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 662.7042439649813
+    },
+    {
+      "id": "fleurs_en_us_076",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 548.100472020451
+    },
+    {
+      "id": "fleurs_en_us_077",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 820.3155809896998
+    },
+    {
+      "id": "fleurs_en_us_078",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.06896551724137931,
+      "total_ms": 839.1333360341378
+    },
+    {
+      "id": "fleurs_en_us_079",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 638.2303209975362
+    },
+    {
+      "id": "fleurs_en_us_080",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.047619047619047616,
+      "total_ms": 703.1532389810309
+    },
+    {
+      "id": "fleurs_en_us_081",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.11764705882352941,
+      "total_ms": 970.5207429942675
+    },
+    {
+      "id": "fleurs_en_us_082",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 592.4411780433729
+    },
+    {
+      "id": "fleurs_en_us_083",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 870.2693330124021
+    },
+    {
+      "id": "fleurs_en_us_084",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.038461538461538464,
+      "total_ms": 774.6242770226672
+    },
+    {
+      "id": "fleurs_en_us_085",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.32142857142857145,
+      "total_ms": 860.6002219603397
+    },
+    {
+      "id": "fleurs_en_us_086",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 464.019990991801
+    },
+    {
+      "id": "fleurs_en_us_087",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 464.17687099892646
+    },
+    {
+      "id": "fleurs_en_us_088",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.21428571428571427,
+      "total_ms": 533.2864599768072
+    },
+    {
+      "id": "fleurs_en_us_089",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.13636363636363635,
+      "total_ms": 753.2057269709185
+    },
+    {
+      "id": "fleurs_en_us_090",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 504.6306650037877
+    },
+    {
+      "id": "fleurs_en_us_091",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.03571428571428571,
+      "total_ms": 770.7838939968497
+    },
+    {
+      "id": "fleurs_en_us_092",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 553.8169419742189
+    },
+    {
+      "id": "fleurs_en_us_093",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.027777777777777776,
+      "total_ms": 1234.4771630014293
+    },
+    {
+      "id": "fleurs_en_us_094",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 513.2994199520908
+    },
+    {
+      "id": "fleurs_en_us_095",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 594.1824010224082
+    },
+    {
+      "id": "fleurs_en_us_096",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 574.4604970095679
+    },
+    {
+      "id": "fleurs_en_us_097",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 862.8921020426787
+    },
+    {
+      "id": "fleurs_en_us_098",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.125,
+      "total_ms": 574.6721620089374
+    },
+    {
+      "id": "fleurs_en_us_099",
+      "language": "en",
+      "metric": "wer",
+      "error_rate": 0.13636363636363635,
+      "total_ms": 708.6218040203676
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_000",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.043478260869565216,
+      "total_ms": 932.9017600393854
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_001",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.4,
+      "total_ms": 583.785270981025
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_002",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 823.5375289805233
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_003",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.03571428571428571,
+      "total_ms": 488.9193539856933
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_004",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 578.265776974149
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_005",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 734.7070280229673
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_006",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 727.3749980377033
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_007",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 752.9148450121284
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_008",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 666.4177299826406
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_009",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 464.3406309769489
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_010",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 818.69598897174
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_011",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 445.80391695490107
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_012",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.26865671641791045,
+      "total_ms": 705.476525996346
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_013",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.4,
+      "total_ms": 576.2794649926946
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_014",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.061224489795918366,
+      "total_ms": 753.805904998444
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_015",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 578.7066260236315
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_016",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.02631578947368421,
+      "total_ms": 682.5136989937164
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_017",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.022222222222222223,
+      "total_ms": 776.579532015603
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_018",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.26865671641791045,
+      "total_ms": 713.1412129965611
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_019",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 492.37584695219994
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_020",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 354.30457297479734
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_021",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.26865671641791045,
+      "total_ms": 709.649215976242
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_022",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.06521739130434782,
+      "total_ms": 921.3741439743899
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_023",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 491.8242139974609
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_024",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.020833333333333332,
+      "total_ms": 758.5101629956625
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_025",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 467.00285002589226
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_026",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.02631578947368421,
+      "total_ms": 686.3121460191905
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_027",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 360.79701595008373
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_028",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.022222222222222223,
+      "total_ms": 782.6514760381542
+    },
+    {
+      "id": "fleurs_cmn_hans_cn_029",
+      "language": "cmn",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 797.7964009623975
+    },
+    {
+      "id": "fleurs_ko_kr_000",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.13333333333333333,
+      "total_ms": 902.9489190434106
+    },
+    {
+      "id": "fleurs_ko_kr_001",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1058.820903999731
+    },
+    {
+      "id": "fleurs_ko_kr_002",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.2222222222222222,
+      "total_ms": 674.0654239547439
+    },
+    {
+      "id": "fleurs_ko_kr_003",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.13333333333333333,
+      "total_ms": 909.4948809943162
+    },
+    {
+      "id": "fleurs_ko_kr_004",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 1168.9843860222027
+    },
+    {
+      "id": "fleurs_ko_kr_005",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.375,
+      "total_ms": 797.8957290179096
+    },
+    {
+      "id": "fleurs_ko_kr_006",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 1347.3236130084842
+    },
+    {
+      "id": "fleurs_ko_kr_007",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 925.5606569931842
+    },
+    {
+      "id": "fleurs_ko_kr_008",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 930.0239710137248
+    },
+    {
+      "id": "fleurs_ko_kr_009",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 944.0386989735998
+    },
+    {
+      "id": "fleurs_ko_kr_010",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 948.8424310111441
+    },
+    {
+      "id": "fleurs_ko_kr_011",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.1875,
+      "total_ms": 1060.345406003762
+    },
+    {
+      "id": "fleurs_ko_kr_012",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.047619047619047616,
+      "total_ms": 1399.2258689831942
+    },
+    {
+      "id": "fleurs_ko_kr_013",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.1875,
+      "total_ms": 1065.099935978651
+    },
+    {
+      "id": "fleurs_ko_kr_014",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1062.1182610047981
+    },
+    {
+      "id": "fleurs_ko_kr_015",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.09523809523809523,
+      "total_ms": 1237.4103080364875
+    },
+    {
+      "id": "fleurs_ko_kr_016",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 661.1577240400948
+    },
+    {
+      "id": "fleurs_ko_kr_017",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 838.2199859479442
+    },
+    {
+      "id": "fleurs_ko_kr_018",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.09523809523809523,
+      "total_ms": 1241.6322769713588
+    },
+    {
+      "id": "fleurs_ko_kr_019",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 832.2446669917554
+    },
+    {
+      "id": "fleurs_ko_kr_020",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.25,
+      "total_ms": 885.3908960008994
+    },
+    {
+      "id": "fleurs_ko_kr_021",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 662.5803849892691
+    },
+    {
+      "id": "fleurs_ko_kr_022",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1465.1377809932455
+    },
+    {
+      "id": "fleurs_ko_kr_023",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1039.9162989924662
+    },
+    {
+      "id": "fleurs_ko_kr_024",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.2222222222222222,
+      "total_ms": 1305.1256670150906
+    },
+    {
+      "id": "fleurs_ko_kr_025",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1217.8566929651424
+    },
+    {
+      "id": "fleurs_ko_kr_026",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.047619047619047616,
+      "total_ms": 1397.4194609909318
+    },
+    {
+      "id": "fleurs_ko_kr_027",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1196.7874240363017
+    },
+    {
+      "id": "fleurs_ko_kr_028",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 837.9518570145592
+    },
+    {
+      "id": "fleurs_ko_kr_029",
+      "language": "ko",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1220.1351010007784
+    },
+    {
+      "id": "fleurs_fr_fr_000",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 883.9457369758748
+    },
+    {
+      "id": "fleurs_fr_fr_001",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 858.2893459824845
+    },
+    {
+      "id": "fleurs_fr_fr_002",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 808.7274509598501
+    },
+    {
+      "id": "fleurs_fr_fr_003",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 772.3917540279217
+    },
+    {
+      "id": "fleurs_fr_fr_004",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 483.3724350319244
+    },
+    {
+      "id": "fleurs_fr_fr_005",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 857.2759659728035
+    },
+    {
+      "id": "fleurs_fr_fr_006",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1053.767075005453
+    },
+    {
+      "id": "fleurs_fr_fr_007",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.041666666666666664,
+      "total_ms": 794.8908989783376
+    },
+    {
+      "id": "fleurs_fr_fr_008",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 963.0394779960625
+    },
+    {
+      "id": "fleurs_fr_fr_009",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1124.251165019814
+    },
+    {
+      "id": "fleurs_fr_fr_010",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.125,
+      "total_ms": 1076.4238850097172
+    },
+    {
+      "id": "fleurs_fr_fr_011",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1475.8785750018433
+    },
+    {
+      "id": "fleurs_fr_fr_012",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 483.5981309879571
+    },
+    {
+      "id": "fleurs_fr_fr_013",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.14705882352941177,
+      "total_ms": 1387.207803025376
+    },
+    {
+      "id": "fleurs_fr_fr_014",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 2008.9653680333868
+    },
+    {
+      "id": "fleurs_fr_fr_015",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 786.4811379695311
+    },
+    {
+      "id": "fleurs_fr_fr_016",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.041666666666666664,
+      "total_ms": 1094.473541015759
+    },
+    {
+      "id": "fleurs_fr_fr_017",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.043478260869565216,
+      "total_ms": 2015.8590599894524
+    },
+    {
+      "id": "fleurs_fr_fr_018",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.12244897959183673,
+      "total_ms": 1595.0422199675813
+    },
+    {
+      "id": "fleurs_fr_fr_019",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.15789473684210525,
+      "total_ms": 785.567982995417
+    },
+    {
+      "id": "fleurs_fr_fr_020",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1054.2037790291943
+    },
+    {
+      "id": "fleurs_fr_fr_021",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.08163265306122448,
+      "total_ms": 1575.588381034322
+    },
+    {
+      "id": "fleurs_fr_fr_022",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 814.9485639878549
+    },
+    {
+      "id": "fleurs_fr_fr_023",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.06896551724137931,
+      "total_ms": 1080.4353239946067
+    },
+    {
+      "id": "fleurs_fr_fr_024",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.10204081632653061,
+      "total_ms": 1728.9477160084061
+    },
+    {
+      "id": "fleurs_fr_fr_025",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.07894736842105263,
+      "total_ms": 1498.4471129719168
+    },
+    {
+      "id": "fleurs_fr_fr_026",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1007.0009820046835
+    },
+    {
+      "id": "fleurs_fr_fr_027",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 1009.0634219814092
+    },
+    {
+      "id": "fleurs_fr_fr_028",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.047619047619047616,
+      "total_ms": 961.8726080516353
+    },
+    {
+      "id": "fleurs_fr_fr_029",
+      "language": "fr",
+      "metric": "wer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 1030.46750795329
+    },
+    {
+      "id": "fleurs_de_de_000",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1014.9575409595855
+    },
+    {
+      "id": "fleurs_de_de_001",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.04,
+      "total_ms": 1280.0387000315823
+    },
+    {
+      "id": "fleurs_de_de_002",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1341.2115689716302
+    },
+    {
+      "id": "fleurs_de_de_003",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1399.6746040065773
+    },
+    {
+      "id": "fleurs_de_de_004",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.07692307692307693,
+      "total_ms": 816.1475759698078
+    },
+    {
+      "id": "fleurs_de_de_005",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 987.7708080457523
+    },
+    {
+      "id": "fleurs_de_de_006",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 903.7027430022135
+    },
+    {
+      "id": "fleurs_de_de_007",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 1052.952556987293
+    },
+    {
+      "id": "fleurs_de_de_008",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1242.1476840390824
+    },
+    {
+      "id": "fleurs_de_de_009",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1345.8976360270754
+    },
+    {
+      "id": "fleurs_de_de_010",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1235.7158500235528
+    },
+    {
+      "id": "fleurs_de_de_011",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1273.8572029629722
+    },
+    {
+      "id": "fleurs_de_de_012",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 993.3429899974726
+    },
+    {
+      "id": "fleurs_de_de_013",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.03225806451612903,
+      "total_ms": 1397.521395003423
+    },
+    {
+      "id": "fleurs_de_de_014",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 710.1512309745885
+    },
+    {
+      "id": "fleurs_de_de_015",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1370.031716010999
+    },
+    {
+      "id": "fleurs_de_de_016",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 641.1290820105933
+    },
+    {
+      "id": "fleurs_de_de_017",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1078.3308189711533
+    },
+    {
+      "id": "fleurs_de_de_018",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 939.2990930355154
+    },
+    {
+      "id": "fleurs_de_de_019",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 902.6917300070636
+    },
+    {
+      "id": "fleurs_de_de_020",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.07692307692307693,
+      "total_ms": 830.3637930075638
+    },
+    {
+      "id": "fleurs_de_de_021",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 1054.0811690152623
+    },
+    {
+      "id": "fleurs_de_de_022",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.13333333333333333,
+      "total_ms": 679.6298759873025
+    },
+    {
+      "id": "fleurs_de_de_023",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 874.2292639799416
+    },
+    {
+      "id": "fleurs_de_de_024",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 816.2766799796373
+    },
+    {
+      "id": "fleurs_de_de_025",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 721.331340027973
+    },
+    {
+      "id": "fleurs_de_de_026",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 863.0716360057704
+    },
+    {
+      "id": "fleurs_de_de_027",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 921.3605570257641
+    },
+    {
+      "id": "fleurs_de_de_028",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 722.5404320051894
+    },
+    {
+      "id": "fleurs_de_de_029",
+      "language": "de",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1103.5827440209687
+    },
+    {
+      "id": "fleurs_es_419_000",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 618.6604629619978
+    },
+    {
+      "id": "fleurs_es_419_001",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 640.8189369831234
+    },
+    {
+      "id": "fleurs_es_419_002",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 550.6187989958562
+    },
+    {
+      "id": "fleurs_es_419_003",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1484.7713430062868
+    },
+    {
+      "id": "fleurs_es_419_004",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 617.9895810200833
+    },
+    {
+      "id": "fleurs_es_419_005",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 990.3600180405192
+    },
+    {
+      "id": "fleurs_es_419_006",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1483.0442490056157
+    },
+    {
+      "id": "fleurs_es_419_007",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 527.0067360252142
+    },
+    {
+      "id": "fleurs_es_419_008",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 1723.6829089815728
+    },
+    {
+      "id": "fleurs_es_419_009",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 620.0763739761896
+    },
+    {
+      "id": "fleurs_es_419_010",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 905.9823510469869
+    },
+    {
+      "id": "fleurs_es_419_011",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 550.1266850042157
+    },
+    {
+      "id": "fleurs_es_419_012",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0784313725490196,
+      "total_ms": 1717.6101160002872
+    },
+    {
+      "id": "fleurs_es_419_013",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 661.0399929923005
+    },
+    {
+      "id": "fleurs_es_419_014",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 619.9489000136964
+    },
+    {
+      "id": "fleurs_es_419_015",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 792.7570500178263
+    },
+    {
+      "id": "fleurs_es_419_016",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 789.4076280063018
+    },
+    {
+      "id": "fleurs_es_419_017",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0196078431372549,
+      "total_ms": 1801.539427950047
+    },
+    {
+      "id": "fleurs_es_419_018",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.034482758620689655,
+      "total_ms": 1169.352910015732
+    },
+    {
+      "id": "fleurs_es_419_019",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 793.4386680135503
+    },
+    {
+      "id": "fleurs_es_419_020",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 555.5299060069956
+    },
+    {
+      "id": "fleurs_es_419_021",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1484.929007012397
+    },
+    {
+      "id": "fleurs_es_419_022",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 639.8551560123451
+    },
+    {
+      "id": "fleurs_es_419_023",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 993.5486220056191
+    },
+    {
+      "id": "fleurs_es_419_024",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 525.3151609795168
+    },
+    {
+      "id": "fleurs_es_419_025",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 615.7671560067683
+    },
+    {
+      "id": "fleurs_es_419_026",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 638.6282390449196
+    },
+    {
+      "id": "fleurs_es_419_027",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 529.2844410287216
+    },
+    {
+      "id": "fleurs_es_419_028",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 988.8108419836499
+    },
+    {
+      "id": "fleurs_es_419_029",
+      "language": "es",
+      "metric": "wer",
+      "error_rate": 0.034482758620689655,
+      "total_ms": 1166.94818000542
+    },
+    {
+      "id": "fleurs_it_it_000",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 702.5127509841695
+    },
+    {
+      "id": "fleurs_it_it_001",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1199.1990460082889
+    },
+    {
+      "id": "fleurs_it_it_002",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1243.9306330052204
+    },
+    {
+      "id": "fleurs_it_it_003",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.03571428571428571,
+      "total_ms": 1176.3857380137779
+    },
+    {
+      "id": "fleurs_it_it_004",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 883.7304209591821
+    },
+    {
+      "id": "fleurs_it_it_005",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1209.2573099653237
+    },
+    {
+      "id": "fleurs_it_it_006",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 903.5677810315974
+    },
+    {
+      "id": "fleurs_it_it_007",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 903.9641339913942
+    },
+    {
+      "id": "fleurs_it_it_008",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1020.5906819901429
+    },
+    {
+      "id": "fleurs_it_it_009",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1167.3910460085608
+    },
+    {
+      "id": "fleurs_it_it_010",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1144.5119779673405
+    },
+    {
+      "id": "fleurs_it_it_011",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.03571428571428571,
+      "total_ms": 1178.089697030373
+    },
+    {
+      "id": "fleurs_it_it_012",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1077.167067967821
+    },
+    {
+      "id": "fleurs_it_it_013",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1266.2496020202525
+    },
+    {
+      "id": "fleurs_it_it_014",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 705.8076279936358
+    },
+    {
+      "id": "fleurs_it_it_015",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 879.9055889830925
+    },
+    {
+      "id": "fleurs_it_it_016",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1252.450107014738
+    },
+    {
+      "id": "fleurs_it_it_017",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 880.9831769904122
+    },
+    {
+      "id": "fleurs_it_it_018",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 1145.6752300146036
+    },
+    {
+      "id": "fleurs_it_it_019",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1204.2967450106516
+    },
+    {
+      "id": "fleurs_it_it_020",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 926.3480629888363
+    },
+    {
+      "id": "fleurs_it_it_021",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1037.9316949984059
+    },
+    {
+      "id": "fleurs_it_it_022",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 705.2970179938711
+    },
+    {
+      "id": "fleurs_it_it_023",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.038461538461538464,
+      "total_ms": 1020.2569030225277
+    },
+    {
+      "id": "fleurs_it_it_024",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 882.1520310011692
+    },
+    {
+      "id": "fleurs_it_it_025",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.05,
+      "total_ms": 947.9283260297962
+    },
+    {
+      "id": "fleurs_it_it_026",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 901.4991319854744
+    },
+    {
+      "id": "fleurs_it_it_027",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1026.7107370309532
+    },
+    {
+      "id": "fleurs_it_it_028",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1076.645962020848
+    },
+    {
+      "id": "fleurs_it_it_029",
+      "language": "it",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1132.0100390003063
+    },
+    {
+      "id": "fleurs_pt_br_000",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1464.0827780240215
+    },
+    {
+      "id": "fleurs_pt_br_001",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1273.3487010118552
+    },
+    {
+      "id": "fleurs_pt_br_002",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.03225806451612903,
+      "total_ms": 1284.225624985993
+    },
+    {
+      "id": "fleurs_pt_br_003",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 2712.3989459942095
+    },
+    {
+      "id": "fleurs_pt_br_004",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.017241379310344827,
+      "total_ms": 2689.380229974631
+    },
+    {
+      "id": "fleurs_pt_br_005",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 903.6490120342933
+    },
+    {
+      "id": "fleurs_pt_br_006",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.02040816326530612,
+      "total_ms": 1776.6111490200274
+    },
+    {
+      "id": "fleurs_pt_br_007",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.22727272727272727,
+      "total_ms": 1261.7605900159106
+    },
+    {
+      "id": "fleurs_pt_br_008",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.11764705882352941,
+      "total_ms": 900.7911920198239
+    },
+    {
+      "id": "fleurs_pt_br_009",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.23529411764705882,
+      "total_ms": 879.9807730247267
+    },
+    {
+      "id": "fleurs_pt_br_010",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0967741935483871,
+      "total_ms": 1374.49973000912
+    },
+    {
+      "id": "fleurs_pt_br_011",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.18181818181818182,
+      "total_ms": 1191.6445819661021
+    },
+    {
+      "id": "fleurs_pt_br_012",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 687.4737140024081
+    },
+    {
+      "id": "fleurs_pt_br_013",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.13513513513513514,
+      "total_ms": 1242.5400809734128
+    },
+    {
+      "id": "fleurs_pt_br_014",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.022727272727272728,
+      "total_ms": 1769.2184789921157
+    },
+    {
+      "id": "fleurs_pt_br_015",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.22727272727272727,
+      "total_ms": 1277.524589037057
+    },
+    {
+      "id": "fleurs_pt_br_016",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1100.3435600432567
+    },
+    {
+      "id": "fleurs_pt_br_017",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.10810810810810811,
+      "total_ms": 1268.3185680070892
+    },
+    {
+      "id": "fleurs_pt_br_018",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 617.0225360547192
+    },
+    {
+      "id": "fleurs_pt_br_019",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 615.7737470348366
+    },
+    {
+      "id": "fleurs_pt_br_020",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 618.3290359913372
+    },
+    {
+      "id": "fleurs_pt_br_021",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.022727272727272728,
+      "total_ms": 1760.2036900352687
+    },
+    {
+      "id": "fleurs_pt_br_022",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.022727272727272728,
+      "total_ms": 1766.2676670006476
+    },
+    {
+      "id": "fleurs_pt_br_023",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 2737.5345330219716
+    },
+    {
+      "id": "fleurs_pt_br_024",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 856.3148539979011
+    },
+    {
+      "id": "fleurs_pt_br_025",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1749.8669599881396
+    },
+    {
+      "id": "fleurs_pt_br_026",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 903.527299000416
+    },
+    {
+      "id": "fleurs_pt_br_027",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 681.9611629471183
+    },
+    {
+      "id": "fleurs_pt_br_028",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 684.5693500363268
+    },
+    {
+      "id": "fleurs_pt_br_029",
+      "language": "pt",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 1127.7940850122832
+    },
+    {
+      "id": "fleurs_ru_ru_000",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 686.2096770200878
+    },
+    {
+      "id": "fleurs_ru_ru_001",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 1630.5671540321782
+    },
+    {
+      "id": "fleurs_ru_ru_002",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 793.4787459671497
+    },
+    {
+      "id": "fleurs_ru_ru_003",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1183.2440340076573
+    },
+    {
+      "id": "fleurs_ru_ru_004",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.4,
+      "total_ms": 699.7470899950713
+    },
+    {
+      "id": "fleurs_ru_ru_005",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 683.5428490303457
+    },
+    {
+      "id": "fleurs_ru_ru_006",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1498.9180350094102
+    },
+    {
+      "id": "fleurs_ru_ru_007",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 788.6268380098045
+    },
+    {
+      "id": "fleurs_ru_ru_008",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.07692307692307693,
+      "total_ms": 1410.2652160217986
+    },
+    {
+      "id": "fleurs_ru_ru_009",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 1627.8856070130132
+    },
+    {
+      "id": "fleurs_ru_ru_010",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.038461538461538464,
+      "total_ms": 1409.0798510005698
+    },
+    {
+      "id": "fleurs_ru_ru_011",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 901.1063920333982
+    },
+    {
+      "id": "fleurs_ru_ru_012",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1076.2195420102216
+    },
+    {
+      "id": "fleurs_ru_ru_013",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1009.3084260006435
+    },
+    {
+      "id": "fleurs_ru_ru_014",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 1059.1100819874555
+    },
+    {
+      "id": "fleurs_ru_ru_015",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.4,
+      "total_ms": 701.2181680183858
+    },
+    {
+      "id": "fleurs_ru_ru_016",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.03333333333333333,
+      "total_ms": 1746.0616159951314
+    },
+    {
+      "id": "fleurs_ru_ru_017",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 905.6449229829013
+    },
+    {
+      "id": "fleurs_ru_ru_018",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 989.6701390389353
+    },
+    {
+      "id": "fleurs_ru_ru_019",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.125,
+      "total_ms": 991.4862419827841
+    },
+    {
+      "id": "fleurs_ru_ru_020",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 575.4516969900578
+    },
+    {
+      "id": "fleurs_ru_ru_021",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1006.8642399855889
+    },
+    {
+      "id": "fleurs_ru_ru_022",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 1751.5646290266886
+    },
+    {
+      "id": "fleurs_ru_ru_023",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 570.9404459921643
+    },
+    {
+      "id": "fleurs_ru_ru_024",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1182.9907699720934
+    },
+    {
+      "id": "fleurs_ru_ru_025",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 903.5671059973538
+    },
+    {
+      "id": "fleurs_ru_ru_026",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1008.9655119809322
+    },
+    {
+      "id": "fleurs_ru_ru_027",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 571.4499360183254
+    },
+    {
+      "id": "fleurs_ru_ru_028",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 879.5600500307046
+    },
+    {
+      "id": "fleurs_ru_ru_029",
+      "language": "ru",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 855.8969629812054
+    },
+    {
+      "id": "fleurs_nl_nl_000",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.041666666666666664,
+      "total_ms": 1098.7539349589497
+    },
+    {
+      "id": "fleurs_nl_nl_001",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.1,
+      "total_ms": 1083.4417790174484
+    },
+    {
+      "id": "fleurs_nl_nl_002",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.05555555555555555,
+      "total_ms": 897.1889530075714
+    },
+    {
+      "id": "fleurs_nl_nl_003",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.045454545454545456,
+      "total_ms": 941.8107160017826
+    },
+    {
+      "id": "fleurs_nl_nl_004",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.05405405405405406,
+      "total_ms": 1765.5785260139965
+    },
+    {
+      "id": "fleurs_nl_nl_005",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.28,
+      "total_ms": 1621.1388590163551
+    },
+    {
+      "id": "fleurs_nl_nl_006",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.08108108108108109,
+      "total_ms": 1463.4853310417384
+    },
+    {
+      "id": "fleurs_nl_nl_007",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.05555555555555555,
+      "total_ms": 905.5669219815172
+    },
+    {
+      "id": "fleurs_nl_nl_008",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 924.487061041873
+    },
+    {
+      "id": "fleurs_nl_nl_009",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.18181818181818182,
+      "total_ms": 1079.0000169654377
+    },
+    {
+      "id": "fleurs_nl_nl_010",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 924.7721019783057
+    },
+    {
+      "id": "fleurs_nl_nl_011",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.05555555555555555,
+      "total_ms": 1073.0811440153047
+    },
+    {
+      "id": "fleurs_nl_nl_012",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 816.2146600079723
+    },
+    {
+      "id": "fleurs_nl_nl_013",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.11764705882352941,
+      "total_ms": 810.4272129712626
+    },
+    {
+      "id": "fleurs_nl_nl_014",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.28,
+      "total_ms": 1662.3220319743268
+    },
+    {
+      "id": "fleurs_nl_nl_015",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1031.9196839700453
+    },
+    {
+      "id": "fleurs_nl_nl_016",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 1402.9164170497097
+    },
+    {
+      "id": "fleurs_nl_nl_017",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 700.064659002237
+    },
+    {
+      "id": "fleurs_nl_nl_018",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 986.9737760163844
+    },
+    {
+      "id": "fleurs_nl_nl_019",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1031.6285940352827
+    },
+    {
+      "id": "fleurs_nl_nl_020",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 918.7113259686157
+    },
+    {
+      "id": "fleurs_nl_nl_021",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1182.8393440227956
+    },
+    {
+      "id": "fleurs_nl_nl_022",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1073.9889399847016
+    },
+    {
+      "id": "fleurs_nl_nl_023",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.02702702702702703,
+      "total_ms": 1467.149153992068
+    },
+    {
+      "id": "fleurs_nl_nl_024",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 766.7724619968794
+    },
+    {
+      "id": "fleurs_nl_nl_025",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 1402.0095969899558
+    },
+    {
+      "id": "fleurs_nl_nl_026",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 1297.0176560338587
+    },
+    {
+      "id": "fleurs_nl_nl_027",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.09375,
+      "total_ms": 1469.2417540354654
+    },
+    {
+      "id": "fleurs_nl_nl_028",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.07407407407407407,
+      "total_ms": 1409.7003469942138
+    },
+    {
+      "id": "fleurs_nl_nl_029",
+      "language": "nl",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 700.5954129854217
+    },
+    {
+      "id": "fleurs_ar_eg_000",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.45454545454545453,
+      "total_ms": 1294.9663520557806
+    },
+    {
+      "id": "fleurs_ar_eg_001",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1143.51667300798
+    },
+    {
+      "id": "fleurs_ar_eg_002",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.1875,
+      "total_ms": 859.8587379674427
+    },
+    {
+      "id": "fleurs_ar_eg_003",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.2857142857142857,
+      "total_ms": 879.8388499999419
+    },
+    {
+      "id": "fleurs_ar_eg_004",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 726.3838679646142
+    },
+    {
+      "id": "fleurs_ar_eg_005",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1326.0717719676904
+    },
+    {
+      "id": "fleurs_ar_eg_006",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.10344827586206896,
+      "total_ms": 1277.3208409780636
+    },
+    {
+      "id": "fleurs_ar_eg_007",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1186.2397890072316
+    },
+    {
+      "id": "fleurs_ar_eg_008",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.15,
+      "total_ms": 881.965305947233
+    },
+    {
+      "id": "fleurs_ar_eg_009",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 548.650405020453
+    },
+    {
+      "id": "fleurs_ar_eg_010",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.3333333333333333,
+      "total_ms": 1782.826896989718
+    },
+    {
+      "id": "fleurs_ar_eg_011",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.16666666666666666,
+      "total_ms": 1138.9157910016365
+    },
+    {
+      "id": "fleurs_ar_eg_012",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1281.8466830067337
+    },
+    {
+      "id": "fleurs_ar_eg_013",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 904.1325799771585
+    },
+    {
+      "id": "fleurs_ar_eg_014",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 546.7676600092091
+    },
+    {
+      "id": "fleurs_ar_eg_015",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1302.898959023878
+    },
+    {
+      "id": "fleurs_ar_eg_016",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.09523809523809523,
+      "total_ms": 1169.3692400003783
+    },
+    {
+      "id": "fleurs_ar_eg_017",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 700.2451379667036
+    },
+    {
+      "id": "fleurs_ar_eg_018",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 877.6297690346837
+    },
+    {
+      "id": "fleurs_ar_eg_019",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.36363636363636365,
+      "total_ms": 593.2667109882459
+    },
+    {
+      "id": "fleurs_ar_eg_020",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.12,
+      "total_ms": 1168.303732003551
+    },
+    {
+      "id": "fleurs_ar_eg_021",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.041666666666666664,
+      "total_ms": 1172.3176849773154
+    },
+    {
+      "id": "fleurs_ar_eg_022",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.043478260869565216,
+      "total_ms": 1118.8304459792562
+    },
+    {
+      "id": "fleurs_ar_eg_023",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 1148.715381976217
+    },
+    {
+      "id": "fleurs_ar_eg_024",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.36,
+      "total_ms": 1591.8236679863185
+    },
+    {
+      "id": "fleurs_ar_eg_025",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 926.3593559735455
+    },
+    {
+      "id": "fleurs_ar_eg_026",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.1111111111111111,
+      "total_ms": 679.4038549996912
+    },
+    {
+      "id": "fleurs_ar_eg_027",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.1388888888888889,
+      "total_ms": 1764.564981975127
+    },
+    {
+      "id": "fleurs_ar_eg_028",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 880.7129169581458
+    },
+    {
+      "id": "fleurs_ar_eg_029",
+      "language": "ar",
+      "metric": "wer",
+      "error_rate": 0.42857142857142855,
+      "total_ms": 550.6904440117069
+    },
+    {
+      "id": "fleurs_th_th_000",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.10328638497652583,
+      "total_ms": 2993.0365229956806
+    },
+    {
+      "id": "fleurs_th_th_001",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.21153846153846154,
+      "total_ms": 1493.6837229761295
+    },
+    {
+      "id": "fleurs_th_th_002",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.07407407407407407,
+      "total_ms": 1446.0195470019244
+    },
+    {
+      "id": "fleurs_th_th_003",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1754.7145590069704
+    },
+    {
+      "id": "fleurs_th_th_004",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.08088235294117647,
+      "total_ms": 1731.7268350161612
+    },
+    {
+      "id": "fleurs_th_th_005",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.03225806451612903,
+      "total_ms": 1268.2314119883813
+    },
+    {
+      "id": "fleurs_th_th_006",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.11737089201877934,
+      "total_ms": 2992.1126469853334
+    },
+    {
+      "id": "fleurs_th_th_007",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.10465116279069768,
+      "total_ms": 1292.8299580235034
+    },
+    {
+      "id": "fleurs_th_th_008",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1315.9697459777817
+    },
+    {
+      "id": "fleurs_th_th_009",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.1391304347826087,
+      "total_ms": 1522.6801569806412
+    },
+    {
+      "id": "fleurs_th_th_010",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.010752688172043012,
+      "total_ms": 1267.6905939588323
+    },
+    {
+      "id": "fleurs_th_th_011",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.031007751937984496,
+      "total_ms": 1717.3693839577027
+    },
+    {
+      "id": "fleurs_th_th_012",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.09259259259259259,
+      "total_ms": 1422.038746997714
+    },
+    {
+      "id": "fleurs_th_th_013",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.03875968992248062,
+      "total_ms": 1756.147972017061
+    },
+    {
+      "id": "fleurs_th_th_014",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.04861111111111111,
+      "total_ms": 1875.1787359942682
+    },
+    {
+      "id": "fleurs_th_th_015",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.04411764705882353,
+      "total_ms": 1841.645881999284
+    },
+    {
+      "id": "fleurs_th_th_016",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.011627906976744186,
+      "total_ms": 1331.0885740211233
+    },
+    {
+      "id": "fleurs_th_th_017",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.04861111111111111,
+      "total_ms": 1824.7858140384778
+    },
+    {
+      "id": "fleurs_th_th_018",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.027777777777777776,
+      "total_ms": 1446.4057559962384
+    },
+    {
+      "id": "fleurs_th_th_019",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.12206572769953052,
+      "total_ms": 3085.6946840067394
+    },
+    {
+      "id": "fleurs_th_th_020",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 2006.6821099608205
+    },
+    {
+      "id": "fleurs_th_th_021",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1312.476691964548
+    },
+    {
+      "id": "fleurs_th_th_022",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.017391304347826087,
+      "total_ms": 1382.034329988528
+    },
+    {
+      "id": "fleurs_th_th_023",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.11538461538461539,
+      "total_ms": 1493.7127450248227
+    },
+    {
+      "id": "fleurs_th_th_024",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.023255813953488372,
+      "total_ms": 1713.6787780327722
+    },
+    {
+      "id": "fleurs_th_th_025",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.11827956989247312,
+      "total_ms": 1270.3407309600152
+    },
+    {
+      "id": "fleurs_th_th_026",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.05813953488372093,
+      "total_ms": 1334.7514049964957
+    },
+    {
+      "id": "fleurs_th_th_027",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.10434782608695652,
+      "total_ms": 1542.0591630390845
+    },
+    {
+      "id": "fleurs_th_th_028",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.1346153846153846,
+      "total_ms": 1558.7553569930606
+    },
+    {
+      "id": "fleurs_th_th_029",
+      "language": "th",
+      "metric": "cer",
+      "error_rate": 0.0,
+      "total_ms": 1316.3987870211713
+    },
+    {
+      "id": "fleurs_vi_vn_000",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 595.9261599928141
+    },
+    {
+      "id": "fleurs_vi_vn_001",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 836.7963249911554
+    },
+    {
+      "id": "fleurs_vi_vn_002",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.07692307692307693,
+      "total_ms": 1338.3090499555692
+    },
+    {
+      "id": "fleurs_vi_vn_003",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.11764705882352941,
+      "total_ms": 640.8735399600118
+    },
+    {
+      "id": "fleurs_vi_vn_004",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.11428571428571428,
+      "total_ms": 1056.9516210234724
+    },
+    {
+      "id": "fleurs_vi_vn_005",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 793.4404230327345
+    },
+    {
+      "id": "fleurs_vi_vn_006",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 642.99934101291
+    },
+    {
+      "id": "fleurs_vi_vn_007",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 816.1253129946999
+    },
+    {
+      "id": "fleurs_vi_vn_008",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.04,
+      "total_ms": 881.8304080050439
+    },
+    {
+      "id": "fleurs_vi_vn_009",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 949.6303439955227
+    },
+    {
+      "id": "fleurs_vi_vn_010",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 595.2731180004776
+    },
+    {
+      "id": "fleurs_vi_vn_011",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1132.9507260234095
+    },
+    {
+      "id": "fleurs_vi_vn_012",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1124.232114001643
+    },
+    {
+      "id": "fleurs_vi_vn_013",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.16,
+      "total_ms": 881.6479439847171
+    },
+    {
+      "id": "fleurs_vi_vn_014",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1129.6843599993736
+    },
+    {
+      "id": "fleurs_vi_vn_015",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.05128205128205128,
+      "total_ms": 1308.1425129785202
+    },
+    {
+      "id": "fleurs_vi_vn_016",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.06060606060606061,
+      "total_ms": 924.2470579920337
+    },
+    {
+      "id": "fleurs_vi_vn_017",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 794.1850650240667
+    },
+    {
+      "id": "fleurs_vi_vn_018",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.1794871794871795,
+      "total_ms": 1369.90919301752
+    },
+    {
+      "id": "fleurs_vi_vn_019",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.04,
+      "total_ms": 880.8270120061934
+    },
+    {
+      "id": "fleurs_vi_vn_020",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 814.4500100170262
+    },
+    {
+      "id": "fleurs_vi_vn_021",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 642.0487610157579
+    },
+    {
+      "id": "fleurs_vi_vn_022",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 793.1953970110044
+    },
+    {
+      "id": "fleurs_vi_vn_023",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.1,
+      "total_ms": 1394.8171159718186
+    },
+    {
+      "id": "fleurs_vi_vn_024",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 966.8474679929204
+    },
+    {
+      "id": "fleurs_vi_vn_025",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.05714285714285714,
+      "total_ms": 1056.17027299013
+    },
+    {
+      "id": "fleurs_vi_vn_026",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 509.8270309972577
+    },
+    {
+      "id": "fleurs_vi_vn_027",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 525.5296059767716
+    },
+    {
+      "id": "fleurs_vi_vn_028",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.05714285714285714,
+      "total_ms": 1103.8612159900367
+    },
+    {
+      "id": "fleurs_vi_vn_029",
+      "language": "vi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 595.6978709436953
+    },
+    {
+      "id": "fleurs_id_id_000",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 660.9327720361762
+    },
+    {
+      "id": "fleurs_id_id_001",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 508.42179398750886
+    },
+    {
+      "id": "fleurs_id_id_002",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1143.7009270302951
+    },
+    {
+      "id": "fleurs_id_id_003",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1147.4709269823506
+    },
+    {
+      "id": "fleurs_id_id_004",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 659.4383670017123
+    },
+    {
+      "id": "fleurs_id_id_005",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 663.1449730484746
+    },
+    {
+      "id": "fleurs_id_id_006",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.1,
+      "total_ms": 684.9325959919952
+    },
+    {
+      "id": "fleurs_id_id_007",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 795.3726379782893
+    },
+    {
+      "id": "fleurs_id_id_008",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 703.2895979937166
+    },
+    {
+      "id": "fleurs_id_id_009",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 529.4152380083688
+    },
+    {
+      "id": "fleurs_id_id_010",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.25,
+      "total_ms": 751.2986849760637
+    },
+    {
+      "id": "fleurs_id_id_011",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.13636363636363635,
+      "total_ms": 1367.1289250487462
+    },
+    {
+      "id": "fleurs_id_id_012",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.047619047619047616,
+      "total_ms": 1207.0947519969195
+    },
+    {
+      "id": "fleurs_id_id_013",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.09090909090909091,
+      "total_ms": 706.3852230203338
+    },
+    {
+      "id": "fleurs_id_id_014",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1210.7873120112345
+    },
+    {
+      "id": "fleurs_id_id_015",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.10526315789473684,
+      "total_ms": 860.2246509981342
+    },
+    {
+      "id": "fleurs_id_id_016",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 684.1492689563893
+    },
+    {
+      "id": "fleurs_id_id_017",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 751.6271260101348
+    },
+    {
+      "id": "fleurs_id_id_018",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 727.6269189896993
+    },
+    {
+      "id": "fleurs_id_id_019",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.23529411764705882,
+      "total_ms": 858.1003439612687
+    },
+    {
+      "id": "fleurs_id_id_020",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.13043478260869565,
+      "total_ms": 2043.8603649963625
+    },
+    {
+      "id": "fleurs_id_id_021",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.25,
+      "total_ms": 749.8561199754477
+    },
+    {
+      "id": "fleurs_id_id_022",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1644.2850599996746
+    },
+    {
+      "id": "fleurs_id_id_023",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 771.7787330038846
+    },
+    {
+      "id": "fleurs_id_id_024",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 773.7426700186916
+    },
+    {
+      "id": "fleurs_id_id_025",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 771.5284100268036
+    },
+    {
+      "id": "fleurs_id_id_026",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1075.4541649948806
+    },
+    {
+      "id": "fleurs_id_id_027",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 880.617071990855
+    },
+    {
+      "id": "fleurs_id_id_028",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1122.8890450438485
+    },
+    {
+      "id": "fleurs_id_id_029",
+      "language": "id",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 880.190993018914
+    },
+    {
+      "id": "fleurs_hi_in_000",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1881.517336005345
+    },
+    {
+      "id": "fleurs_hi_in_001",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1879.3621459626593
+    },
+    {
+      "id": "fleurs_hi_in_002",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.13636363636363635,
+      "total_ms": 2380.2861349540763
+    },
+    {
+      "id": "fleurs_hi_in_003",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 2667.3305760486983
+    },
+    {
+      "id": "fleurs_hi_in_004",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 2384.3386700027622
+    },
+    {
+      "id": "fleurs_hi_in_005",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.15,
+      "total_ms": 4134.965871984605
+    },
+    {
+      "id": "fleurs_hi_in_006",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.04,
+      "total_ms": 2805.375638010446
+    },
+    {
+      "id": "fleurs_hi_in_007",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.1,
+      "total_ms": 1997.399949003011
+    },
+    {
+      "id": "fleurs_hi_in_008",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 1789.3022630014457
+    },
+    {
+      "id": "fleurs_hi_in_009",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 980.4506149957888
+    },
+    {
+      "id": "fleurs_hi_in_010",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.09523809523809523,
+      "total_ms": 2452.700952999294
+    },
+    {
+      "id": "fleurs_hi_in_011",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.15,
+      "total_ms": 1969.5705809863284
+    },
+    {
+      "id": "fleurs_hi_in_012",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.16,
+      "total_ms": 2584.374856960494
+    },
+    {
+      "id": "fleurs_hi_in_013",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 2798.1124540092424
+    },
+    {
+      "id": "fleurs_hi_in_014",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.25,
+      "total_ms": 934.4497749698348
+    },
+    {
+      "id": "fleurs_hi_in_015",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 2445.501720008906
+    },
+    {
+      "id": "fleurs_hi_in_016",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.3125,
+      "total_ms": 1730.9027730370872
+    },
+    {
+      "id": "fleurs_hi_in_017",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.5833333333333334,
+      "total_ms": 1356.0724059934728
+    },
+    {
+      "id": "fleurs_hi_in_018",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 1791.0955909756012
+    },
+    {
+      "id": "fleurs_hi_in_019",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1883.9137979666702
+    },
+    {
+      "id": "fleurs_hi_in_020",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 2227.8786040260457
+    },
+    {
+      "id": "fleurs_hi_in_021",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.2962962962962963,
+      "total_ms": 2905.6196880410425
+    },
+    {
+      "id": "fleurs_hi_in_022",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.037037037037037035,
+      "total_ms": 2872.100639040582
+    },
+    {
+      "id": "fleurs_hi_in_023",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 4038.317567028571
+    },
+    {
+      "id": "fleurs_hi_in_024",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.05,
+      "total_ms": 1978.6851970129646
+    },
+    {
+      "id": "fleurs_hi_in_025",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 2491.2883220240474
+    },
+    {
+      "id": "fleurs_hi_in_026",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 4137.8137660212815
+    },
+    {
+      "id": "fleurs_hi_in_027",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 1402.9126159730367
+    },
+    {
+      "id": "fleurs_hi_in_028",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 1727.452858001925
+    },
+    {
+      "id": "fleurs_hi_in_029",
+      "language": "hi",
+      "metric": "wer",
+      "error_rate": 0.1,
+      "total_ms": 1966.4126299903728
+    },
+    {
+      "id": "fleurs_tr_tr_000",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.07692307692307693,
+      "total_ms": 1036.0836510080844
+    },
+    {
+      "id": "fleurs_tr_tr_001",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1011.1731120268814
+    },
+    {
+      "id": "fleurs_tr_tr_002",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.07142857142857142,
+      "total_ms": 945.4774570185691
+    },
+    {
+      "id": "fleurs_tr_tr_003",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.06666666666666667,
+      "total_ms": 1503.36727098329
+    },
+    {
+      "id": "fleurs_tr_tr_004",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.125,
+      "total_ms": 528.1974769895896
+    },
+    {
+      "id": "fleurs_tr_tr_005",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 951.5615109703504
+    },
+    {
+      "id": "fleurs_tr_tr_006",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1191.823743050918
+    },
+    {
+      "id": "fleurs_tr_tr_007",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.3888888888888889,
+      "total_ms": 1110.192879976239
+    },
+    {
+      "id": "fleurs_tr_tr_008",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 948.8562720362097
+    },
+    {
+      "id": "fleurs_tr_tr_009",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.125,
+      "total_ms": 511.1825409694575
+    },
+    {
+      "id": "fleurs_tr_tr_010",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 1257.2450680308975
+    },
+    {
+      "id": "fleurs_tr_tr_011",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 902.3271659971215
+    },
+    {
+      "id": "fleurs_tr_tr_012",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.21428571428571427,
+      "total_ms": 922.8508590022102
+    },
+    {
+      "id": "fleurs_tr_tr_013",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.25,
+      "total_ms": 1226.5621830010787
+    },
+    {
+      "id": "fleurs_tr_tr_014",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.1,
+      "total_ms": 752.748807950411
+    },
+    {
+      "id": "fleurs_tr_tr_015",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.3333333333333333,
+      "total_ms": 992.9306209669448
+    },
+    {
+      "id": "fleurs_tr_tr_016",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 944.8246139800176
+    },
+    {
+      "id": "fleurs_tr_tr_017",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.10526315789473684,
+      "total_ms": 1189.7645819699392
+    },
+    {
+      "id": "fleurs_tr_tr_018",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1126.8746620044112
+    },
+    {
+      "id": "fleurs_tr_tr_019",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 946.1429599905387
+    },
+    {
+      "id": "fleurs_tr_tr_020",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.10526315789473684,
+      "total_ms": 1213.4518929524347
+    },
+    {
+      "id": "fleurs_tr_tr_021",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 881.8875070428476
+    },
+    {
+      "id": "fleurs_tr_tr_022",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.5,
+      "total_ms": 1479.2362329899333
+    },
+    {
+      "id": "fleurs_tr_tr_023",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 859.8407949903049
+    },
+    {
+      "id": "fleurs_tr_tr_024",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 751.2182819773443
+    },
+    {
+      "id": "fleurs_tr_tr_025",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.55,
+      "total_ms": 1435.9101289883256
+    },
+    {
+      "id": "fleurs_tr_tr_026",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 926.8781140563078
+    },
+    {
+      "id": "fleurs_tr_tr_027",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1191.9080180232413
+    },
+    {
+      "id": "fleurs_tr_tr_028",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 751.1718019959517
+    },
+    {
+      "id": "fleurs_tr_tr_029",
+      "language": "tr",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 1546.1982850101776
+    },
+    {
+      "id": "fleurs_pl_pl_000",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.043478260869565216,
+      "total_ms": 1577.617097995244
+    },
+    {
+      "id": "fleurs_pl_pl_001",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.625,
+      "total_ms": 989.0703859855421
+    },
+    {
+      "id": "fleurs_pl_pl_002",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.22727272727272727,
+      "total_ms": 1499.728538969066
+    },
+    {
+      "id": "fleurs_pl_pl_003",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 894.1329320077784
+    },
+    {
+      "id": "fleurs_pl_pl_004",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.17391304347826086,
+      "total_ms": 1470.0221869861707
+    },
+    {
+      "id": "fleurs_pl_pl_005",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.35294117647058826,
+      "total_ms": 1007.8839380294085
+    },
+    {
+      "id": "fleurs_pl_pl_006",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.2631578947368421,
+      "total_ms": 1251.4556879759766
+    },
+    {
+      "id": "fleurs_pl_pl_007",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 811.8078489787877
+    },
+    {
+      "id": "fleurs_pl_pl_008",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.17391304347826086,
+      "total_ms": 1470.7990839960985
+    },
+    {
+      "id": "fleurs_pl_pl_009",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.15,
+      "total_ms": 990.6751500093378
+    },
+    {
+      "id": "fleurs_pl_pl_010",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.15789473684210525,
+      "total_ms": 1297.3775930004194
+    },
+    {
+      "id": "fleurs_pl_pl_011",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.15,
+      "total_ms": 948.7793340231292
+    },
+    {
+      "id": "fleurs_pl_pl_012",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.3125,
+      "total_ms": 1163.8838819926605
+    },
+    {
+      "id": "fleurs_pl_pl_013",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.14285714285714285,
+      "total_ms": 1383.4101950051263
+    },
+    {
+      "id": "fleurs_pl_pl_014",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.45454545454545453,
+      "total_ms": 1643.758046964649
+    },
+    {
+      "id": "fleurs_pl_pl_015",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.21739130434782608,
+      "total_ms": 1491.3960770354606
+    },
+    {
+      "id": "fleurs_pl_pl_016",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.21428571428571427,
+      "total_ms": 830.4549520253204
+    },
+    {
+      "id": "fleurs_pl_pl_017",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.08695652173913043,
+      "total_ms": 1455.4361070040613
+    },
+    {
+      "id": "fleurs_pl_pl_018",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1147.135948005598
+    },
+    {
+      "id": "fleurs_pl_pl_019",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.21428571428571427,
+      "total_ms": 811.7346090148203
+    },
+    {
+      "id": "fleurs_pl_pl_020",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.13043478260869565,
+      "total_ms": 1427.7527990052477
+    },
+    {
+      "id": "fleurs_pl_pl_021",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.23809523809523808,
+      "total_ms": 1411.8097290047444
+    },
+    {
+      "id": "fleurs_pl_pl_022",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.18181818181818182,
+      "total_ms": 1480.4159580380656
+    },
+    {
+      "id": "fleurs_pl_pl_023",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.2,
+      "total_ms": 989.8358329664916
+    },
+    {
+      "id": "fleurs_pl_pl_024",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.05263157894736842,
+      "total_ms": 1210.0803959765472
+    },
+    {
+      "id": "fleurs_pl_pl_025",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1544.3819249630906
+    },
+    {
+      "id": "fleurs_pl_pl_026",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.23809523809523808,
+      "total_ms": 1186.9365919847041
+    },
+    {
+      "id": "fleurs_pl_pl_027",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.13043478260869565,
+      "total_ms": 1498.1574389967136
+    },
+    {
+      "id": "fleurs_pl_pl_028",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 1012.8039559931494
+    },
+    {
+      "id": "fleurs_pl_pl_029",
+      "language": "pl",
+      "metric": "wer",
+      "error_rate": 0.2857142857142857,
+      "total_ms": 1121.1968139978126
+    },
+    {
+      "id": "fleurs_uk_ua_000",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.47058823529411764,
+      "total_ms": 1186.1019679927267
+    },
+    {
+      "id": "fleurs_uk_ua_001",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 2332.3332259897143
+    },
+    {
+      "id": "fleurs_uk_ua_002",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.23076923076923078,
+      "total_ms": 1882.7142380177975
+    },
+    {
+      "id": "fleurs_uk_ua_003",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1206.906012026593
+    },
+    {
+      "id": "fleurs_uk_ua_004",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.08333333333333333,
+      "total_ms": 896.6388290282339
+    },
+    {
+      "id": "fleurs_uk_ua_005",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.0625,
+      "total_ms": 1119.8408519849181
+    },
+    {
+      "id": "fleurs_uk_ua_006",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.9411764705882353,
+      "total_ms": 988.4847640059888
+    },
+    {
+      "id": "fleurs_uk_ua_007",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 1686.5385919809341
+    },
+    {
+      "id": "fleurs_uk_ua_008",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1185.5461290106177
+    },
+    {
+      "id": "fleurs_uk_ua_009",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.0,
+      "total_ms": 1644.4865689845756
+    },
+    {
+      "id": "fleurs_uk_ua_010",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.19047619047619047,
+      "total_ms": 1599.0550179849379
+    },
+    {
+      "id": "fleurs_uk_ua_011",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.15384615384615385,
+      "total_ms": 1977.9171260306612
+    },
+    {
+      "id": "fleurs_uk_ua_012",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.3181818181818182,
+      "total_ms": 2312.7067669993266
+    },
+    {
+      "id": "fleurs_uk_ua_013",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.23076923076923078,
+      "total_ms": 1140.8614210085943
+    },
+    {
+      "id": "fleurs_uk_ua_014",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.1875,
+      "total_ms": 1226.7756459768862
+    },
+    {
+      "id": "fleurs_uk_ua_015",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.058823529411764705,
+      "total_ms": 1359.7997120232321
+    },
+    {
+      "id": "fleurs_uk_ua_016",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.11764705882352941,
+      "total_ms": 1364.9709029705264
+    },
+    {
+      "id": "fleurs_uk_ua_017",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.7619047619047619,
+      "total_ms": 1234.3841990223154
+    },
+    {
+      "id": "fleurs_uk_ua_018",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.11764705882352941,
+      "total_ms": 1343.7665509991348
+    },
+    {
+      "id": "fleurs_uk_ua_019",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.29411764705882354,
+      "total_ms": 1403.8942829938605
+    },
+    {
+      "id": "fleurs_uk_ua_020",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.375,
+      "total_ms": 1160.9260720433667
+    },
+    {
+      "id": "fleurs_uk_ua_021",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.3333333333333333,
+      "total_ms": 916.0823579877615
+    },
+    {
+      "id": "fleurs_uk_ua_022",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.3333333333333333,
+      "total_ms": 942.9420289816335
+    },
+    {
+      "id": "fleurs_uk_ua_023",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.6470588235294118,
+      "total_ms": 1278.9314900292084
+    },
+    {
+      "id": "fleurs_uk_ua_024",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.11538461538461539,
+      "total_ms": 1860.9471340314485
+    },
+    {
+      "id": "fleurs_uk_ua_025",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.23529411764705882,
+      "total_ms": 1363.513074000366
+    },
+    {
+      "id": "fleurs_uk_ua_026",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.19230769230769232,
+      "total_ms": 2332.6829269644804
+    },
+    {
+      "id": "fleurs_uk_ua_027",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.23076923076923078,
+      "total_ms": 2261.3306600251235
+    },
+    {
+      "id": "fleurs_uk_ua_028",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.07692307692307693,
+      "total_ms": 1251.0015110019594
+    },
+    {
+      "id": "fleurs_uk_ua_029",
+      "language": "uk",
+      "metric": "wer",
+      "error_rate": 0.047619047619047616,
+      "total_ms": 1579.9177649896592
+    }
+  ]
+}

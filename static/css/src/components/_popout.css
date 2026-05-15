@@ -1,0 +1,802 @@
+/* Meeting Scribe — Pop-out view mode + popout layout.
+ *
+ * Two related concerns bundled together:
+ *
+ *   1. body.popout-view cascades — the browser-window pop-out spawn
+ *      that hides admin chrome (header, settings panel, meetings
+ *      panel, modal overlays, table strip, speaker timeline,
+ *      summary panel, metrics dashboard, control bar) so the
+ *      target window renders just the transcript / slide / 1:1
+ *      panes in their popout-only layout.
+ *
+ *   2. Popout-layout primitives — `.lyt-split` (2-pane flex split
+ *      with a 4-px drag gutter), `.lyt-slot`, per-leaf chrome (drag
+ *      handle + options menu popover), slide viewer, terminal body,
+ *      search bar, auth overlay, offline overlay, and the small
+ *      popout header button.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ POP-OUT VIEW MODE ═══════════ */
+
+/* popout-view main height managed by flexbox below */
+
+/* Hide the Live column header — show only lang-a and lang-b */
+body.popout-view .col-header:first-child { display: none; }
+body.popout-view .transcript-col-headers { grid-template-columns: 1fr 1fr; }
+
+/* Hide everything not needed */
+body.popout-view #main-header,
+body.popout-view .meetings-panel,
+body.popout-view .meetings-backdrop,
+body.popout-view .settings-panel,
+body.popout-view .settings-backdrop,
+body.popout-view .modal-overlay,
+body.popout-view .meeting-table-strip,
+body.popout-view .speaker-timeline,
+body.popout-view .meeting-summary-panel,
+body.popout-view .metrics-dashboard,
+body.popout-view .control-bar,
+body.popout-view .room-setup,
+body.popout-view .landing-mode,
+body.popout-view #player-bar {
+  display: none !important;
+}
+
+/* Minimal pop-out header bar */
+.popout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.popout-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.popout-header-left .popout-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex-shrink: 0;
+  transition: background var(--duration-fast);
+}
+/* Connection state — set by the popout JS via dataset.connState. */
+.popout-header-left .popout-dot[data-conn-state="open"]       { background: var(--color-success); }
+.popout-header-left .popout-dot[data-conn-state="connecting"] {
+  background: var(--color-warning);
+  animation: popout-dot-pulse 1.4s ease-in-out infinite;
+}
+.popout-header-left .popout-dot[data-conn-state="down"]       { background: var(--color-recording); }
+@keyframes popout-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+.popout-header-left .popout-title {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.popout-header-left .popout-lang {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-accent);
+}
+
+/* Admin-side slide controls. Sits between the toolbar and the
+   transcript so operators can advance slides without opening the
+   popout. The thumbnail mirrors what the popout's "original" pane
+   shows; the prev/next buttons hit PUT /api/meetings/.../slides/current
+   so every connected viewer (admin + popout + reader) follows the same
+   broadcast. */
+.admin-slide-bar {
+  /* Admin view is the operator's driving interface — slides are the
+     primary signal, transcript is confirmation. Default to 60 vh.
+     Layout: column with two children:
+       - .admin-slide-main: row containing slides | splitter | notes
+       - .admin-slide-resize: bottom edge handle to resize total height
+     Both ratios (height vh + slides:notes split) persist in
+     localStorage and are read by JS into CSS vars. */
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-dim);
+  font-size: 0.78rem;
+  height: var(--admin-slide-bar-height, 60vh);
+  min-height: 200px;
+  max-height: 85vh;
+  position: relative;
+}
+.admin-slide-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 0;  /* let children scroll instead of overflowing */
+}
+.admin-slide-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.admin-slide-pane-slides {
+  flex: var(--admin-slide-split-flex, 70) 1 0%;
+  padding: var(--space-sm) var(--space-md);
+  gap: var(--space-xs);
+}
+.admin-slide-pane-notes {
+  flex: calc(100 - var(--admin-slide-split-flex, 70)) 1 0%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-raised);
+  border-left: 1px solid var(--color-border-dim);
+}
+.admin-slide-splitter {
+  flex: 0 0 6px;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  background: var(--color-bg-raised);
+  border-left: 1px solid var(--color-border-dim);
+  border-right: 1px solid var(--color-border-dim);
+}
+.admin-slide-splitter-grip {
+  width: 2px;
+  height: 32px;
+  border-radius: 1px;
+  background: var(--color-text-secondary);
+  opacity: 0.4;
+  transition: opacity 120ms;
+}
+.admin-slide-splitter:hover .admin-slide-splitter-grip,
+.admin-slide-splitter.dragging .admin-slide-splitter-grip {
+  opacity: 1;
+}
+
+/* Speaker notes pane — flex column inside the right side of
+   .admin-slide-main. Scrollable. Source-only for now. */
+.admin-slide-pane-notes .admin-slide-notes-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  flex: 0 0 auto;
+  margin-bottom: var(--space-xs);
+}
+.admin-slide-pane-notes .admin-slide-notes-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.admin-slide-pane-notes .admin-slide-notes-body.is-empty {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.admin-slide-resize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  background: linear-gradient(to bottom, transparent, var(--color-bg-raised));
+  border-top: 1px solid var(--color-border-dim);
+}
+
+/* Admin "translation + terminal" view. The host container holds the
+   lazy-loaded terminal-panel root (which manages its own internal
+   resize). On the admin layout this lives above the transcript,
+   mirroring the slide-bar's role. The terminal-panel itself has its
+   own `--term-bar-height` / drag-handle behaviour, so we just give
+   it a flex column to stretch into. */
+.admin-terminal-host {
+  display: none;
+  flex-direction: column;
+  background: var(--term-ink, #0b0e14);
+  border-bottom: 1px solid var(--color-border-dim);
+}
+body.view-terminal-host-active .admin-terminal-host {
+  display: flex;
+}
+/* When terminal mode is on, hide the slide bar even if a deck is
+   loaded — they share the same vertical real estate above the
+   transcript, and stacking both wastes the operator's screen. */
+body.view-terminal-host-active .admin-slide-bar {
+  display: none !important;
+}
+/* Inline-mounted terminal panel: drop its modal-style positioning
+   and let it fill the host container. The popout/diagnostic versions
+   apply their own absolute / fixed positioning; here we want it to
+   flow with the admin layout. */
+body.view-terminal-host-active .admin-terminal-host > .terminal-panel {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+.admin-slide-resize-grip {
+  width: 40px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-text-secondary);
+  opacity: 0.5;
+  transition: opacity 120ms;
+}
+.admin-slide-resize:hover .admin-slide-resize-grip,
+.admin-slide-resize.dragging .admin-slide-resize-grip {
+  opacity: 1;
+}
+.admin-slide-resize.dragging {
+  background: linear-gradient(to bottom, transparent, var(--color-bg-surface));
+}
+.admin-slide-bar .admin-slide-upload {
+  position: relative;
+  cursor: pointer;
+  flex: 0 0 auto;
+  align-self: center;
+}
+.admin-slide-bar .admin-slide-controls {
+  align-self: center;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+/* Side-by-side preview: original (Source) + translated. Each tile
+   is height-driven (height matches the bar), with width-via-aspect
+   so 4:3 and 16:9 source PNGs both render proportionate. */
+.admin-slide-thumbs {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-sm);
+  min-width: 0;
+  min-height: 0;  /* essential — let it shrink + scroll instead of overflowing */
+  max-width: 100%;
+}
+.admin-slide-pane-slides .admin-slide-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0 0;
+}
+.admin-slide-thumb-wrap {
+  flex: 0 1 auto;
+  margin: 0;
+  position: relative;
+  height: 100%;
+  /* PowerPoint defaults: classic decks are 4:3, modern decks are
+     16:9. We pick 4:3 because (a) most internal corporate decks are
+     still 4:3, (b) ``object-fit:contain`` on the image will pad a
+     16:9 slide vertically inside a 4:3 wrap, which only steals a
+     little margin off the top + bottom and is far less visually
+     intrusive than the horizontal black-bar look at 16:9. */
+  aspect-ratio: 4 / 3;
+  /* Hard cap so each tile can't grow past half the bar's interior;
+     when the available width is tight, ``object-fit:contain`` on the
+     image keeps the slide proportional inside the smaller box. */
+  max-width: 50%;
+  background: #000;
+  border: 1px solid var(--color-border-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.admin-slide-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.admin-slide-thumb-wrap img:not([src]),
+.admin-slide-thumb-wrap img[src=""] {
+  display: none;
+}
+.admin-slide-thumb-caption {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border-bottom-right-radius: 4px;
+  z-index: 1;
+}
+.admin-slide-thumb-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4c4cc;
+  font-size: 0.7rem;
+  font-style: italic;
+  background: #1a1a1e;
+  pointer-events: none;
+}
+.admin-slide-thumb-status.is-hidden {
+  display: none;
+}
+.admin-slide-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 0 0 auto;
+}
+.admin-slide-controls .btn-ghost { padding: 0.2rem 0.5rem; }
+#admin-slide-label {
+  min-width: 4rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+}
+/* Tablet: shrink tiles to 180px tall so two side-by-side fit
+   without crowding the upload button + nav into a wrap row. */
+@media (max-width: 1100px) {
+  .admin-slide-thumbs {
+    height: 100%;
+    min-height: 180px;
+  }
+  .admin-slide-bar {
+    /* Match the desktop bump: still vh-driven so on smaller laptops
+       the slide bar dominates without forcing a fixed pixel cap. */
+    max-height: min(50vh, 480px);
+  }
+}
+@media (max-width: 900px) {
+  .admin-slide-bar {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    max-height: none;
+  }
+  .admin-slide-thumbs {
+    flex: 1 1 100%;
+    order: 2;
+    height: 200px;
+  }
+  .admin-slide-controls {
+    order: 3;
+  }
+}
+/* Mobile: stack the two panes vertically — side-by-side at <540px
+   would make each ~150px wide which is too small to read slide
+   content. Stacking gives each pane the full bar width. */
+@media (max-width: 540px) {
+  .admin-slide-thumbs {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+    gap: var(--space-xs);
+  }
+  .admin-slide-thumb-wrap {
+    height: auto;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+  }
+}
+/* Hide the admin slide bar in popout mode — popout has its own slide
+   pane via the layout renderer. */
+body.popout-view .admin-slide-bar { display: none !important; }
+
+/* Single-language modes — when the operator clicks one of the
+   language filter buttons (``#btn-col-a`` / ``#btn-col-b``), the
+   transcript collapses to that single language. The slide preview
+   should follow: hiding the irrelevant pane lets the visible one
+   grow to use the full bar width.
+   * ``lang-mode-a-only``: language A is on the LEFT pane (the
+     ``Source`` thumbnail). Collapse the right (Translated) pane.
+   * ``lang-mode-b-only``: language B is on the RIGHT pane
+     (Translated). Collapse the left (Source) pane.
+   The thumb-wrap is sized via ``aspect-ratio: 4/3`` + ``height: 100%``,
+   so removing ``max-width: 50%`` lets the surviving tile claim the
+   full thumbs row. */
+body.lang-mode-a-only .admin-slide-thumb-wrap:nth-of-type(2),
+body.lang-mode-b-only .admin-slide-thumb-wrap:nth-of-type(1) {
+  display: none !important;
+}
+body.lang-mode-a-only .admin-slide-thumbs > .admin-slide-thumb-wrap,
+body.lang-mode-b-only .admin-slide-thumbs > .admin-slide-thumb-wrap {
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+.popout-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.popout-title { cursor: pointer; }
+.popout-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+.popout-btn:hover { border-color: var(--color-text-secondary); color: var(--color-text-secondary); }
+
+/* Segmented control for language mode (Both / English / 日本語) */
+.popout-lang-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 0;
+}
+.popout-lang-toggle .popout-btn {
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--color-border);
+  padding: 2px 10px;
+}
+.popout-lang-toggle .popout-btn:last-child {
+  border-right: none;
+}
+.popout-lang-toggle .popout-btn.active {
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  font-weight: 600;
+}
+.popout-lang-toggle .popout-btn.active:hover {
+  color: var(--color-bg-surface);
+}
+
+/* Slide-language override <select> — matches .popout-btn visually but
+   strips the OS-default <select> chrome and adds a custom chevron so it
+   reads as a header control rather than a fat native dropdown. */
+.popout-slides-lang {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 18px 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  height: auto;
+  line-height: 1.4;
+  /* Inline SVG chevron so we don't depend on an external asset */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none' stroke='%23999' stroke-width='1.4'><path d='M1 1l4 4 4-4'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 8px 5px;
+}
+.popout-slides-lang:hover { border-color: var(--color-text-secondary); color: var(--color-text-secondary); }
+.popout-slides-lang:focus-visible { outline: 2px solid var(--color-text-secondary); outline-offset: 1px; }
+.popout-slides-lang option { color: var(--color-text-primary); background: var(--color-bg-surface); }
+.popout-qr {
+  cursor: pointer;
+  position: relative;
+}
+
+/* Small QR icon in header — expands on hover */
+.popout-qr > svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+  opacity: 0.6;
+  transition: opacity var(--duration-fast);
+}
+.popout-qr:hover > svg { opacity: 1; }
+
+.popout-qr-expanded {
+  display: none;
+  position: absolute;
+  top: 36px;
+  right: 0;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-lg);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  z-index: 100;
+  text-align: center;
+}
+
+.popout-qr-expanded svg {
+  width: 200px;
+  height: 200px;
+}
+
+.popout-qr-expanded .wifi-qr-label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+  font-family: var(--font-mono);
+}
+
+.popout-qr:hover .popout-qr-expanded {
+  display: block;
+}
+
+body.popout-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+body.popout-view main {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pop-out view: amplify the speaker identification with a richer shadow
+   that matches the main view aesthetic but is more prominent for presentation. */
+body.popout-view .compact-block {
+  padding: 0.9rem var(--space-md);
+  border-left-width: 4px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--speaker-color, transparent) 8%, transparent);
+  transition: background var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+body.popout-view .compact-block:hover {
+  background: color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 3%, var(--color-bg-surface));
+}
+
+body.popout-view .compact-block.playing {
+  background: color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 10%, var(--color-bg-surface));
+  box-shadow:
+    inset 4px 0 0 0 var(--speaker-color, var(--color-text-accent)),
+    inset 0 0 0 1px color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 20%, transparent),
+    0 0 28px 0 color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 30%, transparent);
+}
+
+body.popout-view .compact-block.playing .compact-speaker {
+  text-shadow: 0 0 10px color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 60%, transparent);
+}
+
+body.popout-view .compact-speaker {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+body.popout-view .compact-col {
+  font-size: calc(1.05rem * var(--text-scale, 1));
+  line-height: 1.55;
+}
+
+/* Single-language mode: hide the opposite language column */
+body.popout-view.lang-mode-a-only .compact-col-b,
+body.popout-view.lang-mode-b-only .compact-col-a {
+  display: none;
+}
+
+/* Collapse the parent grid to one track too — without this the
+   surviving column gets `width: 100%` of a half-width grid cell,
+   leaving the right half of the transcript pane empty. Mirrors what
+   body.monolingual does for true single-language meetings. */
+body.popout-view.lang-mode-a-only .compact-columns,
+body.popout-view.lang-mode-b-only .compact-columns {
+  grid-template-columns: 1fr;
+}
+
+body.popout-view.lang-mode-a-only .compact-col-a,
+body.popout-view.lang-mode-b-only .compact-col-b {
+  width: 100%;
+  font-size: calc(1.15rem * var(--text-scale, 1));
+}
+
+/* Single-language mode also applies to the slides viewer. Pane-by-
+   language alignment maps left=langA, right=langB (see scribe-app.js
+   _renderSlide).
+   Note: the popout .sv-slides is built inline by scribe-app.js with
+   THREE children (#sv-orig-pane, #sv-pane-divider, #sv-trans-pane),
+   not two — so the previous nth-child / first-child selectors
+   matched nothing or matched the divider. Use IDs so the divider
+   gets hidden together with the inactive pane. ``!important`` is
+   required because the JS sets inline ``flex:var(...)`` on each
+   pane — inline styles out-specificify class selectors. */
+body.popout-view.lang-mode-a-only #sv-trans-pane,
+body.popout-view.lang-mode-a-only #sv-pane-divider,
+body.popout-view.lang-mode-b-only #sv-orig-pane,
+body.popout-view.lang-mode-b-only #sv-pane-divider {
+  display: none !important;
+}
+/* Surviving pane claims 100% width. The inline JS sets flex via a
+   CSS variable for the resize handle to manipulate; in single-lang
+   mode there's no resize handle to honour, so override. */
+body.popout-view.lang-mode-a-only #sv-orig-pane,
+body.popout-view.lang-mode-b-only #sv-trans-pane {
+  flex: 1 1 100% !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ───────── Monolingual meeting ─────────
+   Set on <body> by the frontend (scribe-app.js / reader.html) whenever
+   the meeting's language_pair has a single code. The pair of hidden
+   controls + single-column transcript gives slides and presentation
+   content more room without adding a separate "presentation" mode. */
+
+/* Hide the popout A/Both/B segmented toggle (meaningless with one
+   language), the slide-direction picker (no direction to pick), and
+   any "View Translation" column buttons in the active-meeting view. */
+body.monolingual .popout-lang-toggle,
+body.monolingual #btn-col-b,
+body.monolingual .popout-slides-lang {
+  display: none;
+}
+
+/* Transcript: B column empty — hide it and let A claim full width.
+   Applies in both the popout AND the main meeting view (body.monolingual
+   is set independently of popout-view). */
+body.monolingual .col-header:nth-child(3),
+body.monolingual .compact-col-b {
+  display: none;
+}
+body.monolingual .transcript-col-headers,
+body.monolingual .compact-columns {
+  grid-template-columns: 1fr;
+}
+body.monolingual .compact-col-a {
+  width: 100%;
+}
+body.popout-view.monolingual .compact-col-a {
+  font-size: calc(1.15rem * var(--text-scale, 1));
+}
+
+/* Slides pane: no translated sub-pane. Same divider trap as the
+   single-language rules above — popout .sv-slides has the resize
+   divider between panes, so ``:nth-child(2)`` is the divider, not
+   the trans pane. Use IDs and hide the divider explicitly. */
+.popout-slides.monolingual-slides #sv-trans-pane,
+.popout-slides.monolingual-slides #sv-pane-divider {
+  display: none !important;
+}
+.popout-slides.monolingual-slides #sv-orig-pane {
+  flex: 1 1 100% !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Compact block renderer — main transcript view */
+.compact-block {
+  border-bottom: 1px solid var(--color-border-dim);
+  padding: var(--space-sm) var(--space-md);
+  border-left: 3px solid var(--speaker-color, transparent);
+  width: 100%;
+}
+
+/* Click-to-seek cursor affordance: only when NOT actively recording.
+   Live meetings never suggest audio playback — the admin interface must
+   not play any audio that could leak back into the room. */
+body:not(.recording) .compact-block[data-click-to-seek="1"] {
+  cursor: pointer;
+}
+
+.compact-block.partial {
+  opacity: 0.7;
+}
+
+/* Currently playing segment — faint shadow glow driven by the speaker color */
+.compact-block.playing {
+  background: color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 8%, var(--color-bg-surface));
+  box-shadow:
+    inset 3px 0 0 0 var(--speaker-color, var(--color-text-accent)),
+    0 0 20px 0 color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 25%, transparent);
+  transition: background var(--duration-med), box-shadow var(--duration-med);
+}
+
+.compact-block.playing .compact-speaker {
+  text-shadow: 0 0 6px color-mix(in srgb, var(--speaker-color, var(--color-text-accent)) 50%, transparent);
+}
+
+.compact-block-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: 3px;
+}
+
+.compact-speaker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Overlap chip — shows co-speakers when pyannote detects cross-talk
+ * on an ASR segment. Small pill tinted to the co-speaker's color so
+ * you can visually trace the conversation overlap without reading
+ * each chip's label.
+ */
+.compact-speaker-overlap {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  margin-left: 4px;
+  border-radius: 10px;
+  color: var(--c, var(--color-text-muted));
+  border: 1px solid color-mix(in srgb, var(--c, var(--color-text-muted)) 40%, transparent);
+  background: color-mix(in srgb, var(--c, var(--color-text-muted)) 10%, transparent);
+}
+
+.compact-time {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.compact-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+.compact-col {
+  font-size: calc(1.1rem * var(--text-scale, 1));
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.compact-col:empty::after {
+  content: '...';
+  color: var(--color-text-muted);
+  opacity: 0.4;
+}
+
+/* In pop-out, hide the standard col-headers since compact blocks have their own structure */
+body.popout-view .transcript-col-headers {
+  display: none;
+}
+
+body.popout-view .transcript-grid-scroll {
+  padding-top: 0;
+}
+

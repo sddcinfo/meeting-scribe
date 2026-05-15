@@ -1,0 +1,26 @@
+# meeting-scribe speakerphone — Dell HID-telephony devices
+#
+# Grants the ``plugdev`` group rw on the SP325/SP3022 event* and hidraw*
+# nodes so the unprivileged user-mode listener daemon can read button
+# events and write the LED state. ``TAG+="uaccess"`` opts the nodes
+# into logind's per-seat ACL so an active console-session user also
+# gets access without group churn.
+#
+# Installed by ``bootstrap.sh`` via the speakerphone install helper
+# and reinstalled by ``meeting-scribe speakerphone install``. To
+# uninstall: ``meeting-scribe speakerphone uninstall`` (which removes
+# this file via sudo + reloads udev).
+
+# Dell SP325 (vid 413c, pid 8223)
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8223", \
+  KERNEL=="event*", GROUP="plugdev", MODE="0660", TAG+="uaccess"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8223", \
+  KERNEL=="hidraw*", GROUP="plugdev", MODE="0660", TAG+="uaccess"
+
+# Dell SP3022 (vid 413c, pid 8222) — predecessor; same HID-telephony
+# pattern. Ships from day one so customers with the older device
+# aren't a special case.
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8222", \
+  KERNEL=="event*", GROUP="plugdev", MODE="0660", TAG+="uaccess"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="8222", \
+  KERNEL=="hidraw*", GROUP="plugdev", MODE="0660", TAG+="uaccess"

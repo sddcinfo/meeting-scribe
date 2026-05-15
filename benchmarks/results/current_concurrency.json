@@ -1,0 +1,46 @@
+{
+  "label": "current",
+  "url": "http://localhost:8010",
+  "model": "Intel/Qwen3.5-35B-A3B-int4-AutoRound",
+  "timestamp": "2026-04-09 17:20:31",
+  "vllm_config": {
+    "command": "/bin/bash -c vllm serve Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8 --host 0.0.0.0 --port 8000 --tensor-parallel-size 1 --max-model-len 32768 --gpu-memory-utilization 0.30 --max-num-seqs 32 --max-num-batched-tokens 16384 --enforce-eager --enable-prefix-caching --enable-auto-tool-choice --tool-call-parser=qwen3_coder --load-format fastsafetensors",
+    "driver": "580.126.09",
+    "gpu": "NVIDIA GB10"
+  },
+  "results": [
+    {
+      "concurrency": 1,
+      "num_requests": 30,
+      "wall_time_s": 9.59,
+      "throughput_rps": 3.13,
+      "latency_p50_ms": 315.7,
+      "latency_p90_ms": 382.1,
+      "latency_p99_ms": 475.6,
+      "latency_mean_ms": 319.6,
+      "errors": 0
+    },
+    {
+      "concurrency": 4,
+      "num_requests": 30,
+      "wall_time_s": 4.43,
+      "throughput_rps": 6.77,
+      "latency_p50_ms": 479.0,
+      "latency_p90_ms": 981.0,
+      "latency_p99_ms": 1008.4,
+      "latency_mean_ms": 568.1,
+      "errors": 0
+    },
+    {
+      "concurrency": 8,
+      "num_requests": 30,
+      "wall_time_s": 3.05,
+      "throughput_rps": 9.84,
+      "latency_p50_ms": 768.3,
+      "latency_p90_ms": 900.2,
+      "latency_p99_ms": 1234.5,
+      "latency_mean_ms": 737.0,
+      "errors": 0
+    }
+  ]
+}

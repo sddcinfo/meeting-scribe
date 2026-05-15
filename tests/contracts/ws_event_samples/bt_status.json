@@ -1,0 +1,19 @@
+{
+  "type": "bt_status",
+  "status": {
+    "powered": true,
+    "devices": [
+      {
+        "mac": "10:54:D2:C4:76:0B",
+        "name": "Dell WL5024 Headset",
+        "paired": false,
+        "connected": true,
+        "trusted": true,
+        "audio": true
+      }
+    ],
+    "paired_count": 0,
+    "connected_count": 1,
+    "known_count": 1
+  }
+}

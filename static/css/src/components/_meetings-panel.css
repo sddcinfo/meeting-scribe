@@ -1,0 +1,102 @@
+/* Meeting Scribe — Meetings panel.
+ *
+ * Slide-over panel from the LEFT (mirror image of the settings
+ * slide-over) carrying the All / Favorites tab strip + a virtual-
+ * scrolling list of past meetings. This file owns only the panel
+ * chrome; per-meeting row presentation lives alongside the
+ * meetings-list-manager feature.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.meetings-panel {
+  position: fixed;
+  left: 0;
+  top: 56px;
+  bottom: 0;
+  width: 780px;
+  max-width: 92vw;
+  background: var(--color-bg-surface);
+  border-right: 1px solid var(--color-border);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateX(-100%);
+  transition: transform 0.25s var(--ease-out);
+}
+
+.meetings-panel.open {
+  transform: translateX(0);
+}
+
+.meetings-backdrop {
+  position: fixed;
+  inset: 0;
+  top: 56px;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 49;
+  display: none;
+}
+
+.meetings-backdrop.open {
+  display: block;
+}
+
+.meetings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.meetings-header h3 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* All / Favorites tabs — keeps All in strict chronological order so a
+ * star-toggle never reshuffles the timeline. Favorites is a filtered view. */
+.meetings-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+}
+
+.meetings-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0.5rem 0.85rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--duration-fast), border-color var(--duration-fast);
+}
+
+.meetings-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.meetings-tab.active {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--color-text-accent, var(--color-text-primary));
+}
+
+.meetings-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
+}

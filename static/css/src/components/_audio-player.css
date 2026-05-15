@@ -1,0 +1,93 @@
+/* Meeting Scribe — Audio player.
+ *
+ * The bottom-pinned audio playback rail shown in review mode for
+ * past meetings — play/pause button, segment scrubber + cursor,
+ * speaker bands (coloured background blocks showing who was
+ * talking when), time labels, and the per-segment "now playing"
+ * shadow that links the audio cursor to the active transcript row.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ AUDIO PLAYER ═══════════ */
+
+.player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: var(--color-bg-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 0 var(--space-xl);
+  z-index: 40;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+}
+
+.player-play {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast);
+  flex-shrink: 0;
+}
+
+.player-play:hover { background: var(--color-bg-raised); }
+.player-play.playing { background: var(--color-recording-bg); border-color: var(--color-recording); }
+
+.player-time {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  min-width: 40px;
+  text-align: center;
+}
+
+.player-scrub {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--speaker-gradient, var(--color-bg-raised));
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.player-scrub::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-text-accent);
+  border: 2px solid var(--color-bg-surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+
+.player-speed {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  border: 1px solid var(--color-border-dim);
+  border-radius: 3px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+/* Adjust main content when player is visible */
+body.has-player main { padding-bottom: 48px; }
+

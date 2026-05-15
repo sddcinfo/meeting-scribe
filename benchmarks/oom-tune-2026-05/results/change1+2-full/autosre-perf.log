@@ -1,0 +1,33 @@
+  [warn] --allow-contention set — numbers will not be comparable to the baseline
+  model: auto-detected served id = Qwen/Qwen3.6-35B-A3B-FP8
+perf run — duration=60s  coding_conc=2  translation_rps=2.0
+
+
+autosre perf — run summary
+  timestamp:  20260511T125330
+  model:      Qwen/Qwen3.6-35B-A3B-FP8
+  gpu:        NVIDIA GB10
+  vllm args:  serve Qwen/Qwen3.6-35B-A3B-FP8 --tensor-parallel-size=1 --max-model-len=262144 --gpu-memory-utilizat
+  autosre:    7d091c3
+  baseline:   <none — not comparing>
+
+  Workload     │  Phase       │ Samples │ TTFT p50 │ TTFT p95 │  TPS p50 │ TPS agg │ Errors
+  ─────────────┼──────────────┼─────────┼──────────┼──────────┼──────────┼─────────┼───────
+  translation  │ isolated     │     182 │     110ms │     136ms │   52.42 │  33.10 │     0
+  coding       │ isolated     │      24 │     266ms │     310ms │   41.66 │  75.64 │     0
+  translation  │ contention   │     117 │     151ms │     196ms │   32.42 │  20.73 │     0
+  coding       │ contention   │      20 │     387ms │     431ms │   28.38 │  50.19 │     0
+
+scheduler counters (during contention)
+  preemptions_delta:       0
+  requests_running_peak:   3.0
+  requests_waiting_peak:   0.0
+  kv_cache_pct_peak:       0.010
+  queue_time_avg_ms:       1.0
+  prefix_cache_hit_pct:    69.9
+
+proxy sanity (via :8011/v1/messages)
+  status: OK
+  message_start=True  deltas=3  message_stop=True
+  elapsed: 4385ms
+

@@ -1,0 +1,198 @@
+/* Meeting Scribe — universal form controls.
+ *
+ * Every native form widget on every page picks up its baseline
+ * presentation from this file: `<select>`, `<input>` of every typed
+ * variant, `<textarea>`, `<input type="checkbox">`, and the volume
+ * sliders (`<input type="range">`). One file means dropdowns can't
+ * "blend into the background" on one page while looking right on
+ * another — the admin SPA's room-setup, the settings panel, the
+ * /auth gate, the /setup wizard, and the editorial demos all share
+ * the same token-driven control surface.
+ *
+ * Scope rule: every control widget gets a consistent default. Where
+ * an individual feature wants a different size or radius, it can
+ * override via its own component partial.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ─── Inputs ────────────────────────────────────────────────── */
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  min-height: 36px;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+textarea {
+  min-height: 80px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-text-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-text-accent) 18%, transparent);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ─── Selects ───────────────────────────────────────────────── */
+
+/* Strip the native chevron and paint our own so the affordance is
+ * unambiguous and matches the input border + radius. Inline SVG is
+ * encoded as a data URI so the appliance keeps working offline. */
+select {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-surface);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%234a4a52' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3l4 3 4-3'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  min-height: 36px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+/* ─── Checkboxes + radios ───────────────────────────────────── */
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-text-accent);
+  cursor: pointer;
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-text-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Range / slider ────────────────────────────────────────── */
+
+input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--color-bg-raised);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-text-primary);
+  border: 2px solid var(--color-bg-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  margin-top: -6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-text-primary);
+  border: 2px solid var(--color-bg-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--color-bg-raised);
+  border-radius: 999px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--color-bg-raised);
+  border-radius: 999px;
+}
+
+/* ─── Labels + help text ────────────────────────────────────── */
+
+/* Field-row helper for stacked label + control pairs (used by the
+ * room-setup audio routing card and various other admin surfaces).
+ * Opt in via the class so it doesn't override every <label> — some
+ * forms intentionally place label and control side-by-side. */
+.field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-label {
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field-help {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}

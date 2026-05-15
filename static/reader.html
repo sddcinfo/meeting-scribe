@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Meeting Scribe | Reader</title>
+  <link rel="stylesheet" href="/static/css/dist/reader.css?v=aeb35e567c30"></head>
+<body>
+  <div class="root">
+    <div class="bar">
+      <div class="dot idle" id="r-dot"></div>
+      <a href="/" class="no-underline text-text-muted text-base leading-none" title="Back to guest view">&larr;</a>
+      <span class="title">Reader</span>
+      <button type="button" class="dir-btn" id="r-dir-btn" title="Toggle transcript order (newest first / oldest first)"></button>
+      <button type="button" class="dir-btn" id="r-text-smaller" title="Decrease text size">A-</button>
+      <button type="button" class="dir-btn" id="r-text-larger" title="Increase text size">A+</button>
+      <button type="button" class="dir-btn" id="pip-btn" title="Float above other windows (always on top)" style="display:none">Float</button>
+      <span class="lang-label" id="r-lang-label"></span>
+    </div>
+
+    <div id="slide-viewer-container"></div>
+
+    <div class="waiting" id="r-waiting">
+      Waiting for meeting<span class="dots"></span>
+    </div>
+
+    <div class="split" id="r-split" style="display:none">
+      <div class="pane pane-a">
+        <div class="pane-label" id="label-a">Original</div>
+        <div class="pane-scroll" id="scroll-a">
+          <div class="live" id="live-a"></div>
+        </div>
+      </div>
+      <div class="pane pane-b">
+        <div class="pane-label" id="label-b">Translation</div>
+        <div class="pane-scroll" id="scroll-b">
+          <div class="live" id="live-b"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="/static/js/reader-app.js"></script>
+</body>
+</html>

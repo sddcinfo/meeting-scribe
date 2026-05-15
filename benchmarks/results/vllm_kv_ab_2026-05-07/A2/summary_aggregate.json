@@ -1,0 +1,411 @@
+[
+  {
+    "config_name": "A2",
+    "meeting_id": "38d4efb0-8c67-4a7e-a542-caa78f437a05",
+    "elapsed_ms": 67875.35910890438,
+    "summary": {
+      "schema_version": 2,
+      "executive_summary": "This brief technical clip captures a developer or engineer walking through a simulation or environment build, focusing on discrepancies between a test iteration and a 'real vault' setup. The speaker references integrating Slack data and notes that the physics engine is expected to handle certain environmental behaviors, though they acknowledge potential issues stemming from their own implementation. Due to the fragmentary nature of the recording, no strategic decisions, account discussions, or cross-functional alignments were established. The session appears to be an isolated technical review or debugging walkthrough rather than a strategic meeting.",
+      "key_insights": [
+        {
+          "title": "Technical Debugging & Physics Engine Integration",
+          "description": "The speaker is actively troubleshooting a simulation or environment build, specifically comparing a current iteration to a 'real vault' setup. They note discrepancies in how certain elements (referred to as 'the hole') are rendering or behaving, attributing some inconsistencies to their own implementation ('building them stupidly'). The mention of the 'physics engine' suggests this is likely a game development, simulation, or engineering software context where real-time physics calculations are critical to the environment's integrity.\n\nThe reference to 'Slack data' indicates an attempt to integrate external communication or workflow data into the environment, possibly for testing data pipelines, notification systems, or user activity tracking within the simulation. However, the fragmented nature of the transcript suggests the speaker was mid-explanation or troubleshooting live, without a structured agenda or broader team alignment.\n\nFrom a strategic standpoint, this appears to be a low-level technical check rather than a milestone review. The lack of clear decisions or assigned follow-ups implies this was either a solo debugging session, a quick screen-share with a colleague, or an incomplete recording. Any integration of external data sources like Slack into the physics-driven environment will require formal validation, error handling, and performance benchmarking before it can be considered production-ready.",
+          "speakers": [
+            "Speaker 1"
+          ]
+        }
+      ],
+      "action_items": [],
+      "named_entities": {
+        "companies": [],
+        "people": [],
+        "products": [
+          "Slack"
+        ],
+        "accounts": []
+      },
+      "decisions": [],
+      "questions": [],
+      "key_quotes": [
+        {
+          "text": "Which, as far as I can tell, is from me just building them stupidly, but the physics engine should.",
+          "speaker": "Speaker 1",
+          "context": "Acknowledges potential implementation flaws while deferring to the physics engine's expected behavior, highlighting a technical debugging moment."
+        }
+      ],
+      "topics": [
+        {
+          "title": "Environment Build & Physics Engine Debugging",
+          "description": "Speaker walks through a simulation/environment build, comparing it to a 'real vault,' noting rendering/behavioral discrepancies, and discussing the physics engine's role and potential implementation issues.",
+          "timestamp_min": 0.0
+        }
+      ]
+    },
+    "error": null,
+    "prompt_chars": 501,
+    "n_finals": 6,
+    "response_chars": 3042,
+    "num_topics": 1,
+    "num_action_items": 0,
+    "num_decisions": 0,
+    "topic_names": [
+      "Environment Build & Physics Engine Debugging"
+    ],
+    "hallucinated_speakers": []
+  },
+  {
+    "config_name": "A2",
+    "meeting_id": "c4c913f8-1c43-4de8-99df-1bccffa87a10",
+    "elapsed_ms": 127892.94849301223,
+    "summary": {
+      "schema_version": 2,
+      "executive_summary": "This meeting served as a live technical demonstration of an AI-powered meeting platform capable of real-time, multi-language transcription and translation across English, Japanese, Chinese, Arabic, and Portuguese. The presenter showcased a hybrid architecture that balances local AI processing for data privacy with cloud-based model access via Anthropic to ensure high accuracy. A significant portion of the session was dedicated to demonstrating autonomous development workflows, where an AI coding agent diagnosed and resolved UI/UX rendering issues on the fly based on natural language prompts. While the core technology is functionally impressive, the team noted pending dependencies on external data sources and cross-functional validation before the demo is fully production-ready.",
+      "key_insights": [
+        {
+          "title": "Autonomous Development & Real-Time AI Debugging",
+          "description": "The demonstration highlighted a paradigm shift in software development where human developers act as problem describers rather than manual code writers. By feeding error messages and UI complaints directly into Claude Code, the AI agent autonomously analyzed the system state, generated CSS adjustments, and deployed fixes without human intervention. This approach drastically compresses the feedback loop between identifying a bug and implementing a solution, effectively turning the development environment into an interactive, self-correcting workspace.\n\nHowever, this workflow introduces new operational considerations around AI agent oversight, error validation, and architectural context retention. The presenter noted that while the agent successfully fixed layout and responsiveness issues, it occasionally required manual scrolling or minor adjustments, indicating that full autonomy is still emerging. For enterprise adoption, teams will need to establish guardrails around AI-generated code, ensure proper testing pipelines, and train developers to effectively prompt and verify agent outputs.",
+          "speakers": [
+            "Speaker 1"
+          ]
+        },
+        {
+          "title": "Hybrid AI Architecture for Multilingual Performance",
+          "description": "The platform’s ability to handle simultaneous transcription and translation across five languages relies on a carefully balanced local-cloud hybrid model. While the AI framework harness runs locally to support on-premise or desktop deployment, the system routes inference to Anthropic’s cloud models to leverage superior language processing capabilities. This architecture acknowledges that open-source local models currently lack the multilingual accuracy required for enterprise meeting transcription, but it also highlights the latency and connectivity trade-offs inherent in cloud-dependent AI workflows.\n\nThe team’s iterative testing of language switching, speaker diarization, and personalized audio feeds suggests that real-time multilingual processing remains a work in progress. The presenter explicitly noted that introducing three languages simultaneously causes the system to 'cut harder,' indicating that resource allocation and model routing need further optimization. As enterprises demand stricter data residency requirements, this hybrid approach provides a viable bridge between compliance and performance, but it will require continuous tuning to maintain low latency across diverse linguistic inputs.",
+          "speakers": [
+            "Speaker 1"
+          ]
+        },
+        {
+          "title": "Demo Readiness & Cross-Functional Dependencies",
+          "description": "Despite the technical sophistication of the live demo, the presenter openly acknowledged several operational gaps that must be resolved before public or client-facing deployment. Coordination with the AI BDM team, specifically Saki-san, is underway to validate the system’s accuracy and user experience. Additionally, external data from a demo-site remains pending despite outreach to Mary Young, leaving the presentation without historical performance metrics or comparative figures.\n\nThese dependencies underscore a common challenge in AI product launches: the core technology often outpaces the supporting data, compliance checks, and cross-team alignment required for a polished go-to-market execution. Until the demo site data is integrated and the AI BDM team completes their review, the platform will remain in a pre-release validation phase. Addressing these gaps will be critical to transitioning from a technical showcase to a commercially viable offering.",
+          "speakers": [
+            "Speaker 1"
+          ]
+        }
+      ],
+      "action_items": [
+        {
+          "category": "Demo Preparation & Data Readiness",
+          "task": "Follow up on pending historical performance metrics and data from the demo-site to populate the presentation with accurate figures and comparative benchmarks.",
+          "assignee": "Speaker 1",
+          "due": null
+        },
+        {
+          "category": "Cross-Functional Validation",
+          "task": "Coordinate with Saki-san and the AI BDM team to conduct a final review of the meeting system’s transcription accuracy, UI/UX responsiveness, and multilingual handling before external demonstration.",
+          "assignee": "Speaker 1",
+          "due": null
+        },
+        {
+          "category": "AI Agent Workflow Optimization",
+          "task": "Document the prompt engineering, error-handling protocols, and iterative fix sequences used during the Claude Code autonomous debugging session to establish a repeatable workflow for future UI/UX iterations.",
+          "assignee": "Speaker 1",
+          "due": null
+        }
+      ],
+      "named_entities": {
+        "companies": [
+          "Anthropic",
+          "AI BDM team"
+        ],
+        "people": [
+          "Saki-san",
+          "Mary Young"
+        ],
+        "products": [
+          "Claude Code",
+          "auto SRE tool",
+          "AI framework tooling harness",
+          "meeting system",
+          "GPT",
+          "iPad"
+        ],
+        "accounts": [
+          "demo-site"
+        ]
+      },
+      "decisions": [],
+      "questions": [
+        "When will the historical demo site data and performance metrics be available for the presentation?",
+        "How will the system maintain transcription accuracy and low latency when three or more languages are spoken simultaneously?",
+        "What is the fallback protocol or performance threshold if the cloud model connection drops during a local AI session?"
+      ],
+      "key_quotes": [
+        {
+          "text": "Literally, all I've been doing to make all this is just I want I want this I want I want to see this Oh, this doesn't work. Just describing a problem effectively.",
+          "speaker": "Speaker 1",
+          "context": "Illustrating the new developer workflow where AI agents execute fixes based on natural language problem descriptions rather than manual coding."
+        },
+        {
+          "text": "The harness is local, but when you run it normally, it will connect to Anthropic online, which is what it's actually doing here.",
+          "speaker": "Speaker 1",
+          "context": "Explaining the hybrid architecture that balances local deployment capabilities with cloud model performance for higher accuracy."
+        },
+        {
+          "text": "It's really to showcase what is possible from Local AI, so you know, in your own data centers or on your desktop...",
+          "speaker": "Speaker 1",
+          "context": "Framing the demo around enterprise data privacy, on-premise AI capabilities, and the strategic value of local model deployment."
+        }
+      ],
+      "topics": [
+        {
+          "title": "Voice Recognition & Speaker Identification Setup",
+          "description": "Initial configuration and testing of voice recognition features, speaker diarization, and real-time identification of who is speaking during the meeting.",
+          "timestamp_min": 0.0
+        },
+        {
+          "title": "Multi-Language Transcription & Personalized Meeting Feeds",
+          "description": "Demonstration of simultaneous transcription and translation across English, Japanese, Chinese, Arabic, and Portuguese, including personalized audio and text feed options.",
+          "timestamp_min": 1.0
+        },
+        {
+          "title": "Local AI Infrastructure vs. Cloud Model Performance",
+          "description": "Discussion of the hybrid architecture, emphasizing local AI deployment for data centers and desktops while leveraging cloud models for superior multilingual accuracy.",
+          "timestamp_min": 3.4
+        },
+        {
+          "title": "Real-Time AI Coding Agent Demonstration",
+          "description": "Live showcase of Claude Code autonomously diagnosing system errors, analyzing codebase context, and generating fixes without manual intervention.",
+          "timestamp_min": 5.7
+        },
+        {
+          "title": "Autonomous UI/UX Debugging & Iterative Fixes",
+          "description": "Step-by-step resolution of CSS, layout, and responsiveness issues on the demo page through natural language prompts and AI-driven code generation.",
+          "timestamp_min": 10.5
+        },
+        {
+          "title": "Demo Readiness, Data Dependencies & Team Coordination",
+          "description": "Acknowledgment of pending external data, coordination with the AI BDM team, and final validation steps required before the platform is demo-ready.",
+          "timestamp_min": 12.7
+        }
+      ]
+    },
+    "error": null,
+    "prompt_chars": 11540,
+    "n_finals": 179,
+    "response_chars": 8516,
+    "num_topics": 6,
+    "num_action_items": 3,
+    "num_decisions": 0,
+    "topic_names": [
+      "Voice Recognition & Speaker Identification Setup",
+      "Multi-Language Transcription & Personalized Meeting Feeds",
+      "Local AI Infrastructure vs. Cloud Model Performance",
+      "Real-Time AI Coding Agent Demonstration",
+      "Autonomous UI/UX Debugging & Iterative Fixes",
+      "Demo Readiness, Data Dependencies & Team Coordination"
+    ],
+    "hallucinated_speakers": []
+  },
+  {
+    "config_name": "A2",
+    "meeting_id": "3db4286e-7164-4550-8101-9e5db69cfecc",
+    "elapsed_ms": 178027.68360998016,
+    "summary": {
+      "schema_version": 2,
+      "executive_summary": "This conversation explored the strategic, operational, and economic implications of scaling AI across enterprise environments, contrasting greenfield AI-native development with legacy integration challenges. Speaker 1 detailed a comprehensive personal build-out of infrastructure and software using AI agents, highlighting the critical industry shift from probabilistic, agent-driven workflows toward deterministic, reusable code and structured governance. The discussion pivoted to enterprise realities, emphasizing that while token costs and compute efficiency will inevitably drive organizations toward self-hosted or heavily optimized infrastructure, the immediate bottleneck remains human supervision and accountability. Key takeaways include the necessity of tiered data views for cross-functional alignment, the economic inflection point where cloud-hosted AI becomes unsustainable, and the emerging paradigm of autonomous agent swarms optimizing against KPIs rather than explicit tasks.",
+      "key_insights": [
+        {
+          "title": "The Deterministic vs. Probabilistic AI Paradigm Shift",
+          "description": "Speaker 1's extensive personal build-out demonstrates a critical evolution in AI adoption: moving away from purely probabilistic, agent-driven workflows toward deterministic, reusable software. Initially relying on agentic coding tools like Claude Code and Gemini to generate everything from scratch, the speaker realized that constant regeneration created technical debt and inefficiency. The breakthrough came with implementing hooks (e.g., stop hooks, plan-exit hooks) and Model Context Protocols (MCPs) that forced the AI to build reusable CLI modules and deterministic code rather than one-off scripts. This mirrors traditional software engineering best practices but at exponential velocity.\n\nThe implication for enterprises is clear: AI should be used as an engineering accelerator to produce hardened, deterministic systems, not as a permanent replacement for structured development. Organizations that fail to enforce this transition will face unmanageable probabilistic drift and operational fragility. The speaker noted that while AI can rapidly prototype, the real value emerges when it outputs code that can run independently without continuous model intervention, effectively turning AI into a force multiplier for engineering teams rather than a standalone workflow.\n\nThis insight directly challenges the prevailing 'AI agent for everything' narrative. The speaker's experience shows that the most sustainable path forward requires a hybrid approach: using probabilistic models for ideation, research, and initial scaffolding, then immediately transitioning to deterministic execution layers. This reduces token consumption, eliminates hallucination risks in production, and aligns with traditional DevOps and SRE practices that enterprises already understand and trust.",
+          "speakers": [
+            "Speaker 1"
+          ]
+        },
+        {
+          "title": "Enterprise AI Adoption: Greenfield vs. Legacy Integration & Governance",
+          "description": "A major theme was the stark contrast between building AI-native systems from scratch versus integrating them into legacy enterprise environments. Speaker 1 noted that while starting a company today with an 'AI-first' mindset is straightforward, large organizations like Dell face significant friction. The real challenge isn't just infrastructure but change management and use-case validation. Speaker 2 highlighted Dell's strategy of deploying forward-deployed engineering to help C-suite executives and teams navigate this transition, emphasizing that most enterprises lack the internal expertise to distinguish where deterministic systems should replace probabilistic agents.\n\nThe discussion underscored that successful enterprise AI adoption requires a 'car and driver' analogy: providing the infrastructure is only half the battle; organizations must also invest in governance, supervision layers, and clear accountability frameworks to prevent AI from outpacing human oversight. Speaker 2 explicitly stated that the cost of accountability, not just token costs, will dictate future AI strategy. Without a dedicated supervision layer, organizations risk operational chaos as AI velocity exceeds human capacity to monitor, validate, and correct outputs.\n\nThis highlights a critical strategic gap in current enterprise AI roadmaps. Most organizations are focused on procurement and pilot deployments, but few are building the internal enablement functions, training programs, or governance frameworks required to scale safely. The forward-deployed engineering model mentioned by Speaker 2 represents a necessary evolution, but it also signals that AI transformation will require dedicated internal roles and cross-functional alignment rather than centralized IT mandates.",
+          "speakers": [
+            "Speaker 1",
+            "Speaker 2"
+          ]
+        },
+        {
+          "title": "Tokenomics, Infrastructure Optimization, and the SaaS vs. Self-Hosted Inflection Point",
+          "description": "The conversation heavily addressed the economic trajectory of AI inference. Speaker 1 projected that as organizations scale AI usage, token costs will inevitably explode, forcing a shift from cloud-based SaaS AI to self-hosted or heavily optimized infrastructure. This parallels the cloud computing evolution: start with cloud for flexibility, but refactor to on-prem or optimized clusters when scale and cost demand it. Speaker 2 reinforced this by discussing resource optimization, GPU fractionalization, and Kubernetes-based AI landing zones, noting that while tools exist, enterprises struggle with implementation. The inflection point will likely arrive when token spend exceeds infrastructure investment costs, particularly for workloads that can be batched or scheduled.\n\nThe discussion also touched on risk mitigation, citing a recent case where a company's entire business process collapsed due to over-reliance on a single AI provider (Anthropic), highlighting the strategic necessity of multi-model strategies and infrastructure control. Speaker 1 emphasized that dependency on external APIs creates single points of failure, and as organizations mature, they will demand greater control over their AI stack. This mirrors the historical shift from mainframes to cloud, and now from cloud SaaS to hybrid/self-hosted AI infrastructure.\n\nFrom a product and strategy perspective, this suggests that AI infrastructure vendors will win by offering seamless migration paths, cost-optimization tooling, and multi-model orchestration. The speaker's point about 'building your own Intune' demonstrates that AI lowers the barrier to self-building, but also that enterprises will eventually outgrow DIY solutions due to complexity and maintenance overhead. The winning model will likely be specialized, automated platforms that handle the heavy lifting of provisioning, scaling, and governance while allowing enterprises to retain control over their data and compute.",
+          "speakers": [
+            "Speaker 1",
+            "Speaker 2"
+          ]
+        }
+      ],
+      "action_items": [],
+      "named_entities": {
+        "companies": [
+          "Dell",
+          "VMware",
+          "Bank of America (B of A)",
+          "Deloitte",
+          "EY",
+          "Cloudflare",
+          "Anthropic",
+          "Good Labs",
+          "Commonwealth Bank of Australia (CBA)",
+          "Open Claw",
+          "Malt Book",
+          "Lumos AI",
+          "Red Labs",
+          "IBM",
+          "AWS",
+          "Apple"
+        ],
+        "people": [
+          "Mark Vudrag",
+          "Andre Kapathi"
+        ],
+        "products": [
+          "Gemini",
+          "Node",
+          "DC power",
+          "AC DC",
+          "Kubernetes",
+          "Claude Code",
+          "Opus",
+          "Sonnet",
+          "Opus 4.5",
+          "Opus 4.6",
+          "Opus 4.7",
+          "MCPs",
+          "Cloudflare MCP",
+          "Claude Hooks",
+          "stop hook",
+          "plan exit hooks",
+          "Python",
+          "CLI",
+          "iOS App",
+          "App Store",
+          "VMware Cluster",
+          "GBT Ten",
+          "MVL72 Rack",
+          "Open Claw",
+          "Auto Research",
+          "Malt Book",
+          "Lumos AI",
+          "PKI",
+          "TLS",
+          "128-bit encryption",
+          "Intune",
+          "Apple Business"
+        ],
+        "accounts": [
+          "Amadeus",
+          "Carrier Communications",
+          "ADP"
+        ]
+      },
+      "decisions": [],
+      "questions": [
+        "At what exact inflection point will token economics justify migrating from cloud-hosted AI to self-hosted infrastructure?",
+        "How should enterprises systematically measure and compare the performance and risk impact of incremental model version updates (e.g., Opus 4.5 vs. 4.6 vs. 4.7)?",
+        "What is the optimal human-to-agent supervision ratio before governance overhead becomes unsustainable?",
+        "How will large enterprises decide between building custom internal AI tooling versus purchasing specialized SaaS platforms when AI lowers the barrier to self-building?"
+      ],
+      "key_quotes": [
+        {
+          "text": "The problem isn't how much it costs. It's how do you actually like keep up the human supervision layer, because it's going to outstrip any human-centric organization.",
+          "speaker": "Speaker 1",
+          "context": "Discussing the operational bottleneck of scaling AI beyond pilot stages and the necessity of governance frameworks."
+        },
+        {
+          "text": "If my software doesn't have an on button, i.e., automation and autonomous, then fuck off! Like you can't in this day and age. AI can build anything, right? Literally.",
+          "speaker": "Speaker 2",
+          "context": "Emphasizing that modern software must be self-automating to remain competitive, given AI's rapid development capabilities."
+        },
+        {
+          "text": "It's not about the cost of tokens... the cost of accountability. And do you have enough capacity to govern? Is going to be the conversation, as I think we look forward.",
+          "speaker": "Speaker 1",
+          "context": "Highlighting that enterprise AI strategy will be driven by risk management and oversight capacity rather than just compute spend."
+        },
+        {
+          "text": "We've now been shitified to the point where we just accept that that's inevitable, that's wild. But it was a really interesting perspective from someone who's lived the pain of outages as an executive... to now being like, Eh, everyone's down, so sweet.",
+          "speaker": "Speaker 1",
+          "context": "Reflecting on the cultural shift in enterprise tolerance for cloud/AI outages and the normalization of third-party dependency risks."
+        }
+      ],
+      "topics": [
+        {
+          "title": "AI as a Universal Creator & The Human Bottleneck",
+          "description": "Opening discussion on how AI democratizes creation, the shift from deterministic to probabilistic workflows, and the risk of over-relying on agents for tasks that should be coded.",
+          "timestamp_min": 0.0
+        },
+        {
+          "title": "Defining AI First in Product Development",
+          "description": "Exploring what 'AI First' actually means beyond buzzwords, contrasting traditional software engineering specs with AI-generated prototypes and documentation.",
+          "timestamp_min": 3.0
+        },
+        {
+          "title": "Personal AI Infrastructure Journey",
+          "description": "Speaker 1 details building a compact VMware cluster, learning DC/AC wiring, and transitioning from manual config to agentic coding with Claude Code and Gemini.",
+          "timestamp_min": 6.0
+        },
+        {
+          "title": "Parallels Between Human Orgs and Agent Orgs",
+          "description": "Discussion on MCPs, Claude hooks (stop/plan-exit), and how structuring AI interactions mirrors human team dynamics and communication hierarchies.",
+          "timestamp_min": 13.0
+        },
+        {
+          "title": "Tiered Data Views for Ecosystem Reasoning",
+          "description": "Introducing the engineer, manager, and senior manager view framework for scaling AI-generated codebases and maintaining cross-functional alignment.",
+          "timestamp_min": 17.0
+        },
+        {
+          "title": "Measuring Model Version Impacts & Risk",
+          "description": "Strategies for tracking performance changes across model updates (Opus 4.5 to 4.7) and evaluating open-source alternatives.",
+          "timestamp_min": 21.0
+        },
+        {
+          "title": "Enterprise AI Adoption: Greenfield vs Legacy",
+          "description": "Challenges of integrating AI into large organizations like Dell, the role of forward-deployed engineering, and the need for supervision layers.",
+          "timestamp_min": 24.0
+        },
+        {
+          "title": "Tokenomics, Infrastructure Optimization & SaaS vs Self-Hosted",
+          "description": "Economic trajectory of AI inference, GPU fractionalization, Kubernetes optimization, and the inflection point where cloud AI becomes unsustainable.",
+          "timestamp_min": 27.0
+        },
+        {
+          "title": "Anthropic's Token Model & Dependency Risks",
+          "description": "Critique of pure token-based business models, single-provider dependency risks, and the cultural normalization of cloud outages.",
+          "timestamp_min": 37.0
+        },
+        {
+          "title": "Build vs Buy: Replicating SaaS with AI",
+          "description": "How AI enables individuals to build complex internal tools (PKI, MDM, encryption), and why enterprises will eventually outgrow DIY solutions.",
+          "timestamp_min": 43.0
+        },
+        {
+          "title": "Agent Swarms & Autonomous KPI Optimization",
+          "description": "Exploration of Auto Research, Malt Book, and Red Labs' approach to giving agents KPIs rather than tasks, and the emergence of agent social networks.",
+          "timestamp_min": 47.0
+        },
+        {
+          "title": "Cultural Shifts in AI Reliability & Closing",
+          "description": "Lumos AI anecdote about agent discrimination claims, final reflections on AI's trajectory, and agreement to maintain contact.",
+          "timestamp_min": 50.0
+        }
+      ]
+    },
+    "error": null,
+    "prompt_chars": 62371,
+    "n_finals": 782,
+    "response_chars": 12826,
+    "num_topics": 12,
+    "num_action_items": 0,
+    "num_decisions": 0,
+    "topic_names": [
+      "AI as a Universal Creator & The Human Bottleneck",
+      "Defining AI First in Product Development",
+      "Personal AI Infrastructure Journey",
+      "Parallels Between Human Orgs and Agent Orgs",
+      "Tiered Data Views for Ecosystem Reasoning",
+      "Measuring Model Version Impacts & Risk",
+      "Enterprise AI Adoption: Greenfield vs Legacy",
+      "Tokenomics, Infrastructure Optimization & SaaS vs Self-Hosted",
+      "Anthropic's Token Model & Dependency Risks",
+      "Build vs Buy: Replicating SaaS with AI",
+      "Agent Swarms & Autonomous KPI Optimization",
+      "Cultural Shifts in AI Reliability & Closing"
+    ],
+    "hallucinated_speakers": []
+  }
+]

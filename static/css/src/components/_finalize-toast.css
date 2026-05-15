@@ -1,0 +1,222 @@
+/* Meeting Scribe — background-finalize surfaces.
+ *
+ * Three companion surfaces for in-flight background finalization
+ * that share a visual palette:
+ *   • `.finalize-toast-stack` corner toasts (one per in-flight job)
+ *   • `.meeting-detail-finalize-banner` inline banner on the meeting
+ *     detail view
+ *   • `.meeting-finalizing-progress` mini-bar in the meetings-list row
+ *
+ * Driven by `_renderBackgroundFinalizeToast` in
+ * `features/bg-finalize-toast.js`.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.finalize-toast-stack {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  z-index: 9000;
+  pointer-events: none;
+}
+
+.finalize-toast {
+  pointer-events: auto;
+  width: 320px;
+  background: var(--bg-raised, #fff);
+  border: 1px solid var(--border-dim, #e5e2dc);
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+  font-size: 0.85rem;
+}
+.finalize-toast.done {
+  border-color: var(--ok, #2a8540);
+}
+.finalize-toast.error {
+  border-color: var(--danger, #b52d2d);
+  background: color-mix(in srgb, var(--danger, #b52d2d) 6%, var(--bg-raised, #fff));
+}
+.finalize-toast-title {
+  font-weight: 650;
+  margin-bottom: 4px;
+  color: var(--text-primary, #1a1a1a);
+}
+.finalize-toast-step {
+  color: var(--text-secondary, #555);
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+.finalize-toast-step-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.finalize-toast-step-eta {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #777);
+  white-space: nowrap;
+}
+.finalize-toast.done .finalize-toast-title {
+  color: var(--ok, #2a8540);
+}
+.finalize-toast.done .finalize-toast-title::before {
+  content: '✓ ';
+}
+.finalize-toast-bar {
+  height: 3px;
+  background: var(--border-dim, #e5e2dc);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.finalize-toast-fill {
+  height: 100%;
+  background: var(--accent, #1a6fb5);
+  width: 0%;
+  transition: width 250ms ease;
+}
+.finalize-toast.done .finalize-toast-fill { background: var(--ok, #2a8540); }
+.finalize-toast.error .finalize-toast-fill { background: var(--danger, #b52d2d); }
+.finalize-toast-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.finalize-toast .toast-action {
+  font-size: 0.78rem;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border, #ccc);
+  background: var(--bg-surface, #fafafa);
+  cursor: pointer;
+}
+.finalize-toast .toast-action:hover {
+  background: var(--bg-hover, #f0f0f0);
+}
+
+/* ── Inline finalize banner on the meeting-detail view ────── */
+
+.meeting-detail-finalize-banner {
+  border: 1px solid var(--border-dim, #e5e2dc);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  background: color-mix(in srgb, var(--accent, #1a6fb5) 6%, var(--bg-surface, #fafafa));
+}
+.meeting-detail-finalize-banner.is-error {
+  border-color: var(--danger, #b52d2d);
+  background: color-mix(in srgb, var(--danger, #b52d2d) 8%, var(--bg-surface, #fafafa));
+}
+.meeting-detail-finalize-banner.is-done {
+  border-color: var(--ok, #2a8540);
+  background: color-mix(in srgb, var(--ok, #2a8540) 6%, var(--bg-surface, #fafafa));
+}
+.meeting-detail-finalize-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.meeting-detail-finalize-label {
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  font-size: 0.86rem;
+}
+.meeting-detail-finalize-step {
+  color: var(--text-secondary, #555);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.meeting-detail-finalize-eta {
+  color: var(--text-muted, #777);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+.meeting-detail-finalize-banner.is-done .meeting-detail-finalize-label {
+  color: var(--ok, #2a8540);
+}
+.meeting-detail-finalize-bar {
+  height: 4px;
+  background: var(--border-dim, #e5e2dc);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.meeting-detail-finalize-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent, #1a6fb5);
+  transition: width 250ms ease;
+}
+.meeting-detail-finalize-banner.is-error .meeting-detail-finalize-fill {
+  background: var(--danger, #b52d2d);
+}
+.meeting-detail-finalize-banner.is-done .meeting-detail-finalize-fill {
+  background: var(--ok, #2a8540);
+}
+.meeting-detail-finalize-actions {
+  display: flex;
+  gap: 8px;
+}
+.meeting-detail-finalize-actions .btn-ghost {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+}
+
+/* ── Finalizing progress in the meetings list ──── */
+
+.meeting-finalizing-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--text-muted, #666);
+  margin-top: 4px;
+}
+.meeting-finalizing-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  font-style: italic;
+}
+.meeting-finalizing-bar {
+  flex: 1 1 auto;
+  min-width: 60px;
+  max-width: 160px;
+  height: 3px;
+  background: var(--border-dim, #e5e2dc);
+  border-radius: 2px;
+  overflow: hidden;
+  display: inline-block;
+}
+.meeting-finalizing-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent, #1a6fb5);
+  width: 0%;
+  transition: width 250ms ease;
+}
+.meeting-finalizing-step {
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.meeting-item-state.finalizing {
+  color: var(--accent, #1a6fb5);
+  font-weight: 600;
+}

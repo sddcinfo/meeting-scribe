@@ -1,0 +1,24 @@
+name: CodeQL Security Scan
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"  # Weekly Monday 6am UTC
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python, javascript
+          # Excludes ``py/weak-sensitive-data-hashing`` for the
+          # intentional-public-credentials design (see config + the
+          # setup_state.verify_admin_password docstring).
+          config-file: ./.github/codeql/codeql-config.yml
+      - uses: github/codeql-action/analyze@v4

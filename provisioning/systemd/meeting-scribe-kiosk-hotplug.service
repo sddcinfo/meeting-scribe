@@ -1,0 +1,41 @@
+[Unit]
+# HDMI hot-plug reactor: oneshot triggered by udev whenever any DRM
+# connector state changes (cable in/out, monitor on/off). Reads the
+# HDMI-A-1 status file directly from sysfs and starts or stops the
+# meeting-scribe-kiosk.service so the screen lights up automatically
+# when a display is connected.
+#
+# Idempotent: re-running with the same connector state is a no-op.
+#
+# Wired by 85-meeting-scribe-hdmi-hotplug.rules.
+Description=Meeting Scribe HDMI hot-plug reactor (oneshot)
+After=meeting-scribe-kiosk.service
+
+[Service]
+Type=oneshot
+# Read the HDMI connector status. The status file exists on every
+# kernel with nvidia-drm modeset enabled; if it's missing, bail out
+# silently (e.g. on a non-GB10 platform where this unit was copied
+# accidentally).
+#
+# Settings file is read for the persisted hdmi_enabled flag so an
+# operator who turned the kiosk off via the admin UI doesn't get it
+# re-started on every cable wiggle.
+ExecStart=/bin/sh -c '\
+  test -r /sys/class/drm/card0-HDMI-A-1/status || exit 0; \
+  echo detect > /sys/class/drm/card0-HDMI-A-1/status 2>/dev/null || true; \
+  for _ in 1 2 3 4 5; do \
+    status=$(cat /sys/class/drm/card0-HDMI-A-1/status); \
+    [ "$status" = "connected" ] && break; \
+    sleep 0.5; \
+  done; \
+  enabled=$(/usr/bin/jq -r ".hdmi_enabled // true" \
+    /home/bradlay/.config/meeting-scribe/settings.json 2>/dev/null || echo true); \
+  if [ "$status" = "connected" ] && [ "$enabled" != "false" ]; then \
+    /bin/systemctl start meeting-scribe-kiosk.service; \
+  else \
+    /bin/systemctl stop meeting-scribe-kiosk.service; \
+  fi'
+
+[Install]
+WantedBy=multi-user.target

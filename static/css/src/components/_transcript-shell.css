@@ -1,0 +1,111 @@
+/* Meeting Scribe — Transcript shell.
+ *
+ * The regions around the live transcript:
+ *
+ *   1. .transcript-header — the bilingual column headers (Live |
+ *      lang-A | lang-B) above the transcript scroll surface.
+ *
+ *   2. .transcript-grid-scroll + custom scrollbar styling — the
+ *      flex-1 scroll viewport that hosts the compact-grid rows or
+ *      the 1:1 conversation panes.
+ *
+ *   3. Shared segment helpers — the `@keyframes segment-enter`
+ *      enter animation + `.seg-lang` language chip + `.seg-revision`
+ *      counter used by both the live compact-grid renderer and the
+ *      speaker modal's playback-history rows.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ TRANSCRIPT HEADERS ═══════════ */
+
+.transcript-header {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  padding: var(--space-sm) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-raised);
+}
+
+.col-original, .col-translation {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.col-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.col-lang {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+}
+
+.col-divider { background: var(--color-border-dim); }
+
+/* ═══════════ TRANSCRIPT SCROLL ═══════════ */
+
+.transcript-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  height: calc(100vh - 56px - 42px - 32px);
+  background: var(--color-bg-surface);
+}
+
+.transcript-scroll::-webkit-scrollbar { width: 6px; }
+.transcript-scroll::-webkit-scrollbar-track { background: transparent; }
+.transcript-scroll::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+
+.transcript-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 4rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  gap: var(--space-md);
+}
+
+.empty-icon { opacity: 0.25; margin-bottom: var(--space-sm); }
+.transcript-empty p { font-size: 0.88rem; line-height: 1.5; }
+.empty-hint { font-size: 0.78rem; opacity: 0.6; }
+
+/* ═══════════ SHARED SEGMENT STYLES ═══════════ */
+
+@keyframes segment-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    border-left-color: var(--speaker-color, transparent);
+  }
+}
+
+.seg-lang {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg-raised);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+
+.seg-revision {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  margin-left: var(--space-sm);
+}
+

@@ -1,0 +1,70 @@
+[Unit]
+# HDMI kiosk service: cage + chromium pointed at the loopback /kiosk
+# mirror of the laptop admin's pop-out view.
+#
+# System service, no user systemd / no linger required: User=bradlay
+# plus PAMName=login opens a real logind session so $XDG_RUNTIME_DIR
+# is set up correctly. cage takes over tty7 (Alt+F7); the kiosk-runtime
+# Python process inside the cage session owns wlr-randr applies, DPMS
+# idle, and the chromium watchdog.
+#
+# Lifecycle:
+#   * Started on HDMI connect by meeting-scribe-kiosk-hotplug.service
+#     (oneshot, fires off the 85-meeting-scribe-hdmi-hotplug.rules udev
+#     rule).
+#   * Stopped on HDMI disconnect by the same hotplug oneshot.
+#   * Restarted on chromium crash via Restart=on-failure.
+#
+# Wires:
+#   * /usr/bin/cage:                      apt install cage
+#   * /usr/bin/wlr-randr:                 apt install wlr-randr
+#   * snap chromium:                      snap install chromium
+#   * /usr/local/bin/meeting-scribe-kiosk-runtime:
+#       symlink into meeting-scribe's .venv, installed by
+#       `meeting-scribe kiosk install`.
+Description=Meeting Scribe HDMI kiosk (cage + chromium)
+# meeting-scribe.service is a USER-scope systemd unit; this is a
+# SYSTEM unit so we cannot directly Requires= it across scopes. The
+# kiosk-runtime + chromium retry against http://127.0.0.1:8444 on
+# their own, so if meeting-scribe is briefly down the screen will
+# just show chromium's "site unreachable" until the server is back.
+After=systemd-user-sessions.service
+# Stop GDM (and its Xorg, which holds DRM master with ``-novtswitch -keeptty``)
+# before cage tries to grab the seat. Without this conflict the cage backend
+# fails with ``Timeout waiting session to become active`` / ``Failed to
+# start a DRM session`` (observed 2026-05-14 on the GB10). The Conflicts=
+# is bi-directional: starting gdm.service while the kiosk is running will
+# stop the kiosk, which is the correct semantics (the operator wanted GUI).
+Conflicts=getty@tty7.service gdm.service
+
+[Service]
+Type=simple
+User=bradlay
+Group=bradlay
+# SupplementaryGroups: only groups that actually exist on the target.
+# ``video``, ``render``, ``input`` are standard. ``meeting-scribe-helper``
+# was speculative for the helper-socket-mediated nonce flow; we use
+# the admin REST endpoint instead, so the helper group is not needed.
+SupplementaryGroups=video render input
+PAMName=login
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+UnsetEnvironment=DISPLAY WAYLAND_DISPLAY
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStartPre=/usr/bin/install -d -o bradlay -g bradlay -m 0700 /run/user/1000
+# Force the NVIDIA DRM connector to re-probe before cage runs. With nvidia-drm
+# in modeset mode the connector status can stay "disconnected" across cable
+# events until something explicitly pokes it; cage then refuses to grab the
+# seat. The ``echo detect`` is idempotent and harmless when the link is
+# already up.
+ExecStartPre=/bin/sh -c 'echo detect | tee /sys/class/drm/card0-HDMI-A-1/status >/dev/null 2>&1 || true'
+ExecStart=/usr/bin/cage -d -- /usr/local/bin/meeting-scribe-kiosk-runtime
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

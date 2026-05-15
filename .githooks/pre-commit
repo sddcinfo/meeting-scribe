@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# meeting-scribe pre-commit hook — fast, commit-frequency safe.
+#
+# Stage split (BMAT-style): cheap checks here, heavy whole-repo
+# validation in ``.githooks/pre-push``. The fast set:
+#
+#   * secret scan (staged-files-only sensitive-data scan)
+#   * saved-meeting live ASR/translation/TTS regression
+#
+# Whole-repo validators (``check_ui_style.py``, ``validate_how_it_works.py``)
+# moved to pre-push — they were blocking unrelated one-file commits on
+# pre-existing tech debt because they scan the whole tree on every
+# commit. Pre-push runs ``scripts/ci_local.py`` which mirrors CI and
+# now invokes both validators as part of the lint lane.
+#
+# Enable once per clone (also enables pre-push):
+#   git config core.hooksPath .githooks
+#
+# Bypass in an emergency:
+#   git commit --no-verify   (CI still gates the PR)
+
+set -u
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+fail=0
+PY="${CI_LOCAL_PY:-python3}"
+
+run_blocking() {
+  local name="$1"
+  shift
+  if ! "$@"; then
+    fail=1
+    echo
+    echo "pre-commit: [$name] FAILED (blocking)"
+  fi
+}
+
+if [ -f scripts/check_secrets.py ]; then
+  run_blocking "check-secrets" "$PY" scripts/check_secrets.py
+fi
+
+if [ -f scripts/bench/live_stack_regression.py ]; then
+  run_blocking "live-stack-regression" "$PY" scripts/ci_local.py --only quality
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo
+  echo "pre-commit: blocking validators failed. Fix and re-stage."
+  exit 1
+fi

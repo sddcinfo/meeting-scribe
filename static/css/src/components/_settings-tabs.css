@@ -1,0 +1,270 @@
+/* Meeting Scribe — Settings panel tabbed layout.
+ *
+ * The settings slide-over is a vertical sidebar tabbed layout
+ * (Network / Audio / Display / Terminal / Credentials) inside a
+ * wider panel. The Credentials tab block (.cred-row + helpers)
+ * ships alongside because the tab nav and the cred reveal/copy UI
+ * are exercised together.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ─────────────────────────────────────────────────────────────
+ * PANEL WIDTH
+ *
+ * Fluid panel width — grows smoothly from 720 px floor → 1440 px cap.
+ *
+ *   width ≈ 720 + (100vw − 1280px) × 1.125
+ *
+ * Calibration points:
+ *   * 1280 vw → 720 px (floor; tablet-class desktop ref)
+ *   * 1440 vw → 900 px
+ *   * 1600 vw → 1080 px
+ *   * 1920 vw → 1440 px (2× the floor — the operator's "doubled" target)
+ *   * ≥ 1920 vw → 1440 px (cap; never wider on 4K+/8K so the panel
+ *     stays a conversation-friendly width even on huge displays)
+ *
+ * Fluid form rather than step-function media queries because operators
+ * with HiDPI scaling report logical viewports inside the 1280-1599 band
+ * (e.g. a 4K display at 1.25× scaling lands at 1536 logical) — the
+ * fluid form grows in proportion to whatever logical width the browser
+ * actually advertises.
+ * ───────────────────────────────────────────────────────────── */
+.settings-panel {
+  width: clamp(720px, calc(720px + (100vw - 1280px) * 1.125), 1440px) !important;
+  max-width: 100vw !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * SHELL — flex row wrapping the tab nav + panes container.
+ *
+ * Sits inside .settings-panel where .settings-body used to live.
+ * flex: 1 takes whatever vertical space the panel has after the
+ * header + footer.
+ * ───────────────────────────────────────────────────────────── */
+.settings-shell {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * TAB NAV — left sidebar column.
+ *
+ * Width is fixed so the active-tab indicator (left border) lands
+ * on a stable visual anchor. flex column so future tabs stack.
+ * overflow-y on the nav itself so a long list scrolls separately
+ * from the pane content.
+ * ───────────────────────────────────────────────────────────── */
+.settings-tabs-nav {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 160px;
+  width: 160px;
+  padding: var(--space-sm) 0;
+  border-right: 1px solid var(--color-border-dim);
+  overflow-y: auto;
+  background: var(--color-bg-deep);
+}
+
+.settings-tab {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: background 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+
+.settings-tab:hover {
+  background: var(--color-paper);
+  color: var(--color-text-primary);
+}
+
+.settings-tab:focus-visible {
+  outline: 2px solid var(--color-text-accent);
+  outline-offset: -2px;
+}
+
+.settings-tab.is-active {
+  color: var(--color-text-primary);
+  background: var(--color-paper-deep);
+  border-left-color: var(--color-text-accent);
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * PANES — right scrollable content area.
+ *
+ * One pane shown at a time. Padding matches .settings-body so the
+ * .settings-section / .settings-field styles render at the expected
+ * density.
+ * ───────────────────────────────────────────────────────────── */
+.settings-tabs-panes {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  min-width: 0;
+}
+
+.settings-tab-pane {
+  display: none;
+}
+
+.settings-tab-pane.is-active {
+  display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * PHONE BREAKPOINT — flip the nav to a horizontal strip at top.
+ *
+ * Below 768 px the sidebar would crowd the panes; flip to a
+ * horizontal scrolling row across the top of the body and let
+ * the panes use the full panel width.
+ * ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .settings-shell {
+    flex-direction: column;
+  }
+
+  .settings-tabs-nav {
+    flex: 0 0 auto;
+    width: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: var(--space-xs);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border-dim);
+    white-space: nowrap;
+  }
+
+  .settings-tab {
+    flex: 0 0 auto;
+    width: auto;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    padding: 0.5rem 0.9rem;
+  }
+
+  .settings-tab.is-active {
+    border-bottom-color: var(--color-text-accent);
+    border-left-color: transparent;
+  }
+}
+
+/* Compact desktop — narrower sidebar to leave more room for panes. */
+@media (min-width: 769px) and (max-width: 900px) {
+  .settings-tabs-nav {
+    flex: 0 0 120px;
+    width: 120px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * CREDENTIALS TAB BLOCK
+ *
+ * Three-column grid: label / value / actions. The value column
+ * gets the 1fr stretch so wide passwords don't push the action
+ * buttons off the right edge of the pane. min-width: 0 on the
+ * value cell lets grid shrink it freely.
+ * ───────────────────────────────────────────────────────────── */
+.cred-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: var(--space-sm);
+  row-gap: 0.35rem;
+  padding: 0.5rem 0;
+}
+
+.cred-label {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.cred-value-mono {
+  grid-column: 1;
+  min-width: 0;
+  padding: 0.45rem 0.65rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  background: var(--color-paper-deep);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 4px;
+  user-select: text;
+  /* Long passwords wrap rather than ellipsis-clipping so the operator
+   * can read the full string from the UI without having to click Copy. */
+  overflow-wrap: anywhere;
+}
+
+.cred-value-mono[data-hidden="1"] {
+  color: var(--color-text-muted);
+  letter-spacing: 0.15em;
+}
+
+.cred-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.cred-reveal-btn,
+.cred-copy-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--color-text-primary);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+
+.cred-reveal-btn:hover,
+.cred-copy-btn:hover {
+  background: var(--color-paper);
+  border-color: var(--color-text-accent);
+}
+
+.cred-reveal-btn:focus-visible,
+.cred-copy-btn:focus-visible {
+  outline: 2px solid var(--color-text-accent);
+  outline-offset: 1px;
+}
+
+.cred-status {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin: 0.35rem 0 0;
+  min-height: 1em;
+}
+
+.cred-status[data-tone="ok"] {
+  color: var(--color-text-accent);
+}
+
+.cred-status[data-tone="err"] {
+  color: var(--color-recording);
+}

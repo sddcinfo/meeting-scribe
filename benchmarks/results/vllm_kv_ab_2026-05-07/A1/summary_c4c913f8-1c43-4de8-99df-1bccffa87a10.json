@@ -1,0 +1,151 @@
+{
+  "config_name": "A1",
+  "meeting_id": "c4c913f8-1c43-4de8-99df-1bccffa87a10",
+  "elapsed_ms": 127014.26267297938,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "The meeting served as a live demonstration of a newly developed AI-powered meeting transcription and localization system, alongside a real-time showcase of AI coding agents driving product iteration. Key outcomes included validating the system’s multilingual voice recognition capabilities, demonstrating how natural language prompts can instantly resolve UI/UX bottlenecks via Claude Code, and establishing a hybrid local-cloud AI architecture to balance hardware constraints with model performance. Strategically, the session highlights a shift toward accelerated, AI-augmented development workflows while surfacing immediate follow-ups around demo metrics and responsive design optimization.",
+    "key_insights": [
+      {
+        "title": "Multilingual Transcription & Personalized User Feeds",
+        "description": "The demonstration successfully showcased real-time voice recognition, speaker identification, and language-specific personalized feeds for English, Japanese, and Chinese. The presenter highlighted the system's ability to isolate specific language tracks, allowing participants to filter out unfamiliar languages while maintaining a continuous audio transcript. This capability addresses a critical pain point for global teams, enabling focused consumption of meeting content without cognitive overload from multilingual noise.\n\nHowever, the presenter acknowledged inherent trade-offs between speed, quality, and accuracy when processing three or more languages simultaneously. The system's performance degrades slightly under heavy multilingual load, indicating that the underlying speech recognition models require further tuning for concurrent stream processing. This limitation suggests that while the current architecture is viable for standard bilingual or trilingual meetings, enterprise deployments may need dedicated language routing or model scaling to maintain enterprise-grade accuracy.\n\nThe strategic implication is clear: the product is positioned as a high-value collaboration tool for distributed, multilingual organizations. Success will depend on iterative improvements to the transcription engine's concurrency handling and the seamless integration of audio tracks with text feeds, particularly for participants relying on headphone-based listening modes.",
+        "speakers": [
+          "Speaker 1",
+          "Speaker 2"
+        ]
+      },
+      {
+        "title": "Real-Time AI Coding Agent Workflow",
+        "description": "A significant portion of the meeting was dedicated to demonstrating a live 'vibe coding' workflow using Claude Code, an AI coding agent. The presenter encountered multiple UI/UX issues during the demo—including layout misalignment, missing headers, and poor responsiveness on iPad landscape mode—and resolved them in real-time by simply describing the problems in natural language. The agent autonomously analyzed the codebase, identified the necessary CSS and structural adjustments, and executed the fixes without manual intervention.\n\nThis workflow dramatically compresses the traditional development feedback loop. Instead of writing code, reviewing pull requests, and manually testing, the presenter acted as a product manager directing an autonomous developer. The session proved that AI coding agents can handle complex, context-aware UI adjustments when provided with clear problem statements, effectively turning product iteration into a conversational process.\n\nFrom a strategic standpoint, this validates a new development paradigm where human engineers focus on architecture and problem definition, while AI agents handle implementation and refinement. It also underscores the importance of robust error-handling and agent autonomy in production tooling, as the system successfully recovered from initial failures (e.g., auto SRE tool crashes) by re-prompting the agent with error logs.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Hybrid Local-Cloud AI Architecture & Hardware Constraints",
+        "description": "The presenter outlined a hybrid AI architecture where the application harness runs locally on KB Ten hardware, but inference is routed to Anthropic's cloud models. This design choice was made because current open-source and local models lack the performance tier required for the demo, and KB Ten hardware cannot natively support the most capable LLMs. By keeping the harness local, the system maintains data privacy and low-latency orchestration, while leveraging cloud-based models for superior speech recognition, translation, and coding agent capabilities.\n\nThis architecture reflects a pragmatic compromise between on-premise security requirements and the current limitations of edge AI hardware. The presenter explicitly noted that comparing local open-source models to cloud offerings on KB Ten is 'not a fair comparison' due to hardware constraints, signaling that the product roadmap will likely include phased hardware upgrades or model quantization strategies to eventually run fully local.\n\nThe strategic takeaway is that the product is currently optimized for performance over strict data sovereignty. As edge AI hardware matures and model efficiency improves, the architecture can shift toward fully local execution. Until then, the hybrid model provides a viable path to market while maintaining enterprise-grade AI capabilities.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      }
+    ],
+    "action_items": [
+      {
+        "category": "Product Metrics & Reporting",
+        "task": "Retrieve and integrate last year's performance metrics for the demo-site, as the current data is missing and was previously requested from Saki-san and Mary Young.",
+        "assignee": "Speaker 2",
+        "due": null
+      },
+      {
+        "category": "Product Development & UX",
+        "task": "Refine responsive design and CSS adjustments for iPad landscape mode and mobile views to resolve layout overflow and header visibility issues identified during the live demo.",
+        "assignee": "Speaker 1",
+        "due": null
+      },
+      {
+        "category": "AI Infrastructure & Hardware",
+        "task": "Research and test open-source LLMs that can run natively on KB Ten hardware to reduce dependency on cloud inference and improve data sovereignty for future deployments.",
+        "assignee": "Speaker 1",
+        "due": null
+      },
+      {
+        "category": "Demo Preparation",
+        "task": "Finalize all demo-site content, verify data accuracy, and ensure late-arriving metrics are populated before the next stakeholder presentation.",
+        "assignee": "Speaker 2",
+        "due": null
+      }
+    ],
+    "named_entities": {
+      "companies": [
+        "Anthropic",
+        "OpenAI (GPT)"
+      ],
+      "people": [
+        "Saki-san",
+        "Mary Young"
+      ],
+      "products": [
+        "Claude Code",
+        "KB Ten",
+        "demo-site",
+        "local AI framework/tooling harness",
+        "auto SRE tool"
+      ],
+      "accounts": []
+    },
+    "decisions": [
+      "Adopt a hybrid architecture running the AI harness locally on KB Ten hardware while routing inference to Anthropic's cloud models for superior performance.",
+      "Prioritize natural language prompting as the primary interface for AI coding agents to drive rapid UI/UX iteration."
+    ],
+    "questions": [
+      "How will the transcription engine maintain accuracy when processing three or more languages simultaneously?",
+      "What is the roadmap for optimizing open-source models to run natively on KB Ten hardware?",
+      "Who is responsible for retrieving last year's demo metrics, and when will they be integrated?"
+    ],
+    "key_quotes": [
+      {
+        "text": "Literally, all I've been doing to make all this is just I want I want this I want I want to see this Oh, this doesn't work. Just describing a problem effectively.",
+        "speaker": "Speaker 1",
+        "context": "Demonstrating the efficiency of AI coding agents in resolving UI/UX issues through natural language prompts."
+      },
+      {
+        "text": "The harness is local, but when you run it normally, it will connect to Anthropic online, which is what it's actually doing here.",
+        "speaker": "Speaker 1",
+        "context": "Explaining the hybrid local-cloud AI architecture and why cloud models are currently preferred for performance."
+      },
+      {
+        "text": "I don't have that. I think it's fun. I don't know whether I'll get into that anyway.",
+        "speaker": "Speaker 2",
+        "context": "Discussing the absence of last year's demo metrics and the uncertainty around including them in the current presentation."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Voice Recognition & Speaker Identification Demo",
+        "description": "Initial testing of voice recognition, speaker labeling, and real-time audio feed generation.",
+        "timestamp_min": 0.0
+      },
+      {
+        "title": "Multilingual Feeds & Personalization",
+        "description": "Demonstration of language-specific transcript filtering, headphone audio tracks, and trade-offs in concurrent multilingual processing.",
+        "timestamp_min": 1.0
+      },
+      {
+        "title": "Local AI & Coding Agent Introduction",
+        "description": "Overview of the local AI framework, KB Ten hardware setup, and introduction to Claude Code for product development.",
+        "timestamp_min": 3.4
+      },
+      {
+        "title": "Live UI/UX Fix via Claude Code",
+        "description": "Real-time resolution of layout, CSS, and responsiveness issues using natural language prompts and autonomous agent execution.",
+        "timestamp_min": 5.7
+      },
+      {
+        "title": "Local vs. Cloud AI Architecture Discussion",
+        "description": "Analysis of hybrid architecture, hardware constraints, and model selection strategy between local open-source and cloud Anthropic models.",
+        "timestamp_min": 11.6
+      },
+      {
+        "title": "Demo Metrics & Follow-up Discussion",
+        "description": "Review of missing demo-site metrics from last year, coordination with Saki-san and Mary Young, and final demo preparation notes.",
+        "timestamp_min": 12.7
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 11540,
+  "n_finals": 179,
+  "response_chars": 9386,
+  "num_topics": 6,
+  "num_action_items": 4,
+  "num_decisions": 2,
+  "topic_names": [
+    "Voice Recognition & Speaker Identification Demo",
+    "Multilingual Feeds & Personalization",
+    "Local AI & Coding Agent Introduction",
+    "Live UI/UX Fix via Claude Code",
+    "Local vs. Cloud AI Architecture Discussion",
+    "Demo Metrics & Follow-up Discussion"
+  ],
+  "hallucinated_speakers": []
+}

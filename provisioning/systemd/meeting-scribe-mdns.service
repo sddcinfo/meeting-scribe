@@ -1,0 +1,59 @@
+[Unit]
+# Per-device mDNS publish (Phase C).
+#
+# Publishes ``meeting-scribe-${id4}.local`` → ``10.42.0.1`` ONLY on
+# the AP iface (link-local scope), so off-AP clients can't resolve
+# the name and can't reach the listener anyway. The cert SAN
+# (Phase D) covers BOTH ``IP:10.42.0.1`` and
+# ``DNS:meeting-scribe-${id4}.local`` so the wizard stays on a
+# single canonical origin and browser password autofill works.
+#
+# ``${id4}`` = first 4 hex of the per-device appliance ID, taken
+# from the persistent file at /etc/meeting-scribe/appliance-id (or
+# ``certs/appliance-id`` in dev). The ExecStartPre below derives it
+# from that file at unit-start time so each appliance publishes a
+# unique name without runtime template substitution.
+#
+# Why a separate unit (rather than calling avahi-publish from
+# meeting-scribe.service ExecStartPost): Avahi's name registration
+# survives only as long as the publishing process. Tying the
+# publish to the AP lifecycle (BindsTo NetworkManager-dispatcher)
+# means the name is automatically withdrawn when the AP goes down,
+# which happens during commit_setup phase 2 cutovers.
+#
+# Provisioned by bootstrap.sh; placed under
+# /etc/systemd/system/meeting-scribe-mdns.service. The bootstrap
+# step also runs `apt install avahi-daemon avahi-utils` and
+# enables avahi-daemon.service.
+Description=Meeting Scribe per-device mDNS publish
+Documentation=https://github.com/sddcinfo/meeting-scribe
+After=avahi-daemon.service NetworkManager.service
+Wants=avahi-daemon.service
+BindsTo=NetworkManager.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+# Wait for 10.42.0.1 to actually exist on the AP iface; without it
+# avahi-publish would announce a name that points at nothing during
+# the brief window between unit start and AP activation.
+ExecStartPre=/usr/bin/timeout 60 sh -c 'until ip -4 addr show wlP9s9 | grep -q "10.42.0.1/"; do sleep 0.5; done'
+# Resolve the appliance ID at runtime so a fresh-imaged box that
+# hasn't run `meeting-scribe setup` yet still gets a stable name
+# from the appliance-id mint path.
+ExecStart=/bin/sh -c '\
+  AID_FILE="/etc/meeting-scribe/appliance-id"; \
+  [ -r "$AID_FILE" ] || AID_FILE="/usr/local/lib/meeting-scribe/certs/appliance-id"; \
+  ID="$(cat "$AID_FILE" 2>/dev/null | tr -d "[:space:]" | cut -c1-4)"; \
+  if [ -z "$ID" ]; then echo "appliance-id missing — refusing to start" >&2; exit 1; fi; \
+  exec /usr/bin/avahi-publish -a "meeting-scribe-${ID}.local" 10.42.0.1'
+Restart=on-failure
+RestartSec=2
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=meeting-scribe-mdns
+
+[Install]
+WantedBy=multi-user.target

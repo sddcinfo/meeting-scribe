@@ -1,0 +1,266 @@
+/* Meeting Scribe — popout layout primitives.
+ *
+ * `.lyt-split` is a 2-pane flex container whose children's relative
+ * sizes come from the `--slot-flex` CSS var on each `.lyt-slot`. A
+ * thin 4px gutter between slots doubles as the drag target. The
+ * `.lyt-leaf-chrome` row holds the drag handle + options menu (⋮);
+ * `.lyt-menu` is the options popover. Drop-zone overlays surface
+ * mid-drag indicating where a slot will land.
+ *
+ * Shared between popout windows AND the admin SPA's "Triple stack"
+ * preset that mounts the same `.lyt-split` tree into `<main>`.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+main > .lyt-split,
+main > .lyt-slot-leaf {
+  flex: 1 1 0 !important;
+  min-height: 0;
+  min-width: 0;
+}
+
+body.popout-view main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+}
+
+.lyt-split {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.lyt-split[data-dir="v"] { flex-direction: column; }
+.lyt-split[data-dir="h"] { flex-direction: row; }
+
+.lyt-slot {
+  flex: var(--slot-flex, 1) 1 0;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lyt-slot > .popout-slides,
+.lyt-slot > .terminal-panel {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  height: auto !important;
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
+}
+.lyt-slot > #transcript-grid {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.lyt-slot > .terminal-panel > .term-resize-handle {
+  display: none !important;
+}
+.lyt-slot > .terminal-panel > .term-body {
+  flex: 1;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0;
+}
+
+.lyt-slot > .popout-slides {
+  display: flex !important;
+}
+.lyt-slot > .popout-slides > .sv-resize-handle {
+  display: none !important;
+}
+.lyt-slot > .popout-slides > .sv-slides {
+  flex: 1;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0;
+}
+
+.lyt-slot[data-panel] { background: var(--color-bg-surface); }
+.lyt-slot[data-empty="true"]::before {
+  content: attr(data-empty-text);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+  pointer-events: none;
+  white-space: pre-line;
+  opacity: 0.72;
+}
+
+.lyt-gutter {
+  flex: 0 0 4px;
+  background: var(--border-dim, #e8e6e1);
+  transition: background 0.15s var(--ease-out, ease);
+  touch-action: none;
+  user-select: none;
+}
+.lyt-gutter:hover,
+.lyt-gutter:active {
+  background: var(--text-secondary, #888);
+}
+.lyt-split[data-dir="v"] > .lyt-gutter { cursor: ns-resize; }
+.lyt-split[data-dir="h"] > .lyt-gutter { cursor: ew-resize; }
+
+/* ── Per-leaf chrome: drag handle + options menu ───────────── */
+.lyt-leaf-chrome {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--bg-surface, #fff) 62%, transparent);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.15s var(--ease-out, ease),
+              transform 0.15s var(--ease-out, ease);
+  pointer-events: none;
+}
+.lyt-slot-leaf:hover > .lyt-leaf-chrome,
+.lyt-slot-leaf:focus-within > .lyt-leaf-chrome,
+.lyt-leaf-chrome:hover {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.lyt-slot-leaf[data-panel="terminal"] > .lyt-leaf-chrome,
+.lyt-slot-leaf[data-panel="slides"]   > .lyt-leaf-chrome {
+  background: color-mix(in srgb, #0b0e14 62%, transparent);
+  color: #e6edf3;
+}
+
+.lyt-leaf-handle,
+.lyt-leaf-menu-btn {
+  width: 22px; height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s var(--ease-out, ease),
+              border-color 0.12s var(--ease-out, ease);
+}
+.lyt-leaf-handle { cursor: grab; font-size: 0.9rem; }
+.lyt-leaf-handle:active { cursor: grabbing; }
+.lyt-leaf-handle:hover,
+.lyt-leaf-menu-btn:hover {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  border-color: color-mix(in srgb, currentColor 22%, transparent);
+}
+.lyt-leaf-menu-btn { font-weight: 700; letter-spacing: 0.08em; }
+
+body.lyt-dragging .lyt-slot-leaf { transition: outline 0.12s ease; }
+body.lyt-dragging .lyt-leaf-chrome { opacity: 1; pointer-events: auto; }
+
+.lyt-slot-leaf::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--text-accent, #1a6fb5) 22%, transparent);
+  border: 2px solid var(--text-accent, #1a6fb5);
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  z-index: 4;
+}
+.lyt-slot-leaf.lyt-drop-top::after     { inset: 0 0 50% 0;     opacity: 0.85; }
+.lyt-slot-leaf.lyt-drop-bottom::after  { inset: 50% 0 0 0;     opacity: 0.85; }
+.lyt-slot-leaf.lyt-drop-left::after    { inset: 0 50% 0 0;     opacity: 0.85; }
+.lyt-slot-leaf.lyt-drop-right::after   { inset: 0 0 0 50%;     opacity: 0.85; }
+.lyt-slot-leaf.lyt-drop-center::after  { inset: 10%;           opacity: 0.9; }
+
+/* ── Options menu (⋮) popover ─────────────────────────────── */
+.lyt-menu {
+  position: fixed;
+  z-index: 2147483647;
+  min-width: 170px;
+  padding: 4px;
+  background: var(--bg-surface, #fff);
+  border: 1px solid var(--border, #e8e6e1);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.22);
+  font-family: inherit;
+  font-size: 0.82rem;
+  animation: lyt-menu-pop 0.12s ease-out;
+}
+@keyframes lyt-menu-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.lyt-menu-header {
+  padding: 6px 10px 4px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #888);
+  border-bottom: 1px solid var(--border-dim, #eee);
+  margin-bottom: 4px;
+}
+.lyt-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: var(--text-primary, #111);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+}
+.lyt-menu-item:hover:not(:disabled) {
+  background: var(--bg-raised, #f4f2ed);
+}
+.lyt-menu-item:disabled {
+  color: var(--text-muted, #aaa);
+  cursor: not-allowed;
+}
+
+.popout-layout-picker {
+  font-family: inherit;
+  font-size: 0.72rem;
+  color: var(--text-secondary, #666);
+  background: var(--bg-surface, #fff);
+  border: 1px solid var(--border, #e8e6e1);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  line-height: 1.3;
+}
+.popout-layout-picker:hover {
+  color: var(--text-primary, #000);
+  border-color: var(--text-secondary, #888);
+}

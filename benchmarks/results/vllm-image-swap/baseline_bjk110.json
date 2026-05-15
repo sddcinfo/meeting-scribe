@@ -1,0 +1,161 @@
+{
+  "url": "http://localhost:8003",
+  "model": "Qwen/Qwen3-ASR-1.7B",
+  "samples": 30,
+  "p50_wer": 1.0,
+  "p95_wer": 1.5,
+  "p50_total_ms": 806.8353639973793,
+  "p95_total_ms": 1503.092284759623,
+  "per_sample": [
+    {
+      "id": "fleurs_ja_jp_000",
+      "wer": 1.0,
+      "total_ms": 596.2149540428072
+    },
+    {
+      "id": "fleurs_ja_jp_001",
+      "wer": 1.0,
+      "total_ms": 1285.180123988539
+    },
+    {
+      "id": "fleurs_ja_jp_002",
+      "wer": 1.0,
+      "total_ms": 1424.693489971105
+    },
+    {
+      "id": "fleurs_ja_jp_003",
+      "wer": 1.0,
+      "total_ms": 953.7300519878045
+    },
+    {
+      "id": "fleurs_ja_jp_004",
+      "wer": 1.0,
+      "total_ms": 820.1608289964497
+    },
+    {
+      "id": "fleurs_ja_jp_005",
+      "wer": 1.0,
+      "total_ms": 483.4618510212749
+    },
+    {
+      "id": "fleurs_ja_jp_006",
+      "wer": 1.5,
+      "total_ms": 677.6737989857793
+    },
+    {
+      "id": "fleurs_ja_jp_007",
+      "wer": 1.0,
+      "total_ms": 1412.03129501082
+    },
+    {
+      "id": "fleurs_ja_jp_008",
+      "wer": 1.2,
+      "total_ms": 1521.6272759716958
+    },
+    {
+      "id": "fleurs_ja_jp_009",
+      "wer": 1.0,
+      "total_ms": 590.2497219503857
+    },
+    {
+      "id": "fleurs_ja_jp_010",
+      "wer": 1.0,
+      "total_ms": 1222.7790020406246
+    },
+    {
+      "id": "fleurs_ja_jp_011",
+      "wer": 1.0,
+      "total_ms": 817.242331977468
+    },
+    {
+      "id": "fleurs_ja_jp_012",
+      "wer": 1.0,
+      "total_ms": 527.1239600260742
+    },
+    {
+      "id": "fleurs_ja_jp_013",
+      "wer": 1.0,
+      "total_ms": 1177.6768519775942
+    },
+    {
+      "id": "fleurs_ja_jp_014",
+      "wer": 1.0,
+      "total_ms": 546.5165069908835
+    },
+    {
+      "id": "fleurs_ja_jp_015",
+      "wer": 1.2,
+      "total_ms": 1487.9272919497453
+    },
+    {
+      "id": "fleurs_ja_jp_016",
+      "wer": 1.0,
+      "total_ms": 817.0626009814441
+    },
+    {
+      "id": "fleurs_ja_jp_017",
+      "wer": 1.0,
+      "total_ms": 839.6859799977392
+    },
+    {
+      "id": "fleurs_ja_jp_018",
+      "wer": 1.0,
+      "total_ms": 839.9683500174433
+    },
+    {
+      "id": "fleurs_ja_jp_019",
+      "wer": 1.0,
+      "total_ms": 783.5797589505091
+    },
+    {
+      "id": "fleurs_ja_jp_020",
+      "wer": 1.0,
+      "total_ms": 615.0360859464854
+    },
+    {
+      "id": "fleurs_ja_jp_021",
+      "wer": 1.0,
+      "total_ms": 672.0989199820906
+    },
+    {
+      "id": "fleurs_ja_jp_022",
+      "wer": 1.0,
+      "total_ms": 565.4022970120423
+    },
+    {
+      "id": "fleurs_ja_jp_023",
+      "wer": 1.0,
+      "total_ms": 596.3425179943442
+    },
+    {
+      "id": "fleurs_ja_jp_024",
+      "wer": 1.0,
+      "total_ms": 819.8259900091216
+    },
+    {
+      "id": "fleurs_ja_jp_025",
+      "wer": 1.0,
+      "total_ms": 983.452373999171
+    },
+    {
+      "id": "fleurs_ja_jp_026",
+      "wer": 1.0,
+      "total_ms": 711.9881939725019
+    },
+    {
+      "id": "fleurs_ja_jp_027",
+      "wer": 1.0,
+      "total_ms": 574.4450310012326
+    },
+    {
+      "id": "fleurs_ja_jp_028",
+      "wer": 1.0,
+      "total_ms": 796.6081270133145
+    },
+    {
+      "id": "fleurs_ja_jp_029",
+      "wer": 1.5,
+      "total_ms": 745.0837540091015
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "segment_count": 5,
+  "order": [
+    "00000000-0000-4000-8000-000000000001",
+    "00000000-0000-4000-8000-000000000002",
+    "00000000-0000-4000-8000-000000000003",
+    "00000000-0000-4000-8000-000000000004",
+    "00000000-0000-4000-8000-000000000005"
+  ],
+  "by_segment": {
+    "00000000-0000-4000-8000-000000000001": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "00000000-0000-4000-8000-000000000002": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "failed",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "00000000-0000-4000-8000-000000000003": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "done",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "00000000-0000-4000-8000-000000000004": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "in_progress",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 2,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    },
+    "00000000-0000-4000-8000-000000000005": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": true,
+      "translation_status": "skipped",
+      "translation_target_language": "ja",
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 0
+    }
+  }
+}

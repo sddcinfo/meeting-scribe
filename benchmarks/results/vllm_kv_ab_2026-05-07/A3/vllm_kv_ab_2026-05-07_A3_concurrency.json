@@ -1,0 +1,57 @@
+{
+  "label": "vllm_kv_ab_2026-05-07_A3",
+  "url": "http://localhost:8010",
+  "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+  "timestamp": "2026-05-07 15:35:37",
+  "vllm_config": {
+    "command": "Qwen/Qwen3.6-35B-A3B-FP8 --tensor-parallel-size=1 --max-model-len=262144 --gpu-memory-utilization=0.7 --kv-cache-dtype=auto --host=0.0.0.0 --max-num-seqs=2 --max-num-batched-tokens=4096 --quantization=fp8 --attention-backend=flashinfer --enable-auto-tool-choice --tool-call-parser=qwen3_coder --reasoning-parser=qwen3 --enable-prefix-caching --enable-chunked-prefill --load-format=fastsafetensors --scheduling-policy=priority --port=8010",
+    "driver": "580.142",
+    "gpu": "NVIDIA GB10"
+  },
+  "results": [
+    {
+      "concurrency": 1,
+      "num_requests": 30,
+      "wall_time_s": 10.05,
+      "throughput_rps": 2.99,
+      "latency_p50_ms": 318.9,
+      "latency_p90_ms": 418.1,
+      "latency_p99_ms": 711.5,
+      "latency_mean_ms": 334.9,
+      "errors": 0
+    },
+    {
+      "concurrency": 4,
+      "num_requests": 30,
+      "wall_time_s": 8.04,
+      "throughput_rps": 3.73,
+      "latency_p50_ms": 972.4,
+      "latency_p90_ms": 1523.4,
+      "latency_p99_ms": 1578.0,
+      "latency_mean_ms": 1031.0,
+      "errors": 0
+    },
+    {
+      "concurrency": 8,
+      "num_requests": 30,
+      "wall_time_s": 6.29,
+      "throughput_rps": 4.77,
+      "latency_p50_ms": 1617.5,
+      "latency_p90_ms": 1740.4,
+      "latency_p99_ms": 1785.9,
+      "latency_mean_ms": 1475.7,
+      "errors": 0
+    },
+    {
+      "concurrency": 16,
+      "num_requests": 30,
+      "wall_time_s": 6.38,
+      "throughput_rps": 4.7,
+      "latency_p50_ms": 3119.8,
+      "latency_p90_ms": 3515.3,
+      "latency_p99_ms": 3636.4,
+      "latency_mean_ms": 2573.0,
+      "errors": 0
+    }
+  ]
+}

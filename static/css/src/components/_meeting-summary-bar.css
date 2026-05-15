@@ -1,0 +1,60 @@
+/* Meeting Scribe — Meeting summary bar.
+ *
+ * The slim review-mode toolbar at the top of a past meeting's view,
+ * holding the back-to-meetings button, the meeting title, the
+ * delete-meeting action, and the "View summary" entry-point.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ MEETING SUMMARY BAR (review-mode toolbar) ═══════════ */
+/* Single slim strip pinned to the top of meeting-mode in review mode.
+   Holds the review toolbar (rv-* buttons) + the "View Summary" modal
+   opener. The real summary content lives in the finalization modal.
+   JS toggles display between 'flex' (visible) and 'none' (hidden)
+   via `panel.style.display`. */
+
+.meeting-summary-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  border-bottom: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+  font-size: 0.72rem;
+  min-height: 32px;
+}
+
+.summary-bar-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.summary-bar-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.summary-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.summary-bar-tools .btn-ghost {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+}
+
+.summary-bar-btn {
+  margin-left: 4px;
+  padding-left: 10px !important;
+  border-left: 1px solid var(--color-border-dim) !important;
+}
+

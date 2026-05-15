@@ -1,0 +1,227 @@
+/* Meeting Scribe — Modal system.
+ *
+ * Core .modal-overlay + .modal-card + confirm/input/btn variants.
+ * Consumed by alertDialog / confirmDialog / promptDialog in
+ * static/js/scribe/_legacy.js.
+ *
+ * Feature-specific variants (.modal-card.speaker-modal, .finalize,
+ * .backends-not-ready, .meeting-tool-*) live alongside their owning
+ * component partial (_speaker-modal.css, _finalize-modal.css,
+ * _modal-shell.css).
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* Hidden by default — ``showModal`` flips this to ``display: flex``.
+ * The default must stay ``none``: a stray ``el.style.display = ''``
+ * can clear the inline ``style="display:none"`` on the markup and
+ * reveal the overlay if the CSS default is anything other than
+ * ``none``. Same rationale applies to ``.room-editor-overlay``. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: modal-fade-in 0.2s ease;
+}
+
+.modal-overlay.is-shown {
+  display: flex;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card {
+  background: var(--color-bg-surface);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modal-slide-up 0.25s var(--ease-out);
+}
+
+@keyframes modal-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Confirm dialog variant */
+.modal-card.confirm {
+  width: min(460px, 92vw);
+  padding: var(--space-xl);
+}
+
+/* Error + long-traceback variant — widens the card and lets the body
+ * scroll instead of blowing out the layout. Used by alertDialog()
+ * when the message is multi-line or over the short-prose threshold. */
+.modal-card.confirm.wide {
+  width: min(720px, 94vw);
+}
+
+.modal-confirm-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+  /* Titles stay user-selectable so an error heading is copyable too. */
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.modal-confirm-message {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-xl);
+  /* Always selectable. Wrap on any character so paths, URLs, and
+   * stack traces don't blow the card width. */
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Pre-formatted body: used for errors and long stack traces. Mono
+ * font, preserves whitespace, still wraps long tokens, and sits on a
+ * subtle background so it reads as "copy this" at a glance. */
+.modal-confirm-message.pre {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--color-text-primary);
+  max-height: 55vh;
+}
+
+/* Inline Copy affordance used on the left side of the confirm-actions
+ * row. Secondary visual weight so the primary OK button keeps focus. */
+.modal-copy-btn {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-dim);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.modal-copy-btn:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+  background: var(--color-bg-raised);
+}
+
+.modal-copy-btn.copied {
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.modal-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+/* Styled input for promptDialog — matches the modal's editorial card
+ * aesthetic so we never fall back to window.prompt's chrome-default UI. */
+.modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  line-height: 1.3;
+  outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.modal-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.modal-input:focus {
+  border-color: var(--color-text-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-text-accent) 18%, transparent);
+  background: var(--color-bg-surface);
+}
+
+.modal-input-help {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  margin-top: -0.35rem;
+  margin-bottom: var(--space-md);
+  line-height: 1.4;
+}
+
+.modal-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.modal-btn:hover {
+  background: var(--color-bg-raised);
+}
+
+.modal-btn.disabled,
+.modal-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.modal-btn.danger,
+.modal-btn-danger {
+  background: var(--color-recording);
+  border-color: var(--color-recording);
+  color: white;
+}
+
+.modal-btn.danger:hover,
+.modal-btn-danger:hover {
+  background: #b91c1c;
+}
+
+.modal-btn.primary {
+  background: var(--color-text-accent);
+  border-color: var(--color-text-accent);
+  color: white;
+}
+
+.modal-btn.primary:hover {
+  filter: brightness(1.08);
+}

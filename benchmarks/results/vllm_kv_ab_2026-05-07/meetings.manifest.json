@@ -1,0 +1,15 @@
+{
+  "selected": [
+    "38d4efb0-8c67-4a7e-a542-caa78f437a05",
+    "c4c913f8-1c43-4de8-99df-1bccffa87a10",
+    "3db4286e-7164-4550-8101-9e5db69cfecc"
+  ],
+  "n_finals": [
+    6,
+    179,
+    782
+  ],
+  "captured_at": "2026-05-07",
+  "selector": "summary_param_ab._select_meetings(meetings, 3)",
+  "rng_seed": "0xA5 (deterministic across runs)"
+}

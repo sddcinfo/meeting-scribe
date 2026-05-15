@@ -1,0 +1,998 @@
+"""vLLM ASR backend — Qwen3-ASR via OpenAI-compatible endpoint.
+
+Primary ASR backend. Sends audio buffers to a vLLM-served Qwen3-ASR
+model via HTTP. Superior Japanese quality.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+import io
+import logging
+import os
+import time
+import uuid
+from collections import deque
+from collections.abc import AsyncIterator, Awaitable, Callable
+from dataclasses import dataclass
+from typing import Literal
+
+import httpx
+import numpy as np
+
+from meeting_scribe.runtime import state
+
+# ── W6a — Recovery state machine ────────────────────────────────
+#
+# The 2026-04-30 ASR cascade exposed three coupled gaps:
+#
+#   1. Watchdog fired 40+ times with no escalation. Fixed in W6b.
+#   2. Recovery, when it eventually happened (Docker auto-restart),
+#      lost ~30s of audio because the backend treated the in-flight
+#      request's failure as "no transcript for this segment, advance".
+#      Recording.pcm kept growing the whole time, but ASR never
+#      revisited that range. Fixed here.
+#   3. Stale httpx requests can complete late, after the backend has
+#      already been recovered + replayed. Without a generation guard
+#      they emit duplicate / out-of-order transcripts. Fixed here
+#      via `_recovery_generation`.
+
+_RecoveryState = Literal["NORMAL", "RECOVERY_PENDING", "REPLAYING"]
+
+# Defensive ceiling on `_submissions` size — see W6a plan note.
+# At a worst-case sustained submission rate of ~3 Hz during failure,
+# 500 entries covers ~3 minutes of complete inability to recover
+# before any submissions get dropped.
+_MAX_UNRESOLVED_SUBMISSIONS = 500
+
+# Hard cap on total replay duration. If a single recovery's replay
+# would take >120s of audio, log ERROR and skip the remainder —
+# better degraded than dead.
+_REPLAY_DURATION_CAP_S = 120.0
+
+
+@dataclass
+class InflightSubmission:
+    """Tracks a single ASR submission's audio offsets + status, so
+    after a watchdog escalation we can replay from the EARLIEST
+    unresolved offset (not from the much-later escalation tail).
+
+    Eviction policy:
+    - status="complete" → REMOVED from `_submissions` immediately
+      (successful submissions never accumulate).
+    - status="failed" or "inflight" → KEPT until either a successful
+      replay supersedes them (offset < replay_end_offset) or the
+      defensive ceiling fires.
+    """
+
+    request_id: int
+    audio_start_offset: int  # recording.pcm byte offset of first chunk
+    audio_end_offset: int  # one past the last chunk
+    submitted_at: float  # time.monotonic()
+    status: Literal["inflight", "complete", "failed"]
+    generation: int  # _recovery_generation at submission time
+
+
+import soundfile as sf  # type: ignore[import-untyped]
+
+from meeting_scribe.backends.asr_filters import (
+    _detect_language_from_text,
+    _is_hallucination,
+    _is_low_value_english_fragment,
+    _parse_qwen3_asr_response,
+)
+from meeting_scribe.backends.base import ASRBackend
+from meeting_scribe.models import TranscriptEvent
+
+logger = logging.getLogger(__name__)
+
+SAMPLE_RATE = 16000
+VAD_ENERGY_THRESHOLD = 0.005
+_TRIM_FRAME_SAMPLES = int(0.05 * SAMPLE_RATE)
+_TRIM_PAD_SAMPLES = int(0.20 * SAMPLE_RATE)
+_TRIM_ACTIVE_RMS_MIN = 0.0012
+_TRIM_ACTIVE_RMS_MAX = 0.0025
+_MIN_TRIMMED_SPEECH_SAMPLES = int(0.25 * SAMPLE_RATE)
+
+
+def _trim_quiet_edges(audio: np.ndarray) -> tuple[np.ndarray, int]:
+    """Trim leading/trailing quiet frames before ASR.
+
+    Qwen3-ASR is prone to hallucinating short phrases when a 3.5s buffer is
+    mostly silence with a small speech tail. Keep the middle intact; only trim
+    quiet edges and return the start offset adjustment in samples.
+    """
+    if len(audio) < _TRIM_FRAME_SAMPLES:
+        return audio, 0
+
+    frame_rms: list[float] = []
+    for start in range(0, len(audio), _TRIM_FRAME_SAMPLES):
+        frame = audio[start : start + _TRIM_FRAME_SAMPLES]
+        if len(frame) == 0:
+            continue
+        frame_rms.append(float(np.sqrt(np.mean(frame**2))))
+
+    if not frame_rms:
+        return audio, 0
+
+    # Adaptive and deliberately low: this is only for quiet edge padding, not
+    # VAD. It must not erase soft/distant speakers in a larger room.
+    floor = float(np.percentile(frame_rms, 20))
+    active_threshold = min(
+        _TRIM_ACTIVE_RMS_MAX,
+        max(_TRIM_ACTIVE_RMS_MIN, floor * 2.5),
+    )
+    raw_active = [rms >= active_threshold for rms in frame_rms]
+    active = []
+    for i, is_active in enumerate(raw_active):
+        if not is_active:
+            active.append(False)
+            continue
+        has_neighbor = (i > 0 and raw_active[i - 1]) or (
+            i + 1 < len(raw_active) and raw_active[i + 1]
+        )
+        clearly_loud = frame_rms[i] >= max(active_threshold * 3.0, 0.006)
+        active.append(has_neighbor or clearly_loud)
+    if not any(active):
+        return audio, 0
+
+    first = active.index(True) * _TRIM_FRAME_SAMPLES
+    last = (len(active) - 1 - active[::-1].index(True) + 1) * _TRIM_FRAME_SAMPLES
+    start = max(0, first - _TRIM_PAD_SAMPLES)
+    end = min(len(audio), last + _TRIM_PAD_SAMPLES)
+    trimmed = audio[start:end]
+    if len(trimmed) < _MIN_TRIMMED_SPEECH_SAMPLES:
+        return audio, 0
+    return trimmed.astype(np.float32, copy=False), start
+
+
+class VllmASRBackend(ASRBackend):
+    """Qwen3-ASR via vLLM OpenAI-compatible endpoint.
+
+    Buffers 4s of audio, encodes as WAV, sends to vLLM for transcription.
+    Uses the same hallucination filtering and language detection as
+    the local Qwen3-ASR backend.
+    """
+
+    def __init__(
+        self,
+        base_url: str = "http://localhost:8003",
+        # Live-meeting ASR finalization cadence. Changed 2026-04-15 from
+        # 1.5s → 3.5s after observing three linked pathologies on the
+        # 2026-04-15 ja/en meeting:
+        #   1. Translation quality suffered because 1.5s of audio is
+        #      rarely a complete thought — the model got `'はい'`,
+        #      `'うん'`, `'あの'` fragments with no context.
+        #   2. TTS request rate exceeded the 2-container × 1-slot pool
+        #      capacity; requests queued ~4s inside the container,
+        #      bursting past the 5s synth deadline → mass dropouts.
+        #   3. Short segments straddled speaker-change boundaries in
+        #      the 16s diarization window, producing wrong/unstable
+        #      speaker attribution even though diarization itself was
+        #      fine. 3.5s segments align much better with the 4s
+        #      diarization flush cadence.
+        # Latency cost: +2s to on-screen transcript and first-audio.
+        # Override via SCRIBE_ASR_BUFFER_SECONDS if you need the old
+        # behavior (e.g. for a demo that needs sub-2s response).
+        buffer_seconds: float = float(os.environ.get("SCRIBE_ASR_BUFFER_SECONDS", "3.5")),
+        languages: list[str] | tuple[str, ...] | None = None,
+    ) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._client: httpx.AsyncClient | None = None
+        self._model: str | None = None
+        # Set of 1 or 2 language codes for the meeting. Length 1 = monolingual
+        # (prompt biases ASR toward that one language; no translation hint).
+        self._language_pair: set[str] = set(languages) if languages else set()
+        # Cache the prompt so we don't rebuild it on every chunk. Invalidated
+        # when _language_pair is reassigned (start_meeting does this).
+        self._cached_prompt_pair: frozenset[str] | None = None
+        self._cached_prompt: str = ""
+
+        # Rolling window of recent emitted segment languages. Used to
+        # detect Qwen3-ASR hallucinations on short audio: a single short
+        # segment in language X when the recent history is dominated by
+        # language Y is overwhelmingly a model hallucination (Whisper
+        # family will fall back to high-frequency Japanese filler phrases
+        # like "お疲れ様" or "えっと…" on ambiguous English audio). Long
+        # audio is left alone — that's a legitimate bilingual switch.
+        self._recent_segment_languages: deque[str] = deque(maxlen=8)
+
+        self._buffer: list[np.ndarray] = []
+        self._buffer_samples = 0
+        self._buffer_threshold = int(buffer_seconds * SAMPLE_RATE)
+        self._segment_id: str | None = None
+        self._revision = 0
+        # Absolute sample offset (in the meeting's audio file) of the
+        # FIRST sample currently sitting in the buffer. Set by the caller
+        # on every process_audio_bytes call — the audio file is the
+        # source of truth for timestamps, NOT an internal counter, so
+        # server restart / meeting resume can't desync the transcript
+        # from the audio it belongs to.
+        self._buffer_start_sample: int = 0
+        # Back-compat: old callers may still read _base_offset. Keep as
+        # a mirror of the last-seen buffer-start sample. The backend no
+        # longer USES it to stamp events.
+        self._base_offset = 0
+        self._on_event: Callable[[TranscriptEvent], Awaitable[None]] | None = None
+        self.last_audio_chunk: np.ndarray | None = None
+        self.last_final_monotonic: float | None = None
+        self.last_real_speech_observed_monotonic: float | None = None
+        # _last_response_time is None until the FIRST successful response.
+        # This prevents the watchdog from firing on the first chunk of a new
+        # meeting just because the server has been idle between meetings.
+        self._last_response_time: float | None = None
+        self._watchdog_timeout: float = 10.0  # seconds
+        # Minimum buffer before the watchdog may flush — guards against
+        # flushing tiny ~4000-sample chunks that ASR can't reliably transcribe
+        self._min_watchdog_samples: int = int(0.8 * SAMPLE_RATE)  # 0.8s
+        # Monotonic wall-clock ts at meeting start. Set by the caller when a
+        # new meeting starts (server.py start_meeting). Used to compute
+        # event.utterance_end_at = audio_wall_at_start + end_ms/1000, the
+        # authoritative origin for the TTS speech-end SLA. When None, the
+        # backend raises on event emission rather than silently using a wrong
+        # origin — [P1-2-i5] strict policy.
+        self.audio_wall_at_start: float | None = None
+
+        # ── W6a — Recovery state machine ────────────────────────
+        # Per-submission offset tracking + recovery-generation epoch.
+        # See module docstring for the design rationale; W6b drives
+        # state transitions via `_begin_recovery_pending()` and the
+        # supervisor task in `runtime/recovery_supervisor.py`.
+        self._submissions: list[InflightSubmission] = []
+        self._next_request_id: int = 0
+        self._recovery_state: _RecoveryState = "NORMAL"
+        self._recovery_start_offset: int | None = None
+        self._recovery_generation: int = 0
+        # Asyncio event the supervisor awaits; set by _begin_recovery_pending.
+        self._recovery_requested: asyncio.Event = asyncio.Event()
+        self._inflight_tasks: set[asyncio.Task] = set()
+
+        # ── W6b — Watchdog escalation counter ───────────────────
+        # Increments on every watchdog fire (the dashboard tile shows
+        # fires from the FIRST fire — see W5 watchdog_fires_total
+        # contract). On reaching 3 consecutive fires (~30s of inference
+        # hang), calls _begin_recovery_pending() to enter
+        # RECOVERY_PENDING and signal the background supervisor.
+        # Reset to 0 on every successful response.
+        self._watchdog_consecutive_fires: int = 0
+        # Threshold for transition. Configurable so tests can drive
+        # the path with a smaller value, but prod stays at 3.
+        self._watchdog_escalation_threshold: int = 3
+        self._async_live_submit: bool = os.environ.get("SCRIBE_ASR_ASYNC_LIVE_SUBMIT", "1") != "0"
+
+    def _repair_audio_wall_at_start(self, end_ms: int) -> None:
+        """Recover the meeting clock if lifecycle restart state lost it.
+
+        `start_meeting` is still the normal source of truth. This guard covers
+        the live recovery case seen on the GB10 where the ASR backend kept
+        emitting while its `audio_wall_at_start` field was reset to `None`.
+        """
+        if self.audio_wall_at_start is not None:
+            return
+        if state.current_meeting is not None and state.metrics.meeting_start > 0:
+            self.audio_wall_at_start = state.metrics.meeting_start
+            logger.warning(
+                "ASR repaired missing audio_wall_at_start from active meeting: "
+                "meeting_id=%s meeting_start=%.3f",
+                getattr(state.current_meeting, "meeting_id", "?"),
+                self.audio_wall_at_start,
+            )
+            return
+        if state.current_meeting is not None:
+            self.audio_wall_at_start = time.monotonic() - end_ms / 1000.0
+            logger.warning(
+                "ASR approximated missing audio_wall_at_start from current "
+                "buffer end: meeting_id=%s end_ms=%s",
+                getattr(state.current_meeting, "meeting_id", "?"),
+                end_ms,
+            )
+
+    def set_event_callback(self, fn: Callable[[TranscriptEvent], Awaitable[None]]) -> None:
+        self._on_event = fn
+
+    # ── W6a — Recovery state machine helpers ────────────────────
+    # All offset capture goes through `_begin_recovery_pending()`. Do
+    # NOT inline `current_recording_pcm_offset()` on the watchdog
+    # escalation path elsewhere — that's the iteration-3/4 bug the
+    # plan explicitly forbids.
+
+    def _begin_recovery_pending(self) -> None:
+        """Single source of truth for offset capture on watchdog escalation.
+
+        Replay must cover audio submitted to a hung backend during the
+        multi-watchdog-fire window before escalation, so we capture
+        the earliest unresolved submission's start offset, NOT the
+        current tail of recording.pcm.
+
+        Idempotent: if state is already RECOVERY_PENDING or REPLAYING
+        the call is a no-op. This blocks stale-task-driven re-entry
+        — a superseded httpx request whose timeout fires mid-recovery
+        cannot bump the watchdog counter past 3 again and re-trigger
+        this method (the response-path generation guard already
+        ignores its result; this guard is the second line of defence).
+        """
+        if self._recovery_state != "NORMAL":
+            return  # already in recovery; no-op
+
+        # Bump epoch FIRST — older submissions become stale before
+        # they have a chance to mutate any shared state.
+        self._recovery_generation += 1
+
+        # Best-effort cancel of in-flight tasks. The generation guard
+        # remains the safety net regardless of cancellation.
+        for task in list(self._inflight_tasks):
+            if not task.done():
+                task.cancel()
+
+        unresolved = [s for s in self._submissions if s.status in ("inflight", "failed")]
+        if unresolved:
+            self._recovery_start_offset = min(s.audio_start_offset for s in unresolved)
+        else:
+            # Defensive fallback. Shouldn't happen because watchdog
+            # fires imply timed-out submissions exist; if it does we
+            # may have lost some audio — log loudly.
+            logger.warning(
+                "ASR recovery escalation with empty in-flight submissions "
+                "deque; falling back to current recording offset, "
+                "transcript may have a hole"
+            )
+            self._recovery_start_offset = state.current_recording_pcm_offset()
+
+        self._recovery_state = "RECOVERY_PENDING"
+        try:
+            state.metrics.watchdog_escalations_total += 1
+        except AttributeError:
+            pass  # metrics not yet wired (warmup); harmless
+        self._recovery_requested.set()
+
+    def _track_submission_start(
+        self, audio_start_offset: int, audio_end_offset: int
+    ) -> InflightSubmission:
+        """Record an outgoing transcribe request. Caller is
+        responsible for calling `_track_submission_complete` /
+        `_track_submission_failed` exactly once per submission (with
+        the generation guard built in). Enforces the
+        _MAX_UNRESOLVED_SUBMISSIONS ceiling defensively."""
+        self._next_request_id += 1
+        sub = InflightSubmission(
+            request_id=self._next_request_id,
+            audio_start_offset=audio_start_offset,
+            audio_end_offset=audio_end_offset,
+            submitted_at=time.monotonic(),
+            status="inflight",
+            generation=self._recovery_generation,
+        )
+        self._submissions.append(sub)
+
+        # Defensive ceiling — drop oldest "failed" entry if exceeded.
+        # Never drop "inflight" (those are still pending real outcome).
+        if len(self._submissions) > _MAX_UNRESOLVED_SUBMISSIONS:
+            for i, s in enumerate(self._submissions):
+                if s.status == "failed":
+                    del self._submissions[i]
+                    logger.error(
+                        "ASR submission tracking exceeded %d unresolved "
+                        "entries; dropping oldest failed entry "
+                        "(request_id=%d offset=%d) — transcript may have "
+                        "a hole",
+                        _MAX_UNRESOLVED_SUBMISSIONS,
+                        s.request_id,
+                        s.audio_start_offset,
+                    )
+                    # Future: emit a structured `submission_tracking_overflow`
+                    # WS event (W6b will own that wiring).
+                    break
+
+        return sub
+
+    def _track_submission_complete(self, sub: InflightSubmission) -> bool:
+        """Mark a submission complete. Returns True if the result
+        should be processed (generation matches), False if it's a
+        stale-generation response that must be silently discarded."""
+        if sub.generation != self._recovery_generation:
+            logger.debug(
+                "ignoring stale response from generation %d (current=%d)",
+                sub.generation,
+                self._recovery_generation,
+            )
+            return False
+        # Success → REMOVE the entry (do not let completed submissions
+        # accumulate; the deque retains only inflight + failed).
+        try:
+            self._submissions.remove(sub)
+        except ValueError:
+            pass  # already evicted by replay; harmless
+        return True
+
+    def _track_submission_failed(self, sub: InflightSubmission, exc: BaseException) -> bool:
+        """Mark a submission failed. Returns True if the failure
+        should be processed (generation matches), False if it's a
+        stale-generation result that must be silently discarded.
+
+        Failed entries are RETAINED in `_submissions` so the next
+        recovery escalation knows the earliest unresolved offset.
+        Replay (or the defensive ceiling) is what eventually evicts
+        them."""
+        if sub.generation != self._recovery_generation:
+            logger.debug(
+                "ignoring stale failure from generation %d (current=%d): %s",
+                sub.generation,
+                self._recovery_generation,
+                exc,
+            )
+            return False
+        sub.status = "failed"
+        return True
+
+    async def replay_until_caught_up(self, start_offset: int) -> int:
+        """Replay recording.pcm from `start_offset` to the current
+        write head, submitting each chunk through the production
+        transcribe path. Returns the final replay-end offset.
+
+        Bounded by `_REPLAY_DURATION_CAP_S` (120s of audio); past
+        that, log ERROR + advance offset to live + return. Better
+        degraded than dead.
+
+        Caller (W6b supervisor) is responsible for setting state to
+        REPLAYING before calling this and resetting to NORMAL after
+        completion. The replay submissions themselves go through the
+        normal `process_audio_bytes` path with `_is_replay=True` so
+        the live-suppression check skips them."""
+        offset = start_offset
+        bytes_per_sec = 16000 * 2  # s16le @ 16 kHz
+        replay_started_at = time.monotonic()
+        # Read a 3.5s buffer's worth of audio per replay step — same
+        # natural cadence as the normal flush threshold.
+        chunk_bytes = int(3.5 * bytes_per_sec)
+        chunk_bytes -= chunk_bytes % 2  # keep alignment
+
+        meeting_dir = state.current_meeting and state.storage.get_meeting_dir(
+            state.current_meeting.meeting_id
+        )
+        pcm_path = meeting_dir / "audio" / "recording.pcm" if meeting_dir else None
+        if pcm_path is None or not pcm_path.exists():
+            logger.warning("replay_until_caught_up: no recording.pcm path; nothing to replay")
+            return offset
+
+        with pcm_path.open("rb") as fh:
+            while True:
+                live_offset = state.current_recording_pcm_offset()
+                if offset >= live_offset:
+                    break  # caught up
+
+                # Cap total replay duration.
+                replayed_s = (offset - start_offset) / bytes_per_sec
+                if replayed_s > _REPLAY_DURATION_CAP_S:
+                    skipped_s = (live_offset - offset) / bytes_per_sec
+                    logger.error(
+                        "ASR replay duration exceeded %.0fs, skipping "
+                        "%.1fs of audio (offset=%d → %d)",
+                        _REPLAY_DURATION_CAP_S,
+                        skipped_s,
+                        offset,
+                        live_offset,
+                    )
+                    offset = live_offset
+                    break
+
+                fh.seek(offset)
+                read_n = min(chunk_bytes, live_offset - offset)
+                pcm = fh.read(read_n)
+                if not pcm:
+                    break
+                # Sample offset for transcript alignment is byte-offset
+                # divided by 2 (s16le).
+                sample_offset = offset // 2
+                await self.process_audio_bytes(pcm, sample_offset=sample_offset, _is_replay=True)
+                offset += len(pcm)
+
+        replay_end_offset = offset
+
+        # Drop submissions superseded by replay (those whose
+        # audio_start_offset falls in [start_offset, replay_end_offset)).
+        self._submissions = [
+            s for s in self._submissions if s.audio_start_offset >= replay_end_offset
+        ]
+        logger.info(
+            "ASR replay caught up at offset=%d (replayed %d bytes, %.1fs, %.1fs wall)",
+            replay_end_offset,
+            replay_end_offset - start_offset,
+            (replay_end_offset - start_offset) / bytes_per_sec,
+            time.monotonic() - replay_started_at,
+        )
+        return replay_end_offset
+
+    def _build_system_prompt(self) -> str:
+        """Build the ASR system prompt with the meeting's expected languages.
+
+        Without naming the languages explicitly Qwen3-ASR over-confidently
+        labels Germanic-family speech (Dutch, German, sometimes Norwegian)
+        as English. Spelling out the exact pair gives it a strong prior.
+        """
+        pair = frozenset(self._language_pair)
+        if pair == self._cached_prompt_pair and self._cached_prompt:
+            return self._cached_prompt
+
+        from meeting_scribe.languages import LANGUAGE_REGISTRY
+
+        if not pair:
+            self._cached_prompt = (
+                "Transcribe the audio in the original spoken language. Do not translate."
+            )
+        else:
+            # Map each ISO code to its English name (e.g. "nl" → "Dutch").
+            # Falls back to upper-cased code if the language registry
+            # doesn't have it.
+            names: list[str] = []
+            for code in sorted(pair):
+                lang = LANGUAGE_REGISTRY.get(code)
+                if lang is not None:
+                    names.append(f"{lang.name} ({code})")
+                else:
+                    names.append(code.upper())
+            joined = " or ".join(names) if len(names) <= 2 else ", ".join(names)
+            self._cached_prompt = (
+                f"Transcribe the audio in the original spoken language. "
+                f"The speaker is using {joined}. "
+                f"Do NOT translate. If the speech is in one of these "
+                f"languages, output it verbatim in that language."
+            )
+            if pair == {"en", "ja"}:
+                self._cached_prompt += (
+                    " For English/Japanese meetings, output English only when "
+                    "the spoken audio is unmistakably English; do not infer "
+                    "English words from Japanese speech or from silence."
+                )
+        self._cached_prompt_pair = pair
+        return self._cached_prompt
+
+    def set_languages(self, languages: list[str] | tuple[str, ...]) -> None:
+        """Update the meeting's languages (1 = monolingual, 2 = bilingual pair)
+        and invalidate the prompt cache.
+        """
+        self._language_pair = set(languages)
+        self._cached_prompt_pair = None
+        self._cached_prompt = ""
+        self._recent_segment_languages.clear()
+
+    async def start(self) -> None:
+        """Connect to vLLM endpoint and detect model."""
+        self._client = httpx.AsyncClient(base_url=self._base_url, timeout=30.0)
+        # Reset watchdog state on every start — this prevents the watchdog from
+        # firing on the first chunk of a new meeting when the backend has been
+        # idle between meetings.
+        self._last_response_time = None
+        self._buffer.clear()
+        self._buffer_samples = 0
+        self._segment_id = None
+        self._revision = 0
+
+        # Health check
+        resp = await self._client.get("/health")
+        resp.raise_for_status()
+
+        # Auto-detect model
+        resp = await self._client.get("/v1/models")
+        resp.raise_for_status()
+        models = resp.json().get("data", [])
+        if models:
+            self._model = models[0]["id"]
+        else:
+            msg = "No models available at vLLM ASR endpoint"
+            raise RuntimeError(msg)
+
+        logger.info("vLLM ASR connected: model=%s", self._model)
+
+    async def stop(self) -> None:
+        """Release HTTP client."""
+        if self._client:
+            await self._client.aclose()
+            self._client = None
+        self._buffer.clear()
+        self._buffer_samples = 0
+        self._last_response_time = None  # so next meeting starts clean
+
+    async def process_audio(
+        self,
+        audio: np.ndarray,
+        sample_offset: int,
+        sample_rate: int = 16000,
+        *,
+        _is_replay: bool = False,
+    ) -> AsyncIterator[TranscriptEvent]:
+        """Buffer audio and transcribe when threshold is reached.
+
+        ``sample_offset`` is the absolute sample index of the FIRST
+        sample in ``audio`` within the meeting's audio file. Events
+        emitted from this call are stamped with (start, end) derived
+        from the first sample of the buffer, not an internal counter.
+
+        ``_is_replay`` is set by W6a's `replay_until_caught_up` so
+        replay submissions bypass the live-suppression check during
+        RECOVERY_PENDING / REPLAYING. Live audio still goes to
+        recording.pcm via the unrelated audio_writer path; replay
+        re-reads from there and feeds it through the recovered backend.
+        """
+        if self._client is None:
+            return
+
+        # ── W6a — Live suppression during recovery ─────────────
+        # During RECOVERY_PENDING / REPLAYING, the inference endpoint
+        # is presumed wedged or being recreated. Live audio chunks
+        # still arrive via WS and still get appended to recording.pcm
+        # (independent path), so the audio is preserved on disk.
+        # Submitting them to the wedged endpoint would just generate
+        # more failed submissions and pollute the deque. Reset the
+        # in-memory chunk buffer and return early.
+        if not _is_replay and self._recovery_state in ("RECOVERY_PENDING", "REPLAYING"):
+            self._buffer.clear()
+            self._buffer_samples = 0
+            if self._segment_id is not None and self._revision > 0:
+                self._segment_id = None
+                self._revision = 0
+            return
+
+        if self._segment_id is None:
+            self._segment_id = str(uuid.uuid4())
+            self._revision = 0
+
+        # First append to an empty buffer anchors the buffer's start
+        # sample to where THIS chunk lives in the audio file.
+        if self._buffer_samples == 0:
+            self._buffer_start_sample = sample_offset
+            self._base_offset = sample_offset  # back-compat mirror
+
+        self._buffer.append(audio)
+        self._buffer_samples += len(audio)
+
+        # Watchdog: force flush if no ASR response within timeout AND we have
+        # enough buffered audio for ASR to produce meaningful output.
+        # Guards against:
+        #   - Firing on the first chunk of a new meeting (last_response_time is None)
+        #   - Flushing tiny ~4000-sample chunks that ASR can't reliably transcribe
+        watchdog_triggered = (
+            self._last_response_time is not None
+            and self._buffer_samples >= self._min_watchdog_samples
+            and self._buffer_samples < self._buffer_threshold
+            and time.monotonic() - self._last_response_time > self._watchdog_timeout
+        )
+        if self._buffer_samples >= self._buffer_threshold or watchdog_triggered:
+            combined = np.concatenate(self._buffer)
+            rms = float(np.sqrt(np.mean(combined**2)))
+
+            if rms < VAD_ENERGY_THRESHOLD:
+                if watchdog_triggered:
+                    logger.debug(
+                        "ASR watchdog ignored sub-VAD buffer: rms=%.4f < %.4f (%d samples)",
+                        rms,
+                        VAD_ENERGY_THRESHOLD,
+                        self._buffer_samples,
+                    )
+                    self._watchdog_consecutive_fires = 0
+                    self._last_response_time = time.monotonic()
+                self._buffer.clear()
+                self._buffer_samples = 0
+                if self._segment_id and self._revision > 0:
+                    self._segment_id = None
+                    self._revision = 0
+                return
+
+            if watchdog_triggered:
+                logger.warning(
+                    "ASR watchdog: no response in %.0fs, forcing flush (%d samples)",
+                    self._watchdog_timeout,
+                    self._buffer_samples,
+                )
+                # ── W6b — Count + escalate ───────────────────────────
+                # Only count watchdog fires for buffers that pass VAD and
+                # will actually be submitted. Low-level room noise should
+                # not drive recovery with an empty submission deque.
+                self._watchdog_consecutive_fires += 1
+                try:
+                    state.metrics.watchdog_fires_total += 1
+                    state.metrics._watchdog_fire_timestamps.append(time.monotonic())
+                except AttributeError:
+                    pass  # metrics not yet wired (warmup); harmless
+
+                if self._watchdog_consecutive_fires >= self._watchdog_escalation_threshold:
+                    self._begin_recovery_pending()
+
+            buffer_start_sample = self._buffer_start_sample
+            segment_id = self._segment_id
+            self._segment_id = str(uuid.uuid4())
+            self._revision = 0
+            self._buffer.clear()
+            self._buffer_samples = 0
+            # Next buffer starts where this one ended. The caller can
+            # override by passing a fresh sample_offset on the next
+            # process_audio_bytes call (e.g. after a mic gap).
+            self._buffer_start_sample += len(combined)
+            self._base_offset = self._buffer_start_sample
+
+            if (
+                self._async_live_submit
+                and self._on_event
+                and not _is_replay
+                and state.current_meeting is not None
+                and state.audio_writer is not None
+            ):
+                task = asyncio.create_task(
+                    self._submit_combined_audio(combined, buffer_start_sample, segment_id),
+                    name=f"asr-submit-{segment_id}",
+                )
+                self._inflight_tasks.add(task)
+                task.add_done_callback(self._on_submit_task_done)
+                return
+
+            event = await self._submit_combined_audio(combined, buffer_start_sample, segment_id)
+            if event is not None:
+                yield event
+
+    async def _submit_combined_audio(
+        self,
+        combined: np.ndarray,
+        buffer_start_sample: int,
+        segment_id: str,
+    ) -> TranscriptEvent | None:
+        combined, trim_start_samples = _trim_quiet_edges(combined)
+        asr_start_sample = buffer_start_sample + trim_start_samples
+
+        # Encode audio as WAV in memory.
+        wav_buf = io.BytesIO()
+        sf.write(wav_buf, combined, SAMPLE_RATE, format="WAV")
+        wav_bytes = wav_buf.getvalue()
+        audio_b64 = base64.b64encode(wav_bytes).decode()
+
+        _rtt_t0 = time.monotonic()
+        _audio_start_offset = asr_start_sample * 2
+        _audio_end_offset = _audio_start_offset + len(combined) * 2
+        _submission = self._track_submission_start(_audio_start_offset, _audio_end_offset)
+        try:
+            system_prompt = self._build_system_prompt()
+            resp = await self._client.post(
+                "/v1/chat/completions",
+                json={
+                    "model": self._model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "input_audio",
+                                    "input_audio": {
+                                        "data": audio_b64,
+                                        "format": "wav",
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                    "max_tokens": 512,
+                    "temperature": 0.0,
+                    # Live ASR is the tightest-SLA path in the stack (user
+                    # hears silence otherwise). vLLM priority: lower = earlier.
+                    "priority": -20,
+                },
+            )
+            resp.raise_for_status()
+            if not self._track_submission_complete(_submission):
+                return None
+            self._watchdog_consecutive_fires = 0
+            try:
+                state.metrics.asr_request_rtt_ms.append((time.monotonic() - _rtt_t0) * 1000)
+            except AttributeError:
+                pass  # metrics field missing in some test stubs — observability only, never blocks ASR
+            result = resp.json()
+            raw = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+            text, lang = _parse_qwen3_asr_response(raw)
+
+            if text and self._language_pair:
+                script_lang = _detect_language_from_text(text)
+                # Script-based detection trusts the WRITTEN form over Qwen3-ASR's
+                # own language tag. Two outcomes matter:
+                #
+                # 1. ``script_lang`` is a member of the meeting pair, but
+                #    differs from the ASR tag → relabel. (Common: Qwen3
+                #    confidently tags Dutch/Spanish as English.)
+                # 2. ``script_lang`` is OUTSIDE the meeting pair → drop the
+                #    segment outright. (Observed 2026-05-15 live meeting:
+                #    Chinese script "电视啊，这样，这样。" arriving with
+                #    ``language=ja`` and surviving the pair-membership check
+                #    below because the ASR tag was in-pair. The script
+                #    itself is the giveaway — it can't be both Chinese and
+                #    Japanese; trust the bytes on the wire.)
+                if (
+                    script_lang
+                    and script_lang != "unknown"
+                    and script_lang not in self._language_pair
+                ):
+                    logger.info(
+                        "Dropping ASR segment — script detected %s outside meeting pair %s: %r",
+                        script_lang,
+                        sorted(self._language_pair),
+                        text[:80],
+                    )
+                    text = ""
+                else:
+                    if script_lang in self._language_pair and script_lang != lang:
+                        logger.info(
+                            "ASR script corrected tag: %r → %r on %r",
+                            lang,
+                            script_lang,
+                            text[:80],
+                        )
+                        lang = script_lang
+                    try:
+                        from meeting_scribe.language_correction import correct_segment_language
+
+                        corrected = correct_segment_language(text, lang, self._language_pair)
+                        if corrected != lang:
+                            lang = corrected
+                    except Exception:
+                        logger.debug("lingua post-correction failed", exc_info=True)
+
+            if self._language_pair and lang not in self._language_pair:
+                logger.debug(
+                    "Dropping %s segment (meeting pair: %s): '%s'",
+                    lang,
+                    self._language_pair,
+                    text[:40] if text else "",
+                )
+                text = ""
+            if (
+                text
+                and self._language_pair == {"en", "ja"}
+                and lang == "en"
+                and _is_low_value_english_fragment(text)
+            ):
+                logger.debug("Dropping low-value English ASR fragment: '%s'", text[:40])
+                text = ""
+
+            # Short-audio language-flip hallucination guard. A model that
+            # has been transcribing English steadily and then emits a
+            # single short Japanese segment is almost certainly halluci-
+            # nating high-frequency filler phrases. The pair-membership +
+            # script-correction checks above can't see this — both letters
+            # of the dialect-pair are legitimate, and the script genuinely
+            # IS Japanese (just not what the speaker actually said). Look
+            # at history instead.
+            audio_duration_s = len(combined) / SAMPLE_RATE
+            if (
+                text
+                and lang
+                and lang in self._language_pair
+                and audio_duration_s < 1.5
+                and len(self._recent_segment_languages) >= 4
+            ):
+                recent = list(self._recent_segment_languages)
+                dominant = max(set(recent), key=recent.count)
+                dominant_count = recent.count(dominant)
+                if dominant_count >= len(recent) * 0.75 and lang != dominant:
+                    logger.info(
+                        "Dropping short-audio language-flip hallucination: "
+                        "%.2fs in %r against %d/%d recent %r segments: %r",
+                        audio_duration_s,
+                        lang,
+                        dominant_count,
+                        len(recent),
+                        dominant,
+                        text[:80],
+                    )
+                    text = ""
+        except asyncio.CancelledError:
+            raise
+        except (httpx.HTTPError, KeyError, IndexError) as e:
+            if not self._track_submission_failed(_submission, e):
+                return None
+            logger.warning("vLLM ASR request failed: %s", e)
+            text = ""
+            lang = "unknown"
+
+        if text and (len(text) > 200 or _is_hallucination(text)):
+            logger.debug("Filtered hallucination: '%s'", text[:40])
+            text = ""
+
+        self._last_response_time = time.monotonic()
+        if not text:
+            return None
+
+        if lang in self._language_pair:
+            self._recent_segment_languages.append(lang)
+
+        self.last_audio_chunk = combined
+        start_ms = int(asr_start_sample / SAMPLE_RATE * 1000)
+        end_ms = start_ms + int(len(combined) / SAMPLE_RATE * 1000)
+
+        utterance_end_at: float | None = None
+        self._repair_audio_wall_at_start(end_ms)
+        if self.audio_wall_at_start is not None:
+            utterance_end_at = self.audio_wall_at_start + end_ms / 1000.0
+        else:
+            logger.warning(
+                "ASR emit without audio_wall_at_start — utterance_end_at "
+                "will be None and TTS will refuse this segment. This is a "
+                "server init bug (start_meeting must set audio_wall_at_start)."
+            )
+
+        event = TranscriptEvent(
+            segment_id=segment_id,
+            revision=1,
+            is_final=True,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            language=lang,
+            text=text,
+            utterance_end_at=utterance_end_at,
+        )
+        self.last_final_monotonic = time.monotonic()
+        self.last_real_speech_observed_monotonic = self.last_final_monotonic
+
+        if self._on_event:
+            await self._on_event(event)
+            return None
+        return event
+
+    async def _drain_inflight_tasks(self, *, timeout_s: float = 15.0) -> None:
+        if not self._inflight_tasks:
+            return
+        pending = set(self._inflight_tasks)
+        done, still_pending = await asyncio.wait(pending, timeout=timeout_s)
+        for task in done:
+            self._on_submit_task_done(task)
+        if still_pending:
+            logger.warning(
+                "ASR drain timed out with %d live submission task(s) still pending",
+                len(still_pending),
+            )
+
+    def _on_submit_task_done(self, task: asyncio.Task) -> None:
+        self._inflight_tasks.discard(task)
+        if task.cancelled():
+            return
+        try:
+            task.result()
+        except Exception:
+            logger.exception("ASR live submission task failed")
+
+    async def flush(self) -> AsyncIterator[TranscriptEvent]:
+        """Flush buffered audio."""
+        await self._drain_inflight_tasks()
+        if self._buffer_samples >= SAMPLE_RATE // 2 and self._client:
+            old_async_live_submit = self._async_live_submit
+            self._async_live_submit = False
+            self._buffer_threshold = 0
+            try:
+                async for event in self.process_audio(np.array([], dtype=np.float32), 0):
+                    yield event
+            finally:
+                self._buffer_threshold = int(4.0 * SAMPLE_RATE)
+                self._async_live_submit = old_async_live_submit
+        await self._drain_inflight_tasks()
+
+    async def process_audio_bytes(
+        self,
+        pcm_s16le: bytes,
+        sample_offset: int | None = None,
+        *,
+        _is_replay: bool = False,
+    ) -> None:
+        """Process raw s16le PCM bytes.
+
+        ``sample_offset`` is the absolute sample index of the FIRST
+        sample in ``pcm_s16le`` within the meeting's audio file. When
+        None, the backend falls back to its running internal counter —
+        but callers that own a meeting-wide audio file (the live
+        server) MUST pass the real offset so transcript alignment
+        survives server restarts and meeting resume.
+
+        ``_is_replay`` is forwarded to ``process_audio`` so W6a's
+        replay path bypasses the live-suppression check during
+        RECOVERY_PENDING / REPLAYING.
+        """
+        audio = np.frombuffer(pcm_s16le, dtype=np.int16).astype(np.float32) / 32768.0
+        if sample_offset is None:
+            sample_offset = self._buffer_start_sample + self._buffer_samples
+        async for _ in self.process_audio(audio, sample_offset, _is_replay=_is_replay):
+            pass

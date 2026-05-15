@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Dell wordmark for the HDMI kiosk idle splash.
+
+  Stylized rendition of the Dell wordmark - geometric sans-serif
+  "DELL" with the signature tilted "E". Each glyph is its own
+  ``<text>`` element so the E can carry its own ``transform=rotate()``
+  around the right pivot.
+
+  No SVG filter primitives - any glow is applied via CSS
+  ``filter: drop-shadow()`` on the host img element (see
+  ``components/_kiosk.css``: ``.kiosk-idle-splash-logo``). The
+  previous revision used ``feGaussianBlur`` + ``feMerge`` which
+  painted a visible horizontal bar across the logo on
+  chromium-wayland.
+
+  Font stack matches ``--font-ui`` in ``css/src/lib/tokens.css``:
+  system fonts only, no external loads (the appliance ships from a
+  captive AP with no internet by design).
+
+  Used on the Dell Pro Max with GB10 (sddcinfo meeting-scribe demo
+  appliance, Dell AI Factory product line, 2026).
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 280 96"
+  role="img"
+  aria-label="Dell"
+>
+  <g
+    font-family="'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-size="92"
+    font-weight="800"
+    letter-spacing="-5"
+    fill="#FFFFFF"
+  >
+    <text x="0" y="78">D</text>
+    <text x="58" y="78" transform="rotate(-18 92 50)">E</text>
+    <text x="123" y="78">L</text>
+    <text x="172" y="78">L</text>
+  </g>
+</svg>

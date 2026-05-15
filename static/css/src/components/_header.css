@@ -1,0 +1,224 @@
+/* Meeting Scribe — Admin SPA header bar.
+ *
+ * The slim 44 px chrome strip across the top of the admin SPA:
+ * logo / Home button on the left, subtitle, then the right cluster
+ * (record + cancel buttons, audio meter, backend pills, stats popover,
+ * notification badge, gear icon). The recording-state cascades that
+ * dim non-essential icons + animate the pulse ring live in _state.css.
+ * The Wi-Fi QR poster swap (.header-qr) lives in _wifi-qr.css.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Tight left padding so the hamburger sits hard against the left edge. */
+  padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  height: 44px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: height var(--duration-med) var(--ease-out),
+              padding var(--duration-med) var(--ease-out);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Logo-mark doubles as the Home button. Pulse ring animation still
+ * driven by the child elements, so a <button> wrapper is fine here. */
+.logo-mark {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--duration-fast);
+}
+
+.logo-mark:hover {
+  background: var(--color-bg-raised);
+}
+
+.logo-mark:focus-visible {
+  outline: 2px solid var(--color-text-accent);
+  outline-offset: 2px;
+}
+
+/* Plain icon button used in the header (Home, etc.) */
+.header-icon-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.header-icon-btn:hover {
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+}
+
+.header-icon-btn:focus-visible {
+  outline: 2px solid var(--color-text-accent);
+  outline-offset: 2px;
+}
+
+.header-icon-btn.active-toggle {
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+}
+
+.pulse-core {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transition: background var(--duration-med) var(--ease-out);
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  opacity: 0;
+}
+
+@keyframes pulse-expand {
+  0%   { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.header-subtitle {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  padding: 3px 8px;
+  background: var(--color-bg-raised);
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  /* Long status strings ("Recording <UUID>") otherwise force header
+   * siblings to compress; keep the line single and shrinkable so the
+   * header preserves its 44 px height under narrow viewports. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: min(40vw, 360px);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  /* Allow the cluster to shrink rather than stretch the header beyond
+   * viewport width. Individual children (icon buttons, audio meter)
+   * still set their own ``flex-shrink`` posture below. */
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.header-meeting-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  flex-shrink: 0;
+  padding-inline: var(--space-xs);
+  border-inline: 1px solid var(--color-border-dim);
+}
+
+.header-stats {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Stats popover — small fixed-position card hanging under the
+ * .header-stats button, surfacing live metric counters. */
+.stats-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: 210px;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.stats-popover-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 3px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.74rem;
+}
+
+.stats-popover-row strong {
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Hamburger button (left of the header — opens the meetings panel) */
+.hamburger {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all var(--duration-fast);
+}
+
+.hamburger:hover {
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+}
+
+/* Admin SPA root layout — `<main>` sits below the 56-px header and
+ * fills the rest of the viewport. The height transition is what
+ * makes the metrics-split + popout layouts feel smooth when they
+ * adjust the chrome around the main column. */
+main {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+  transition: height var(--duration-med) var(--ease-out);
+}
+
+/* Admin SPA grain texture — disabled by default; kept so a future
+ * commit can flip it on without re-introducing the rule. */
+.grain-overlay { display: none; }

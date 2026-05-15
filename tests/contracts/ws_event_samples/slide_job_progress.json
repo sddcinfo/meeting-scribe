@@ -1,0 +1,6 @@
+{
+  "type": "slide_job_progress",
+  "deck_id": "deck-abc",
+  "stage": "translating",
+  "progress": "3/12"
+}

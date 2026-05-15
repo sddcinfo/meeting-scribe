@@ -1,0 +1,171 @@
+/* Meeting Scribe — guest view components.
+ *
+ * Imported by static/css/src/guest.css. The guest page is what
+ * hotspot clients see at `/guest` and via the captive-portal handoff:
+ * live transcript + optional language filter + Listen-button audio
+ * interpretation.
+ *
+ * JS toggles:
+ *   .pulse-ring.idle  — recording indicator dim state
+ *   .guest-listen-btn.active  — Listen button toggled green
+ *   .seg.partial  — half-opacity ASR-in-progress segment
+ *   .seg.no-anim  — segments hydrated from history (skip animation)
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@layer components {
+  header.guest-header {
+    background: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border);
+    @apply flex items-center gap-3 px-5 py-3;
+  }
+  header.guest-header h1 {
+    @apply text-base font-semibold;
+    letter-spacing: -0.01em;
+  }
+  header.guest-header .status {
+    color: var(--color-text-muted);
+    @apply text-xs ml-auto;
+  }
+
+  .pulse-ring {
+    background: var(--color-recording);
+    @apply w-2.5 h-2.5 rounded-full;
+    animation: guest-pulse 2s ease-in-out infinite;
+  }
+  .pulse-ring.idle {
+    background: var(--color-text-muted);
+    animation: none;
+  }
+
+  .lang-bar {
+    background: var(--color-bg-surface);
+    border-bottom: 1px solid var(--color-border);
+    @apply flex items-center gap-1.5 px-2 py-1.5 text-[0.7rem] overflow-x-auto whitespace-nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .lang-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .lang-bar label {
+    color: var(--color-text-secondary);
+    @apply text-[0.65rem] flex-shrink-0;
+  }
+  .lang-bar select {
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    font-family: var(--font-ui);
+    @apply text-[0.7rem] px-1.5 py-1 rounded-md;
+    max-width: 45vw;
+  }
+
+  .guest-listen-btn {
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    font-family: var(--font-ui);
+    @apply text-[0.7rem] px-2 py-1 rounded-md flex items-center gap-1 whitespace-nowrap cursor-pointer;
+  }
+  .guest-listen-btn.active {
+    background: var(--color-success-soft);
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+  .guest-select {
+    font-family: var(--font-ui);
+    @apply text-[0.7rem];
+    max-width: 120px;
+  }
+
+  .live-bar {
+    background: var(--color-bg-raised);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    @apply sticky top-0 z-10 flex items-start gap-1.5 px-3 py-2 text-[0.8rem];
+    min-height: 2.5rem;
+  }
+  .live-bar-dot {
+    @apply w-1.5 h-1.5 rounded-full flex-shrink-0;
+    background: var(--color-recording);
+    margin-top: 0.35rem;
+    animation: guest-pulse-dot 1.5s ease-in-out infinite;
+  }
+  .live-bar-text {
+    @apply flex-1;
+    line-height: 1.4;
+  }
+
+  .transcript {
+    @apply flex-1 overflow-y-auto p-2;
+    -webkit-overflow-scrolling: touch;
+  }
+  .seg {
+    border-bottom: 1px solid var(--color-bg-raised);
+    @apply px-3 py-2;
+    animation: guest-seg-fade-in 0.2s ease;
+  }
+  .seg.partial {
+    @apply opacity-60;
+  }
+  .seg.no-anim {
+    animation: none;
+  }
+  .seg-meta {
+    color: var(--color-text-muted);
+    @apply flex items-center gap-1.5 mb-1 text-[0.7rem];
+  }
+  .seg-speaker {
+    @apply font-medium inline-flex items-center gap-0.5;
+  }
+  .seg-dot {
+    @apply w-1.5 h-1.5 rounded-full inline-block;
+  }
+  .seg-text {
+    @apply text-[0.95rem];
+    line-height: 1.55;
+  }
+  .seg-text.ja {
+    font-family: var(--font-ja);
+  }
+
+  .waiting {
+    @apply flex-1 flex flex-col items-center justify-center gap-4 text-center p-8;
+  }
+  .waiting h2 {
+    @apply text-xl font-semibold;
+  }
+  .waiting p {
+    color: var(--color-text-secondary);
+    @apply text-sm;
+    max-width: 300px;
+  }
+  .waiting .dots::after {
+    content: "";
+    animation: guest-dots 1.5s steps(4, end) infinite;
+  }
+}
+
+@keyframes guest-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes guest-pulse-dot {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+@keyframes guest-seg-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes guest-dots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+}

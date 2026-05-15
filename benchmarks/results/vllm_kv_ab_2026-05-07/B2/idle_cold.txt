@@ -1,0 +1,19 @@
+=== B2 cold-idle ===
+2026-05-07T15:51:27+09:00
+               total        used        free      shared  buff/cache   available
+Mem:           121Gi       103Gi       2.1Gi       4.8Gi        21Gi        18Gi
+Swap:           15Gi       2.8Gi        13Gi
+Filename				Type		Size		Used		Priority
+/swap.img                               file		16777212	2894832		-2
+MemTotal:       127535960 kB
+MemAvailable:   19081644 kB
+Cached:         22437288 kB
+SwapFree:       13882380 kB
+AnonPages:      13691144 kB
+NAME                 MEM USAGE / LIMIT
+scribe-diarization   1.147GiB / 6GiB
+scribe-tts-2         752.5MiB / 4GiB
+scribe-asr           6.734GiB / 18GiB
+scribe-tts           2.163GiB / 4GiB
+autosre-vllm-local   7.452GiB / 80GiB
+scribe-autoheal      3.469MiB / 121.6GiB

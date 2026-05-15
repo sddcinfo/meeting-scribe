@@ -1,0 +1,145 @@
+{
+  "label": "oom-tune-change2-expandseg",
+  "timestamp": 1778471169.9203968,
+  "iso": "2026-05-11T12:46:09+0900",
+  "config": {
+    "sequential_iters": 15,
+    "concurrent_iters": 60,
+    "concurrency": 6
+  },
+  "scribe_status_before": {},
+  "asr_sequential": {
+    "probe": "asr",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 15,
+      "min": 95.7,
+      "p50": 104.8,
+      "p95": 128.1,
+      "p99": 128.1,
+      "max": 128.1,
+      "mean": 106.1
+    }
+  },
+  "translate_ja_en_sequential": {
+    "probe": "translate_ja_en",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 15,
+      "min": 205.1,
+      "p50": 314.1,
+      "p95": 336.8,
+      "p99": 336.8,
+      "max": 336.8,
+      "mean": 294.2
+    }
+  },
+  "translate_en_ja_sequential": {
+    "probe": "translate_en_ja",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 15,
+      "min": 189.2,
+      "p50": 251.5,
+      "p95": 317.9,
+      "p99": 317.9,
+      "max": 317.9,
+      "mean": 254.4
+    }
+  },
+  "diarize_sequential": {
+    "probe": "diarize",
+    "mode": "sequential",
+    "latency_ms": {
+      "n": 15,
+      "min": 19.9,
+      "p50": 21.4,
+      "p95": 325.1,
+      "p99": 325.1,
+      "max": 325.1,
+      "mean": 41.5
+    }
+  },
+  "asr_concurrent": {
+    "probe": "asr",
+    "mode": "concurrent(c=6,n=60)",
+    "latency_ms": {
+      "n": 60,
+      "min": 97.9,
+      "p50": 129.3,
+      "p95": 181.9,
+      "p99": 207.3,
+      "max": 207.3,
+      "mean": 133.2
+    }
+  },
+  "translate_concurrent": {
+    "probe": "translate_ja_en",
+    "mode": "concurrent(c=6,n=60)",
+    "latency_ms": {
+      "n": 60,
+      "min": 343.4,
+      "p50": 689.6,
+      "p95": 892.1,
+      "p99": 967.7,
+      "max": 967.7,
+      "mean": 667.1
+    }
+  },
+  "diarize_concurrent": {
+    "probe": "diarize",
+    "mode": "concurrent(c=6,n=60)",
+    "latency_ms": {
+      "n": 60,
+      "min": 30.0,
+      "p50": 115.4,
+      "p95": 127.6,
+      "p99": 129.4,
+      "max": 129.4,
+      "mean": 112.8
+    }
+  },
+  "mixed_stress": {
+    "wall_ms": 8886.2,
+    "asr": {
+      "n": 20,
+      "min": 204.0,
+      "p50": 217.9,
+      "p95": 296.6,
+      "p99": 296.6,
+      "max": 296.6,
+      "mean": 226.0
+    },
+    "translate": {
+      "n": 20,
+      "min": 292.8,
+      "p50": 338.5,
+      "p95": 912.9,
+      "p99": 912.9,
+      "max": 912.9,
+      "mean": 444.1
+    },
+    "diarize": {
+      "n": 20,
+      "min": 40.5,
+      "p50": 59.1,
+      "p95": 77.2,
+      "p99": 77.2,
+      "max": 77.2,
+      "mean": 59.5
+    }
+  },
+  "scribe_status_after": {},
+  "loop_lag_delta": {
+    "p50_before": null,
+    "p50_after": null,
+    "p95_before": null,
+    "p95_after": null,
+    "p99_before": null,
+    "p99_after": null
+  },
+  "gpu_vram_pct": {
+    "before": null,
+    "after": null
+  }
+}

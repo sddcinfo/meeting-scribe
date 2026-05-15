@@ -1,0 +1,521 @@
+/* Meeting Scribe — how-it-works page-specific components.
+   Shared editorial chrome (nav-bar, hero, sections, stages, flows,
+   lifecycles, resource tables, glossary, scroll-reveal, footer)
+   lives in ./_editorial.css and is imported by every editorial
+   page. This file holds only how-it-works-specific content
+   components: the transcript mockup grid, the GB10 unified-memory
+   budget bar, and the service topology schematic. */
+
+/* ═══════════ EXPERIENCE MOCKUP ═══════════ */
+
+.mockup {
+  margin-top: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-bg-surface);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.mockup-header {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-dim);
+  background: var(--color-bg-raised);
+}
+
+.mockup-col-header {
+  flex: 1;
+  padding: 10px var(--space-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-right: 1px solid var(--color-border-dim);
+}
+
+.mockup-col-header:last-child { border-right: none; }
+
+.mockup-col-hint {
+  display: block;
+  font-weight: 400;
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+
+.mockup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.mockup-row {
+  display: contents;
+}
+
+.mockup-cell {
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--color-border-dim);
+  border-right: 1px solid var(--color-border-dim);
+}
+
+.mockup-row:last-child .mockup-cell { border-bottom: none; }
+.mockup-cell:nth-child(3n) { border-right: none; }
+
+.mockup-cell.cell-ja {
+  font-family: var(--font-ja);
+  font-weight: 400;
+}
+
+.mockup-speaker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.mockup-speaker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mockup-cell .translated {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* ═══════════ ARCHITECTURE TOPOLOGY ═══════════
+
+   Replaces the prior ASCII <pre>-style wire-block.  This is a CSS-only
+   service-topology engraving: the FastAPI app sits centre-left, the
+   four model services arrange as a column to the right, port labels
+   ride on the connecting bus, and the bus itself uses each service's
+   stage colour for the wire.  Designed to read as a technical
+   schematic rather than a Visio diagram.                              */
+
+.topology {
+  margin-top: var(--space-lg);
+  padding: var(--space-xl) var(--space-xl);
+  background:
+    linear-gradient(180deg, var(--color-bg-surface), var(--color-bg-raised));
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Faint engineering-grid background — establishes the schematic aesthetic
+   without competing with content.  Opacity is light enough that it only
+   reads as texture on hover or in screenshots. */
+.topology::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-border-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border-dim) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Two columns: host card spans the full height on the left, service
+   stack on the right.  Each service row owns its own connector wire
+   via .topo-service::before, so alignment is automatic regardless of
+   service-row height. */
+.topo-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: var(--space-md) 64px;
+  align-items: stretch;
+}
+
+.topo-host {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-md) var(--space-md);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Tiny stub coming out of the right edge of the host — implies the
+   bus that the per-service connectors feed into. */
+.topo-host::after {
+  content: "";
+  position: absolute;
+  right: -32px;
+  top: 50%;
+  width: 32px;
+  height: 1px;
+  background: var(--color-text-muted);
+  z-index: 1;
+}
+
+.topo-host-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.topo-host-name {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.topo-host-meta {
+  margin-top: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.topo-host-meta code {
+  font-family: var(--font-mono);
+  color: var(--color-text-accent);
+}
+
+.topo-services {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  position: relative;
+  z-index: 2;
+}
+
+/* Vertical "bus" running through the gap between host and services.
+   Drawn on the left edge of the services column so it visually bonds
+   the host stub to each row's connector. */
+.topo-services::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 18px;
+  bottom: 18px;
+  width: 1px;
+  background:
+    repeating-linear-gradient(180deg,
+      var(--color-text-muted) 0 6px,
+      transparent 6px 12px);
+}
+
+.topo-service {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-left: 3px solid var(--node-color, var(--color-border));
+  border-radius: 6px;
+  font-size: 0.82rem;
+  position: relative;
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+/* Per-row connector wire from the bus into the service card. */
+.topo-service::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 50%;
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    var(--color-text-muted),
+    var(--node-color, var(--color-text-accent)));
+}
+
+/* Tiny arrow head at the service-card edge. */
+.topo-service::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: calc(50% - 3px);
+  width: 0;
+  height: 0;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  border-left: 5px solid var(--node-color, var(--color-text-accent));
+}
+
+.topo-service:hover {
+  transform: translateX(2px);
+  box-shadow: -2px 2px 0 color-mix(in srgb, var(--node-color, var(--color-text-accent)) 18%, transparent);
+}
+
+.topo-port {
+  position: absolute;
+  left: -32px;
+  top: calc(50% - 14px);
+  width: 32px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-surface);
+  padding: 1px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px var(--color-border-dim);
+}
+
+.topo-service[data-stage="asr"]         { --node-color: var(--color-speaker-2); }
+.topo-service[data-stage="translation"] { --node-color: var(--color-speaker-3); }
+.topo-service[data-stage="speaker"]     { --node-color: var(--color-speaker-4); }
+.topo-service[data-stage="tts"]         { --node-color: #b52d2d; }
+
+.topo-service-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--node-color, var(--color-text-muted));
+  justify-self: center;
+}
+
+.topo-service-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.topo-service-model {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+
+.topo-service-port {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--color-text-muted);
+  padding: 2px 6px;
+  background: var(--color-bg-raised);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* ═══════════ MEMORY-BUDGET BAR ═══════════ */
+
+.memory-budget {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 8px;
+}
+
+.memory-budget-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.memory-budget-total {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.memory-bar {
+  display: flex;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+}
+
+.memory-bar-segment {
+  height: 100%;
+  position: relative;
+  transition: filter 0.2s var(--ease-out);
+}
+
+.memory-bar-segment:hover { filter: brightness(1.08); }
+
+.memory-bar-segment[data-stage="asr"]         { background: var(--color-speaker-2); }
+.memory-bar-segment[data-stage="translation"] { background: var(--color-speaker-3); }
+.memory-bar-segment[data-stage="kv"]          {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-speaker-3) 0 6px,
+    color-mix(in srgb, var(--color-speaker-3) 60%, var(--color-bg-raised)) 6px 12px);
+}
+.memory-bar-segment[data-stage="speaker"]     { background: var(--color-speaker-4); }
+.memory-bar-segment[data-stage="tts"]         { background: #b52d2d; }
+.memory-bar-segment[data-stage="headroom"]    {
+  background: var(--color-bg-raised);
+}
+
+.memory-bar-segment[data-stage="headroom"] {
+  border-left: 1px dashed var(--color-border);
+}
+
+.memory-legend {
+  margin-top: var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-lg);
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+.memory-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+}
+
+.memory-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.memory-legend-swatch[data-stage="asr"]         { background: var(--color-speaker-2); }
+.memory-legend-swatch[data-stage="translation"] { background: var(--color-speaker-3); }
+.memory-legend-swatch[data-stage="kv"]          {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-speaker-3) 0 4px,
+    color-mix(in srgb, var(--color-speaker-3) 60%, var(--color-bg-raised)) 4px 8px);
+}
+.memory-legend-swatch[data-stage="speaker"]     { background: var(--color-speaker-4); }
+.memory-legend-swatch[data-stage="tts"]         { background: #b52d2d; }
+.memory-legend-swatch[data-stage="headroom"]    {
+  background: var(--color-bg-raised);
+  border: 1px dashed var(--color-border);
+}
+
+.memory-legend-pct {
+  color: var(--color-text-muted);
+}
+
+/* ═══════════ RESPONSIVE — MOBILE ═══════════
+   Page-specific overrides; the shared editorial chrome handles the
+   rest in _editorial.css. */
+
+@media (max-width: 768px) {
+  /* Mockup: responsive */
+  .mockup-header {
+    font-size: 0.68rem;
+  }
+
+  .mockup-cell {
+    font-size: 0.72rem;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .mockup-col-hint {
+    font-size: 0.58rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Mockup: stack columns vertically */
+  .mockup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mockup-header {
+    flex-direction: column;
+  }
+
+  .mockup-col-header {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-dim);
+  }
+
+  .mockup-col-header:last-child { border-bottom: none; }
+
+  .mockup-cell {
+    border-right: none;
+  }
+}
+
+/* iPad Pro 9.7" 2025 — landscape (1024 × 768) and portrait (768 × 1024).
+   Portrait collapses the topology to a single column at 768. */
+
+@media (max-width: 1024px) {
+  .topo-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  .topo-host {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .topo-services {
+    grid-column: 1;
+  }
+  /* Hide the schematic connectors when the layout collapses to a
+     single column — there's no longer a horizontal axis for the wires
+     to span, so leaving them in produces stray dashes/arrows. */
+  .topo-host::after,
+  .topo-services::before,
+  .topo-service::before,
+  .topo-service::after,
+  .topo-port {
+    display: none;
+  }
+}
+
+/* iPhone 17 Pro Max portrait (440 × 956).  Sits above the small-phone
+   480 px breakpoint and below the tablet 768 px one — needs its own
+   block so the tablet rules don't bleed into the largest-phone class.  */
+
+@media (min-width: 416px) and (max-width: 480px) {
+  .topology {
+    padding: var(--space-md) var(--space-md);
+  }
+  .topo-host {
+    padding: var(--space-sm) var(--space-md);
+  }
+  .topo-service {
+    grid-template-columns: 24px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .topo-service-port {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .memory-budget {
+    padding: var(--space-md) var(--space-md);
+  }
+  .memory-bar { height: 22px; }
+  .memory-legend { gap: var(--space-sm) var(--space-md); }
+}

@@ -1,0 +1,258 @@
+/* Meeting Scribe — Hardware tab speakerphone card.
+ *
+ * USB-speakerphone integration UI: connected device list, button
+ * mapping table (Phone/Teams/Phone-Mute), read-only "Handled by OS"
+ * rows for Vol+/Vol−/sys-mute, LED state-machine controls, default
+ * meeting-profile fields. Keeps the visual language of
+ * _settings-panel.css + _form-controls.css.
+ */
+
+#speakerphone-card h5 {
+  margin-top: var(--space-md, 1rem);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #e5e7eb);
+}
+
+.speakerphone-devices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space-sm, 0.75rem);
+}
+
+.speakerphone-device-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-soft, rgba(255, 255, 255, 0.04));
+  border-radius: 6px;
+}
+
+.speakerphone-vid-pid {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+/* ── Button mapping table ───────────────────────────────────────── */
+
+.speakerphone-mapping-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.speakerphone-button-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 100px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-soft, rgba(255, 255, 255, 0.04));
+  border-radius: 6px;
+  transition: background 0.15s ease-out;
+}
+
+.speakerphone-button-row.is-flashing {
+  background: rgba(56, 189, 248, 0.25);  /* sky-400 / accent */
+}
+
+.speakerphone-button-label {
+  font-weight: 600;
+  color: var(--text-primary, #e5e7eb);
+}
+
+.speakerphone-button-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.speakerphone-action-select,
+.speakerphone-pattern-select {
+  flex: 1;
+}
+
+.speakerphone-last-press {
+  font-size: 0.8rem;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.5));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── OS-handled (read-only) ─────────────────────────────────────── */
+
+.speakerphone-os-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-md, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.speakerphone-os-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-soft, rgba(255, 255, 255, 0.02));
+  border-radius: 6px;
+  opacity: 0.85;
+}
+
+.speakerphone-os-behavior {
+  font-size: 0.85rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  flex: 1;
+}
+
+.speakerphone-os-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-soft, rgba(255, 255, 255, 0.06));
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+/* ── LED state table ────────────────────────────────────────────── */
+
+.speakerphone-led-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space-md, 1rem);
+}
+
+.speakerphone-led-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-soft, rgba(255, 255, 255, 0.04));
+  border-radius: 6px;
+}
+
+.speakerphone-led-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+/* ── Footer actions ─────────────────────────────────────────────── */
+
+.speakerphone-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: var(--space-md, 1rem);
+}
+
+.speakerphone-status {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+/* ── Button feedback override editor ──────────────────────────────
+ *
+ * Uses the project's ``--color-*`` token namespace. The fallback
+ * values are sane defaults for a light panel background, which is
+ * what the admin settings overlay uses. Keep the fallbacks
+ * dark-on-light — anything like ``rgba(255,255,255,…)`` is invisible
+ * on the actual surface.
+ */
+
+.speakerphone-feedback-overrides {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.speakerphone-feedback-row {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-bg-soft, rgba(0, 0, 0, 0.03));
+  border-radius: 6px;
+  border: 1px solid var(--color-border-subtle, rgba(0, 0, 0, 0.05));
+}
+
+.speakerphone-feedback-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.speakerphone-feedback-meta strong {
+  font-family: var(--color-font-mono, ui-monospace, monospace);
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #111827);
+}
+
+.speakerphone-feedback-help {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary, #4b5563);
+}
+
+.speakerphone-feedback-input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  background: var(--color-bg-input, #ffffff);
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.15));
+  border-radius: 4px;
+  color: var(--color-text-primary, #111827);
+  font-size: 0.9rem;
+}
+
+.speakerphone-feedback-input:focus {
+  outline: 2px solid var(--color-accent, #2563eb);
+  outline-offset: 1px;
+}
+
+/* Match the .btn-primary / .btn-ghost surface conventions defined in
+ * static/css/src/components/_buttons.css. We use ghost styling for
+ * the Test buttons so they read as secondary actions next to the
+ * primary "Save" button at the bottom of the panel. */
+.speakerphone-feedback-test {
+  white-space: nowrap;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--color-text-primary, #111827);
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.2));
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.speakerphone-feedback-test:hover {
+  background: var(--color-bg-soft, rgba(0, 0, 0, 0.04));
+}
+
+.speakerphone-feedback-test:active {
+  background: var(--color-bg-stronger, rgba(0, 0, 0, 0.08));
+}
+
+/* Single "Test feedback" button row — Button + helper text. */
+.speakerphone-feedback-test-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}

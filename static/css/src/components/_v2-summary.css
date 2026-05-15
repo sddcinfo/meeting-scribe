@@ -1,0 +1,254 @@
+/* Meeting Scribe — V2 Summary cards.
+ *
+ * The four named-summary card sections shown inside the
+ * finalization modal's "Summary" tab: Key Insights, Named
+ * Entities, Categorized Actions, and Attributed Quotes. Each
+ * section has its own colour-banded header strip, body grid,
+ * and per-item formatting. The finalize-modal shell itself lives
+ * in _finalize-modal.css.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ V2 SUMMARY — KEY INSIGHTS ═══════════ */
+
+.summary-v2 {
+  display: flex;
+  flex-direction: column;
+}
+
+/* At wider modal widths, use 2-column grid for v2 summaries.
+   Overview + entities span full width; insights and actions fill columns. */
+@media (min-width: 820px) {
+  .summary-v2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 0;
+    row-gap: 0;
+    align-content: start;
+  }
+  .summary-v2 > .summary-overview,
+  .summary-v2 > .summary-entities,
+  .summary-v2 > .summary-insights {
+    grid-column: 1 / -1;
+  }
+  .summary-v2 > .summary-section:not(.summary-overview):not(.summary-entities):not(.summary-insights) {
+    border-bottom: 1px solid var(--color-border-dim);
+  }
+  .summary-v2 > .summary-quotes {
+    border-left: 1px solid var(--color-border-dim);
+  }
+}
+
+.insights-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insight-card {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 10px;
+  padding: 16px 18px;
+  animation: item-slide-in 0.4s var(--ease-out) both;
+  transition: border-color 0.2s;
+}
+
+.insight-card:hover {
+  border-color: var(--color-border);
+}
+
+.insight-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.insight-number {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--color-text-accent);
+  background: rgba(139, 105, 20, 0.08);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.insight-title {
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--color-text-primary);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.insight-body {
+  padding-left: 32px;
+}
+
+.insight-body p {
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+  margin: 0 0 8px;
+}
+
+.insight-body p:last-child {
+  margin-bottom: 0;
+}
+
+.insight-speakers {
+  padding-left: 32px;
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.insight-speaker-pill {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--color-text-accent);
+  background: rgba(139, 105, 20, 0.06);
+  padding: 2px 8px;
+  border-radius: 100px;
+  letter-spacing: 0.01em;
+}
+
+/* ═══════════ V2 SUMMARY — NAMED ENTITIES ═══════════ */
+
+.entities-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.entity-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.entity-label {
+  font-size: 0.65rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  width: 80px;
+  flex-shrink: 0;
+  padding-top: 3px;
+}
+
+.entity-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.entity-pill {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.entity-companies { border-color: rgba(26, 111, 181, 0.25); color: #1a6fb5; background: rgba(26, 111, 181, 0.04); }
+.entity-people    { border-color: rgba(42, 133, 64, 0.25); color: #2a8540; background: rgba(42, 133, 64, 0.04); }
+.entity-products  { border-color: rgba(155, 45, 123, 0.25); color: #9b2d7b; background: rgba(155, 45, 123, 0.04); }
+.entity-accounts  { border-color: rgba(139, 105, 20, 0.25); color: var(--color-text-accent); background: rgba(139, 105, 20, 0.04); }
+
+/* ═══════════ V2 SUMMARY — CATEGORIZED ACTIONS ═══════════ */
+
+.action-category-group {
+  margin-bottom: 12px;
+}
+
+.action-category-group:last-child {
+  margin-bottom: 0;
+}
+
+.action-category-header {
+  font-size: 0.7rem;
+  font-weight: 620;
+  color: var(--color-text-accent);
+  padding: 4px 0 6px;
+  border-bottom: 1px solid var(--color-border-dim);
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+
+/* ═══════════ V2 SUMMARY — ATTRIBUTED QUOTES ═══════════ */
+
+.quotes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quote-card {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  animation: item-slide-in 0.35s var(--ease-out) both;
+}
+
+.quote-card + .quote-card {
+  border-top: 1px solid var(--color-border-dim);
+}
+
+.quote-mark {
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--color-text-accent);
+  opacity: 0.4;
+  flex-shrink: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.quote-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.quote-text {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+.quote-attribution {
+  margin-top: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.quote-speaker {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.quote-context {
+  font-size: 0.66rem;
+  color: var(--color-text-muted);
+}
+

@@ -1,0 +1,39 @@
+/* Meeting Scribe — Audio meter bar.
+ *
+ * The admin SPA header carries a tiny live-level meter. The fill bar
+ * (`.meter-bar`) animates with the getUserMedia level read from the
+ * browser-side AnalyserNode hooked to `audio.stream`. When the
+ * server-side mic path (Poly SP325 via pw-record) is the actual ASR
+ * source the browser-side level is whatever the local mic happens to
+ * pick up; the meter renders whatever the browser hears, full stop.
+ *
+ * Body-state cascades for the recording-mode colour swap on .meter-bar
+ * live in _state.css; this file owns the base presentation only.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.audio-meter {
+  width: 120px;
+  height: 8px;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.meter-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--color-text-accent);
+  border-radius: 999px;
+  transition: width 100ms linear;
+}
+
+@media (max-width: 640px) {
+  .audio-meter {
+    width: 56px;
+  }
+}

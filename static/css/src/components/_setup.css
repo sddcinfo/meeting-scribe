@@ -1,0 +1,199 @@
+/* Meeting Scribe — setup wizard + /auth gate components.
+ *
+ * Imported by static/css/src/setup.css. Used by two server-rendered
+ * pages (HTML lives in Python f-strings under src/meeting_scribe/routes/):
+ *   - /setup        (first-touch wizard, src/.../routes/setup.py)
+ *   - /auth         (sign-in gate, src/.../routes/guest_auth.py)
+ *
+ * Both pages render with the admin SPA's neutral palette + sans-serif
+ * type from the unified @theme.
+ *
+ * Class names referenced by the Python HTML: .setup, .step-indicator,
+ * .product, .step, .eyebrow, .lede, .creds-panel, .cred-row (+.pin/
+ * .admin), .label, .value (+.copy-target/.mono), .caption,
+ * .visually-hidden, .hint, .button-row, .primary, .secondary, .error.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@layer base {
+  /* The setup pages get full-bleed centered presentation. */
+  html, body {
+    @apply min-h-screen;
+  }
+  body:has(main.setup) {
+    background: var(--color-bg-deep);
+    color: var(--color-text-primary);
+    @apply flex flex-col items-center;
+    padding: 3rem 1rem;
+    padding-top: calc(3rem + env(safe-area-inset-top, 0));
+    padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0));
+  }
+}
+
+@layer components {
+  main.setup {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-dim);
+    box-shadow: var(--shadow-thin);
+    @apply w-full max-w-xl rounded-2xl p-8;
+  }
+
+  .step-indicator {
+    color: var(--color-text-muted);
+    @apply flex items-center justify-between text-xs uppercase tracking-wider mb-6;
+  }
+  .step-indicator .product {
+    color: var(--color-text-primary);
+    @apply font-semibold;
+  }
+
+  .eyebrow {
+    color: var(--color-text-accent);
+    @apply text-xs font-semibold uppercase tracking-wider mb-2;
+  }
+
+  main.setup h1 {
+    color: var(--color-text-primary);
+    @apply text-3xl font-bold mb-3;
+    letter-spacing: -0.02em;
+  }
+
+  main.setup h2 {
+    color: var(--color-text-primary);
+    @apply text-lg font-semibold mt-6 mb-2;
+    letter-spacing: -0.01em;
+  }
+
+  main.setup p {
+    color: var(--color-text-secondary);
+    @apply text-sm leading-relaxed mb-3;
+  }
+
+  .lede {
+    color: var(--color-text-secondary);
+    @apply text-base leading-relaxed mb-6;
+  }
+
+  .creds-panel {
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border-dim);
+    @apply rounded-xl p-6 mb-6 flex flex-col gap-5;
+  }
+
+  .cred-row {
+    @apply flex flex-col gap-1;
+  }
+  .cred-row .label {
+    color: var(--color-text-muted);
+    @apply text-xs uppercase tracking-wider font-semibold;
+  }
+  .cred-row .value {
+    color: var(--color-text-primary);
+    @apply text-2xl font-semibold cursor-pointer;
+    letter-spacing: -0.01em;
+  }
+  .cred-row .value.mono {
+    font-family: var(--font-mono);
+    @apply text-xl;
+  }
+  .cred-row .value.copy-target:hover {
+    color: var(--color-text-accent);
+  }
+  .cred-row .caption {
+    color: var(--color-text-secondary);
+    @apply text-sm leading-relaxed;
+  }
+  .cred-row .caption em {
+    color: var(--color-text-primary);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .hint {
+    color: var(--color-text-secondary);
+    @apply text-sm leading-relaxed mb-6;
+  }
+  .hint strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  .button-row {
+    @apply flex flex-row-reverse gap-3 mt-4;
+  }
+  .button-row button.primary {
+    background: var(--color-text-primary);
+    color: var(--color-bg-surface);
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold cursor-pointer;
+    border: 1px solid transparent;
+    transition: opacity 150ms;
+  }
+  .button-row button.primary:hover {
+    @apply opacity-90;
+  }
+  .button-row button.primary:active {
+    @apply opacity-80;
+  }
+  .button-row button.secondary {
+    background: var(--color-bg-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold cursor-pointer;
+    transition: background 150ms;
+  }
+  .button-row button.secondary:hover {
+    background: var(--color-bg-hover);
+  }
+
+  /* /auth + /setup form fields. The HTML pattern is
+   *   <form>
+   *     <label>Field name
+   *       <input ...>
+   *     </label>
+   *     <div class="button-row">…</div>
+   *   </form>
+   * so the input lives INSIDE the label. Style accordingly. */
+  main.setup form {
+    @apply flex flex-col gap-3 mb-6;
+  }
+  main.setup form label {
+    color: var(--color-text-muted);
+    @apply text-xs uppercase tracking-wider font-semibold flex flex-col gap-1.5;
+  }
+  main.setup form input[type="text"],
+  main.setup form input[type="password"],
+  main.setup form input[type="number"] {
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    font-family: var(--font-ui);
+    @apply text-base px-3 py-2.5 rounded-lg normal-case tracking-normal font-normal;
+    transition: border-color 150ms;
+  }
+  main.setup form input:focus {
+    outline: none;
+    border-color: var(--color-text-accent);
+  }
+  main.setup form input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .error {
+    color: var(--color-recording);
+    @apply text-sm mb-3;
+  }
+
+  #status {
+    color: var(--color-text-secondary);
+    @apply text-sm mt-3 min-h-[1.25rem];
+  }
+
+  .visually-hidden {
+    @apply absolute w-px h-px overflow-hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

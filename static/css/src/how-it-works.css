@@ -1,0 +1,19 @@
+/* Meeting Scribe — how-it-works doc entry (compiled to dist/how-it-works.css).
+ *
+ * Linked by static/how-it-works.html (the editorial documentation
+ * page, also published to https://sddcinfo.github.io/meeting-scribe/).
+ *
+ * Imports the shared editorial chrome (nav-bar, hero, sections,
+ * stages, flows, lifecycles, resource tables, glossary, scroll-
+ * reveal, footer) plus the how-it-works-specific content components
+ * (transcript mockup, memory-budget bar, service topology).
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_editorial.css";
+@import "./components/_how-it-works.css";
+
+@source "../../how-it-works.html";
+@source "../../js/how-it-works.js";

@@ -1,0 +1,300 @@
+/* Meeting Scribe — Settings panel.
+ *
+ * The right-side slide-over panel with the tabbed settings UI —
+ * the panel itself (`.settings-panel`, .open, .settings-header,
+ * .settings-body, .settings-section, .settings-section h4,
+ * .settings-field + label + input + select + .settings-field-help),
+ * plus the small ghost / icon buttons used inside the panel
+ * (reveal / hide / copy buttons inside the Credentials tab,
+ * regen toggles).
+ *
+ * Tab navigation primitives (`.settings-tab` / .settings-tabs-nav
+ * / .settings-tabs-panes / .settings-tab-pane) live in the separate
+ * _settings-tabs.css partial — this file owns the panel chrome +
+ * form-field block layout that surrounds the tabs.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ── Settings panel (slide-over from the right) ───────────────── */
+
+.settings-panel {
+  position: fixed;
+  right: 0;
+  top: 56px;
+  bottom: 0;
+  width: 460px;
+  max-width: 92vw;
+  background: var(--color-bg-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -4px 0 20px rgba(0,0,0,0.08);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform 0.25s var(--ease-out);
+  outline: none;
+}
+
+.settings-panel.open { transform: translateX(0); }
+
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  top: 56px;
+  background: rgba(0,0,0,0.2);
+  z-index: 49;
+  display: none;
+}
+
+.settings-backdrop.open { display: block; }
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.settings-header h3 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.settings-header .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.settings-header .btn-ghost:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+
+.settings-section {
+  margin-bottom: var(--space-lg);
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section h4 {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-sm) 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Put real breathing room between stacked fields inside one section.
+   Previously the fields ran straight into each other — an Admin password
+   input sat flush under the WiFi Mode help text. */
+.settings-field + .settings-field {
+  margin-top: 14px;
+}
+.settings-section > .term-access-card + .settings-field,
+.settings-section > .settings-field + .term-access-card {
+  margin-top: 14px;
+}
+
+.settings-field label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.settings-field select,
+.settings-field input[type="text"],
+.settings-field input[type="password"],
+.settings-field input[type="number"],
+.settings-field input[type="email"] {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: text;
+  transition: border-color 0.15s var(--ease-out),
+              box-shadow 0.15s var(--ease-out);
+}
+.settings-field select { cursor: pointer; }
+
+.settings-field select:hover,
+.settings-field input[type="text"]:hover,
+.settings-field input[type="password"]:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.settings-field select:focus,
+.settings-field input[type="text"]:focus,
+.settings-field input[type="password"]:focus,
+.settings-field input[type="number"]:focus,
+.settings-field input[type="email"]:focus {
+  outline: none;
+  border-color: var(--color-text-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+}
+
+.settings-field select:disabled,
+.settings-field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.settings-field input[type="password"],
+.settings-field input[type="text"]#setting-admin-ssid {
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  letter-spacing: 0.02em;
+}
+
+/* Admin-password row — supersedes the inline styles in index.html. */
+.settings-admin-pw-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.settings-admin-pw-row input { flex: 1; }
+
+.settings-field-help {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+.settings-toggle input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent, #2563eb);
+  cursor: pointer;
+}
+
+.settings-field-live {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+}
+
+.settings-field-live.mismatch {
+  color: #c2410c;
+}
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+}
+
+.settings-status {
+  flex: 1;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  min-height: 1em;
+}
+
+.settings-status.ok { color: var(--success, #16a34a); }
+.settings-status.error { color: #dc2626; }
+
+.settings-footer .btn-primary {
+  padding: 8px 18px;
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  border: 1px solid var(--color-text-primary);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.15s var(--ease-out);
+}
+
+.settings-footer .btn-primary:hover:not(:disabled) {
+  background: #2a2a2e;
+}
+
+.settings-footer .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Small ghost/icon buttons used inside settings (Show / Hide / Copy). */
+.settings-panel .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.7rem;
+  min-width: 54px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease-out),
+              border-color 0.15s var(--ease-out),
+              background 0.15s var(--ease-out);
+}
+.settings-panel .btn-icon:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-secondary);
+  background: var(--bg-raised, var(--color-bg-surface));
+}
+.settings-panel .btn-icon:active { transform: translateY(1px); }
+.settings-panel .btn-icon.btn-icon-success {
+  color: #16a34a;
+  border-color: #16a34a;
+  background: color-mix(in srgb, #16a34a 8%, transparent);
+}
+

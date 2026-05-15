@@ -1,0 +1,275 @@
+/* Meeting Scribe — Metrics dashboard.
+ *
+ * The slide-over split-view diagnostics panel mounted to the right
+ * of the meeting view when the operator opens the live-stats slide-
+ * over (header stats button or `/#metrics`). Owns the host
+ * container's `body.metrics-split` adjustments, the metric-card
+ * grid, the per-card title/value/breakdown layout, and the
+ * sparkline + bar-chart blocks inside each card.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ METRICS DASHBOARD (Split-View) ═══════════ */
+
+.metrics-dashboard {
+  background: var(--color-bg-raised);
+  border-left: 1px solid var(--color-border);
+  padding: var(--space-sm);
+  overflow-y: auto;
+}
+
+/* Default: overlay above transcript */
+body:not(.metrics-split) .metrics-dashboard {
+  border-left: none;
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-xl);
+}
+
+/* Split mode: side panel. Targets the real transcript container
+   (.transcript-columns) — an earlier version of these rules referenced a
+   non-existent .transcript-scroll class, which left the transcript spilling
+   under the pinned dashboard. */
+body.metrics-split .transcript-columns {
+  flex: 1;
+}
+
+body.metrics-split #meeting-mode {
+  display: flex !important;
+  flex-direction: column;
+}
+
+body.metrics-split .metrics-dashboard {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  z-index: 50;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-bg-raised);
+  box-shadow: -2px 0 8px rgba(0,0,0,0.08);
+}
+
+body.metrics-split .meeting-summary-panel,
+body.metrics-split .transcript-columns,
+body.metrics-split .control-bar,
+body.metrics-split .speaker-timeline,
+body.metrics-split .meeting-table-strip {
+  margin-right: 320px;
+}
+
+.metrics-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-xs) 0;
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.metrics-panel-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.metrics-panel-badge {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #22c55e20;
+  color: #16a34a;
+  letter-spacing: 0.05em;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+body:not(.metrics-split) .metrics-grid {
+  /* Inline mode: pack as many tiles as the row allows, but never wider
+     than ~140px so a narrow viewport (DevTools open) wraps to a second
+     row instead of forcing horizontal scroll on the whole page. */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.metric-card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 8px;
+  padding: var(--space-sm);
+  text-align: center;
+}
+
+.metric-card-wide {
+  grid-column: 1 / -1;
+}
+
+body:not(.metrics-split) .metric-card-wide {
+  grid-column: auto;
+}
+
+.backend-detail-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-xs, 0.35rem);
+  padding: 0 var(--space-xs, 0.35rem) var(--space-xs, 0.35rem);
+}
+.backend-detail-panel:empty { display: none; }
+
+.bd-card {
+  background: var(--bg-raised, #f2f1ee);
+  border: 1px solid var(--border-dim, #e0ddd6);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #4a4a52);
+}
+.bd-card .bd-name {
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1e);
+  margin-bottom: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.bd-card .bd-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.bd-card .bd-dot.active { background: #22c55e; }
+.bd-card .bd-dot.loading { background: #f59e0b; }
+.bd-card .bd-dot.error { background: #ef4444; }
+.bd-card .bd-dot.down { background: #888; }
+.bd-card .bd-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+.bd-card .bd-row .bd-label { color: var(--text-muted, #8a8a94); }
+.bd-card .bd-row .bd-val { font-family: var(--font-mono, monospace); text-align: right; }
+.bd-card .bd-error {
+  color: #dc2626;
+  font-size: 0.62rem;
+  word-break: break-all;
+  margin-top: 0.15rem;
+}
+
+.metric-card-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+}
+
+.metric-card-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.metric-card-sub {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+
+.metric-bar-container {
+  width: 100%;
+  height: 6px;
+  background: var(--color-bg-raised);
+  border-radius: 3px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+
+.metric-bar {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.metric-bar-warn { background: #f59e0b; }
+.metric-bar-danger { background: #ef4444; }
+
+/* W5: reliability tile color coding for ASR RTT, watchdog fires,
+   time-since-final, GPU free.  Same palette as the VRAM bar. */
+.metric-value-warn { color: #f59e0b; }
+.metric-value-crit { color: #ef4444; }
+
+/* W4 Fix #3: backends-warming banner sits between the setup hint and
+   the Start button. Only visible while ASR or translate are still
+   warming up after a server restart. Amber to match the existing
+   "loading" pill style. */
+.backends-warming-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 6px;
+  color: #f59e0b;
+  font-size: 0.85rem;
+}
+.backends-warming-icon {
+  display: inline-block;
+  font-size: 1rem;
+  animation: backends-warming-spin 1.6s linear infinite;
+}
+.backends-warming-text {
+  font-weight: 600;
+}
+.backends-warming-detail {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-left: 4px;
+}
+@keyframes backends-warming-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.metric-backends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+
+.backend-badge {
+  font-size: 0.55rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.backend-on {
+  background: #22c55e20;
+  color: #16a34a;
+}
+
+.backend-off {
+  background: #ef444420;
+  color: #ef4444;
+}
+

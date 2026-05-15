@@ -1,0 +1,10 @@
+{
+  "type": "background_finalize_progress",
+  "meeting_id": "5bfd6f9a-2e49-45a9-be70-b8ceed26d608",
+  "step": 5,
+  "total_steps": 7,
+  "label": "Running full-audio diarization...",
+  "eta_seconds": 60,
+  "terminal": false,
+  "error": false
+}

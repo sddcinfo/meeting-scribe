@@ -1,0 +1,456 @@
+/* Meeting Scribe — Terminal access + Terminal font slider.
+ *
+ * Two related Terminal-tab blocks bundled together:
+ *
+ *   1. Terminal access — the per-host authorisation card with
+ *      revoke buttons, role chips, granted-at timestamps, and the
+ *      Reset Terminal Auth row.
+ *
+ *   2. Terminal font slider — the row that controls the in-page
+ *      terminal panel's monospace font size, with the live preview
+ *      value chip and the slider thumb styling.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ── Terminal-access card ─────────────────────────────────────
+   A dark graphite card embedded in the cream settings panel.
+   The visual break is intentional: this section controls the
+   terminal feature, and the card mirrors the terminal panel's
+   own ink + amber language. */
+.term-access-card {
+  --color-card-ink: #0d1117;
+  --color-card-ink-raised: #161b22;
+  --color-card-hairline: #30363d;
+  --color-card-chrome-fg: #e6edf3;
+  --color-card-chrome-dim: #9aa4b2;
+  --color-card-amber: #ffb454;
+  --color-card-red: #ff7b72;
+  --color-card-green: #7ee787;
+
+  background: linear-gradient(135deg, #0e141c 0%, #0b0e14 100%);
+  border: 1px solid var(--color-card-hairline);
+  border-left: 2px solid var(--color-card-amber);
+  border-radius: 10px;
+  padding: 0.95rem 1rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  color: var(--color-card-chrome-fg);
+  box-shadow: 0 10px 24px -16px rgba(0, 0, 0, 0.45);
+  margin-bottom: 0.75rem;
+}
+
+.term-access-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "dot title"
+    ".   meta";
+  align-items: baseline;
+  column-gap: 0.55rem;
+  row-gap: 0.25rem;
+}
+.term-access-dot {
+  grid-area: dot;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-card-chrome-dim);
+  flex-shrink: 0;
+  align-self: center;
+  transform: translateY(-1px);
+}
+.term-access-title {
+  grid-area: title;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--color-card-chrome-fg);
+  line-height: 1.25;
+}
+.term-access-meta {
+  grid-area: meta;
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-card-chrome-dim);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.term-access-card[data-state='authorized'] .term-access-dot {
+  background: var(--color-card-amber);
+  box-shadow: 0 0 8px rgba(255, 180, 84, 0.55);
+  animation: term-access-breath 2.4s ease-in-out infinite;
+}
+.term-access-card[data-state='authorized'] .term-access-title {
+  color: var(--color-card-amber);
+}
+.term-access-card[data-state='unauthorized'] .term-access-dot {
+  background: var(--color-card-red);
+  box-shadow: 0 0 6px rgba(255, 123, 114, 0.4);
+}
+.term-access-card[data-state='denied'] .term-access-dot {
+  background: #6c7380;
+}
+.term-access-card[data-state='unknown'] .term-access-dot,
+.term-access-card[data-state='loading'] .term-access-dot {
+  background: var(--color-card-chrome-dim);
+  animation: term-access-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes term-access-breath {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+@keyframes term-access-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.88); }
+}
+
+.term-access-body {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-card-chrome-dim);
+  margin: 0;
+}
+
+.term-access-secret {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.term-access-secret > label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-card-chrome-dim);
+}
+.term-access-secret .settings-field-help {
+  color: var(--color-card-chrome-dim);
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+  opacity: 0.8;
+}
+.term-access-secret-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+.term-access-secret-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: var(--color-card-chrome-fg);
+  background: var(--color-card-ink);
+  border: 1px solid var(--color-card-hairline);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s var(--ease-out);
+  cursor: text;
+}
+.term-access-secret-input:focus { border-color: var(--color-card-amber); }
+
+/* Override the panel-wide .btn-icon styling when used inside the dark card. */
+.term-access-card .btn-icon {
+  border-color: var(--color-card-hairline);
+  background: var(--color-card-ink-raised);
+  color: var(--color-card-chrome-dim);
+  min-width: 58px;
+  height: auto;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+}
+.term-access-card .btn-icon:hover {
+  color: var(--color-card-chrome-fg);
+  border-color: var(--color-card-amber);
+  background: var(--color-card-ink-raised);
+}
+.term-access-card .btn-icon.btn-icon-success {
+  color: var(--color-card-green);
+  border-color: var(--color-card-green);
+  background: color-mix(in srgb, var(--color-card-green) 12%, transparent);
+}
+
+.term-access-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+}
+.btn-primary-inline {
+  padding: 0.55rem 0.9rem;
+  background: var(--color-card-amber);
+  color: #0b0e14;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--color-card-amber);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: filter 0.15s var(--ease-out), transform 0.06s ease-out;
+}
+.btn-primary-inline:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-primary-inline:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary-inline:disabled { opacity: 0.55; cursor: wait; }
+
+.btn-ghost-inline {
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  color: var(--color-card-chrome-dim);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--color-card-hairline);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+.btn-ghost-inline:hover:not(:disabled) {
+  color: var(--color-card-chrome-fg);
+  border-color: var(--color-card-chrome-dim);
+}
+.btn-ghost-inline:disabled { opacity: 0.55; cursor: wait; }
+
+/* ── Terminal font-size slider row ──────────────────────────── */
+.term-font-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.55rem;
+  align-items: center;
+}
+.term-font-row input[type="range"] {
+  width: 100%;
+  accent-color: #c45d20;
+  cursor: pointer;
+}
+.term-font-value {
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 0.76rem;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.3em;
+  text-align: right;
+  letter-spacing: 0.01em;
+}
+.term-font-row .btn-icon {
+  min-width: 44px;
+}
+
+.meeting-item {
+  display: block;
+  width: 100%;
+  padding: 0.7rem var(--space-md);
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--color-border-dim);
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.meeting-item:last-child { border-bottom: none; }
+
+.meeting-item:hover {
+  background: var(--color-bg-raised);
+}
+
+.meeting-item.active {
+  background: var(--color-bg-raised);
+  border-left-color: var(--color-text-accent);
+}
+
+.meeting-item-date {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.meeting-item-info {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Date and state row — inline, always first line */
+.meeting-item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.meeting-item-state {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.35rem;
+}
+
+.meeting-item-state.complete { background: color-mix(in srgb, var(--color-success) 12%, var(--color-bg-raised)); color: var(--color-success); }
+.meeting-item-state.recording { background: var(--color-recording-bg); color: var(--color-recording); }
+.meeting-item-state.interrupted { background: var(--color-bg-raised); color: var(--color-text-muted); }
+
+.meeting-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meeting-item-content {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  overflow: hidden;
+}
+
+.meeting-item-summary {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-height: 2.9em;
+  cursor: help;
+  padding-right: 0.25rem;
+}
+
+.meeting-item-summary:empty { display: none; }
+
+.meeting-delete {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0;
+  transition: all var(--duration-fast);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meeting-item:hover .meeting-delete { opacity: 0.6; }
+.meeting-delete:hover { opacity: 1 !important; color: var(--color-recording); background: var(--color-recording-bg); }
+
+/* Star toggle for marking demo / reference meetings.
+   Always visible (unlike the delete X) so favorites stand out at a glance,
+   but the unstarred state is muted to stay quiet for unmarked meetings. */
+.meeting-star {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0.45;
+  transition: all var(--duration-fast);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.meeting-item:hover .meeting-star { opacity: 0.75; }
+.meeting-star:hover { opacity: 1 !important; color: #d4a017; }
+.meeting-star.starred {
+  color: #d4a017;
+  opacity: 1;
+  text-shadow: 0 0 1px rgba(212, 160, 23, 0.4);
+}
+.meeting-star:focus-visible {
+  outline: 2px solid var(--color-text-secondary);
+  outline-offset: 1px;
+}
+
+/* Action buttons in meeting list */
+.meeting-view, .meeting-resume {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-raised);
+}
+.meeting-view:hover, .meeting-resume:hover {
+  border-color: var(--color-text-accent);
+  color: var(--color-text-primary);
+}
+
+/* Summary indicator button */
+.meeting-summary {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-raised);
+}
+.meeting-summary .check-mark {
+  color: #16a34a;
+  font-weight: bold;
+  margin-right: 0.15rem;
+}
+.meeting-summary:hover {
+  border-color: var(--color-text-accent);
+  color: var(--color-text-primary);
+}
+.meeting-no-summary {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+.meeting-no-summary:hover {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
+#meeting-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#view-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#view-mode .transcript-columns { grid-template-columns: 1fr; }
+

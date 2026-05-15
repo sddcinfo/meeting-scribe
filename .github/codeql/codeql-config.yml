@@ -1,0 +1,46 @@
+name: meeting-scribe CodeQL config
+
+# Default queries (security-and-quality) plus targeted exclusions for
+# alerts that conflict with documented design decisions. Each
+# exclusion below names the rule, the reason, and where the design
+# is captured so the suppression can be revisited cleanly.
+
+queries:
+  - uses: security-and-quality
+
+query-filters:
+  # py/weak-sensitive-data-hashing fires on
+  # ``setup_state.verify_admin_password`` + ``verify_guest_pin``
+  # because they HMAC-SHA256 the candidate. The v1.0 demo appliance
+  # INTENTIONALLY exposes both credentials to anyone in WiFi range:
+  #
+  #   * admin password = ``DellMeetingAdmin<NNNN>`` where NNNN is
+  #     the SSID's 4-digit suffix (publicly visible to AP joiners).
+  #   * guest PIN = the same 4-digit suffix.
+  #
+  # The HMAC is keyed by the master ``admin-secret`` and protects
+  # against a stolen-disk-image scenario where someone reads
+  # ``admin-password-hmac`` but doesn't have the master key. A
+  # password-hashing KDF (Argon2/scrypt/bcrypt) would add zero
+  # security here — the keyspace is 10000 candidates, brute-forceable
+  # regardless of hash speed, and the credentials are already public
+  # to anyone who can read the SSID. See the user-direction header in
+  # the sunny-seeking-pebble plan + the docstrings on the two
+  # functions for the full rationale.
+  - exclude:
+      id: py/weak-sensitive-data-hashing
+
+paths-ignore:
+  # Test + benchmark files exercise the production server over httpx
+  # with ``verify=False`` against a self-signed dev cert. CodeQL
+  # flags every one of those calls as
+  # ``py/request-without-cert-validation`` — over a hundred alerts
+  # that all reduce to "this is a test against the test server."
+  # Suppressing at the path level rather than disabling the rule
+  # keeps the check enabled on production code paths.
+  - tests/**
+  - benchmarks/**
+  # Bundled vendor JS (xterm grapheme provider, addons) is minified
+  # third-party code that lights up the analyzer; it ships as-is.
+  - static/js/vendor/**
+  - overlay/dist/**

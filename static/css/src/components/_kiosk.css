@@ -1,0 +1,252 @@
+/* Meeting Scribe - HDMI kiosk + persistent meeting PIN styles.
+ *
+ * Surfaces:
+ *  .popout-meeting-pin     persistent chip in the popout header
+ *  .header-pin-chip        admin SPA header pin variant
+ *  .kiosk-idle-splash      full-screen Dell Pro Max themed splash
+ *                          shown only when body[data-role="kiosk"]
+ *                          AND no meeting is recording.
+ *
+ * All colors come from ``--color-kiosk-*`` tokens in tokens.css.
+ * All fonts come from ``--font-ui`` (system stack, no external
+ * loads - the appliance runs from a captive AP with no internet).
+ * Body-state cascades live in ``_state.css`` per CLAUDE.md.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+@layer components {
+  /* Persistent meeting-PIN chip in the popout header.
+   * Injected into #popout-qr by _legacy.js:refreshPopoutPin. */
+  .popout-meeting-pin {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-lg;
+    background: var(--color-bg-night-card, rgba(255, 255, 255, 0.06));
+    color: var(--color-text-dark, #f0efe8);
+    font-feature-settings: "tnum" 1;
+  }
+
+  .popout-meeting-pin-label {
+    @apply text-xs uppercase tracking-wide opacity-70;
+  }
+
+  .popout-meeting-pin-value {
+    @apply font-mono font-semibold text-lg;
+    letter-spacing: 0.08em;
+  }
+
+  /* Header chip variant for the admin SPA's main header (#header-qr
+   * target, populated by features/wifi-qr.js). */
+  .header-pin-chip {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-md;
+    background: var(--color-bg-night-card, rgba(255, 255, 255, 0.06));
+    color: var(--color-text-dark, #f0efe8);
+  }
+
+  .header-pin-label {
+    @apply text-[0.65rem] uppercase tracking-wide opacity-70;
+  }
+
+  .header-pin-value {
+    @apply font-mono text-base font-semibold;
+    letter-spacing: 0.08em;
+  }
+
+  /* Kiosk idle splash: full-screen Dell Pro Max + AI Factory themed
+   * panel with the appliance PIN in display-size numerals. */
+  .kiosk-idle-splash {
+    @apply fixed inset-0 z-50 flex flex-col items-center justify-between overflow-hidden;
+    display: none;
+    padding: clamp(40px, 6vh, 80px) clamp(40px, 5vw, 96px);
+    /* Layered lighting: bottom-center Dell-blue glow, left+right
+     * cyan accents, near-black base. */
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 110%,
+        color-mix(in srgb, var(--color-kiosk-dell-blue) 45%, transparent) 0%,
+        transparent 70%),
+      radial-gradient(circle at 12% 78%,
+        color-mix(in srgb, var(--color-kiosk-cyan) 22%, transparent) 0%,
+        transparent 45%),
+      radial-gradient(circle at 88% 22%,
+        color-mix(in srgb, var(--color-kiosk-dell-blue-dim) 22%, transparent) 0%,
+        transparent 55%),
+      linear-gradient(180deg,
+        var(--color-kiosk-ink) 0%,
+        var(--color-kiosk-ink-mid) 50%,
+        var(--color-kiosk-ink-rise) 100%);
+    color: var(--color-text-dark, #f0efe8);
+    font-family: var(--font-ui);
+    pointer-events: none;
+    transition: opacity 600ms ease-out;
+  }
+
+  /* Filmic vignette + faint horizontal "horizon" accent line. */
+  .kiosk-idle-splash-bg {
+    @apply absolute inset-0 pointer-events-none;
+    background: linear-gradient(180deg,
+      transparent 64%,
+      color-mix(in srgb, var(--color-kiosk-cyan) 18%, transparent) 65%,
+      transparent 65.6%);
+    box-shadow: inset 0 0 300px rgba(0, 0, 0, 0.65);
+  }
+
+  /* Honeycomb undertone - inline-SVG hexagonal lattice at very low
+   * opacity. Evokes the Dell Pro Max shroud without rendering it
+   * literally. Masked so the pattern is hidden in the central
+   * vertical column where the logo, PIN, and tagline sit; only
+   * visible as a soft texture near the left/right edges. Inline
+   * data URI: no extra HTTP, no internet. */
+  /* Honeycomb undertone - inline-SVG hexagonal lattice masked to
+   * the left/right edges so the center column stays clean. */
+  .kiosk-idle-splash-grid {
+    @apply absolute inset-0 pointer-events-none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 96' width='56' height='96'><g fill='none' stroke='%239FD7FF' stroke-width='1' opacity='0.18'><polygon points='28,4 52,18 52,46 28,60 4,46 4,18'/><polygon points='28,52 52,66 52,94 28,108 4,94 4,66'/></g></svg>");
+    background-size: 56px 96px;
+    background-repeat: repeat;
+    background-position: center top;
+    opacity: 0.22;
+    mask-image:
+      radial-gradient(ellipse 40% 120% at 50% 50%,
+        transparent 0%, transparent 55%, black 95%, black 100%);
+    -webkit-mask-image:
+      radial-gradient(ellipse 40% 120% at 50% 50%,
+        transparent 0%, transparent 55%, black 95%, black 100%);
+  }
+
+  .kiosk-idle-splash-header {
+    @apply relative flex flex-col items-center;
+    gap: clamp(8px, 1.2vh, 18px);
+    /* Bump z so neither the bg gradient nor the honeycomb grid can
+     * ever paint a visible artifact over the logo. */
+    z-index: 2;
+    /* Override the global ``header { background: --color-bg-surface }``
+     * rule in _header.css - that's the WHITE rectangle that's been
+     * painting behind the Dell wordmark this whole time. Also kill
+     * the border-bottom, box-shadow, and forced height the same
+     * rule sets so the splash flex layout owns the spacing. */
+    background: transparent !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    height: auto !important;
+    padding: 0 !important;
+  }
+
+  /* CSS-rendered Dell wordmark - plain spans typed in the system
+   * font. Debug outlines (red/green/blue) currently enabled to
+   * isolate where the persistent "white rectangle" overlay comes
+   * from on the live HDMI - red is the logo container, green is
+   * each letter, blue is the eyebrow. */
+  /* Dell wordmark: just a heading. No fancy SVG, no inline-flex
+   * container, no per-letter spans - none of which behaved
+   * reliably on chromium-snap-wayland (a stubborn white rectangle
+   * kept appearing behind / around the letters and I could not
+   * track down which element was the source). The plain text
+   * approach lets the page's typography do all the work. */
+  .kiosk-idle-splash-brand {
+    font-family: var(--font-ui);
+    font-size: clamp(64px, 9vh, 132px);
+    font-weight: 800;
+    line-height: 1;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background: transparent;
+  }
+
+  .kiosk-idle-splash-eyebrow {
+    @apply uppercase font-semibold;
+    font-family: var(--font-ui);
+    font-size: clamp(0.85rem, 0.95vw, 1.1rem);
+    letter-spacing: 0.55em;
+    padding-left: 0.55em;
+    color: color-mix(in srgb, var(--color-kiosk-cyan) 85%, transparent);
+  }
+
+  .kiosk-idle-splash-pin-block {
+    @apply relative flex flex-col items-center;
+    z-index: 1;
+  }
+
+  .kiosk-idle-splash-pin-label {
+    @apply uppercase font-medium;
+    font-family: var(--font-ui);
+    font-size: clamp(0.95rem, 1.15vw, 1.25rem);
+    letter-spacing: 0.5em;
+    padding-left: 0.5em;
+    margin-bottom: clamp(8px, 1vh, 18px);
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  .kiosk-idle-splash-pin-value {
+    /* Massive PIN with white→ice→cyan gradient + animated halo. */
+    position: relative;
+    font-family: var(--font-ui);
+    font-size: clamp(11rem, 22vw, 22rem);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    background: linear-gradient(180deg,
+      #ffffff 0%,
+      var(--color-kiosk-ice) 35%,
+      var(--color-kiosk-cyan-pale) 70%,
+      var(--color-kiosk-cyan) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    animation: kiosk-pin-breathe 4.5s ease-in-out infinite;
+  }
+
+  .kiosk-idle-splash-pin-value::before {
+    content: "";
+    position: absolute;
+    inset: -20% -10%;
+    background: radial-gradient(ellipse at 50% 60%,
+      color-mix(in srgb, var(--color-kiosk-cyan) 45%, transparent) 0%,
+      transparent 65%);
+    filter: blur(40px);
+    z-index: -1;
+    animation: kiosk-pin-halo 4.5s ease-in-out infinite;
+  }
+
+  @keyframes kiosk-pin-breathe {
+    0%, 100% {
+      filter: drop-shadow(0 0 40px
+        color-mix(in srgb, var(--color-kiosk-cyan) 35%, transparent));
+    }
+    50% {
+      filter: drop-shadow(0 0 70px
+        color-mix(in srgb, var(--color-kiosk-cyan) 65%, transparent));
+    }
+  }
+
+  @keyframes kiosk-pin-halo {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 0.85; transform: scale(1.06); }
+  }
+
+  .kiosk-idle-splash-tagline {
+    @apply relative uppercase font-medium;
+    z-index: 1;
+    font-family: var(--font-ui);
+    font-size: clamp(0.8rem, 0.95vw, 1.05rem);
+    letter-spacing: 0.32em;
+    padding-left: 0.32em;
+    color: rgba(255, 255, 255, 0.42);
+  }
+
+  /* Thin accent line above the tagline - centered, fades at both ends. */
+  .kiosk-idle-splash-tagline::before {
+    content: "";
+    display: block;
+    width: clamp(80px, 12vw, 220px);
+    height: 1px;
+    margin: 0 auto clamp(16px, 1.8vh, 28px);
+    background: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-kiosk-cyan) 55%, transparent) 50%,
+      transparent 100%);
+  }
+}

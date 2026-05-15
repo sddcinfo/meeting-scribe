@@ -1,0 +1,261 @@
+/* Meeting Scribe — Landing page.
+ *
+ * The first screen the operator sees: a hero block + a Start /
+ * Quick start CTA row, the numbered "Set up the room / Start the
+ * meeting / Speak in any language / Review when finished" steps,
+ * and the "Capabilities" feature grid below it.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.landing-mode {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.landing-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 0 80px;
+}
+
+.landing-hero {
+  padding: 56px 48px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.landing-hero-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-accent);
+  background: rgba(139, 105, 20, 0.07);
+  padding: 4px 14px;
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+
+.landing-hero h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  margin-bottom: 14px;
+}
+
+.landing-hero > p {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  max-width: 720px;
+  margin: 0 auto 28px;
+}
+
+.landing-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* 1px transparent border so the dimensions exactly match
+     .landing-cta-quick's 1px outline, otherwise the two buttons sit
+     2 px out of vertical alignment in the row and the eye reads it
+     as "off-centre". */
+  padding: 10px 24px;
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  border: 1px solid var(--color-text-primary);
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  min-height: 42px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.landing-cta:hover {
+  background: #2a2a2e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Row that holds the primary "Start a Meeting" CTA and the secondary
+   "Quick start English" shortcut side by side. Centers the pair and
+   lets them wrap cleanly onto two lines on narrow viewports so the
+   quick-start still gets tapped-sized spacing on mobile. */
+.landing-cta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Secondary "Quick start English" — a ghost/outline variant of the
+   primary CTA. Geometry (padding, font-size, weight, line-height,
+   min-height, border-width) MUST match .landing-cta exactly so the
+   two buttons sit in a perfectly balanced row.  Only the fill
+   colours + border colour distinguish primary vs secondary; the
+   weight differential comes from contrast, not size. */
+.landing-cta-quick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  min-height: 42px;
+  cursor: pointer;
+  transition: all 0.18s var(--ease-out);
+}
+
+.landing-cta-quick:hover {
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.landing-cta-quick svg {
+  color: var(--color-text-accent);
+}
+
+/* Steps */
+
+.landing-steps {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.landing-step {
+  display: flex;
+  gap: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--color-border-dim);
+}
+
+.landing-step-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-accent);
+  background: rgba(139, 105, 20, 0.06);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.landing-step h3 {
+  font-size: 0.88rem;
+  font-weight: 620;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.landing-step p {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+}
+
+/* Features grid */
+
+.landing-features {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px 48px;
+}
+
+.landing-features > h3 {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  font-weight: 650;
+  margin-bottom: 16px;
+}
+
+.landing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.landing-feature {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-radius: 12px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+
+.landing-feature:hover {
+  border-color: var(--color-border);
+}
+
+.landing-feature-icon {
+  color: var(--color-text-accent);
+  margin-bottom: 10px;
+}
+
+.landing-feature strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 3px;
+}
+
+.landing-feature p {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.landing-footer-note {
+  text-align: center;
+  padding: 20px 48px 0;
+  border-top: 1px solid var(--color-border-dim);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-tech-link {
+  font-size: 0.78rem;
+  color: var(--color-text-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.landing-tech-link:hover {
+  text-decoration: underline;
+}

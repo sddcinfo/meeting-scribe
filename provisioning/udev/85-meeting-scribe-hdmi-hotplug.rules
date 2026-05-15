@@ -1,0 +1,16 @@
+# DRM connector hot-plug -> kick the meeting-scribe kiosk reactor.
+#
+# Fires on every connector change on card0 (the NVIDIA Blackwell
+# display engine on the GB10). The reactor (oneshot systemd service)
+# reads /sys/class/drm/card0-HDMI-A-1/status itself and decides
+# whether to start or stop meeting-scribe-kiosk.service.
+#
+# Routed through systemd (TAG+="systemd" + SYSTEMD_WANTS) rather than
+# RUN+= so a long-running cage launch doesn't block the udev event
+# queue. udev's own contract is "events must complete quickly" so
+# this indirection is the canonical pattern.
+#
+# Provisioned by `meeting-scribe kiosk install` into
+# /etc/udev/rules.d/.
+SUBSYSTEM=="drm", ACTION=="change", ENV{HOTPLUG}=="1", \
+  TAG+="systemd", ENV{SYSTEMD_WANTS}+="meeting-scribe-kiosk-hotplug.service"

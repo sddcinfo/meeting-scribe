@@ -1,0 +1,15 @@
+{
+  "config_name": "C0",
+  "meeting_id": "3db4286e-7164-4550-8101-9e5db69cfecc",
+  "elapsed_ms": 180013.36189103313,
+  "summary": null,
+  "error": "LLM call failed: ",
+  "prompt_chars": 62371,
+  "n_finals": 782,
+  "response_chars": 0,
+  "num_topics": 0,
+  "num_action_items": 0,
+  "num_decisions": 0,
+  "topic_names": [],
+  "hallucinated_speakers": []
+}

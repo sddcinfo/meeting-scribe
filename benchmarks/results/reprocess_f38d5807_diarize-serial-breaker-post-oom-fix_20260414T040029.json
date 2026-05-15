@@ -1,0 +1,232 @@
+{
+  "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+  "label": "diarize-serial-breaker-post-oom-fix",
+  "timestamp": "2026-04-14T04:00:29",
+  "state": "complete",
+  "audio_ms": 5330145,
+  "bench_wall_ms": 455454,
+  "phase_timings_ms": {
+    "load_audio": 98,
+    "diarize": 120865,
+    "asr": 144197,
+    "translate": 174503,
+    "preserve_corrections": 113,
+    "speaker_data": 19,
+    "summary": 15589,
+    "TOTAL": 455392
+  },
+  "quality": {
+    "meeting_id": "f38d5807-bbdf-4c5c-96fb-cb8267e55ed0",
+    "audio_ms": 5330145,
+    "all_passed": false,
+    "checks": [
+      {
+        "name": "alignment",
+        "passed": true,
+        "detail": "duration_drift=+0ms tail_gap=2675460ms last_end=2654685ms audio=5330145ms",
+        "metrics": {
+          "timeline_duration_ms": 5330145,
+          "audio_ms": 5330145,
+          "duration_drift_ms": 0,
+          "last_segment_end_ms": 2654685,
+          "tail_gap_ms": 2675460,
+          "segment_count": 1136
+        }
+      },
+      {
+        "name": "seq_density",
+        "passed": true,
+        "detail": "seq=[1, 2, 3, 4, 5, 6] expected=[1, 2, 3, 4, 5, 6]",
+        "metrics": {
+          "seq_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "speaker_count": 6
+        }
+      },
+      {
+        "name": "no_orphan_lane",
+        "passed": true,
+        "detail": "lane_keys=['1', '2', '3', '4', '5', '6']",
+        "metrics": {
+          "lane_keys": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ]
+        }
+      },
+      {
+        "name": "journal_detected_agreement",
+        "passed": true,
+        "detail": "journal_clusters={1: 364, 2: 318, 3: 320, 4: 46, 5: 68, 6: 20} unknown=[]",
+        "metrics": {
+          "journal_cluster_dist": {
+            "1": 364,
+            "2": 318,
+            "3": 320,
+            "4": 46,
+            "5": 68,
+            "6": 20
+          },
+          "unknown_cluster_ids": [],
+          "valid_seq_indices": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      },
+      {
+        "name": "no_empty_speakers",
+        "passed": true,
+        "detail": "empty_events=0/1136",
+        "metrics": {
+          "empty_count": 0,
+          "total_finals": 1136
+        }
+      },
+      {
+        "name": "coverage",
+        "passed": false,
+        "detail": "empty_buckets=90/178",
+        "metrics": {
+          "total_buckets": 178,
+          "empty_bucket_count": 90,
+          "empty_bucket_indices": [
+            0,
+            89,
+            90,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120,
+            121,
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143,
+            144,
+            145,
+            146,
+            147,
+            148,
+            149,
+            150,
+            151,
+            152,
+            153,
+            154,
+            155,
+            156,
+            157,
+            158,
+            159,
+            160,
+            161,
+            162,
+            163,
+            164,
+            165,
+            166,
+            167,
+            168,
+            169,
+            170,
+            171,
+            172,
+            173,
+            174,
+            175,
+            176,
+            177
+          ]
+        }
+      },
+      {
+        "name": "name_preservation",
+        "passed": false,
+        "detail": "name_coverage=83% (5/6) per_event_accuracy=14% (32/230)",
+        "metrics": {
+          "original_unique_names": [
+            "Brad",
+            "Danny",
+            "Joel",
+            "Mark",
+            "Nakul",
+            "Nikul"
+          ],
+          "preserved_names": [
+            "Brad",
+            "Danny",
+            "Joel",
+            "Mark",
+            "Nakul"
+          ],
+          "missing_names": [
+            "Nikul"
+          ],
+          "name_coverage_pct": 83.3,
+          "per_event_accurate": 32,
+          "per_event_checked": 230,
+          "per_event_accuracy_pct": 13.9
+        }
+      }
+    ]
+  }
+}

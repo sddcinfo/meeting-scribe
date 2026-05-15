@@ -1,0 +1,14 @@
+/* Meeting Scribe — voice-clone demo entry (compiled to dist/voice-clone.css).
+ *
+ * Linked by static/demo/voice-clone.html — interactive demo that
+ * records mic input, transcribes, translates, and plays back in a
+ * cloned voice. Independent of any meeting. Uses the dark-night
+ * tokens from the unified @theme.
+ */
+
+@import "./lib/base.css";
+@import "./components/_buttons.css";
+@import "./components/_form-controls.css";
+@import "./components/_voice-clone.css";
+
+@source "../../demo/voice-clone.html";

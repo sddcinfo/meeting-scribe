@@ -1,0 +1,394 @@
+/* Meeting Scribe — terminal panel.
+ *
+ * The xterm.js-backed terminal that lives inside the popout layout
+ * and the admin SPA's "Translate + terminal" preset. Intentionally
+ * dark inside the editorial layout — graphite slab with amber accent,
+ * razor edges, tabular-nums everywhere, harmonious cursor+dot
+ * pulses. Driven by `static/js/terminal-panel.js`.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.terminal-panel {
+  --color-term-ink:        #0b0e14;
+  --color-term-ink-raised: #10141c;
+  --color-term-hairline:   #1a212b;
+  --color-term-chrome-fg:  #c1c4cc;
+  --color-term-chrome-dim: #6f7680;
+  --color-term-amber:      #ffb454;
+  --color-term-amber-soft: #d99a3a;
+  --color-term-cyan:       #73d0ff;
+  --color-term-green:      #b8cc52;
+  --color-term-red:        #f07178;
+  /* Despite the `--color-` prefix these are font-family stacks,
+     not colours — the prefix keeps every var() reference under
+     one consistent namespace. */
+  --color-term-chrome-font: 'DM Sans', -apple-system, sans-serif;
+  --color-term-mono-font: 'JetBrains Mono', ui-monospace, monospace;
+
+  display: flex;
+  flex-direction: column;
+  background: var(--color-term-ink);
+  color: var(--color-term-chrome-fg);
+  border-top: 1px solid var(--color-term-hairline);
+  box-shadow: inset 0 1px 0 rgba(255, 180, 84, 0.04),
+              0 -12px 24px -12px rgba(0, 0, 0, 0.25);
+  font-family: var(--color-term-chrome-font);
+  -webkit-font-smoothing: antialiased;
+}
+.terminal-panel[hidden] { display: none !important; }
+
+/* ── Drag handle ─────────────────────────────────────────────── */
+.term-resize-handle {
+  height: 8px;
+  background: linear-gradient(to bottom, transparent, var(--color-term-ink));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  user-select: none;
+  position: relative;
+}
+.term-resize-handle::before {
+  content: '';
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 1px;
+  background: var(--color-term-hairline);
+}
+.term-resize-grip {
+  width: 36px;
+  height: 3px;
+  background: var(--color-term-chrome-dim);
+  opacity: 0.3;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+.term-resize-handle:hover .term-resize-grip {
+  opacity: 0.8;
+  background: var(--color-term-amber);
+}
+
+/* ── Status strip (22 px tall) ───────────────────────────────── */
+.term-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.8rem;
+  min-height: 22px;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--color-term-chrome-dim);
+  background: var(--color-term-ink-raised);
+  border-bottom: 1px solid var(--color-term-hairline);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.term-status-host {
+  font-family: var(--color-term-mono-font);
+  color: var(--color-term-chrome-fg);
+  font-size: 0.7rem;
+  letter-spacing: 0;
+}
+.term-status-host::before {
+  content: '';
+  display: inline-block;
+  width: 5px; height: 5px;
+  background: var(--color-term-amber);
+  margin-right: 0.4rem;
+  transform: translateY(-1px);
+}
+.term-status .term-sep { opacity: 0.5; color: var(--color-term-chrome-dim); }
+.term-status .term-spacer { flex: 1; }
+
+.term-session-pick {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--color-term-cyan);
+  font: inherit;
+  font-family: var(--color-term-mono-font);
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 2px;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+.term-session-pick::after {
+  content: ' ▾';
+  font-size: 0.7em;
+  opacity: 0.6;
+}
+.term-session-pick:hover {
+  background: rgba(115, 208, 255, 0.08);
+  border-color: rgba(115, 208, 255, 0.35);
+}
+
+.term-dims, .term-bytes {
+  font-family: var(--color-term-mono-font);
+  font-size: 0.7rem;
+  color: var(--color-term-chrome-fg);
+  opacity: 0.8;
+}
+.term-bytes { letter-spacing: 0; }
+
+.term-tool {
+  background: none;
+  border: none;
+  color: var(--color-term-chrome-dim);
+  font-family: var(--color-term-mono-font);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0 6px;
+  cursor: pointer;
+  transition: color var(--duration-fast);
+}
+.term-tool:hover { color: var(--color-term-amber); }
+.term-tool.term-zoom-in,
+.term-tool.term-zoom-out {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0 5px;
+}
+
+.term-close {
+  background: none; border: none;
+  color: var(--color-term-chrome-dim);
+  font-family: var(--color-term-mono-font);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 6px 0 4px;
+  margin-left: 0.2rem;
+  cursor: pointer;
+  transition: color var(--duration-fast);
+}
+.term-close:hover { color: var(--color-term-red); }
+
+.term-dotwrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.3rem 0 0.4rem;
+}
+.term-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--color-term-chrome-dim);
+  transition: background var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+.term-dot-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-term-chrome-dim);
+}
+
+.term-status[data-state='live'] .term-dot {
+  background: var(--color-term-amber);
+  box-shadow: 0 0 8px rgba(255, 180, 84, 0.55);
+  animation: term-breath 2s ease-in-out infinite;
+}
+.term-status[data-state='live'] .term-dot-label { color: var(--color-term-amber); }
+.term-status[data-state='paused'] .term-dot {
+  background: #e8a02f;
+  box-shadow: 0 0 6px rgba(232, 160, 47, 0.45);
+}
+.term-status[data-state='paused'] .term-dot-label { color: #e8a02f; }
+.term-status[data-state='connecting'] .term-dot,
+.term-status[data-state='reconnecting'] .term-dot {
+  background: var(--color-term-cyan);
+  animation: term-pulse 0.8s ease-in-out infinite;
+}
+.term-status[data-state='connecting'] .term-dot-label,
+.term-status[data-state='reconnecting'] .term-dot-label { color: var(--color-term-cyan); }
+.term-status[data-state='offline'] .term-dot { background: var(--color-term-red); }
+.term-status[data-state='offline'] .term-dot-label { color: var(--color-term-red); }
+
+@keyframes term-breath {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+@keyframes term-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
+}
+
+/* ── Terminal body ─────────────────────────────────────────────
+ * Padding lives on .term-body rather than .term-mount because xterm's
+ * FitAddon reads getComputedStyle(parentElement).height — putting the
+ * breathing room on .term-body matches xterm's expectation exactly. */
+.term-body {
+  position: relative;
+  height: 320px;
+  min-height: 140px;
+  max-height: 75vh;
+  overflow: hidden;
+  background: var(--color-term-ink);
+  padding: 8px 12px;
+}
+.term-mount { position: absolute; inset: 0; padding: 0; }
+
+/* xterm.js fine-tuning */
+.term-mount .xterm {
+  padding: 0 !important;
+  height: 100%;
+}
+.term-mount .xterm-viewport {
+  background: transparent !important;
+}
+.term-mount .xterm-viewport::-webkit-scrollbar {
+  width: 10px; height: 10px;
+}
+.term-mount .xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.term-mount .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--color-term-hairline);
+  border: 2px solid var(--color-term-ink);
+  border-radius: 0;
+}
+.term-mount .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--color-term-chrome-dim);
+}
+.term-mount .xterm-scroll-area { will-change: transform; }
+
+/* ── Search bar ───────────────────────────────────────────── */
+.term-search {
+  position: absolute;
+  top: 8px; right: 12px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-term-ink-raised);
+  border: 1px solid var(--color-term-hairline);
+  box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.5);
+  padding: 4px 6px;
+  font-size: 0.75rem;
+}
+.term-search[data-open='1'] { display: flex; }
+.term-search-input {
+  background: transparent;
+  border: none;
+  color: var(--color-term-chrome-fg);
+  font-family: var(--color-term-mono-font);
+  font-size: 0.78rem;
+  outline: none;
+  min-width: 160px;
+  padding: 2px 4px;
+}
+.term-search .term-tool { font-size: 0.8rem; }
+
+/* ── Auth overlay ────────────────────────────────────────── */
+.term-auth-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(11,14,20,0.96), rgba(16,20,28,0.96));
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.term-auth-overlay[hidden] { display: none; }
+.term-auth-card {
+  max-width: 420px;
+  padding: 1.4rem 1.6rem;
+  background: var(--color-term-ink-raised);
+  border: 1px solid var(--color-term-hairline);
+  border-left: 2px solid var(--color-term-amber);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.term-auth-eyebrow {
+  font-family: var(--color-term-mono-font);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-term-amber);
+}
+.term-auth-head {
+  font-size: 0.95rem;
+  color: var(--color-term-chrome-fg);
+  line-height: 1.35;
+}
+.term-auth-body {
+  font-size: 0.82rem;
+  color: var(--color-term-chrome-dim);
+  line-height: 1.5;
+}
+.term-auth-cta {
+  margin-top: 0.4rem;
+  align-self: flex-start;
+  padding: 0.45rem 0.75rem;
+  background: var(--color-term-amber);
+  color: var(--color-term-ink);
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: filter var(--duration-fast);
+}
+.term-auth-cta:hover { filter: brightness(1.07); }
+
+/* ── Offline overlay (post-disconnect reconnect prompt) ── */
+.term-offline-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(11,14,20,0.96), rgba(16,20,28,0.96));
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.term-offline-overlay[hidden] { display: none; }
+.term-offline-card {
+  max-width: 420px;
+  padding: 1.4rem 1.6rem;
+  background: var(--color-term-ink-raised);
+  border: 1px solid var(--color-term-hairline);
+  border-left: 2px solid var(--color-term-red);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.term-offline-eyebrow {
+  font-family: var(--color-term-mono-font);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-term-red);
+}
+.term-offline-head { font-size: 0.95rem; color: var(--color-term-chrome-fg); line-height: 1.35; }
+.term-offline-body { font-size: 0.82rem; color: var(--color-term-chrome-dim); line-height: 1.5; }
+.term-offline-cta {
+  margin-top: 0.4rem;
+  align-self: flex-start;
+  padding: 0.45rem 0.9rem;
+  background: var(--color-term-amber);
+  color: var(--color-term-ink);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+  border: none;
+  cursor: pointer;
+  transition: filter var(--duration-fast);
+}
+.term-offline-cta:hover { filter: brightness(1.07); }
+
+/* ── Popout header terminal button + narrow-viewport tweaks ── */
+.popout-btn.popout-btn-term[data-active='1'] {
+  color: var(--term-amber, #c45d20);
+  border-color: var(--term-amber, #c45d20);
+}
+
+@media (max-width: 768px) {
+  .term-status { font-size: 0.68rem; padding: 0.15rem 0.5rem; gap: 0.3rem; }
+  .term-status-host, .term-dims { display: none; }
+  .term-body { height: 260px; }
+}
+@media (max-height: 420px) {
+  .term-body { height: 150px; min-height: 120px; }
+}

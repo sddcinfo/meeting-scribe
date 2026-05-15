@@ -1,0 +1,45 @@
+# Qwen3-ASR — Speech Recognition via vLLM
+# Primary ASR backend. Superior Japanese quality.
+# 52 languages, 97.9% language ID accuracy.
+
+model_key: asr-vllm
+model_id: Qwen/Qwen3-ASR-1.7B
+short_name: Qwen3-ASR-1.7B
+description: "ASR with superior Japanese quality (52 languages)"
+# weights: ~5 GB    # picked up by scripts/validate_how_it_works.py
+
+mode: solo
+tensor_parallel: 1
+port: 8003
+max_model_len: 4096
+gpu_memory_utilization: 0.10  # 12.4 GB cap on 124 GB GPU.
+# The recipe original 0.04 was aspirational and never feasible —
+# Qwen3-ASR encoder cache budget alone (~7 GB) exceeds 0.04 4.96 GB
+# cap, so 0.04 always crashed engine init with "No available memory
+# for cache blocks". Production has run on 0.10 since release.
+# Earlier 0.10-causes-OOM warning was specific to a two-35B layout
+# (translate + autosre = 94 GB consumed); current design is
+# one-shared-35B (~73 GB), leaving ~30 GB free with ASR at 0.10.
+# Validated against vllm v0.20.0 pinned in containers/vllm-asr/Dockerfile.
+max_num_seqs: 4
+
+kv_cache_dtype: null
+quantization: null
+
+extra_args:
+  - "--enforce-eager"
+  # fastsafetensors is ~19x faster than plain safetensors on GB10's
+  # NVMe — the 1.7B ASR model goes from ~60-90s cold load down to
+  # ~5-10s. Critical for the new `meeting-scribe gb10 restart-container`
+  # flow (CUDA recovery should never take more than ~10s).
+  - "--load-format=fastsafetensors"
+
+capabilities:
+  tool_calling: false
+  reasoning: false
+  multimodal: true  # Audio input
+  max_context: 4096
+  active_params: "1.7B"
+  total_params: "1.7B"
+
+best_for: "Real-time multilingual ASR, especially Japanese"

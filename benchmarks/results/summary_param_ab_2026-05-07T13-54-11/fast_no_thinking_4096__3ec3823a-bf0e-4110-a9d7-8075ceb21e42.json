@@ -1,0 +1,157 @@
+{
+  "config_name": "fast_no_thinking_4096",
+  "meeting_id": "3ec3823a-bf0e-4110-a9d7-8075ceb21e42",
+  "elapsed_ms": 44796.26483109314,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "This session was a technical deep-dive and demonstration of a local AI inference stack running on consumer-grade hardware (Apple M-series with unified memory), specifically designed to support the new Forward Deployed Engineering initiative. The speaker detailed the architecture of a 'meeting pad' system that prioritizes real-time transcription and translation over batch processing, utilizing a Mixture of Experts (MoE) model (Qwen 3.5) to fit within VRAM constraints. Key outcomes include the validation of this local-first approach for customer-facing technical engagements and the identification of specific model benchmarks (Qwen vs. Whisper) that inform our technical positioning.",
+    "key_insights": [
+      {
+        "title": "Local-First AI Architecture for Forward Deployed Engineering",
+        "description": "The speaker demonstrated a sophisticated local inference pipeline running on a GB10 (likely referring to an M-series Mac with 128GB unified memory) that hosts a 35-billion parameter Qwen 3.5 model. This setup is critical for the 'Forward Deployed Engineering' role, as it allows engineers to operate in air-gapped or privacy-sensitive customer environments without relying on cloud APIs. The system uses a 'harness' (Claude Code interface) to manage multiple models: Qwen 1.7B for ASR, a TTS model for speech synthesis, and the large MoE model for translation and coding tasks.\n\nThe architecture prioritizes real-time latency for transcription over batch processing for coding. By using a Mixture of Experts (MoE) approach, only 3 billion parameters are active at any given time, allowing the massive 35B model to run efficiently on consumer hardware. This demonstrates a strategic shift towards edge-AI capabilities that can be sold or demonstrated as a privacy-preserving, low-latency alternative to cloud-based solutions.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Model Benchmarking and Competitive Positioning",
+        "description": "A significant portion of the discussion focused on the rationale for choosing Qwen over industry standards like Whisper. The speaker noted that while Whisper is strong for English, it lacks performance in multilingual contexts, which is a key differentiator for our global customer base. The speaker conducted their own benchmarking suite, testing various models to determine the optimal balance between quantization (SP4/INT4) and inference speed (tokens per second).\n\nThis technical validation supports the sales and engineering narrative that our local stack offers superior multilingual capabilities compared to standard open-source offerings. The speaker also highlighted the recent 'leak' of Claude Code's source structure, noting that while the interface is proprietary, the underlying harness logic is becoming more transparent, allowing for greater customization of the backend models.",
+        "speakers": [
+          "Speaker 1"
+        ]
+      },
+      {
+        "title": "Strategic Alignment with Forward Deployed Engineering (FDE) Roles",
+        "description": "The meeting explicitly connected this technical demonstration to the new 'Forward Deployed Engineering' roles being built by Dave Star. The speaker emphasized that these FDEs need to be technologists who can understand customer infrastructure and deploy custom AI solutions on-site. The ability to run complex LLMs locally on a laptop is a key skill set for this new team.\n\nThe speaker contrasted their nine months of experience in this specific ecosystem with a salesperson's potential learning curve, highlighting the specialized knowledge required to build and maintain these stacks. This insight suggests that hiring and training for FDE roles must prioritize deep technical proficiency in local LLM deployment, quantization, and hardware constraints, rather than general sales or generic software engineering skills.",
+        "speakers": [
+          "Speaker 1",
+          "Speaker 2"
+        ]
+      }
+    ],
+    "action_items": [
+      {
+        "category": "Headcount & Roles",
+        "task": "Define technical competency requirements for Forward Deployed Engineering (FDE) roles, specifically focusing on local LLM deployment, quantization, and hardware constraints (VRAM/Unified Memory). Ensure candidates have experience with MoE architectures and edge-AI infrastructure.",
+        "assignee": "Dave Star",
+        "due": null
+      },
+      {
+        "category": "Technical Strategy",
+        "task": "Evaluate the Qwen 3.5 MoE model versus Whisper for multilingual ASR tasks in customer-facing demos. Document benchmarking results to support sales narratives regarding privacy-preserving, local-first AI capabilities.",
+        "assignee": null,
+        "due": null
+      },
+      {
+        "category": "Internal Enablement",
+        "task": "Create a technical briefing or workshop for the sales team explaining the 'local-first' AI stack, the benefits of running models on consumer hardware (e.g., M-series Macs), and how this differentiates us from cloud-only competitors.",
+        "assignee": null,
+        "due": null
+      }
+    ],
+    "named_entities": {
+      "companies": [
+        "Apple",
+        "Anthropic",
+        "OpenAI",
+        "Google",
+        "Meta"
+      ],
+      "people": [
+        "Dave Star",
+        "Brendan"
+      ],
+      "products": [
+        "Claude Code",
+        "Qwen 3.5",
+        "Qwen 1.7B",
+        "Whisper",
+        "Gemini",
+        "Opus",
+        "Sonnet",
+        "Haiku",
+        "GB10",
+        "H100",
+        "L70",
+        "Meeting Pad",
+        "Agent Swarm Vibe Code"
+      ],
+      "accounts": []
+    },
+    "decisions": [
+      "Adopting a local-first AI architecture using Qwen models for Forward Deployed Engineering use cases to enable privacy-preserving, on-premise deployments.",
+      "Prioritizing real-time transcription and translation capabilities over batch processing in the local inference stack."
+    ],
+    "questions": [
+      "How does the performance of the local Qwen stack compare quantitatively to cloud-hosted models like Opus or Sonnet in terms of accuracy and latency?",
+      "What are the specific hardware procurement guidelines for FDE teams to ensure they have sufficient unified memory (e.g., 128GB) for these workloads?"
+    ],
+    "key_quotes": [
+      {
+        "text": "The most important metric is: Can you load it into VRAM? If you can't load in the GPU RAM, then your inference will be just speed-wise.",
+        "speaker": "Speaker 1",
+        "context": "Explaining the primary constraint of running large models on consumer hardware."
+      },
+      {
+        "text": "This is exactly what the Forward Deployed Engineering team will be doing. It's going into a customer, understanding what they're standing like being a technologist who understands a bit of what a CTO should be.",
+        "speaker": "Speaker 1",
+        "context": "Connecting the technical demo to the strategic purpose of the new FDE roles."
+      },
+      {
+        "text": "Whisper models are good for English. They're not as good for multilingual.",
+        "speaker": "Speaker 1",
+        "context": "Justifying the switch from Whisper to Qwen for global customer needs."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Resource Usage and Inference Prioritization",
+        "description": "Discussion on how the system prioritizes real-time transcription over batch coding tasks, and the impact of concurrency on GPU usage.",
+        "timestamp_min": 0.0
+      },
+      {
+        "title": "Local Model Architecture (Qwen 3.5)",
+        "description": "Detailed explanation of the 35B parameter MoE model, its 3B active parameters, and how it fits into 128GB unified memory.",
+        "timestamp_min": 3.0
+      },
+      {
+        "title": "Hardware Constraints and Memory Bandwidth",
+        "description": "Comparison of consumer hardware (GB10/M-series) vs. data center GPUs (H100), focusing on VRAM capacity and memory bandwidth.",
+        "timestamp_min": 9.0
+      },
+      {
+        "title": "Quantization and Model Precision",
+        "description": "Explanation of FP16 training vs. INT4/SP4 quantization to reduce model size without significant quality loss.",
+        "timestamp_min": 10.5
+      },
+      {
+        "title": "Model Benchmarking (Qwen vs. Whisper)",
+        "description": "Rationale for choosing Qwen over Whisper for multilingual ASR tasks based on speaker's own benchmarking.",
+        "timestamp_min": 12.5
+      },
+      {
+        "title": "Forward Deployed Engineering (FDE) Role Definition",
+        "description": "Discussion on how this technical stack supports the new FDE roles, requiring deep technical expertise in AI infrastructure.",
+        "timestamp_min": 14.0
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 21550,
+  "n_finals": 452,
+  "response_chars": 7889,
+  "num_topics": 6,
+  "num_action_items": 3,
+  "num_decisions": 2,
+  "topic_names": [
+    "Resource Usage and Inference Prioritization",
+    "Local Model Architecture (Qwen 3.5)",
+    "Hardware Constraints and Memory Bandwidth",
+    "Quantization and Model Precision",
+    "Model Benchmarking (Qwen vs. Whisper)",
+    "Forward Deployed Engineering (FDE) Role Definition"
+  ],
+  "hallucinated_speakers": [
+    "Dave Star"
+  ]
+}

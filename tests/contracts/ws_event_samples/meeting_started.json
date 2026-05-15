@@ -1,0 +1,5 @@
+{
+  "type": "meeting_started",
+  "meeting_id": "test-meeting-0",
+  "language_pair": ["en", "ja"]
+}

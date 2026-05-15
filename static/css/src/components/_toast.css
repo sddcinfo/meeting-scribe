@@ -1,0 +1,47 @@
+/* Meeting Scribe — Cross-feature toasts.
+ *
+ * The ``.tts-toast`` family is the bottom-right banner driven by
+ * scribe-app.js checkStatus() when ``/api/status`` reports
+ * tts.health=stalled or surfaces a crash sentinel. Slides up from
+ * the bottom edge on ``.visible``; the ``.crash`` variant darkens to
+ * indicate a backend trip rather than a routine stall.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* Anchored to the BOTTOM-RIGHT so the toast never lands on top of
+ * the centred status-line + record/cancel buttons in #main-header.
+ * Field operators rely on Cancel being reachable at any time during
+ * a meeting; an absorbing red banner over the header was making the
+ * controls disappear behind the warning. */
+.tts-toast {
+  position: fixed;
+  right: var(--space-md, 16px);
+  bottom: var(--space-md, 16px);
+  z-index: 200;
+  background: #b91c1c;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(120%);
+  transition: transform 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
+  pointer-events: none;
+  max-width: min(420px, 90vw);
+  text-align: left;
+}
+
+.tts-toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.tts-toast.crash {
+  background: #7c2d12;
+}

@@ -1,0 +1,28 @@
+== sequential probes ==
+  asr: {'n': 15, 'min': 100.1, 'p50': 102.1, 'p95': 132.9, 'p99': 132.9, 'max': 132.9, 'mean': 104.0}
+  translate ja→en: {'n': 15, 'min': 203.7, 'p50': 299.9, 'p95': 341.9, 'p99': 341.9, 'max': 341.9, 'mean': 285.9}
+  translate en→ja: {'n': 15, 'min': 173.9, 'p50': 236.3, 'p95': 603.2, 'p99': 603.2, 'max': 603.2, 'mean': 271.2}
+  diarize: {'n': 15, 'min': 21.2, 'p50': 21.7, 'p95': 45.7, 'p99': 45.7, 'max': 45.7, 'mean': 23.6}
+== concurrent probes ==
+  asr: {'n': 60, 'min': 98.0, 'p50': 122.9, 'p95': 173.1, 'p99': 202.9, 'max': 202.9, 'mean': 131.5}
+  translate ja→en: {'n': 60, 'min': 372.3, 'p50': 724.7, 'p95': 1142.1, 'p99': 1586.7, 'max': 1586.7, 'mean': 730.5}
+  diarize: {'n': 60, 'min': 113.2, 'p50': 122.3, 'p95': 272.9, 'p99': 326.2, 'max': 326.2, 'mean': 140.2}
+== mixed pipeline stress (simulates live meeting) ==
+  mixed total wall: 7807ms
+  asr: {'n': 20, 'min': 201.2, 'p50': 214.8, 'p95': 278.0, 'p99': 278.0, 'max': 278.0, 'mean': 224.7}
+  translate: {'n': 20, 'min': 211.4, 'p50': 317.5, 'p95': 864.3, 'p99': 864.3, 'max': 864.3, 'mean': 390.1}
+  diarize: {'n': 20, 'min': 51.9, 'p50': 62.6, 'p95': 68.9, 'p99': 68.9, 'max': 68.9, 'mean': 62.2}
+
+wrote benchmarks/oom-tune-2026-05/results/post-boot-ordering/scribe-perf.json
+
+== post-boot-ordering SUMMARY ==
+  asr                    p50=102.1ms p95=132.9ms p99=132.9ms n=15
+  translate_ja_en        p50=299.9ms p95=341.9ms p99=341.9ms n=15
+  translate_en_ja        p50=236.3ms p95=603.2ms p99=603.2ms n=15
+  diarize                p50=21.7ms p95=45.7ms p99=45.7ms n=15
+  asr                    concurrent(c=6,n=60)           p50=122.9ms p95=173.1ms
+  translate_ja_en        concurrent(c=6,n=60)           p50=724.7ms p95=1142.1ms
+  diarize                concurrent(c=6,n=60)           p50=122.3ms p95=272.9ms
+  mixed wall=7807.1ms (ASR+translate+diarize concurrently)
+  loop_lag p99 before=None after=None
+  gpu_pct None → None

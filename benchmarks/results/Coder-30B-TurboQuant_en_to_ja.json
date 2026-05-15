@@ -1,0 +1,120 @@
+{
+  "model_name": "Coder-30B-TurboQuant",
+  "url": "http://localhost:8000",
+  "direction": "en_to_ja",
+  "corpus_size": 15,
+  "latency_p50_ms": 953.5,
+  "latency_p90_ms": 1902.0,
+  "latency_p99_ms": 3093.4,
+  "latency_mean_ms": 1113.7,
+  "avg_char_similarity": 0.495,
+  "total_time_s": 16.71,
+  "throughput_sps": 0.9,
+  "results": [
+    {
+      "source": "Let's confirm the agenda for today's meeting.",
+      "reference": "今日の会議の議題について確認しましょう。",
+      "translated": "今日の会議の議題を確認しましょう。\n(Kyō no kaigi no gidai wo kakunin shimashō.)",
+      "latency_ms": 1304.7,
+      "char_similarity": 0.342
+    },
+    {
+      "source": "Do you have any questions about this proposal?",
+      "reference": "この提案について何かご質問はありますか？",
+      "translated": "この提案について、質問はありますか？",
+      "latency_ms": 505.1,
+      "char_similarity": 0.85
+    },
+    {
+      "source": "Let's decide on the next steps.",
+      "reference": "次のステップを決めましょう。",
+      "translated": "次に何をすべきか決めましょう。\n(Natsu ni nani wo subeki ka kimemasu.)",
+      "latency_ms": 966.8,
+      "char_similarity": 0.237
+    },
+    {
+      "source": "We achieved our quarterly sales target.",
+      "reference": "四半期の売上目標を達成しました。",
+      "translated": "当社は今季の売上目標を達成しました。\n(Tōsha wa konkai no baikyō mokhyō wo tassei shimashita.)",
+      "latency_ms": 1579.2,
+      "char_similarity": 0.3
+    },
+    {
+      "source": "We need to approve the budget for the new project.",
+      "reference": "新しいプロジェクトの予算を承認する必要があります。",
+      "translated": "新しいプロジェクトの予算を承認する必要があります。\n(Niisaki no yosan wo shounin suru hito wa arimasu.)",
+      "latency_ms": 1375.6,
+      "char_similarity": 0.558
+    },
+    {
+      "source": "We are preparing for next week's demo.",
+      "reference": "来週のデモに向けて準備を進めています。",
+      "translated": "私たちは来週のデモに向けて準備をしています。",
+      "latency_ms": 620.6,
+      "char_similarity": 0.696
+    },
+    {
+      "source": "The API response time has improved.",
+      "reference": "APIのレスポンスタイムが改善されました。",
+      "translated": "APIの応答時間が改善されました。",
+      "latency_ms": 462.7,
+      "char_similarity": 0.542
+    },
+    {
+      "source": "We will run the database migration tomorrow.",
+      "reference": "データベースのマイグレーションは明日実行します。",
+      "translated": "私たちは明日データベースマイグレーションを実行します。\n(Note: I've provided the translation as requested, but in a more natural Japanese format. The original English \"run the database migration\" can also be translated as \"データベース移行を実行する\" or \"データベースのマイグレーションを行う\" which might sound even more natural in some contexts.)",
+      "latency_ms": 3093.4,
+      "char_similarity": 0.338
+    },
+    {
+      "source": "Please complete testing before deploying to production.",
+      "reference": "本番環境にデプロイする前にテストを完了してください。",
+      "translated": "本番環境へのデプロイを行う前に、テストを完了してください。",
+      "latency_ms": 682.2,
+      "char_similarity": 0.767
+    },
+    {
+      "source": "Excuse me, could you say that again?",
+      "reference": "すみません、もう一度言っていただけますか？",
+      "translated": "すみません、もう一度言ってもらえますか。",
+      "latency_ms": 541.7,
+      "char_similarity": 0.636
+    },
+    {
+      "source": "I agree with that point.",
+      "reference": "その点については同意します。",
+      "translated": "その点に於いては同感です。\n(そのてんにおいいてどうさんです。)",
+      "latency_ms": 953.5,
+      "char_similarity": 0.4
+    },
+    {
+      "source": "Could you explain in more detail?",
+      "reference": "詳しく説明していただけますか？",
+      "translated": "もっと詳しく説明してもらえますか。",
+      "latency_ms": 486.9,
+      "char_similarity": 0.45
+    },
+    {
+      "source": "I believe we need the whole team to cooperate to solve this problem.",
+      "reference": "この問題を解決するためには、チーム全体で協力する必要があると考えています。",
+      "translated": "この問題を解決するには、チーム全員が協力しなければならないと思います。",
+      "latency_ms": 814.1,
+      "char_similarity": 0.561
+    },
+    {
+      "source": "Let's re-examine priorities to minimize schedule delays.",
+      "reference": "スケジュールの遅延を最小限に抑えるため、優先順位を再検討しましょう。",
+      "translated": "優先順位を見直して、スケジュールの遅延を最小限に抑えましょう。\nLet's re-examine priorities to minimize schedule delays.",
+      "latency_ms": 1416.9,
+      "char_similarity": 0.441
+    },
+    {
+      "source": "We plan to improve the UI based on customer feedback.",
+      "reference": "お客様からのフィードバックに基づいて、UIを改善する計画です。",
+      "translated": "我々は顧客のフィードバックをもとにUIを改善する予定です。\n(Watashi wa kokyaku no feed-back wo motta UI wo kesshoku suru yotei desu.)",
+      "latency_ms": 1902.0,
+      "char_similarity": 0.302
+    }
+  ]
+}

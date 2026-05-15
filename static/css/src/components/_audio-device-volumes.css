@@ -1,0 +1,121 @@
+/* Meeting Scribe — Audio device volume mixer.
+ *
+ * The per-device volume row (sliders + mute toggle) used in the
+ * Settings → Audio panel AND inside the Audio popover's "Device
+ * volumes" disclosure. Driven by /api/admin/audio/volumes.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.audio-routing-status,
+.audio-mic-active-status,
+.audio-refresh-status {
+  font-size: 0.78rem;
+  margin: var(--space-xs) 0 0;
+  color: var(--color-text-secondary);
+  min-height: 1em;
+}
+
+/* `.ok` status used to render in green --success, which read like a
+ * loud "alert: success!" badge. These are tertiary info lines
+ * ("Capturing from <device>", listener counts, etc.) — keep them
+ * muted so the screen has one focal point per surface. */
+.audio-routing-status.ok,
+.audio-mic-active-status.ok,
+.audio-refresh-status.ok {
+  color: var(--color-text-muted);
+}
+.audio-routing-status.err,
+.audio-mic-active-status.err,
+.audio-refresh-status.err {
+  color: var(--danger, var(--color-text-secondary));
+}
+
+/* `.audio-routing-select` inherits the universal `<select>` styling
+ * in _form-controls.css; this block only locks the width. */
+.audio-routing-select {
+  width: 100%;
+}
+.audio-routing-select option[data-missing="1"] {
+  color: var(--danger, var(--color-text-secondary));
+  font-style: italic;
+}
+.audio-routing-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.audio-device-volumes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+.audio-device-volume-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+.audio-device-volume-row .audio-device-volume-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-primary);
+}
+.audio-device-volume-row .audio-device-volume-name .audio-device-volume-kind {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  margin-right: var(--space-xs);
+  font-family: var(--font-mono, monospace);
+}
+.audio-device-endpoints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.audio-device-endpoint {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.audio-device-endpoint .audio-device-endpoint-kind {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+.audio-device-endpoint input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent, currentColor);
+}
+.audio-device-endpoint .audio-device-volume-readout {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  min-width: 3em;
+  text-align: right;
+}
+.audio-device-endpoint .audio-device-volume-mute {
+  font-size: 0.72rem;
+  padding: 2px var(--space-xs);
+  border-radius: 4px;
+  border: 1px solid var(--border, currentColor);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.audio-device-endpoint .audio-device-volume-mute.is-muted {
+  color: var(--danger, var(--color-text-secondary));
+  border-color: var(--danger, var(--color-text-secondary));
+}
+.audio-device-endpoint.is-muted input[type="range"] {
+  opacity: 0.5;
+}
+.audio-device-volumes-empty {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}

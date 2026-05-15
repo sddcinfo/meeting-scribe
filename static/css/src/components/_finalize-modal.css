@@ -1,0 +1,663 @@
+/* Meeting Scribe — Finalization modal.
+ *
+ * The big review-mode modal that appears after a meeting is
+ * finalized — header tabs, transcript pane, summary pane, topics /
+ * decisions / action items / speaker breakdown blocks, download
+ * footer, and the V2-summary cards that precede the KEY INSIGHTS /
+ * NAMED ENTITIES / CATEGORIZED ACTIONS / ATTRIBUTED QUOTES sections
+ * (those latter four live in _v2-summary.css).
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+/* ═══════════ FINALIZATION MODAL ═══════════ */
+
+/* ── Finalize modal ── */
+
+.modal-card.finalize {
+  width: min(94vw, 1100px);
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 1px rgba(26, 26, 30, 0.06),
+    0 32px 80px rgba(0, 0, 0, 0.22),
+    0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.finalize-modal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.finalize-modal.done .finalize-subtitle {
+  color: var(--color-success);
+  font-weight: 600;
+}
+.finalize-modal.done .finalize-header h3 {
+  color: var(--color-success);
+}
+
+/* ── Header ── */
+
+.finalize-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  flex-shrink: 0;
+}
+
+.finalize-header-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.finalize-header h3 {
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--color-text-primary);
+}
+
+.finalize-subtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+  transition: color 0.3s;
+}
+
+.finalize-subtitle.error {
+  color: var(--color-recording);
+}
+
+/* Pulse indicator */
+.finalize-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-text-accent);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.finalize-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: var(--color-text-accent);
+  opacity: 0.2;
+  animation: finalize-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.finalize-pulse.complete {
+  background: var(--color-success);
+}
+
+.finalize-pulse.complete::before {
+  background: var(--color-success);
+  animation: none;
+  opacity: 0.15;
+}
+
+@keyframes finalize-ping {
+  0%   { transform: scale(1); opacity: 0.25; }
+  75%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.finalize-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--duration-fast);
+  line-height: 1;
+}
+
+.finalize-close:hover {
+  background: var(--color-bg-raised);
+  color: var(--color-text-primary);
+}
+
+/* ── Progress bar ── */
+
+.finalize-progress-track {
+  height: 2px;
+  background: var(--color-border-dim);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.finalize-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-text-accent);
+  transition: width 0.6s var(--ease-out);
+  border-radius: 0 1px 1px 0;
+}
+
+/* ── Stepper ── */
+
+.finalize-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 16px 24px;
+  flex-shrink: 0;
+  transition: max-height 0.5s var(--ease-out), opacity 0.3s, padding 0.4s;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.finalize-steps.collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.finalize-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--color-text-muted);
+  transition: color 0.25s;
+}
+
+.finalize-step.active {
+  color: var(--color-text-primary);
+}
+
+.finalize-step.done {
+  color: var(--color-success);
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.step-ring {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-ring svg {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+}
+
+.step-ring svg circle {
+  stroke: var(--color-border);
+  transition: stroke 0.25s, fill 0.25s;
+  fill: none;
+}
+
+.finalize-step.active .step-ring svg circle {
+  stroke: var(--color-text-accent);
+  fill: rgba(139, 105, 20, 0.08);
+}
+
+.finalize-step.done .step-ring svg circle {
+  stroke: var(--color-success);
+  fill: var(--color-success);
+}
+
+.step-check {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: transparent;
+  position: relative;
+  z-index: 1;
+  transition: color 0.2s;
+}
+
+.finalize-step.done .step-check {
+  color: white;
+}
+
+.finalize-step.active .step-ring::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-accent);
+  position: absolute;
+  animation: step-dot-in 0.3s var(--ease-out);
+}
+
+@keyframes step-dot-in {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.step-connector {
+  width: 1.5px;
+  height: 12px;
+  background: var(--color-border-dim);
+  transition: background 0.3s;
+}
+
+.finalize-step.done .step-connector {
+  background: var(--color-success);
+}
+
+.step-label {
+  font-size: 0.78rem;
+  line-height: 20px;
+  font-weight: 450;
+  padding-bottom: 12px;
+}
+
+.finalize-step.active .step-label {
+  font-weight: 550;
+}
+
+/* ── ETA ── */
+
+.finalize-eta {
+  padding: 0 24px 12px;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.3s, max-height 0.3s;
+}
+
+.finalize-eta.visible {
+  opacity: 1;
+  max-height: 30px;
+}
+
+/* ── Summary content ── */
+
+.finalize-summary {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: summary-reveal 0.5s var(--ease-out);
+}
+
+@keyframes summary-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Meta bar ── */
+
+.summary-meta-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 24px;
+  border-top: 1px solid var(--color-border-dim);
+  border-bottom: 1px solid var(--color-border-dim);
+  background: var(--color-bg-deep);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  font-size: 0.66rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  padding: 2px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.02em;
+}
+
+/* ── Scrollable summary body ── */
+
+.summary-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* At wider modal widths, lay the summary body out as a 2-column grid.
+   Overview always spans both columns so long-form text stays readable;
+   topics/decisions/actions/speakers fill the remaining rows. Items flow
+   row-by-row: overview → topics (col 1) + decisions (col 2) → actions
+   (col 1) + speakers (col 2). */
+@media (min-width: 820px) {
+  .summary-scroll {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 0;
+    row-gap: 0;
+    align-content: start;
+  }
+  .summary-scroll > .summary-overview {
+    grid-column: 1 / -1;
+  }
+  .summary-scroll > .summary-section:not(.summary-overview) {
+    border-bottom: 1px solid var(--color-border-dim);
+  }
+  /* Column-2 items get a subtle divider from column 1. Overview is
+     nth-child(1) and spans both cols, so col-2 items land at odd
+     positions from child 3 onward (3, 5, …). */
+  .summary-scroll > .summary-section:nth-child(n+3):nth-child(odd) {
+    border-left: 1px solid var(--color-border-dim);
+  }
+}
+
+.summary-section {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--color-border-dim);
+}
+
+.summary-section:last-child {
+  border-bottom: none;
+}
+
+.summary-section h4 {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+
+.summary-overview > p {
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+}
+
+/* ── Topics ── */
+
+.topic-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.topic-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  animation: item-slide-in 0.35s var(--ease-out) both;
+}
+
+.topic-item + .topic-item {
+  border-top: 1px solid var(--color-border-dim);
+}
+
+.topic-marker {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-accent);
+  background: rgba(139, 105, 20, 0.06);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.topic-item strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.topic-item p {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+/* ── Decisions ── */
+
+.decision-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.decision-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  padding: 6px 0;
+  animation: item-slide-in 0.35s var(--ease-out) both;
+}
+
+.decision-list li + li {
+  border-top: 1px solid var(--color-border-dim);
+}
+
+.decision-bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--color-text-accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* ── Action items ── */
+
+.action-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.action-list .action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+  animation: item-slide-in 0.35s var(--ease-out) both;
+}
+
+.action-list .action-item + .action-item {
+  border-top: 1px solid var(--color-border-dim);
+}
+
+.action-check {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: var(--color-bg-surface);
+}
+
+.action-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.action-body > span:first-child {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.action-assignee {
+  display: inline-block;
+  font-size: 0.68rem;
+  color: var(--color-text-accent);
+  font-weight: 600;
+  background: rgba(139, 105, 20, 0.07);
+  padding: 1px 8px;
+  border-radius: 100px;
+  width: fit-content;
+  letter-spacing: 0.01em;
+}
+
+@keyframes item-slide-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Speaker stats ── */
+
+.speaker-stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.speaker-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  animation: item-slide-in 0.4s var(--ease-out) both;
+}
+
+.speaker-stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.speaker-stat-name {
+  width: 100px;
+  flex-shrink: 0;
+  font-weight: 520;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.76rem;
+}
+
+.speaker-stat-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  min-width: 4px;
+  background: var(--color-bg-raised);
+  overflow: hidden;
+}
+
+.speaker-stat-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s var(--ease-out);
+}
+
+.speaker-stat-pct {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--color-text-muted);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Summary action buttons ── */
+
+.summary-actions {
+  display: flex;
+  gap: var(--space-sm);
+  padding: 12px 24px;
+  border-top: 1px solid var(--color-border);
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--color-bg-raised);
+  flex-wrap: wrap;
+}
+
+.summary-actions-left {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.summary-actions-right {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.summary-actions .modal-btn {
+  font-size: 0.72rem;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.summary-actions .btn-download {
+  position: relative;
+  padding-left: 22px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+}
+
+.summary-actions .btn-download:hover {
+  border-color: var(--color-border);
+  background: var(--color-bg-hover);
+}
+
+.summary-actions .btn-download::before {
+  content: '↓';
+  position: absolute;
+  left: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.summary-actions .btn-primary {
+  background: var(--color-text-primary);
+  color: var(--color-bg-surface);
+  border-color: var(--color-text-primary);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.summary-actions .btn-primary:hover {
+  background: #2a2a2e;
+}
+
+.finalize-error {
+  padding: 16px 24px;
+  color: var(--color-recording);
+  font-size: 0.82rem;
+}
+

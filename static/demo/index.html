@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Scribe — Demos</title>
+  <link rel="stylesheet" href="/static/css/dist/demo.css?v=c6133356c239">
+</head>
+<body class="bg-bg-dark text-text-dark font-ui min-h-dvh flex flex-col items-center px-6 py-12">
+  <h1 class="text-3xl font-bold tracking-tight mb-2">Meeting Scribe Demos</h1>
+  <p class="text-text-muted text-sm mb-10">Interactive demos and display modes</p>
+
+  <div class="grid w-full max-w-3xl gap-4 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+
+    <a href="/reader"
+       class="group block bg-bg-dark-surface border border-bg-dark-border rounded-xl p-6 text-text-dark no-underline transition-[border-color,transform] duration-150 hover:border-accent-gold hover:-translate-y-0.5">
+      <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+        Reader View
+        <span class="inline-block text-[0.65rem] px-1.5 py-0.5 rounded bg-accent-gold/20 text-accent-gold font-semibold uppercase tracking-wider">Live</span>
+      </h2>
+      <p class="text-text-muted text-[0.82rem] leading-relaxed">Split-pane bilingual transcript. iPad shows languages side by side, iPhone shows top/bottom. Large text, optimized for readability from a distance.</p>
+    </a>
+
+    <a href="/demo/guest"
+       class="group block bg-bg-dark-surface border border-bg-dark-border rounded-xl p-6 text-text-dark no-underline transition-[border-color,transform] duration-150 hover:border-accent-gold hover:-translate-y-0.5">
+      <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+        Guest View
+        <span class="inline-block text-[0.65rem] px-1.5 py-0.5 rounded bg-accent-gold/20 text-accent-gold font-semibold uppercase tracking-wider">Live</span>
+      </h2>
+      <p class="text-text-muted text-[0.82rem] leading-relaxed">Preview of what hotspot guests see — transcript, language filter, and real-time audio interpretation via the Listen button.</p>
+    </a>
+
+    <a href="/demo/voice-clone"
+       class="group block bg-bg-dark-surface border border-bg-dark-border rounded-xl p-6 text-text-dark no-underline transition-[border-color,transform] duration-150 hover:border-accent-gold hover:-translate-y-0.5">
+      <h2 class="text-lg font-semibold mb-1 flex items-center gap-2">
+        Voice Clone TTS
+        <span class="inline-block text-[0.65rem] px-1.5 py-0.5 rounded bg-accent-gold/20 text-accent-gold font-semibold uppercase tracking-wider">Interactive</span>
+      </h2>
+      <p class="text-text-muted text-[0.82rem] leading-relaxed">Speak into your mic. The system transcribes, translates, and plays back the translation in your cloned voice. Runs independently of any meeting.</p>
+    </a>
+
+  </div>
+
+  <p class="text-text-muted text-xs mt-12">Powered by <a href="https://sddc.info" class="text-accent-gold no-underline">sddc.info</a></p>
+</body>
+</html>

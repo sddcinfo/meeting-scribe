@@ -1,0 +1,1882 @@
+{
+  "segment_count": 125,
+  "order": [
+    "7adf2da5-11ea-40c0-8791-75dae4b0d17d",
+    "5ee2fcb9-e17f-f982-34c5-3e79d5b586d9",
+    "329c5467-17df-4afa-d2e4-1653627dabb0",
+    "6db192a6-efed-0bff-6f48-7f72c3cc1676",
+    "89f5dd5e-69fd-f77e-8bf6-931256a532dc",
+    "6efb80c7-b88e-fab0-b6c7-5384505810f9",
+    "cbcf3d00-2e20-7ac7-bf8d-0f164924534e",
+    "c15813dc-90e3-c4b3-d536-e2658d251ad7",
+    "3376646d-8c42-c6fe-df3f-548170b68db6",
+    "eec6a463-9a02-7812-8e75-f4aac1d8b0bb",
+    "2e339e01-2acb-fab6-6704-729a92a85f82",
+    "e40f6cca-213a-5772-b788-594db75c966a",
+    "98737d38-4352-f5fc-2879-dbe57b91242b",
+    "01e11354-3886-7e95-9646-5fa94b8c9e36",
+    "a62de4ce-7ed6-dbe4-48d8-b8c77c0618c9",
+    "8d6080a3-8ea7-eef6-e714-75c8387f854a",
+    "428f4824-50a9-5c77-98e3-85c0732a78d0",
+    "464ed051-defb-19d1-f5fe-50243a793b7a",
+    "1c492dc6-a738-450a-5aab-a3e965873818",
+    "3d572f4b-78fa-45bd-10de-df1d8a860b9d",
+    "434dc0bf-5f00-2b22-5077-468d9398bffd",
+    "6622d551-c645-ce69-a663-38f7c2d65208",
+    "bb7e21e8-a295-0ab9-8c0b-e83bbb4d0fa4",
+    "68b1e842-d7dc-c6da-a664-9bd4792116d7",
+    "4d1ead01-52f1-a37f-ced5-f9cdbc16c5b1",
+    "5035fbf7-62d2-9d21-0edd-52f50f9b1990",
+    "4567d796-5819-0445-f434-7ffeecaef31a",
+    "6007f3e9-b04f-98ff-e55b-301e84da341a",
+    "e0c473a0-61f9-5237-7f20-3a0291516477",
+    "3c930ac5-d016-27b0-692f-0c9f40b33b61",
+    "c3da0ff4-e1b2-6097-4c4d-a77742dfcbcd",
+    "7ebb6234-36f2-4793-12fb-dfddc0d4f817",
+    "bddc6b99-7a9b-eab0-2279-582e3cb9934b",
+    "5042c2e8-1b20-40f2-0ac7-a33924a4a0d5",
+    "4676cb5f-8032-0678-235d-8bc8c57a9454",
+    "d7013a96-995c-784b-340f-428b0da25967",
+    "65a30af8-243e-9c30-6858-1faff7551d12",
+    "76e695f4-72d9-dd70-933b-ab254e125120",
+    "98c4e38d-25ce-5901-8e12-47e7b7ef5d79",
+    "68cba1be-c669-1afa-682d-3167a3b5ac09",
+    "f1473aea-e480-db93-217a-d81ba7d7ed0a",
+    "9bd55a74-0c72-340e-4d3b-a1d08ef66d42",
+    "875b1ac1-a965-7d1f-0a3a-0456f746c665",
+    "948e0cff-6f0a-1692-6036-f6dec9c4a456",
+    "3679595d-9f6e-2b95-3483-151a87c1e716",
+    "e4a33ce1-d49d-7393-3c0d-c1f4a6f4c209",
+    "b1e211a5-bf6e-a990-0db8-667b7234f4a3",
+    "e6c6c3d8-9d0a-b9e3-ce23-b94b671ccb73",
+    "81678a2f-7c7e-d14b-24ed-e46bf3dead4a",
+    "79361678-f174-ef5f-f082-5deba6a576d9",
+    "f1131f3d-4e66-1f6d-9e70-3a9b32fd9870",
+    "7f770ec0-5bb2-3aaa-d901-eba6b8a55191",
+    "ef18fe88-2eb7-0ad6-760e-9571f7b402f4",
+    "4daff25d-1bbc-804e-6df7-657eecf8fbbd",
+    "f5a03e8c-2f36-4369-a986-5469c4a74ca9",
+    "8a600bd8-3689-e1bb-cf3b-dded15f7f6d8",
+    "b33ede3a-41de-f20a-4abd-057664f5cbea",
+    "bc88e6bc-ffa5-dcbe-a213-c86a58213348",
+    "1600e74d-44bc-24e2-4b9e-4e3b3e176303",
+    "eabc65ad-d053-3139-e404-bc858d3466d1",
+    "f1615e7b-b0c5-5ddd-a9c5-afeee0d85c38",
+    "e821cdca-328c-9933-649e-fb48cd6ee08a",
+    "31b768c7-16ab-e566-96d1-639c92eb8a4a",
+    "464ed7ba-f448-adf3-35ec-6652e318b390",
+    "720af84d-34db-918a-607c-3359e6f00459",
+    "de1b0b6e-a475-40f7-8f8b-0c1371cb95af",
+    "5180aa1f-6c22-3d83-6cca-1c7a7bd6a312",
+    "435af791-e252-f495-bd5b-ab0254732589",
+    "6bbd669a-0d53-f152-d542-147bf51434f3",
+    "105bc35a-bcbf-b1ed-6a79-cc9a78042795",
+    "611adf37-8f8e-6c2a-d7d4-af135fcedd74",
+    "8ecaaed9-42ac-3725-e422-b7dc47ca23e9",
+    "a6c5e754-ad86-141e-b98f-96463230a986",
+    "38206416-2db2-0784-ad73-11142488d8c9",
+    "abcc08c1-cb01-1c4d-6a01-1db63edec722",
+    "2807399a-56d4-d0b9-27dc-d54216adffae",
+    "7fd2d8e6-d781-5e92-7b4a-64fc28e972dc",
+    "5ae3373f-3e16-1260-612d-861f9d3fb8d2",
+    "835b7d29-0934-b8e8-36c0-f04b948abc2d",
+    "494906b1-ca63-00ae-6c3e-7e5bcc06eb9f",
+    "13054bc9-1631-523e-96e2-9e228688a153",
+    "25c9783f-f340-8b2b-db1b-20363509a529",
+    "b11a653c-0aca-55a7-c7b7-509f56f802e2",
+    "f60547ec-e63b-dbdd-c51c-8156231088fb",
+    "127e03ad-4630-cafa-b19a-f1dfb2c454bf",
+    "7e551c65-c0aa-9a51-ee1a-8510f9fd80a5",
+    "99906b1a-9744-a7e9-656d-b094770c59f9",
+    "fca44ba1-0329-bd22-c542-3bb3d20691ab",
+    "c5d89b94-5bfa-e1c4-f96b-0466293cee39",
+    "81e05fc5-75bb-3882-432c-97d6454f1bbe",
+    "3b7e474c-1245-9f96-eaf7-1a9f10abd22c",
+    "463e9fec-8839-a24d-c5b1-f210abc552aa",
+    "3a4c63b2-b185-c769-2870-b9d7db035caf",
+    "0c96c119-d6cf-5a86-1747-9b1c96b4fd49",
+    "55c96450-4705-fcba-52ea-97d732737305",
+    "64e84724-d5ea-9ea2-77cf-d2c41d90b2cc",
+    "16741a74-4a5b-6e07-fba0-8a18fc1135b4",
+    "6778a22b-f1d6-e799-40ae-1927e36e24ef",
+    "b7f0425e-c194-266a-2560-17e2b53c3a4c",
+    "6ce3602d-a107-8c19-dfc3-2f92cec2bbe3",
+    "aa94b1a7-5ec3-2253-4868-0470a6cdf059",
+    "b2cd9f64-681b-b08b-eddb-cf70058ebf15",
+    "196e2434-2fa8-3e46-679c-bcdd821ef837",
+    "23a6858e-9ebe-d0a9-091e-13a66c2e1c3f",
+    "0f06c6da-7f33-be31-e030-69a3928d5261",
+    "35ae2baf-1313-fc11-8e05-dcedead738c0",
+    "f2d7bff9-956d-07aa-4cc8-febe4f7d835a",
+    "af9b8888-493b-5803-0528-e85507741b95",
+    "305bed7b-36f3-8bb5-b735-21038ea578b9",
+    "b6f8f52b-02da-76f3-2ba9-a71d41d0ef85",
+    "2666bfe5-1075-271b-57e2-6d745e514228",
+    "1c645b6b-39c4-b7b6-4925-826e0cc625fc",
+    "d77fcbad-d363-997e-5fbe-2d8ddcd2257a",
+    "fda3b24a-4c9a-2be4-94b2-cd2f9e44e4c7",
+    "477ce747-6ddf-6b6c-3965-3cb674f82bbe",
+    "d3b9f24b-bc10-c237-8982-b18871782c26",
+    "fcf1f74b-49ba-823f-b26d-0b33a061565b",
+    "03066a0f-10d3-97ce-e9df-6dc9e37eab39",
+    "417955ee-47fe-3b13-ca95-97ab5f7c71f1",
+    "7e682717-f821-2f32-34fd-5aafdae1ce06",
+    "714f377e-589e-46b3-3aee-9622a0770c2d",
+    "f0589152-a7d2-662e-293a-cb0d6b22417a",
+    "fd89b2c3-292c-a590-aa55-f1fe498b683d",
+    "33e4991a-8c24-edf0-ef33-f114493d3af9",
+    "6803a58b-bb0c-4938-0e9d-a2356e0a1960"
+  ],
+  "by_segment": {
+    "7adf2da5-11ea-40c0-8791-75dae4b0d17d": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "5ee2fcb9-e17f-f982-34c5-3e79d5b586d9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "329c5467-17df-4afa-d2e4-1653627dabb0": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "6db192a6-efed-0bff-6f48-7f72c3cc1676": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "89f5dd5e-69fd-f77e-8bf6-931256a532dc": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "6efb80c7-b88e-fab0-b6c7-5384505810f9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "cbcf3d00-2e20-7ac7-bf8d-0f164924534e": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "c15813dc-90e3-c4b3-d536-e2658d251ad7": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "3376646d-8c42-c6fe-df3f-548170b68db6": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "eec6a463-9a02-7812-8e75-f4aac1d8b0bb": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "2e339e01-2acb-fab6-6704-729a92a85f82": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "e40f6cca-213a-5772-b788-594db75c966a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "98737d38-4352-f5fc-2879-dbe57b91242b": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "01e11354-3886-7e95-9646-5fa94b8c9e36": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "a62de4ce-7ed6-dbe4-48d8-b8c77c0618c9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "8d6080a3-8ea7-eef6-e714-75c8387f854a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "428f4824-50a9-5c77-98e3-85c0732a78d0": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "464ed051-defb-19d1-f5fe-50243a793b7a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "1c492dc6-a738-450a-5aab-a3e965873818": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "3d572f4b-78fa-45bd-10de-df1d8a860b9d": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "434dc0bf-5f00-2b22-5077-468d9398bffd": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "6622d551-c645-ce69-a663-38f7c2d65208": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "bb7e21e8-a295-0ab9-8c0b-e83bbb4d0fa4": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "68b1e842-d7dc-c6da-a664-9bd4792116d7": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "4d1ead01-52f1-a37f-ced5-f9cdbc16c5b1": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "5035fbf7-62d2-9d21-0edd-52f50f9b1990": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "4567d796-5819-0445-f434-7ffeecaef31a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "6007f3e9-b04f-98ff-e55b-301e84da341a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "e0c473a0-61f9-5237-7f20-3a0291516477": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "3c930ac5-d016-27b0-692f-0c9f40b33b61": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "c3da0ff4-e1b2-6097-4c4d-a77742dfcbcd": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "7ebb6234-36f2-4793-12fb-dfddc0d4f817": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "bddc6b99-7a9b-eab0-2279-582e3cb9934b": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "5042c2e8-1b20-40f2-0ac7-a33924a4a0d5": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 2
+    },
+    "4676cb5f-8032-0678-235d-8bc8c57a9454": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "diarization"
+        }
+      ],
+      "revision": 2
+    },
+    "d7013a96-995c-784b-340f-428b0da25967": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "65a30af8-243e-9c30-6858-1faff7551d12": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "76e695f4-72d9-dd70-933b-ab254e125120": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "98c4e38d-25ce-5901-8e12-47e7b7ef5d79": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "68cba1be-c669-1afa-682d-3167a3b5ac09": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "f1473aea-e480-db93-217a-d81ba7d7ed0a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "9bd55a74-0c72-340e-4d3b-a1d08ef66d42": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "875b1ac1-a965-7d1f-0a3a-0456f746c665": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "948e0cff-6f0a-1692-6036-f6dec9c4a456": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "3679595d-9f6e-2b95-3483-151a87c1e716": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "e4a33ce1-d49d-7393-3c0d-c1f4a6f4c209": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "b1e211a5-bf6e-a990-0db8-667b7234f4a3": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "e6c6c3d8-9d0a-b9e3-ce23-b94b671ccb73": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "81678a2f-7c7e-d14b-24ed-e46bf3dead4a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "79361678-f174-ef5f-f082-5deba6a576d9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "f1131f3d-4e66-1f6d-9e70-3a9b32fd9870": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "7f770ec0-5bb2-3aaa-d901-eba6b8a55191": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "ef18fe88-2eb7-0ad6-760e-9571f7b402f4": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "4daff25d-1bbc-804e-6df7-657eecf8fbbd": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "f5a03e8c-2f36-4369-a986-5469c4a74ca9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "8a600bd8-3689-e1bb-cf3b-dded15f7f6d8": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "b33ede3a-41de-f20a-4abd-057664f5cbea": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "bc88e6bc-ffa5-dcbe-a213-c86a58213348": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "1600e74d-44bc-24e2-4b9e-4e3b3e176303": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "eabc65ad-d053-3139-e404-bc858d3466d1": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "f1615e7b-b0c5-5ddd-a9c5-afeee0d85c38": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "e821cdca-328c-9933-649e-fb48cd6ee08a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "31b768c7-16ab-e566-96d1-639c92eb8a4a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "464ed7ba-f448-adf3-35ec-6652e318b390": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "720af84d-34db-918a-607c-3359e6f00459": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "de1b0b6e-a475-40f7-8f8b-0c1371cb95af": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "5180aa1f-6c22-3d83-6cca-1c7a7bd6a312": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "435af791-e252-f495-bd5b-ab0254732589": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "6bbd669a-0d53-f152-d542-147bf51434f3": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "105bc35a-bcbf-b1ed-6a79-cc9a78042795": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "611adf37-8f8e-6c2a-d7d4-af135fcedd74": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "8ecaaed9-42ac-3725-e422-b7dc47ca23e9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "a6c5e754-ad86-141e-b98f-96463230a986": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "38206416-2db2-0784-ad73-11142488d8c9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "abcc08c1-cb01-1c4d-6a01-1db63edec722": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "2807399a-56d4-d0b9-27dc-d54216adffae": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "7fd2d8e6-d781-5e92-7b4a-64fc28e972dc": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "5ae3373f-3e16-1260-612d-861f9d3fb8d2": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "835b7d29-0934-b8e8-36c0-f04b948abc2d": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "494906b1-ca63-00ae-6c3e-7e5bcc06eb9f": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "13054bc9-1631-523e-96e2-9e228688a153": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "25c9783f-f340-8b2b-db1b-20363509a529": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "b11a653c-0aca-55a7-c7b7-509f56f802e2": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "f60547ec-e63b-dbdd-c51c-8156231088fb": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "127e03ad-4630-cafa-b19a-f1dfb2c454bf": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "7e551c65-c0aa-9a51-ee1a-8510f9fd80a5": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "99906b1a-9744-a7e9-656d-b094770c59f9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "fca44ba1-0329-bd22-c542-3bb3d20691ab": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "c5d89b94-5bfa-e1c4-f96b-0466293cee39": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "81e05fc5-75bb-3882-432c-97d6454f1bbe": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "3b7e474c-1245-9f96-eaf7-1a9f10abd22c": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "463e9fec-8839-a24d-c5b1-f210abc552aa": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "3a4c63b2-b185-c769-2870-b9d7db035caf": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "0c96c119-d6cf-5a86-1747-9b1c96b4fd49": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "55c96450-4705-fcba-52ea-97d732737305": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "64e84724-d5ea-9ea2-77cf-d2c41d90b2cc": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "16741a74-4a5b-6e07-fba0-8a18fc1135b4": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "6778a22b-f1d6-e799-40ae-1927e36e24ef": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "b7f0425e-c194-266a-2560-17e2b53c3a4c": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "6ce3602d-a107-8c19-dfc3-2f92cec2bbe3": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "aa94b1a7-5ec3-2253-4868-0470a6cdf059": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "b2cd9f64-681b-b08b-eddb-cf70058ebf15": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "196e2434-2fa8-3e46-679c-bcdd821ef837": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "23a6858e-9ebe-d0a9-091e-13a66c2e1c3f": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "0f06c6da-7f33-be31-e030-69a3928d5261": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "35ae2baf-1313-fc11-8e05-dcedead738c0": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "f2d7bff9-956d-07aa-4cc8-febe4f7d835a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "af9b8888-493b-5803-0528-e85507741b95": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "305bed7b-36f3-8bb5-b735-21038ea578b9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "b6f8f52b-02da-76f3-2ba9-a71d41d0ef85": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "2666bfe5-1075-271b-57e2-6d745e514228": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "1c645b6b-39c4-b7b6-4925-826e0cc625fc": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "d77fcbad-d363-997e-5fbe-2d8ddcd2257a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "fda3b24a-4c9a-2be4-94b2-cd2f9e44e4c7": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "477ce747-6ddf-6b6c-3965-3cb674f82bbe": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "d3b9f24b-bc10-c237-8982-b18871782c26": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "fcf1f74b-49ba-823f-b26d-0b33a061565b": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "03066a0f-10d3-97ce-e9df-6dc9e37eab39": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "417955ee-47fe-3b13-ca95-97ab5f7c71f1": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "7e682717-f821-2f32-34fd-5aafdae1ce06": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "714f377e-589e-46b3-3aee-9622a0770c2d": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "f0589152-a7d2-662e-293a-cb0d6b22417a": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "fd89b2c3-292c-a590-aa55-f1fe498b683d": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    },
+    "33e4991a-8c24-edf0-ef33-f114493d3af9": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 3
+    },
+    "6803a58b-bb0c-4938-0e9d-a2356e0a1960": {
+      "language": "en",
+      "is_final": true,
+      "has_translation": false,
+      "translation_status": null,
+      "translation_target_language": null,
+      "speakers": [
+        {
+          "cluster_id": 1,
+          "source": "orphan_reassigned"
+        }
+      ],
+      "revision": 2
+    }
+  }
+}

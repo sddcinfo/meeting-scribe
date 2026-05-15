@@ -1,0 +1,159 @@
+/* Meeting Scribe — benchmarking page-specific components.
+   Shared editorial chrome lives in ./_editorial.css. This file holds
+   only the benchmarking-page-specific content components: the suite
+   grid, the verdict table, and the exit-code lifecycle pills. */
+
+/* ═══════════ EVAL SUITE GRID ═══════════
+   Compact card variant of .spec-card sized for a 10-card grid. */
+
+.suite-grid {
+  margin-top: var(--space-xl);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
+}
+
+.suite-card {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-left: 3px solid var(--suite-color, var(--color-text-accent));
+  border-radius: 6px;
+  font-size: 0.82rem;
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+}
+
+.suite-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.suite-name {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.suite-agents {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  padding: 1px 6px;
+  background: var(--color-bg-raised);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.suite-desc {
+  margin-top: 4px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+/* Per-suite accent stripe — same palette family as the audio pipeline
+   stage colours so the page reads as one continuous design. */
+.suite-card[data-suite="a11y"]           { --suite-color: var(--color-speaker-2); }
+.suite-card[data-suite="coverage"]       { --suite-color: var(--color-speaker-3); }
+.suite-card[data-suite="dead-code"]      { --suite-color: var(--color-text-muted); }
+.suite-card[data-suite="duplication"]    { --suite-color: var(--color-text-muted); }
+.suite-card[data-suite="i18n"]           { --suite-color: var(--color-speaker-1); }
+.suite-card[data-suite="leakage"]        { --suite-color: var(--color-recording); }
+.suite-card[data-suite="quality"]        { --suite-color: var(--color-speaker-3); }
+.suite-card[data-suite="security"]       { --suite-color: var(--color-recording); }
+.suite-card[data-suite="tech-debt"]      { --suite-color: var(--color-warning); }
+.suite-card[data-suite="ui-consistency"] { --suite-color: var(--color-speaker-4); }
+
+/* ═══════════ VERDICT ROW (Phase 6 retrospective) ═══════════ */
+
+.verdict-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-left: 3px solid var(--verdict-color, var(--color-border));
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: var(--space-xs);
+}
+
+.verdict-row[data-verdict="reference"] { --verdict-color: var(--color-speaker-2); }
+.verdict-row[data-verdict="FAIL"]      { --verdict-color: var(--color-recording); }
+.verdict-row[data-verdict="skipped"]   { --verdict-color: var(--color-text-muted); }
+
+.verdict-config {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.verdict-reason {
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.verdict-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--verdict-color, var(--color-text-muted));
+}
+
+/* ═══════════ EXIT-CODE LIFECYCLE PILLS ═══════════
+   Reuse the existing .lifecycle / .lifecycle-state vocabulary, with
+   an extra accent for the exit-code numbers. */
+
+.exitcode-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-dim);
+  border-bottom: 2px solid var(--exitcode-color, var(--color-text-muted));
+  border-radius: 5px;
+  color: var(--color-text-primary);
+  transition: transform 0.2s var(--ease-out);
+}
+
+.exitcode-pill:hover { transform: translateY(-1px); }
+
+.exitcode-num {
+  font-weight: 700;
+  color: var(--exitcode-color, var(--color-text-accent));
+}
+
+.exitcode-pill[data-code="0"] { --exitcode-color: var(--color-success); }
+.exitcode-pill[data-code="1"] { --exitcode-color: var(--color-warning); }
+.exitcode-pill[data-code="2"] { --exitcode-color: var(--color-recording); }
+
+/* ═══════════ RESPONSIVE ═══════════ */
+
+@media (max-width: 768px) {
+  .verdict-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
+  .verdict-stamp {
+    text-align: left;
+  }
+  .suite-grid {
+    grid-template-columns: 1fr;
+  }
+}

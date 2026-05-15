@@ -1,0 +1,99 @@
+/* Meeting Scribe — Record + Cancel meeting buttons.
+ *
+ * Pure CSS, no @apply, since the buttons rely on bespoke patterns
+ * (subtle borders, role-conditional colour shifts) that don't map
+ * 1:1 to Tailwind utilities.
+ *
+ * Body-state cascades for the "recording" mode live in _state.css —
+ * this file only owns the base presentation. Cancel-button visibility
+ * gating (``body:not(.recording) .btn-cancel-meeting { display: none }``)
+ * is part of _state.css too.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.btn-record {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 6px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-record:hover:not(:disabled) {
+  background: var(--color-bg-raised);
+  border-color: var(--color-text-muted);
+}
+
+.btn-record:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-record-icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transition: all var(--duration-med) var(--ease-out);
+}
+
+.btn-cancel-meeting {
+  padding: 4px 12px;
+  border: 1px solid var(--color-text-secondary);
+  border-radius: 4px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-cancel-meeting:hover:not(:disabled) {
+  border-color: var(--color-recording);
+  color: var(--color-recording);
+  background: var(--color-recording-bg);
+}
+
+.btn-cancel-meeting:focus-visible {
+  outline: 2px solid var(--color-recording);
+  outline-offset: 2px;
+}
+
+.btn-cancel-meeting:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Header-row sizing — tighter padding for the slim header strip. */
+.header-meeting-controls .btn-record {
+  height: 30px;
+  padding-inline: 12px;
+}
+
+.header-meeting-controls .btn-cancel-meeting {
+  height: 30px;
+  padding-inline: 10px;
+}
+
+/* Narrow-viewport breakpoint — shave another 4 px off the inline
+ * padding on phones so the two header buttons fit alongside the
+ * meeting subtitle. */
+@media (max-width: 480px) {
+  .header-meeting-controls .btn-record,
+  .header-meeting-controls .btn-cancel-meeting {
+    padding-inline: 8px;
+  }
+}

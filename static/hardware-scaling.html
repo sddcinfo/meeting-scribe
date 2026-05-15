@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover lets the page extend behind the iOS browser
+       chrome so env(safe-area-inset-*) picks up the correct insets;
+       without this, iPhone content gets clipped by the home indicator
+       / bottom toolbar.  See `static/TESTING_VIEWPORTS.md` for the
+       canonical device list this page is QA'd against. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hardware Scaling | Meeting Scribe</title>
+  <!-- System fonts only. No external font loads (hotspot has no internet). -->
+  <!-- Cache-bust ?v= on each artifact is rewritten by
+       scripts/build_css.py from static/css/dist/manifest.json. -->
+  <link rel="stylesheet" href="../static/css/dist/hardware-scaling.css?v=a65d2e7e6952">
+</head>
+<body data-lang="both">
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <nav class="nav-bar">
+    <a href="../how-it-works/" class="nav-logo">
+      <span class="nav-logo-dot"></span>
+      <span class="nav-logo-text">Meeting Scribe</span>
+    </a>
+    <div class="nav-right">
+      <div class="lang-toggle">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn active" data-lang="both">Both</button>
+        <button class="lang-btn" data-lang="ja">JA</button>
+      </div>
+      <a href="../how-it-works/" class="nav-link">
+        <span class="lang-en">How It Works</span><span class="lang-ja">仕組み</span>
+      </a>
+      <a href="../benchmarking/" class="nav-link">
+        <span class="lang-en">Benchmarking</span><span class="lang-ja">評価</span>
+      </a>
+      <a href="../hardware-scaling/" class="nav-link" aria-current="page">
+        <span class="lang-en">Hardware Scaling</span><span class="lang-ja">スケーリング</span>
+      </a>
+      <a href="https://github.com/sddcinfo/meeting-scribe" class="nav-link" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- ═══ HERO ═══ -->
+    <section class="hero">
+      <div class="hero-pulse">
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-ring"></div>
+        <div class="hero-pulse-core"></div>
+      </div>
+      <div class="bi-inline">
+        <h1 class="hero-title lang-en">Hardware Scaling</h1>
+        <h1 class="hero-title lang-ja">ハードウェア・スケーリング</h1>
+      </div>
+      <div class="bi hero-bi">
+        <p class="hero-subtitle lang-en">
+          A 240-watt desktop today, an AI factory tomorrow, same software stack. GB10 is the art of the possible: the smallest device that runs the full pipeline. Scale up to a rack-mount node or a full liquid-cooled rack, and the same architecture hosts the largest open-weights frontier models with room for several tenants and several models at once.
+        </p>
+        <p class="hero-subtitle lang-ja">
+          今日は240ワットのデスクトップ、明日はAIファクトリー。ソフトウェアスタックは同じです。GB10は「可能性の芸術」、パイプライン全体を回せる最小のデバイスです。ラックマウントノードや液冷の1ラックへスケールすれば、同じアーキテクチャ上で最大規模の公開重みフロンティアモデルを動かせ、複数テナント・複数モデルの同時運用にも余裕が生まれます。
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══ 01 · THE SPECTRUM ═══ -->
+    <section class="section pipeline-overview" id="spectrum">
+      <div class="bi-inline">
+        <div class="section-label lang-en">01 · The Spectrum</div>
+        <div class="section-label lang-ja">01 · スペクトル</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Desk. Rack. Factory.</h2>
+        <h2 class="section-title lang-ja">デスク、ラック、ファクトリー。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">Three tiers of NVIDIA Blackwell-generation hardware. Each one runs essentially the same vLLM + meeting-scribe + auto-sre stack. The GB10 we ship today on a desk is the small end. The HGX B200 / B300 air-cooled node is the rack-mount tier. The GB200 / GB300 NVL72 is one liquid-cooled rack with more compute than most pre-2024 AI startups had in their entire fleet.</p>
+        <p class="section-desc lang-ja">NVIDIA Blackwell世代ハードウェアの三段階。それぞれが本質的に同じ vLLM + meeting-scribe + auto-sre スタックで動作します。今日デスク上で出荷している GB10 が小さい端。HGX B200 / B300 空冷ノードがラックマウント段。GB200 / GB300 NVL72 は液冷の1ラックで、2024年以前の多くの AI スタートアップが全社で持っていた以上の計算量を提供します。</p>
+      </div>
+
+      <div class="pipeline-track" style="margin-top:var(--space-lg);">
+        <div class="pipeline-line"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+        <div class="pipeline-particle"></div>
+
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="desk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M2 20h20"/><path d="M9 16v4"/><path d="M15 16v4"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">GB10 desktop</span><span class="pipeline-node-label lang-ja">GB10 デスクトップ</span></div><div class="pipeline-node-sub">240 W · 128 GB · ~1 PFLOPS FP4</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="rack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 8h18"/><path d="M3 12h18"/><path d="M3 16h18"/><path d="M7 6v0.5"/><path d="M7 10v0.5"/><path d="M7 14v0.5"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">HGX B200 / B300 rack-mount</span><span class="pipeline-node-label lang-ja">HGX B200 / B300 ラックマウント</span></div><div class="pipeline-node-sub">14 kW · 8× GPU · 144 PFLOPS FP4</div></div>
+        </div>
+        <div class="pipeline-node-group">
+          <div class="pipeline-node" data-stage="factory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 21V11l5 3V11l5 3V11l5 3V21z"/><path d="M3 21h18"/><circle cx="8" cy="17" r="0.6" fill="currentColor"/><circle cx="13" cy="17" r="0.6" fill="currentColor"/><circle cx="18" cy="17" r="0.6" fill="currentColor"/></svg></div>
+          <div class="pipeline-node-info"><div class="bi-inline"><span class="pipeline-node-label lang-en">GB200 / GB300 NVL72 rack</span><span class="pipeline-node-label lang-ja">GB200 / GB300 NVL72 ラック</span></div><div class="pipeline-node-sub">~120 kW · 72× GPU · 1.44 ExaFLOPS FP4</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 02 · TIER 1 · GB10 (THE DESK) ═══ -->
+    <section class="section stage" data-stage="desk" id="tier-spark">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">2</div>
+          <div class="bi-inline">
+            <h3 class="stage-title lang-en">Tier 1 · GB10 <span class="tier-badge" data-tier="desk">desk</span></h3>
+            <h3 class="stage-title lang-ja">第1段・GB10 <span class="tier-badge" data-tier="desk">デスク</span></h3>
+          </div>
+        </div>
+        <div class="stage-body">
+          <figure class="product-image">
+            <img src="../static/images/hardware/dell-pro-max-gb10.png"
+                 alt="Dell Pro Max with GB10 desktop unit, front three-quarter view"
+                 loading="lazy" width="1200" height="900">
+            <figcaption class="product-image-caption">
+              <span class="lang-en"><strong>Dell Pro Max with GB10</strong> · desktop · Image: Dell Technologies</span>
+              <span class="lang-ja"><strong>Dell Pro Max with GB10</strong>・デスクトップ・画像：Dell Technologies</span>
+            </figcaption>
+          </figure>
+          <div class="bi">
+            <p class="lang-en">A single Grace+Blackwell SoC on a 150 mm desktop board. The unified memory pool is fixed at 128 GB, so we ship a 35B-A3B Mixture-of-Experts translation model that lives inside that envelope. Every part of the pipeline is sized to the device. It is the entry point, and for a small team or one conference room it is plenty.</p>
+            <p class="lang-ja">150 mm のデスクトップ基板上に1つの Grace+Blackwell SoC。ユニファイドメモリのプールは 128 GB 固定です。そのエンベロープに収まる 35B-A3B の Mixture-of-Experts 翻訳モデルを出荷しています。パイプラインの各要素はデバイスに合わせて設計されています。エントリーポイントですが、小規模チームや一つの会議室には十分です。</p>
+          </div>
+          <div class="spec-grid" data-tier="spark">
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">GPU count</span><span class="lang-ja">GPU数</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.gpu_count">1</div>
+              <div class="spec-card-meta">Grace + Blackwell SoC</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Fast memory</span><span class="lang-ja">高速メモリ</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.fast_memory_gb">128 GB</div>
+              <div class="spec-card-meta">LPDDR5x unified</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Memory bandwidth</span><span class="lang-ja">メモリ帯域</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.memory_bandwidth_gbs">273 GB/s</div>
+              <div class="spec-card-meta">256-bit @ 8533 MT/s</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">FP4 sparse</span><span class="lang-ja">FP4 スパース</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.fp4_pflops_sparse">1 PFLOPS</div>
+              <div class="spec-card-meta">Tensor core peak</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Power</span><span class="lang-ja">電力</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.power_watts">240 W</div>
+              <div class="spec-card-meta">External PSU</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Form factor</span><span class="lang-ja">形状</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.form_factor_mm">150 × 150 × 50.5 mm</div>
+              <div class="spec-card-meta">1.2 kg desktop</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Interconnect</span><span class="lang-ja">インターコネクト</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="spark.interconnect_short">200 Gbps ConnectX-7 (×2 max)</div>
+              <div class="spec-card-meta">Two-node cluster supported</div>
+            </div>
+          </div>
+          <div class="callout">
+            <div class="callout-title">
+              <span class="lang-en">What fits on a GB10</span><span class="lang-ja">GB10 に収まるもの</span>
+            </div>
+            <div class="bi">
+              <span class="lang-en">A 35B-class FP8 Mixture-of-Experts with its KV cache for live translation, plus an ASR model, a TTS model, and a diarization model. All co-resident, all serving real users on the local WiFi hotspot. NVIDIA documents that two Sparks linked over ConnectX-7 can serve a 405B model, though aggregate throughput is gated by the 200 Gbps link.</span>
+              <span class="lang-ja">FP8 の 35B クラス Mixture-of-Experts をライブ翻訳用 KV キャッシュとともに常駐させ、ASR モデル、TTS モデル、ダイアライゼーションモデルを同居させます。全てがローカル WiFi ホットスポット上の実ユーザーへ提供されます。NVIDIA の資料では ConnectX-7 で連結した 2 台の Spark で 405B モデルを動かせるとされていますが、総スループットは 200 Gbps リンクで律速されます。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 03 · TIER 2 · HGX B200 / B300 (THE RACK-MOUNT) ═══ -->
+    <section class="section stage" data-stage="rack" id="tier-b200">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">3</div>
+          <div class="bi-inline">
+            <h3 class="stage-title lang-en">Tier 2 · HGX B200 / B300 <span class="tier-badge" data-tier="rack">rack-mount</span></h3>
+            <h3 class="stage-title lang-ja">第2段・HGX B200 / B300 <span class="tier-badge" data-tier="rack">ラックマウント</span></h3>
+          </div>
+        </div>
+        <div class="stage-body">
+          <figure class="product-image">
+            <img src="../static/images/hardware/poweredge-xe9680.jpg"
+                 alt="Dell PowerEdge XE9680 rack-mount server, front view"
+                 loading="lazy" width="1200" height="900">
+            <figcaption class="product-image-caption">
+              <span class="lang-en"><strong>Dell PowerEdge XE9680</strong> · 10U air-cooled · Image: Dell Technologies</span>
+              <span class="lang-ja"><strong>Dell PowerEdge XE9680</strong>・10U 空冷・画像：Dell Technologies</span>
+            </figcaption>
+          </figure>
+          <div class="bi">
+            <p class="lang-en">Eight Blackwell B200 SXM GPUs in one chassis, knit together by two on-board NVSwitches. Aggregate HBM3e goes from 128 GB on a desk to 1,440 GB per node. Dell ships this as the PowerEdge XE9680. The Blackwell Ultra successor (HGX B300) sits in the PowerEdge XE9780 air-cooled and XE9785 AMD-CPU variants, and started shipping in volume in 2H 2025. This is the tier where the recent open-weights frontier MoEs run as production workloads.</p>
+            <p class="lang-ja">1 つのシャーシに 8 基の Blackwell B200 SXM GPU、基板上の 2 つの NVSwitch で結合。総 HBM3e はデスクの 128 GB から、1 ノードあたり 1,440 GB に増えます。Dell は PowerEdge XE9680 として出荷。Blackwell Ultra の後継である HGX B300 は PowerEdge XE9780（空冷・Intel CPU）と XE9785（AMD CPU）に搭載され、2025 年下半期から量産出荷が始まっています。最近の公開重みフロンティア MoE が本番ワークロードとして動くのはこの段です。</span>
+          </div>
+          <div class="spec-grid" data-tier="b200">
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">GPU count</span><span class="lang-ja">GPU数</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.gpu_count">8</div>
+              <div class="spec-card-meta">SXM Blackwell B200</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">HBM3e total</span><span class="lang-ja">HBM3e 合計</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.fast_memory_gb">1,440 GB</div>
+              <div class="spec-card-meta">180 GB per GPU</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Memory bandwidth</span><span class="lang-ja">メモリ帯域</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.memory_bandwidth_tbs">64 TB/s</div>
+              <div class="spec-card-meta">Aggregate HBM3e</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">FP4 sparse</span><span class="lang-ja">FP4 スパース</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.fp4_pflops_sparse">144 PFLOPS</div>
+              <div class="spec-card-meta">Aggregate node peak</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">FP8 sparse</span><span class="lang-ja">FP8 スパース</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.fp8_pflops_sparse">72 PFLOPS</div>
+              <div class="spec-card-meta">Aggregate node peak</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">NVLink fabric</span><span class="lang-ja">NVLink ファブリック</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.nvlink_tbs_aggregate">14.4 TB/s</div>
+              <div class="spec-card-meta">NVLink 5, 2× NVSwitch</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Power</span><span class="lang-ja">電力</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.power_kw">14.3 kW</div>
+              <div class="spec-card-meta">6× 3.3 kW PSU (5+1)</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Form factor</span><span class="lang-ja">形状</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="b200.form_factor_u">10U air-cooled</div>
+              <div class="spec-card-meta">1,550 CFM airflow</div>
+            </div>
+          </div>
+          <div class="callout">
+            <div class="callout-title">
+              <span class="lang-en">Open-weights frontier models that fit</span><span class="lang-ja">収まる公開重みフロンティアモデル</span>
+            </div>
+            <div class="bi">
+              <span class="lang-en">All three frontier MoEs released in the past three months serve at production speed on a single B200 / B300 node, with weights, KV cache, and several concurrent tenants in the same memory pool. <code>GLM-5</code> (Z.ai, 2026-02-11, 744B / 40B active, MIT license). <code>MiniMax M2.7</code> (MiniMax, 2026-03-18, 230B / 10B active, open weights). <code>Kimi K2.6</code> (Moonshot AI, 2026-04-20, 1T / 32B active, Modified MIT, 256K context). DeepSeek V4-class and Qwen-3.6 405B-class models sit alongside them with similar headroom.</span>
+              <span class="lang-ja">過去 3 ヶ月に公開された 3 つのフロンティア MoE は、いずれも 1 ノードの B200 / B300 で本番速度で動作し、重み・KV キャッシュ・複数テナントを同じメモリプールに収められます。<code>GLM-5</code>（Z.ai、2026-02-11、744B / 40B アクティブ、MIT ライセンス）。<code>MiniMax M2.7</code>（MiniMax、2026-03-18、230B / 10B アクティブ、公開重み）。<code>Kimi K2.6</code>（Moonshot AI、2026-04-20、1T / 32B アクティブ、改変 MIT、256K コンテキスト）。DeepSeek V4 クラスや Qwen-3.6 405B クラスも同様の余裕で同居します。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 04 · TIER 3 · GB200 / GB300 NVL72 (THE FACTORY) ═══ -->
+    <section class="section stage" data-stage="factory" id="tier-nvl72">
+      <div class="stage-card reveal">
+        <div class="stage-header">
+          <div class="stage-number">4</div>
+          <div class="bi-inline">
+            <h3 class="stage-title lang-en">Tier 3 · GB200 / GB300 NVL72 <span class="tier-badge" data-tier="factory">factory</span></h3>
+            <h3 class="stage-title lang-ja">第3段・GB200 / GB300 NVL72 <span class="tier-badge" data-tier="factory">ファクトリー</span></h3>
+          </div>
+        </div>
+        <div class="stage-body">
+          <div class="product-image-stack">
+            <figure class="product-image">
+              <img src="../static/images/hardware/dell-xe9712-row.jpg"
+                   alt="Six Dell PowerEdge XE9712 racks in a row with Dell Technologies wordmark, raised-floor data centre"
+                   loading="lazy" width="1110" height="842">
+              <figcaption class="product-image-caption">
+                <span class="lang-en"><strong>Dell PowerEdge XE9712</strong> · six-rack row, liquid-cooled · Image: Dell Technologies</span>
+                <span class="lang-ja"><strong>Dell PowerEdge XE9712</strong>・6 ラック構成、液冷・画像：Dell Technologies</span>
+              </figcaption>
+            </figure>
+            <figure class="product-image">
+              <img src="../static/images/hardware/dell-xe9712-sled.jpg"
+                   alt="Single Dell PowerEdge XE9712 sled, three-quarter top view"
+                   loading="lazy" width="881" height="500">
+              <figcaption class="product-image-caption">
+                <span class="lang-en"><strong>Dell PowerEdge XE9712 sled</strong> · chassis close-up · Image: Dell Technologies</span>
+                <span class="lang-ja"><strong>Dell PowerEdge XE9712 スレッド</strong>・シャーシ詳細・画像：Dell Technologies</span>
+              </figcaption>
+            </figure>
+          </div>
+          <div class="bi">
+            <p class="lang-en">One liquid-cooled rack with 72 Blackwell GPUs and 36 Grace CPUs welded into a single NVLink domain. The whole rack behaves like one big coherent GPU: 13.4 TB of HBM, 30 TB of fast memory in total, 130 TB/s of NVLink bandwidth inside the domain. Dell ships both the GB200 NVL72 and the GB300 NVL72 (Blackwell Ultra) variants under the same PowerEdge XE9712 family. CoreWeave received Dell's first XE9712 GB200 in late 2024 and Dell's first GB300 NVL72 in July 2025. The next platform, Vera Rubin (XE9812), is in customer sampling now with general availability expected in 2H 2026.</p>
+            <p class="lang-ja">液冷の 1 ラックに 72 基の Blackwell GPU と 36 基の Grace CPU を、1 つの NVLink ドメインに溶接した構成です。ラック全体が 1 つの大きなコヒーレント GPU として動きます。13.4 TB の HBM、合計 30 TB の高速メモリ、ドメイン内 130 TB/s の NVLink 帯域。Dell は GB200 NVL72 と GB300 NVL72（Blackwell Ultra）の両方を、同じ PowerEdge XE9712 ファミリーで出荷しています。CoreWeave は 2024 年後半に Dell 初の XE9712 GB200 を、2025 年 7 月には初の GB300 NVL72 を受領しました。次世代の Vera Rubin（XE9812）は現在カスタマーサンプリング中で、一般出荷は 2026 年下半期の予定です。</span>
+          </div>
+          <div class="spec-grid" data-tier="nvl72">
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">GPU count</span><span class="lang-ja">GPU数</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.gpu_count">72</div>
+              <div class="spec-card-meta">One NVLink domain</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">HBM3e</span><span class="lang-ja">HBM3e</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.hbm_tb">13.4 TB</div>
+              <div class="spec-card-meta">Aggregate across 72 GPUs</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Total fast memory</span><span class="lang-ja">高速メモリ総量</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.total_fast_memory_tb">30.4 TB</div>
+              <div class="spec-card-meta">HBM + Grace LPDDR5X</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Memory bandwidth</span><span class="lang-ja">メモリ帯域</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.memory_bandwidth_tbs">576 TB/s</div>
+              <div class="spec-card-meta">Aggregate HBM</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">FP4 sparse</span><span class="lang-ja">FP4 スパース</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.fp4_pflops_sparse">1,440 PFLOPS</div>
+              <div class="spec-card-meta">= 1.44 ExaFLOPS</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">FP8 sparse</span><span class="lang-ja">FP8 スパース</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.fp8_pflops_sparse">720 PFLOPS</div>
+              <div class="spec-card-meta">Aggregate rack peak</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">NVLink fabric</span><span class="lang-ja">NVLink ファブリック</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.nvlink_tbs_aggregate">130 TB/s</div>
+              <div class="spec-card-meta">NVLink Switch System</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Power</span><span class="lang-ja">電力</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.power_kw">~120 kW</div>
+              <div class="spec-card-meta">Per rack, liquid-cooled</div>
+            </div>
+            <div class="spec-card">
+              <div class="spec-card-label"><span class="lang-en">Form factor</span><span class="lang-ja">形状</span></div>
+              <div class="spec-card-value" data-spec-value data-claim="nvl72.form_factor_label">Full rack, liquid-cooled</div>
+              <div class="spec-card-meta">Dell XE9712 (GB200 + GB300)</div>
+            </div>
+          </div>
+          <div class="callout">
+            <div class="callout-title">
+              <span class="lang-en">What an NVL72 rack unlocks</span><span class="lang-ja">NVL72 ラックが解放するもの</span>
+            </div>
+            <div class="bi">
+              <span class="lang-en">Multi-trillion-parameter inference at frontier interactive speeds. One coherent NVLink domain hosting <code>Kimi K2.6</code>'s 1T MoE alongside <code>GLM-5</code>, <code>MiniMax M2.7</code>, several Qwen variants, and your own fine-tunes, all co-resident, all addressable from a single endpoint. Frontier-grade agentic coding becomes a single-rack workload instead of a multi-rack distributed-systems problem.</span>
+              <span class="lang-ja">対話可能な速度での兆パラメータ推論。1 つのコヒーレント NVLink ドメイン内に、<code>Kimi K2.6</code> の 1T MoE と並んで <code>GLM-5</code>、<code>MiniMax M2.7</code>、複数の Qwen バリアント、自前のファインチューンを全て同居させ、単一エンドポイントから扱えます。フロンティア級のエージェントコーディングは、複数ラックの分散システム課題ではなく、単一ラックのワークロードになります。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 05 · THE SCALING LENS ═══ -->
+    <section class="section" id="scaling-lens">
+      <div class="bi-inline">
+        <div class="section-label lang-en">05 · The Scaling Lens</div>
+        <div class="section-label lang-ja">05 · スケーリングのレンズ</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Same dimensions, three tiers, side by side.</h2>
+        <h2 class="section-title lang-ja">同じ軸で三段階、並べて見る。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">All numbers below are headline specs from NVIDIA, Dell, and Lenovo. FP4 PFLOPS values are the marketing-convention sparse / theoretical peak. Real-world dense throughput is half. The ratios under the table are what the same software stack experiences when it rehosts onto the next tier.</p>
+        <p class="section-desc lang-ja">下の数値は NVIDIA、Dell、Lenovo によるヘッドラインスペックです。FP4 PFLOPS はマーケティング慣例のスパース／理論ピーク値で、実環境での密スループットは半分です。表の下の倍率は、同じソフトウェアスタックを次の段に再ホストしたときに体験する比率です。</p>
+      </div>
+
+      <div class="resource-table-wrap reveal">
+        <table class="resource-table">
+          <thead>
+            <tr>
+              <th><span class="lang-en">Dimension</span><span class="lang-ja">軸</span></th>
+              <th>Dell Pro Max with GB10</th>
+              <th>HGX B200 / B300 (8-GPU)</th>
+              <th>GB200 / GB300 NVL72</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="lang-en">GPU count</span><span class="lang-ja">GPU数</span></td>
+              <td><span class="mv">1</span></td>
+              <td><span class="mv">8</span></td>
+              <td><span class="mv">72</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Fast memory</span><span class="lang-ja">高速メモリ</span></td>
+              <td><span class="mv">128 GB</span></td>
+              <td><span class="mv">1,440 GB</span></td>
+              <td><span class="mv">13.4 TB HBM + 17 TB LPDDR</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Memory bandwidth</span><span class="lang-ja">メモリ帯域</span></td>
+              <td><span class="mv">273 GB/s</span></td>
+              <td><span class="mv">64 TB/s</span></td>
+              <td><span class="mv">576 TB/s</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">FP4 sparse</span><span class="lang-ja">FP4 スパース</span></td>
+              <td><span class="mv">1 PFLOPS</span></td>
+              <td><span class="mv">144 PFLOPS</span></td>
+              <td><span class="mv">1,440 PFLOPS</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">NVLink bandwidth</span><span class="lang-ja">NVLink 帯域</span></td>
+              <td><span class="mv">200 Gbps (CX-7)</span></td>
+              <td><span class="mv">14.4 TB/s</span></td>
+              <td><span class="mv">130 TB/s</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Power</span><span class="lang-ja">電力</span></td>
+              <td><span class="mv">240 W</span></td>
+              <td><span class="mv">14.3 kW</span></td>
+              <td><span class="mv">~120 kW</span></td>
+            </tr>
+            <tr>
+              <td><span class="lang-en">Dell SKU</span><span class="lang-ja">Dell 型番</span></td>
+              <td><span class="mv">Dell Pro Max GB10</span></td>
+              <td><span class="mv">PowerEdge XE9680 / XE9780</span></td>
+              <td><span class="mv">PowerEdge XE9712</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ratio-strip reveal" aria-label="Scaling ratios from GB10 baseline">
+        <div class="ratio-cell">
+          <div class="ratio-label"><span class="lang-en">GPU count</span><span class="lang-ja">GPU数</span></div>
+          <div class="ratio-value">1× → <span class="ratio-multiplier">8×</span> → <span class="ratio-multiplier">72×</span></div>
+        </div>
+        <div class="ratio-cell">
+          <div class="ratio-label"><span class="lang-en">FP4 compute</span><span class="lang-ja">FP4 演算</span></div>
+          <div class="ratio-value">1× → <span class="ratio-multiplier">144×</span> → <span class="ratio-multiplier">1,440×</span></div>
+        </div>
+        <div class="ratio-cell">
+          <div class="ratio-label"><span class="lang-en">Power draw</span><span class="lang-ja">消費電力</span></div>
+          <div class="ratio-value">1× → <span class="ratio-multiplier">60×</span> → <span class="ratio-multiplier">500×</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 06 · THE ART OF THE POSSIBLE ═══ -->
+    <section class="section" id="art-of-possible">
+      <div class="bi-inline">
+        <div class="section-label lang-en">06 · The Art of the Possible</div>
+        <div class="section-label lang-ja">06 · 可能性の芸術</div>
+      </div>
+      <div class="bi">
+        <h2 class="section-title lang-en">Small box now, big box later.</h2>
+        <h2 class="section-title lang-ja">今は小さな箱、将来は大きな箱。</h2>
+      </div>
+      <div class="bi">
+        <p class="section-desc lang-en">GB10 is what we ship today. It proves the architecture works end-to-end at desktop wattage. The smaller models we run on it are not a compromise; they are a fit. The vLLM + meeting-scribe + auto-sre stack rehosts onto a B200 / B300 node or an NVL72 rack without fundamental changes. What changes is the set of models you can host. The desk tier proves the design. The rack tiers expand the menu.</p>
+        <p class="section-desc lang-ja">GB10 は今日出荷している製品です。アーキテクチャがデスクトップの消費電力で一貫して動くことを実証しています。そこで動かす小さなモデルは妥協ではなく、適合です。vLLM + meeting-scribe + auto-sre スタックは、根本的な変更なしに B200 / B300 ノードや NVL72 ラックへ再ホストできます。変わるのは、その上で動かせるモデルの集合です。デスク段は設計を証明し、ラック段はメニューを広げます。</p>
+      </div>
+
+      <div class="callout reveal">
+        <div class="callout-title">
+          <span class="lang-en">Scaling up, three concrete steps</span><span class="lang-ja">スケールアップ、3 つの具体的なステップ</span>
+        </div>
+        <div class="bi">
+          <span class="lang-en">On a desk: one frontier pipeline, sized to its envelope. On a rack-mount node: the recent open-weights frontier models <code>GLM-5</code>, <code>MiniMax M2.7</code>, and <code>Kimi K2.6</code> running as production workloads, plus several tenants and several models in one box. On an NVL72 rack: a single coherent NVLink domain hosting a trillion-parameter model alongside dozens of frontier specialists, at the speed of human iteration. Same code paths, different size class.</span>
+          <span class="lang-ja">デスクでは、エンベロープに収まる 1 つのフロンティア・パイプライン。ラックマウントノードでは、最近の公開重みフロンティアモデル <code>GLM-5</code>、<code>MiniMax M2.7</code>、<code>Kimi K2.6</code> を本番ワークロードとして稼働させ、複数テナント・複数モデルを 1 箱に同居させます。NVL72 ラックでは、1 つのコヒーレント NVLink ドメインに兆パラメータ・モデルと数十のフロンティア特化モデルを併置し、人間のイテレーション速度で動かせます。コード経路は同じで、サイズクラスだけが違います。</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="page-footer">
+      <a href="https://github.com/sddcinfo/meeting-scribe" class="footer-cta" target="_blank" rel="noopener">
+        <span class="lang-en">View on GitHub</span>
+        <span class="lang-ja">GitHubで見る</span>
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+      <div class="footer-attr">Meeting Scribe · hardware scaling, from a desk to an AI factory</div>
+    </footer>
+
+    <!-- ═══ TERMINOLOGY ═══ -->
+    <section class="glossary" id="glossary">
+      <div class="section-inner">
+        <header class="glossary-header">
+          <div>
+            <div class="glossary-eyebrow"><span class="lang-en">07 · Reference</span><span class="lang-ja">07 · 参考</span></div>
+            <h2><span class="lang-en">Terminology</span><span class="lang-ja">用語集</span></h2>
+          </div>
+          <p class="glossary-lede">
+            <span class="lang-en">Every acronym used above, in one place. The dotted underlines in the body link here.</span>
+            <span class="lang-ja">本文で使われている略語を一箇所にまとめています。本文中の点線下線はこのセクションへのリンクです。</span>
+          </p>
+        </header>
+        <dl class="glossary-grid">
+          <div class="glossary-item" id="gloss-gb10">
+            <dt>GB10</dt>
+            <dd><span class="lang-en">NVIDIA Grace+Blackwell desktop SoC. Arm CPU + Blackwell-class GPU on one package. The processor inside Dell Pro Max with GB10.</span><span class="lang-ja">NVIDIA Grace+Blackwell のデスクトップ向け SoC。Arm CPU と Blackwell 級 GPU を 1 パッケージに統合。Dell Pro Max with GB10 に搭載。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-hgx">
+            <dt>HGX</dt>
+            <dd><span class="lang-en">NVIDIA reference platform OEMs use to build 4- and 8-GPU SXM-baseboard servers. HGX B200 is the Blackwell-generation 8-GPU baseboard; HGX B300 is the Blackwell Ultra version.</span><span class="lang-ja">OEM が 4 ／ 8 GPU の SXM ベースボードサーバーを構築するための NVIDIA リファレンスプラットフォーム。HGX B200 は Blackwell 世代の 8 GPU 基板、HGX B300 は Blackwell Ultra 版。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-nvl72">
+            <dt>NVL72</dt>
+            <dd><span class="lang-en">72-GPU rack-scale system in a single NVLink domain. GB200 NVL72 has 72 Blackwell GPUs plus 36 Grace CPUs liquid-cooled in one rack; GB300 NVL72 is the Blackwell Ultra version of the same chassis.</span><span class="lang-ja">単一 NVLink ドメイン内の 72 GPU ラックスケールシステム。GB200 NVL72 は液冷 1 ラックに 72 Blackwell GPU と 36 Grace CPU。GB300 NVL72 は同じシャーシの Blackwell Ultra 版。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-xe9712">
+            <dt>XE9712</dt>
+            <dd><span class="lang-en">Dell PowerEdge SKU family covering both GB200 NVL72 and GB300 NVL72. First GB200 unit shipped to CoreWeave in late 2024; first GB300 unit shipped to CoreWeave in July 2025.</span><span class="lang-ja">GB200 NVL72 と GB300 NVL72 の両方をカバーする Dell PowerEdge の SKU ファミリー。GB200 の初号機は 2024 年後半、GB300 の初号機は 2025 年 7 月に CoreWeave へ出荷。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-sxm">
+            <dt>SXM</dt>
+            <dd><span class="lang-en">NVIDIA's high-power GPU module form factor for HGX baseboards. Higher TGP and NVLink-direct connectivity than PCIe cards.</span><span class="lang-ja">HGX ベースボード向けの高電力 GPU モジュール形状。PCIe カードに比べて TGP が高く、NVLink で直結。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-nvlink">
+            <dt>NVLink</dt>
+            <dd><span class="lang-en">NVIDIA's high-bandwidth GPU-to-GPU interconnect. NVLink 5 reaches 1.8 TB/s bidirectional per GPU on Blackwell-class hardware.</span><span class="lang-ja">NVIDIA の高帯域 GPU 間インターコネクト。NVLink 5 では Blackwell 世代で GPU あたり双方向 1.8 TB/s。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-hbm3e">
+            <dt>HBM3e</dt>
+            <dd><span class="lang-en">High Bandwidth Memory generation 3-extended. Stacked DRAM on the GPU package. The fast memory that holds model weights and KV cache on B200 / B300 and NVL72.</span><span class="lang-ja">第 3 世代拡張の高帯域メモリ。GPU パッケージ上に積層された DRAM。B200 / B300 や NVL72 でモデル重みと KV キャッシュを保持する高速メモリ。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-lpddr5x">
+            <dt>LPDDR5X</dt>
+            <dd><span class="lang-en">Low-power mobile-class DDR memory used in GB10's unified Grace memory pool. Not HBM. Lower bandwidth, larger capacity, lower power.</span><span class="lang-ja">GB10 の Grace 統合メモリプールに使われる低電力モバイル系 DDR メモリ。HBM ではなく、帯域は低いが容量は大きく、低消費電力。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-fp4">
+            <dt>FP4 sparse</dt>
+            <dd><span class="lang-en">4-bit floating-point compute with 2:4 sparsity. NVIDIA's marketing-headline performance number on Blackwell. Dense FP4 is exactly half.</span><span class="lang-ja">2:4 スパース構造の 4 ビット浮動小数点演算。Blackwell のマーケティング表記で見出しに使われる性能指標。密 FP4 は正確にその半分。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-pflops">
+            <dt>PFLOPS / ExaFLOPS</dt>
+            <dd><span class="lang-en">10<sup>15</sup> floating-point operations per second (peta) and 10<sup>18</sup> (exa). NVL72's 1,440 PFLOPS FP4 equals 1.44 ExaFLOPS.</span><span class="lang-ja">毎秒 10<sup>15</sup> 回（ペタ）／ 10<sup>18</sup> 回（エクサ）の浮動小数点演算。NVL72 の 1,440 PFLOPS FP4 は 1.44 ExaFLOPS。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-grace">
+            <dt>Grace</dt>
+            <dd><span class="lang-en">NVIDIA's Arm-based server CPU, paired with Blackwell GPUs on Grace+Blackwell superchips. 72-core Neoverse V2 in datacenter parts; 20-core on GB10.</span><span class="lang-ja">NVIDIA の Arm ベース・サーバー CPU。Grace+Blackwell スーパーチップ上で Blackwell GPU と組み合わされる。データセンター部品は 72 コアの Neoverse V2、GB10 は 20 コア。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-blackwell">
+            <dt>Blackwell</dt>
+            <dd><span class="lang-en">NVIDIA's 2024+ GPU architecture (successor to Hopper). Shipping in B200, B300, GB200, GB300, GB10. SM121 is the GB10 compute-capability identifier.</span><span class="lang-ja">NVIDIA の 2024 年以降の GPU アーキテクチャ（Hopper の後継）。B200、B300、GB200、GB300、GB10 に搭載。SM121 は GB10 のコンピュート能力識別子。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-vera-rubin">
+            <dt>Vera Rubin</dt>
+            <dd><span class="lang-en">NVIDIA's next-generation platform after Blackwell. Vera CPU + Rubin GPU, 288 GB HBM4 per GPU. Customer samples shipping now, general availability in 2H 2026. Dell PowerEdge XE9812 is the rack-scale SKU.</span><span class="lang-ja">Blackwell の次世代 NVIDIA プラットフォーム。Vera CPU と Rubin GPU、GPU あたり 288 GB の HBM4。現在カスタマーサンプリング中、一般出荷は 2026 年下半期。Dell PowerEdge XE9812 がラックスケール SKU。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-moe">
+            <dt>MoE</dt>
+            <dd><span class="lang-en">Mixture of Experts. A model architecture that activates only a subset of parameters per token. Lets a 35B-total / 3B-active model run at 3B compute cost on GB10.</span><span class="lang-ja">Mixture of Experts。トークンごとに一部のパラメータだけを活性化する構造。35B 総パラメータ／ 3B アクティブのモデルを、GB10 で 3B 相当のコストで動かせる。</span></dd>
+          </div>
+          <div class="glossary-item" id="gloss-ai-factory">
+            <dt>AI factory</dt>
+            <dd><span class="lang-en">Industry term for a rack-scale system designed end-to-end as a single coherent inference / training unit. Dell AI Factory with NVL72 is the canonical instance.</span><span class="lang-ja">単一のコヒーレントな推論／訓練ユニットとして端から端まで設計されたラックスケールシステムを指す業界用語。Dell AI Factory と NVL72 が代表例。</span></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="../static/js/how-it-works.js?v=20260421a"></script>
+</body>
+</html>

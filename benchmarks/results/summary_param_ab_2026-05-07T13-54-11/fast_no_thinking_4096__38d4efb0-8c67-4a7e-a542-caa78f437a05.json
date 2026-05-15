@@ -1,0 +1,57 @@
+{
+  "config_name": "fast_no_thinking_4096",
+  "meeting_id": "38d4efb0-8c67-4a7e-a542-caa78f437a05",
+  "elapsed_ms": 9370.887645054609,
+  "summary": {
+    "schema_version": 2,
+    "executive_summary": "The provided transcript is too fragmented and short (under one minute) to support a meaningful executive summary, strategic analysis, or identification of business outcomes. The content appears to be a disjointed technical discussion or debugging session regarding a 'physics engine' and 'Slack data', lacking the coherence required for high-level strategic intelligence.",
+    "key_insights": [],
+    "action_items": [],
+    "named_entities": {
+      "companies": [],
+      "people": [],
+      "products": [
+        "Slack",
+        "physics engine"
+      ],
+      "accounts": []
+    },
+    "decisions": [],
+    "questions": [],
+    "key_quotes": [
+      {
+        "text": "You can see that the hole isn't.",
+        "speaker": "Speaker 1",
+        "context": "Fragmented statement likely referring to a visual or data discrepancy."
+      },
+      {
+        "text": "And here it is. What's a little different than the real vault? Everything that matters.",
+        "speaker": "Speaker 1",
+        "context": "Comparison between a current state and a 'real vault', implying a data or system integrity check."
+      },
+      {
+        "text": "Which, as far as I can tell, is from me just building them stupidly, but the physics engine should.",
+        "speaker": "Speaker 1",
+        "context": "Attribution of a bug or error to poor construction, while noting the physics engine's expected behavior."
+      }
+    ],
+    "topics": [
+      {
+        "title": "Technical Debugging / Data Integrity",
+        "description": "Speaker discusses discrepancies in data ('Slack data'), references a 'real vault', and attributes issues to construction errors versus physics engine behavior.",
+        "timestamp_min": 0.1
+      }
+    ]
+  },
+  "error": null,
+  "prompt_chars": 501,
+  "n_finals": 6,
+  "response_chars": 1526,
+  "num_topics": 1,
+  "num_action_items": 0,
+  "num_decisions": 0,
+  "topic_names": [
+    "Technical Debugging / Data Integrity"
+  ],
+  "hallucinated_speakers": []
+}

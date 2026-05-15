@@ -1,0 +1,63 @@
+/* Meeting Scribe — Speaker chip.
+ *
+ * Pill-shaped chips that render each detected/enrolled speaker in
+ * the admin SPA's detected-speakers strip + the room-editor.
+ * The ``.unknown`` variant draws a dashed outline and pulses the
+ * inner dot until the speaker gets enrolled with a name.
+ *
+ * The ``@keyframes dot-pulse`` keyframe used by the dashed dot
+ * lives at the bottom of this file — it has to be co-located
+ * because the admin SPA never imports the editorial CSS where
+ * the keyframe was historically defined.
+ */
+
+@reference "tailwindcss";
+@import "../lib/tokens.css";
+
+.speaker-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border-dim);
+  background: var(--color-bg-surface);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: all var(--duration-fast);
+}
+
+.speaker-chip:hover {
+  background: var(--color-bg-raised);
+  border-color: var(--color-border);
+}
+
+.speaker-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.speaker-chip.unknown {
+  border-style: dashed;
+}
+
+.speaker-chip.unknown .speaker-chip-dot {
+  animation: dot-pulse 1.5s ease infinite;
+}
+
+.speaker-chip-count {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--color-text-muted);
+  margin-left: 2px;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
